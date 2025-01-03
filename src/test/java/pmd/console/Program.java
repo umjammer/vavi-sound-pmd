@@ -1,0 +1,244 @@
+package pmd.console;
+
+import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.ResourceBundle;
+
+import dotnet4j.io.BufferedStream;
+import dotnet4j.io.File;
+import dotnet4j.io.FileAccess;
+import dotnet4j.io.FileMode;
+import dotnet4j.io.FileShare;
+import dotnet4j.io.FileStream;
+import dotnet4j.io.IOException;
+import dotnet4j.io.MemoryStream;
+import dotnet4j.io.Path;
+import dotnet4j.io.Stream;
+import dotnet4j.io.StreamReader;
+import dotnet4j.util.compat.Tuple;
+import musicDriverInterface.MmlDatum;
+import pmd.common.Environment;
+import pmd.compiler.Compiler;
+import vavi.util.serdes.Serdes;
+
+import static java.lang.System.getLogger;
+
+
+class Program {
+
+    private static final Logger logger = getLogger(Program.class.getName());
+
+    private static final ResourceBundle rb = ResourceBundle.getBundle("message");
+
+    private static String srcFile;
+    private static String ffFile;
+    private static String desFile;
+    private static boolean isXml = false;
+    private static Environment env = null;
+
+    public static void main(String[] args) {
+        int fnIndex = AnalyzeOption(args);
+
+        if (args == null || args.length - fnIndex < 1) {
+            logger.log(Level.ERROR, rb.getString("E0600"));
+            return;
+        }
+
+        try {
+//#if NETCOREAPP
+//                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+//#endif
+
+            compile(args, fnIndex);
+
+        } catch (Exception ex) {
+            logger.log(Level.ERROR, ex.getMessage(), ex);
+        }
+    }
+
+    private static int compile(String[] args, int argIndex) {
+        try {
+            //mc向け引数のリストを作る
+            List<String> lstMcArg = new ArrayList<>(Arrays.asList(args).subList(argIndex, args.length));
+
+            Compiler compiler = new Compiler();
+            compiler.init();
+            compiler.mcArgs = lstMcArg.toArray(String[]::new);
+
+            env = new Environment();
+            env.AddEnv("arranger");
+            env.AddEnv("composer");
+            env.AddEnv("user");
+            env.AddEnv("mcopt");
+            env.AddEnv("pmd");
+            compiler.env = env.GetEnv();
+
+            //各種ファイルネームを得る
+            int s = 0;
+            for (String arg : compiler.mcArgs) {
+                if (arg == null || arg.isEmpty()) continue;
+                if (arg.charAt(0) == '-' || arg.charAt(0) == '/') continue;
+                if (s == 0) srcFile = arg;
+                else if (s == 1) ffFile = arg;
+                else if (s == 2) desFile = arg;
+                s++;
+            }
+
+            if (srcFile == null || srcFile.isEmpty()) {
+                logger.log(Level.ERROR, rb.getString("E0601"));
+                return 1;
+            }
+
+            byte[] ffFileBuf = null;
+            if (ffFile != null && !ffFile.isEmpty() && File.exists(ffFile)) {
+                ffFileBuf = File.readAllBytes(ffFile);
+                compiler.SetFfFileBuf(ffFileBuf);
+            }
+
+//#if DEBUG
+//                compiler.SetCompileSwitch("IDE");
+//                //compiler.SetCompileSwitch("SkipPoint=R17:C18");
+//#endif
+
+            if (!isXml) {
+                //デフォルトはソースファイル名の拡張子を.Mに変更したものにする
+                String destFileName = "";
+                if (srcFile != null && !srcFile.isEmpty()) {
+                    destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), String.format("%s.M", Path.getFileNameWithoutExtension(srcFile)));
+                }
+
+                //TagからFilenameを得る
+                String srcText;
+                try (FileStream sourceMML = new FileStream(srcFile, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                    try (StreamReader sr = new StreamReader(sourceMML, Charset.forName("Shift_JIS"))) {
+                        srcText = sr.readToEnd();
+                    }
+                }
+                String outFileName = "";
+                Tuple<String, String>[] tags = compiler.GetTags(srcText, Program::appendFileReaderCallback);
+                if (tags != null && tags.length > 0) {
+                    for (Tuple<String, String> tag : tags) {
+                        logger.log(Level.TRACE, String.format("%d\t: %d", tag.getItem1(), tag.getItem2()));
+                        //出力ファイル名を得る
+                        if (tag.getItem1().toUpperCase().indexOf("#FI") != 0) continue; // mcは3文字まで判定している為
+                        outFileName = tag.getItem2();
+                    }
+                }
+
+                //TagにFileName指定がある場合はそちらを適用する
+                if (outFileName != null && !outFileName.isEmpty()) {
+                    if (outFileName.charAt(0) != '.') {
+                        //ファイル名指定の場合
+                        destFileName = Path.combine(
+                                Path.getDirectoryName(Path.getFullPath(srcFile))
+                                , outFileName);
+                    } else {
+                        //拡張子のみの指定の場合
+                        destFileName = Path.combine(
+                                Path.getDirectoryName(Path.getFullPath(srcFile))
+                                , "%s%s".formatted(
+                                        Path.getFileNameWithoutExtension(srcFile)
+                                        , outFileName));
+                    }
+                }
+
+                //最終的にdesFileの指定がある場合は、そちらを優先する
+                if (desFile != null) {
+                    destFileName = desFile;
+                }
+
+                boolean isSuccess = false;
+                try (FileStream sourceMML = new FileStream(srcFile, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                    //try (FileStream destCompiledBin = new FileStream(destFileName, FileMode.Create, FileAccess.Write))
+                    try (MemoryStream destCompiledBin = new MemoryStream()) {
+                        try (Stream bufferedDestStream = new BufferedStream(destCompiledBin)) {
+                            isSuccess = compiler.compile(sourceMML, bufferedDestStream, Program::appendFileReaderCallback);
+
+                            if (isSuccess) {
+                                bufferedDestStream.flush();
+                                byte[] destbuf = destCompiledBin.toArray();
+                                File.writeAllBytes(destFileName, destbuf);
+                                if (compiler.getOutFFFileBuf() != null) {
+                                    String outfn = Path.combine(Path.getDirectoryName(destFileName), compiler.getOutFFFileName());
+                                    File.writeAllBytes(outfn, compiler.getOutFFFileBuf());
+                                }
+                            } else return 1;
+                        }
+                    }
+                }
+            } else {
+
+                String destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), String.format("%s.xml", Path.getFileNameWithoutExtension(srcFile)));
+                if (desFile != null) {
+                    destFileName = desFile;
+                }
+                MmlDatum[] dest = null;
+
+                //xmlの時はIDEモードでコンパイル
+                compiler.setCompileSwitch("IDE");
+
+                try (FileStream sourceMML = new FileStream(srcFile, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                    dest = compiler.compile(sourceMML, Program::appendFileReaderCallback);
+                }
+
+                try (OutputStream sw = Files.newOutputStream(java.nio.file.Path.of(destFileName))) {
+                    Serdes.Util.serialize(sw, dest);
+                }
+            }
+
+        } catch (Exception ex) {
+            logger.log(Level.ERROR, ex.getMessage(), ex);
+            return 1;
+        } finally {
+        }
+        return 0;
+    }
+
+    private static Stream appendFileReaderCallback(String arg) {
+
+        String fn;
+        fn = Path.combine(Path.getDirectoryName(srcFile), arg);
+
+        String[] envPaths = env.GetEnvVal("pmd");
+        if (envPaths != null) {
+            int i = 0;
+            while (!File.exists(fn) && i < envPaths.length) {
+                fn = Path.combine(envPaths[i++], arg);
+            }
+        }
+
+        FileStream strm;
+        try {
+            strm = new FileStream(fn, FileMode.Open, FileAccess.Read, FileShare.Read);
+        } catch (IOException e) {
+            strm = null;
+        }
+
+        return strm;
+    }
+
+    private static int AnalyzeOption(String[] args) {
+        if (args == null) return 0;
+        if (args.length < 1) return 0;
+
+        int i = 0;
+        while (args.length > i && args[i] != null && !args[i].isEmpty() && args[i].charAt(0) == '-') {
+            String op = args[i].substring(1).toUpperCase();
+            if (op.equals("XML")) {
+                isXml = true;
+            } else {
+                break;
+            }
+
+            i++;
+        }
+
+        return i;
+    }
+}

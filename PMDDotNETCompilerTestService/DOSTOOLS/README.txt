@@ -1,1 +1,0 @@
-ここに msdos.exe / mc.exe を置く
