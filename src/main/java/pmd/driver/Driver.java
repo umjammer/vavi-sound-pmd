@@ -301,7 +301,7 @@ getmemo_errret:
         Consumer<ChipDatum> opnaWrite = chipsAction.get(0)::writeRegister;
         BiConsumer<Long, Integer> opnaWaitSend = chipsAction.get(0)::waitSend;
 
-        Object[] option = (Object[]) addtionalOption;
+        Object[] option = addtionalOption;
 
         Object[] pdnos = (Object[]) option[0];
         PMDDotNETOption pdno = new PMDDotNETOption() {{
@@ -357,7 +357,7 @@ getmemo_errret:
             Function<ChipDatum, Integer> ppz8Write,
             Function<ChipDatum, Integer> ppsdrvWrite,
             Function<ChipDatum, Integer> p86Write) {
-        if (!Path.getExtension(fileName).toLowerCase().equals(".xml")) {
+        if (!Path.getExtension(fileName).equalsIgnoreCase(".xml")) {
             byte[] srcBuf = File.readAllBytes(fileName);
             if (srcBuf == null || srcBuf.length < 1) return;
             init(srcBuf, opnaWrite, opnaWaitSend, addtionalPMDDotNETOption, addtionalPMDOption

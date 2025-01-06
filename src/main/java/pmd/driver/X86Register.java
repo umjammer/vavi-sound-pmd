@@ -19,6 +19,37 @@ public class X86Register {
         al = (byte) value;
     }
 
+    public void addAx(short value) {
+        setAx((short) (getAx() + value));
+    }
+
+    public void subAx(short value) {
+        setAx((short) (getAx() - value));
+    }
+
+    public void incAx() {
+        addAx((short) 1);
+    }
+
+    public void decAx() {
+        subAx((short) 1);
+    }
+
+    // >>=
+    public void srAx(int value) {
+        setAx((short) (getAx() >>> value));
+    }
+
+    // |=
+    public void orAx(int value) {
+        setAx((short) (getAx() | value));
+    }
+
+    // &=
+    public void andAx(int value) {
+        setAx((short) (getAx() & value));
+    }
+
     public byte bl;
     public byte bh;
 
@@ -36,6 +67,40 @@ public class X86Register {
         bl = (byte) value;
     }
 
+    public void addBx(short value) {
+        setBx((short) (getBx() + value));
+    }
+
+    public void subBx(short value) {
+        setBx((short) (getBx() - value));
+    }
+
+    public void incBx() {
+        addBx((short) 1);
+    }
+
+    public void decBx() {
+        subBx((short) 1);
+    }
+
+    // >>=
+    public void srBx(int value) {
+        setBx((short) (getBx() >>> value));
+    }
+
+    // <<=
+    public void slBx(int value) {
+        setBx((short) (getBx() << value));
+    }
+
+    public void andBx(short value) {
+        setBx((short) (getBx() & value));
+    }
+
+    public void orBx(short value) {
+        setBx((short) (getBx() | value));
+    }
+
     public byte cl;
     public byte ch;
 
@@ -48,6 +113,26 @@ public class X86Register {
         cl = (byte) value;
     }
 
+    public void addCx(short value) {
+        setCx((short) (getCx() + value));
+    }
+
+    public void subCx(short value) {
+        setCx((short) (getCx() - value));
+    }
+
+    public void incCx() {
+        addCx((short) 1);
+    }
+
+    public void decCx() {
+        subCx((short) 1);
+    }
+
+    public void andCx(short value) {
+        setCx((short) (getCx() & value));
+    }
+
     public byte dl;
     public byte dh;
 
@@ -58,6 +143,27 @@ public class X86Register {
     public void setDx(short value) {
         dh = (byte) (value >> 8);
         dl = (byte) value;
+    }
+
+    public void addDx(short value) {
+        setDx((short) (getDx() + value));
+    }
+
+    public void subDx(short value) {
+        setDx((short) (getDx() - value));
+    }
+
+    public void incDx() {
+        addDx((short) 1);
+    }
+
+    public void decDx() {
+        subDx((short) 1);
+    }
+
+    // >>=
+    public void srDx(int value) {
+        setDx((short) (getDx() >>> value));
     }
 
     short di;
@@ -80,9 +186,28 @@ public class X86Register {
         _si = value;
     }
 
+    public void addSi(short value) {
+        setSi((short) (_si + value));
+    }
+
+    public void subSi(short value) {
+        setSi((short) (_si - value));
+    }
+
     public short incSi() {
-        setSi((short) (_si + 1));
-        return _si;
+        try {
+            return _si;
+        } finally {
+            addSi((short) 1);
+        }
+    }
+
+    public short decSi() {
+        try {
+            return _si;
+        } finally {
+            subSi((short) 1);
+        }
     }
 
     short bp;

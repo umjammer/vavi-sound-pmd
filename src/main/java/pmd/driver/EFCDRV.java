@@ -220,7 +220,7 @@ public class EFCDRV {
 
         r.al = (byte) pw.crtEfcDat[r.incSi()].dat;
 
-        r.setAx((short) (byte) r.al); //    cbw
+        r.setAx(r.al); //    cbw
         pw.eswtst = r.getAx(); // スイープ増分(TONE)
         r.al = (byte) pw.crtEfcDat[r.incSi()].dat;
         pw.eswnst = r.al; // スイープ増分(NOISE)

@@ -38,7 +38,7 @@ public class _PPZ8em {
     private int volume = 0;
 
     public _PPZ8em(int SamplingRate /* = 44100 */) {
-        this.SamplingRate = (double) SamplingRate;
+        this.SamplingRate = SamplingRate;
     }
 
     /**
@@ -248,7 +248,7 @@ public class _PPZ8em {
 //#if DEBUG
         logger.log(Level.TRACE, String.format("ppz8em: SetFrequency: 0x{0:x8}", dx * 0x10000 + cx));
 //#endif
-        chWk[al].frequency = (int) (dx * 0x10000 + cx);
+        chWk[al].frequency = dx * 0x10000 + cx;
     }
 
     /**
@@ -433,9 +433,9 @@ public class _PPZ8em {
         //音色テーブルのコンバート
         long size2 = 0;
         for (int i = 0; i < instCount; i++) {
-            int startaddress = (int) (pcmData[bank][i * 4 + 0x10] + pcmData[bank][i * 4 + 0x11] * 0x100) << (5 + 1);
-            int size = ((int) (pcmData[bank][i * 4 + 0x12] + pcmData[bank][i * 4 + 0x13] * 0x100)
-                    - (int) (pcmData[bank][i * 4 + 0x10] + pcmData[bank][i * 4 + 0x11] * 0x100) + 1)
+            int startaddress = (pcmData[bank][i * 4 + 0x10] + pcmData[bank][i * 4 + 0x11] * 0x100) << (5 + 1);
+            int size = ((pcmData[bank][i * 4 + 0x12] + pcmData[bank][i * 4 + 0x13] * 0x100)
+                    - (pcmData[bank][i * 4 + 0x10] + pcmData[bank][i * 4 + 0x11] * 0x100) + 1)
                     << (5 + 1); // endAdr - startAdr
             size2 += size;
             short rate = 16000;   // 16kHz
@@ -488,8 +488,8 @@ public class _PPZ8em {
             int X_N = 0x80; // Xn (ADPCM>PCM 変換用)
             int DELTA_N = 127; // DELTA_N(ADPCM>PCM 変換用)
 
-            int size = ((int) (pcmData[bank][i * 4 + 0x12] + pcmData[bank][i * 4 + 0x13] * 0x100)
-                    - (int) (pcmData[bank][i * 4 + 0x10] + pcmData[bank][i * 4 + 0x11] * 0x100) + 1)
+            int size = ((pcmData[bank][i * 4 + 0x12] + pcmData[bank][i * 4 + 0x13] * 0x100)
+                    - (pcmData[bank][i * 4 + 0x10] + pcmData[bank][i * 4 + 0x11] * 0x100) + 1)
                     << (5 + 1); // endAdr - startAdr
 
             for (int j = 0; j < size / 2; j++) {

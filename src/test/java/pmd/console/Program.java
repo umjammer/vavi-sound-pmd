@@ -98,7 +98,7 @@ class Program {
             byte[] ffFileBuf = null;
             if (ffFile != null && !ffFile.isEmpty() && File.exists(ffFile)) {
                 ffFileBuf = File.readAllBytes(ffFile);
-                compiler.SetFfFileBuf(ffFileBuf);
+                compiler.setFfFileBuf(ffFileBuf);
             }
 
 //#if DEBUG
@@ -121,7 +121,7 @@ class Program {
                     }
                 }
                 String outFileName = "";
-                Tuple<String, String>[] tags = compiler.GetTags(srcText, Program::appendFileReaderCallback);
+                Tuple<String, String>[] tags = compiler.getTags(srcText, Program::appendFileReaderCallback);
                 if (tags != null && tags.length > 0) {
                     for (Tuple<String, String> tag : tags) {
                         logger.log(Level.TRACE, String.format("%d\t: %d", tag.getItem1(), tag.getItem2()));

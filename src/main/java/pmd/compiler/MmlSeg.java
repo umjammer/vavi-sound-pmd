@@ -33,45 +33,45 @@ public class MmlSeg {
 //				+ Mc.cr + Mc.lf + Mc.cr + Mc.lf + Mc.eof;
 //#else
 //#if !hyouka
-//		public String usames = "Usage:  MC"
-//		+ " [/option] filename[.MML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
-//		+ "Option: "
-//		+ "/V  Compile with Tonedatas & Messages & Filenames" + Mc.cr + Mc.lf
-//		+ "        /VW Write Tonedata after Compile" + Mc.cr + Mc.lf
-//		+ "        /N  Compile on OPN   Mode(Default)" + Mc.cr + Mc.lf
-//		+ "        /L  (unsupported) Compile on OPL   Mode" + Mc.cr + Mc.lf
-//		+ "        /M  (unsupported) Compile on OPM   Mode" + Mc.cr + Mc.lf
-//		+ "        /T  (unsupported) Compile on TOWNS Mode" + Mc.cr + Mc.lf
-//		+ "        /P  (unsupported) Play after Compile Complete" + Mc.cr + Mc.lf
-//		+ "        /S  (unsupported) Not Write Compiled File & Play" + Mc.cr + Mc.lf
-//		+ "        /A  (unsupported) Not Set ADPCM_File before Play" + Mc.cr + Mc.lf
-//		+ "        /O  (unsupported) Not Put Title Messages after Play" + Mc.cr + Mc.lf
-//		+ "        /C  Calculate & Put Total Length of Parts" + Mc.cr + Mc.lf
-//		//+ Mc.eof
-//		;
-//		public String titmes = " .MML file --> .M file Compiler"
-//		+ " ver " + Mc.ver + Mc.cr + Mc.lf
-//		+ "		Programmed by M.Kajihara(KAJA) " + Mc.date
-//		+ Mc.cr + Mc.lf
-//		//+ Mc.cr + Mc.lf
-//		//+ Mc.eof
-//		;
+		public String usames = "Usage:  MC"
+		+ " [/option] filename[.MML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
+		+ "Option: "
+		+ "/V  Compile with Tonedatas & Messages & Filenames" + Mc.cr + Mc.lf
+		+ "        /VW Write Tonedata after Compile" + Mc.cr + Mc.lf
+		+ "        /N  Compile on OPN   Mode(Default)" + Mc.cr + Mc.lf
+		+ "        /L  (unsupported) Compile on OPL   Mode" + Mc.cr + Mc.lf
+		+ "        /M  (unsupported) Compile on OPM   Mode" + Mc.cr + Mc.lf
+		+ "        /T  (unsupported) Compile on TOWNS Mode" + Mc.cr + Mc.lf
+		+ "        /P  (unsupported) Play after Compile Complete" + Mc.cr + Mc.lf
+		+ "        /S  (unsupported) Not Write Compiled File & Play" + Mc.cr + Mc.lf
+		+ "        /A  (unsupported) Not Set ADPCM_File before Play" + Mc.cr + Mc.lf
+		+ "        /O  (unsupported) Not Put Title Messages after Play" + Mc.cr + Mc.lf
+		+ "        /C  Calculate & Put Total Length of Parts" + Mc.cr + Mc.lf
+		//+ Mc.eof
+		;
+		public String titmes = " .MML file --> .M file Compiler"
+		+ " ver " + Mc.ver + Mc.cr + Mc.lf
+		+ "		Programmed by M.Kajihara(KAJA) " + Mc.date
+		+ Mc.cr + Mc.lf
+		//+ Mc.cr + Mc.lf
+		//+ Mc.eof
+		;
 //#else
-    public String usames = "Usage:  MCH"
-            + " [/option] filename[.MML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
-            + "Option: "
-            + "/N  Compile on OPN   Mode(Default)" + Mc.cr + Mc.lf
-            + "        /L  Compile on OPL   Mode" + Mc.cr + Mc.lf
-            + "        /A  Not Set ADPCM_File before Play" + Mc.cr + Mc.lf
-            + "        /O  Not Put Title Messages after Play" + Mc.cr + Mc.lf
-            + "        /C  Calculate & Put Total Length of Parts" + Mc.cr + Mc.lf
-            + Mc.eof;
-    public String titmes = " .MML file Compiler & Player (MC.EXE評価版)"
-            + " ver " + Mc.ver + Mc.cr + Mc.lf
-            + "		Programmed by M.Kajihara(KAJA) " + Mc.date
-            + Mc.cr + Mc.lf
-            //+ Mc.cr + Mc.lf + Mc.eof
-            ;
+//    public String usames = "Usage:  MCH"
+//            + " [/option] filename[.MML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
+//            + "Option: "
+//            + "/N  Compile on OPN   Mode(Default)" + Mc.cr + Mc.lf
+//            + "        /L  Compile on OPL   Mode" + Mc.cr + Mc.lf
+//            + "        /A  Not Set ADPCM_File before Play" + Mc.cr + Mc.lf
+//            + "        /O  Not Put Title Messages after Play" + Mc.cr + Mc.lf
+//            + "        /C  Calculate & Put Total Length of Parts" + Mc.cr + Mc.lf
+//            + Mc.eof;
+//    public String titmes = " .MML file Compiler & Player (MC.EXE評価版)"
+//            + " ver " + Mc.ver + Mc.cr + Mc.lf
+//            + "		Programmed by M.Kajihara(KAJA) " + Mc.date
+//            + Mc.cr + Mc.lf
+//            //+ Mc.cr + Mc.lf + Mc.eof
+//            ;
 //#endif
 //#endif
 
@@ -94,7 +94,7 @@ public class MmlSeg {
     public String mcopt_txt = "MCOPT=";
 
 //#if !tempo_old_flag
-//		public int tempo = 0;
+		public int tempo = 0;
 //#endif
     public int timerb = 0; // b
     public int octave = 4; // b

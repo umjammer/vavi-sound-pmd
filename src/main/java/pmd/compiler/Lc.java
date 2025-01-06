@@ -240,10 +240,10 @@ extend_check_next:
         loop_flag = 0;
 
         //Console.WriteLine("bp:%d", Work.bp);
-        work.si = (int) (m_seg.m_buf.get(work.bp).dat + (m_seg.m_buf.get(work.bp + 1).dat * 0x100));
+        work.si = m_seg.m_buf.get(work.bp).dat + (m_seg.m_buf.get(work.bp + 1).dat * 0x100);
         work.si += 0; // offset m_buf
         work.bp += 2;
-        work.bx = (int) (m_seg.m_buf.get(work.bp).dat + (m_seg.m_buf.get(work.bp + 1).dat * 0x100));
+        work.bx = m_seg.m_buf.get(work.bp).dat + (m_seg.m_buf.get(work.bp + 1).dat * 0x100);
         work.bx += 0; // offset m_buf	; bx= R table 先頭番地
 
         return enmPart_ends.kcom_loop;
@@ -262,7 +262,7 @@ extend_check_next:
             al = (byte) ald.dat;
             if (al == 0x80) return enmPart_ends.kpart_end;
             if (al >= 0x80) {
-                work.al = (byte) al;
+                work.al = al;
                 return enmPart_ends.kl_00;
             }
             al *= 2;
@@ -272,7 +272,7 @@ extend_check_next:
             int si = work.si;
             int bx = work.bx;
             work.bx += al;
-            work.si = (int) (m_seg.m_buf.get(work.bx).dat + (m_seg.m_buf.get(work.bx + 1).dat * 0x100));
+            work.si = m_seg.m_buf.get(work.bx).dat + (m_seg.m_buf.get(work.bx + 1).dat * 0x100);
             //Console.WriteLine("bx:%d si:%d", Work.bx, Work.si);
             work.si += 0; // offset m_buf
             rcom_loop();
@@ -290,7 +290,7 @@ extend_check_next:
     //==============================================================================
     private enmPart_ends kl_00() {
         int bx = work.bx;
-        command_exec((byte) work.al);
+        command_exec(work.al);
         work.bx = bx;
 
         if (loop_flag != 0) return enmPart_ends.kpart_end;

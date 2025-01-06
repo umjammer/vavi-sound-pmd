@@ -95,7 +95,7 @@ public class PW {
     public int sync = 0; // １の時MIDISYNC使用
     public int vsync = 0; // １の時VSyncを止める
     public String resmes = "PMD ver." + ver;
-    public int fmvd_init = 16; // ９８は８８よりもＦＭ音源を小さく
+    public int fmvd_init = 16; // ９８は８８よりもFM音源を小さく
 
     //PMD.ASM 114-116
     public int pmdvector = 0x60; // PMD用の割り込みベクトル
@@ -346,7 +346,7 @@ public class PW {
     //8153-8247
     //	演奏中のデータエリア
 
-    public class partWork { //qq  struc
+    public static class partWork { //qq  struc
 
         public short address; // w?	; 2 エンソウチュウ ノ アドレス
         public short partloop; // w? ; 2 エンソウ ガ オワッタトキ ノ モドリサキ
@@ -940,7 +940,7 @@ public class PW {
 
     //PMD.ASM 7955-7964
     //==============================================================================
-    //	ＦＭ音色のキャリアのテーブル
+    //	FM音色のキャリアのテーブル
     //==============================================================================
     public int[] carrier_table = new int[] {
             0b1000_0000, 0b1000_0000, 0b1000_0000, 0b1000_0000
@@ -968,7 +968,7 @@ public class PW {
     //	DataArea
     //==============================================================================
     //if	message
-    public String allload_mes = "ＰＣＭを定義中です。しばらくお待ち下さい。";
+    public String allload_mes = "PCMを定義中です。しばらくお待ち下さい。";
     public String exit1_mes = "PCMが定義出来る環境ではありません。";
     public String exit1p_mes = "PPSDRVが常駐していません。";
     public String exit2_mes = "PCMFileが見つかりません。";

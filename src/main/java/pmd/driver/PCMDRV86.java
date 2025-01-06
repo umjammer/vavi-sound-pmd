@@ -31,12 +31,12 @@ public class PCMDRV86 {
 
     //1-130
     //==============================================================================
-    //	ＰＣＭ音源 演奏 メイン(86B PCM)
+    //	PCM音源 演奏 メイン(86B PCM)
     //==============================================================================
     //pcmmain_ret:
     //	ret
     public void pcmmain() {
-        r.si = pw.partWk[r.di].address; // si = PART DATA ADDRESS
+        r.setSi(pw.partWk[r.di].address); // si = PART DATA ADDRESS
         if (r.getSi() == 0)
             return;
 
@@ -59,18 +59,15 @@ public class PCMDRV86 {
         r.al = pw.partWk[r.di].leng;
 
         //	; KEYOFF CHECK
-        if ((pw.partWk[r.di].keyoff_flag & 3) != 0) // 既にkeyoffしたか？
-            break mp0m;
+        if ((pw.partWk[r.di].keyoff_flag & 3) != 0) { // 既にkeyoffしたか？ // break mp0m;
 
-        if (r.al > pw.partWk[r.di].qdat) // Q値 => 残りLength値時 keyoff
-            break mp0m;
-
-mp00m:
-        ;
-        keyoffm(); // ALは壊さない
-        pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
-
-mp0m:
+            if (r.al <= pw.partWk[r.di].qdat) { // Q値 => 残りLength値時 keyoff // break mp0m;
+//mp00m:
+                keyoffm(); // ALは壊さない
+                pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
+            }
+        }
+//mp0m:
         // LENGTH CHECK
         if (r.al != 0) return this::mpexitm;
         return this::mp1m0;
@@ -95,9 +92,9 @@ mp0m:
             Object o = commandsm();
             Supplier<Object> mp1m_ = this::mp1m;
             Supplier<Object> mnp_ret_ = pmd::mnp_ret;
-            while (o != null && (Supplier<Object>) o != mp1m_) {
+            while (o != null && o != mp1m_) {
                 o = ((Supplier<Object>) o).get();
-                if ((Supplier<Object>) o == mnp_ret_)
+                if (o == mnp_ret_)
                     return pmd::mnp_ret;
                 //if ((Supplier<Object>)o == porta_returnm)
                 //return porta_returnm;
@@ -109,15 +106,15 @@ mp0m:
         if (r.al >= 0x80) { // break mp2m;
             pmd.FlashMacroList();
 
-            r.si--;
+            r.decSi();
             pw.partWk[r.di].address = r.getSi(); // mov[di],si
             pw.partWk[r.di].loopcheck = 3;
             pw.partWk[r.di].onkai = (byte) 0xff; // -1
-            r.bx = pw.partWk[r.di].partloop;
+            r.setBx(pw.partWk[r.di].partloop);
             if (r.getBx() == 0) return this::mpexitm;
 
             // 'L' ガ アッタトキ
-            r.si = r.getBx();
+            r.setSi(r.getBx());
 
             pw.partWk[r.di].loopcheck = 1;
             pw.partWk[r.di].loopCounter++;
@@ -135,22 +132,22 @@ mp0m:
         pmd.calc_q();
 
 
-        if (pw.partWk[r.di].volpush == 0) break mp_newm;
-        if (pw.partWk[r.di].onkai == 0xff) break mp_newm;
-        pw.volpush_flag--;
-        if (pw.volpush_flag == 0) break mp_newm;
-        pw.volpush_flag = 0;
-        pw.partWk[r.di].volpush = 0;
-mp_newm:
-        ;
+        if (pw.partWk[r.di].volpush != 0) { // break mp_newm;
+            if (pw.partWk[r.di].onkai != 0xff) { // break mp_newm;
+                pw.volpush_flag--;
+                if (pw.volpush_flag != 0) { // break mp_newm;
+                    pw.volpush_flag = 0;
+                    pw.partWk[r.di].volpush = 0;
+                }
+            }
+        }
+//mp_newm:
         volsetm();
         otodasim();
-        if ((pw.partWk[r.di].keyoff_flag & 1) == 0)
-            break mp3m;
-        keyonm();
-
-mp3m:
-        ;
+        if ((pw.partWk[r.di].keyoff_flag & 1) != 0) { // break mp3m;
+            keyonm();
+        }
+//mp3m:
         pw.partWk[r.di].keyon_flag++;
         pw.partWk[r.di].address = r.getSi();
         r.al = 0;
@@ -165,61 +162,62 @@ mp3m:
 
     private Supplier<Object> mpexitm() {
         r.cl = pw.partWk[r.di].lfoswi;
-        if ((r.cl & 0x22) == 0)
-            break not_lfo3m;
+        if ((r.cl & 0x22) != 0) { // break not_lfo3m;
 
-        pw.lfo_switch = 0;
-        if ((r.cl & 2) == 0)
-            break not_lfom;
+            pw.lfo_switch = 0;
+            if ((r.cl & 2) != 0) { // break not_lfom;
 
-        pmd.lfo();
-        r.al = r.cl;
-        r.al &= 2;
-        pw.lfo_switch = r.al;
-not_lfom:
-        ;
-        if ((r.cl & 0x20) == 0)
-            break not_lfo2m;
-        //pushf
-        //cli
-        pmd.lfo_change();
-        pmd.lfo();
-        if (!r.carry) break not_lfo1m;
-        pmd.lfo_change();
-        //	popf
-        r.al = pw.partWk[r.di].lfoswi;
-        r.al &= 0x20;
-        pw.lfo_switch |= r.al;
-        break not_lfo2m;
-not_lfo1m:
-        ;
-        pmd.lfo_change();
-        //	popf
-not_lfo2m:
-        ;
-        pmd.soft_env();
-        if (r.carry) break volsm2;
-        if ((pw.lfo_switch & 0x22) != 0)
-            break volsm2;
-volsm1:
-        ;
-        if (pw.fadeout_speed == 0)
+                pmd.lfo();
+                r.al = r.cl;
+                r.al &= 2;
+                pw.lfo_switch = r.al;
+            }
+//not_lfom:
+            if ((r.cl & 0x20) != 0) { // break not_lfo2m;
+                //pushf
+                //cli
+                pmd.lfo_change();
+                pmd.lfo();
+                if (r.carry) { // break not_lfo1m;
+                    pmd.lfo_change();
+                    //	popf
+                    r.al = pw.partWk[r.di].lfoswi;
+                    r.al &= 0x20;
+                    pw.lfo_switch |= r.al;
+//                    break not_lfo2m;
+                } else {
+//not_lfo1m:
+                    pmd.lfo_change();
+                    //	popf
+                }
+            }
+//not_lfo2m:
+            pmd.soft_env();
+            if (!r.carry) { // break volsm2;
+                if ((pw.lfo_switch & 0x22) == 0) { // break volsm2;
+//volsm1:
+                    if (pw.fadeout_speed == 0)
+                        return pmd::mnp_ret;
+                }
+            }
+//volsm2:
+            volsetm();
             return pmd::mnp_ret;
-volsm2:
-        ;
-        volsetm();
-        return pmd::mnp_ret;
-not_lfo3m:
-        ;
+        }
+//not_lfo3m:
         pmd.soft_env();
-        if (r.carry) break volsm2;
-        break volsm1;
+        if (!r.carry)  { // break volsm2;
+//        break volsm1; // <<
+            if (pw.fadeout_speed == 0) // <<
+                return pmd::mnp_ret; // <<
+        }
+//volsm2: // <<
+        volsetm(); // <<
+        return pmd::mnp_ret; // <<
     }
 
-
-    //131-176
     //==============================================================================
-    //	ＰＣＭ音源演奏メイン：パートマスクされている時
+    //	PCM音源演奏メイン：パートマスクされている時
     //==============================================================================
     private Supplier<Object> pcmmain_nonplay() {
         pw.partWk[r.di].leng--;
@@ -249,14 +247,16 @@ not_lfo3m:
         do {
             do {
                 pw.cmd = pw.md[r.getSi()];
-                r.al = (byte) pw.md[r.si++].dat;
+                r.al = (byte) pw.md[r.incSi()].dat;
                 if (r.al == 0x80) break; // KUMA: 未チェック(TAG050で　==になおした)
                 if (r.al < 0x80) return pmd::fmmnp_3;
 
                 Object o = commandsm();
-                while (o != null && (Supplier<Object>) o != this::pcmmnp_1) {
+                Supplier<Object> _pcmmnp_1 = this::pcmmnp_1;
+                Supplier<Object> _mnp_ret = pmd::mnp_ret;
+                while (o != null && o != _pcmmnp_1) {
                     o = ((Supplier<Object>) o).get();
-                    if ((Supplier<Object>) o == pmd::mnp_ret)
+                    if (o == _mnp_ret)
                         return pmd::mnp_ret;
                 }
             } while (true);
@@ -264,28 +264,27 @@ not_lfo3m:
             pmd.FlashMacroList();
 
             //	; END OF MUSIC["L"があった時はそこに戻る]
-            r.si--;
+            r.decSi();
             pw.partWk[r.di].address = r.getSi();
             pw.partWk[r.di].loopcheck = 3;
             pw.partWk[r.di].onkai = (byte) 0xff; // -1
-            r.bx = pw.partWk[r.di].partloop;
+            r.setBx(pw.partWk[r.di].partloop);
 
             if ((r.getBx() & r.getBx()) == 0) return pmd::fmmnp_4;
 
             //    ; "L"があった時
-            r.si = r.getBx();;
+            r.setSi(r.getBx());
             pw.partWk[r.di].loopcheck = 1;
             pw.partWk[r.di].loopCounter++;
         } while (true);
     }
 
-    //177-
     //==============================================================================
-    //	ＰＣＭ音源特殊コマンド処理
+    //	PCM音源特殊コマンド処理
     //==============================================================================
     private Supplier<Object> commandsm() {
         pw.currentCommandTable = cmdtblm;
-        r.bx = 0; // offset cmdtblp
+        r.setBx((short) 0); // offset cmdtblp
         return pmd.command00();
     }
 
@@ -401,51 +400,46 @@ not_lfo3m:
         };
     }
 
-    //278-300
     //==============================================================================
     //	演奏中パートのマスクon/off
     //==============================================================================
     private Supplier<Object> pcm_mml_part_mask() {
-        r.al = (byte) pw.md[r.si++].dat;
+        r.al = (byte) pw.md[r.incSi()].dat;
         if (r.al >= 2)
             return pmd::special_0c0h;
 
-        if (r.al == 0)
-            break pcm_part_maskoff_ret;
+        if (r.al != 0) { // break pcm_part_maskoff_ret;
 
-        pw.partWk[r.di].partmask |= 0x40;
-        if (pw.partWk[r.di].partmask != 0x40)
-            break pmpm_ret;
+            pw.partWk[r.di].partmask |= 0x40;
+            if (pw.partWk[r.di].partmask == 0x40) { // break pmpm_ret;
 
-        stop_86pcm();
-
-pmpm_ret:
-        ;
-        //    pop ax; commandsm
-        return this::pcmmnp_1;
-
-pcm_part_maskoff_ret:
-        ;
+                stop_86pcm();
+            }
+//pmpm_ret:
+            //    pop ax; commandsm
+            return this::pcmmnp_1;
+        }
+//pcm_part_maskoff_ret:
         pw.partWk[r.di].partmask &= 0xbf;
-        if (pw.partWk[r.di].partmask != 0)
-            break pmpm_ret;
+        if (pw.partWk[r.di].partmask != 0) {
+//            break pmpm_ret;
+            return this::pcmmnp_1;
+        }
         //    pop ax		;commandsm
         return this::mp1m; // パート復活
     }
 
-
-    //301-408
     //==============================================================================
     //	リピート設定
     //==============================================================================
     private Supplier<Object> pcmrepeat_set() {
-        r.ax = pw._start_ofs;
+        r.setAx(pw._start_ofs);
         pw.repeat_ofs = r.getAx();
-        r.ax = pw._start_ofs2;
+        r.setAx(pw._start_ofs2);
         pw.repeat_ofs2 = r.getAx(); // repeat開始位置 = start位置に設定
-        r.dx = pw._size1;
+        r.setDx(pw._size1);
         pw.repeat_size1 = r.getDx();
-        r.cx = pw._size2; // cx:dx=全体size
+        r.setCx(pw._size2); // cx:dx=全体size
         pw.repeat_size2 = r.getCx(); // repeat_size = 今のsizeに設定
         pw.repeat_flag = 1;
 
@@ -455,172 +449,158 @@ pcm_part_maskoff_ret:
         r.stack.push(r.getCx());//
 
         //	一個目 = リピート開始位置
-        r.ax = (short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100);
-        r.si += 2;
+        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.addSi((short) 2);
 
-        if ((r.ax & 0x8000) != 0)
-            break prs1_minus;
+        if ((r.getAx() & 0x8000) == 0) { // break prs1_minus;
 
-        // 正の場合
-        pcm86vol_chk();
-        int a = pw.repeat_size2 * 0x10000 + pw.repeat_size1;
-        a -= r.getAx(); // リピートサイズ＝全体のサイズ-指定値
-        pw.repeat_size1 = (short) a;
-        pw.repeat_size2 = (short) (a >> 16);
+            // 正の場合
+            pcm86vol_chk();
+            int a = pw.repeat_size2 * 0x10000 + pw.repeat_size1;
+            a -= r.getAx(); // リピートサイズ＝全体のサイズ-指定値
+            pw.repeat_size1 = (short) a;
+            pw.repeat_size2 = (short) (a >> 16);
 
-        a = pw.repeat_ofs2 * 0x10000 + pw.repeat_ofs;
-        a += r.getAx(); // リピート開始位置から指定値を加算
-        pw.repeat_ofs = (short) a;
-        pw.repeat_ofs2 = (short) (a >> 16);
+            a = pw.repeat_ofs2 * 0x10000 + pw.repeat_ofs;
+            a += r.getAx(); // リピート開始位置から指定値を加算
+            pw.repeat_ofs = (short) a;
+            pw.repeat_ofs2 = (short) (a >> 16);
 
-        break prs2_set;
+//            break prs2_set;
+        } else {
+            // 負の場合
+//prs1_minus:
+            r.setAx((short) (-r.getAx()));
+            pcm86vol_chk();
 
-        // 負の場合
-prs1_minus:
-        ;
-        r.ax = (short) (-r.getAx());
-        pcm86vol_chk();
+            pw.repeat_size1 = r.getAx(); // リピートサイズ＝neg(指定値)
+            pw.repeat_size2 = 0;
 
-        pw.repeat_size1 = r.getAx(); // リピートサイズ＝neg(指定値)
-        pw.repeat_size2 = 0;
+            int a = r.getCx() * 0x10000 + r.getDx();
+            a -= r.getAx();
+            r.setDx((short) a);
+            r.setCx((short) (a >> 16));
 
-        a = r.getCx() * 0x10000 + r.getDx();
-        a -= r.getAx();
-        r.dx = (short) a;
-        r.cx = (short) (a >> 16);
-
-        a = pw.repeat_ofs2 * 0x10000 + pw.repeat_ofs;
-        a += r.getDx(); // リピート開始位置に
-        a += r.getCx() * 0x10000; // (全体サイズ-指定値)を加算
-        pw.repeat_ofs = (short) a;
-        pw.repeat_ofs2 = (short) (a >> 16);
-
+            a = pw.repeat_ofs2 * 0x10000 + pw.repeat_ofs;
+            a += r.getDx(); // リピート開始位置に
+            a += r.getCx() * 0x10000; // (全体サイズ-指定値)を加算
+            pw.repeat_ofs = (short) a;
+            pw.repeat_ofs2 = (short) (a >> 16);
+        }
         //	２個目 = リピート終了位置
-prs2_set:
-        ;
+//prs2_set:
+        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.addSi((short) 2);
 
-        r.ax = (short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100);
-        r.si += 2;
+        if (r.getAx() != 0) { // break prs3_set;//	;0なら計算しない
+            if ((r.getAx() & 0x8000) == 0) { // break prs2_minus;
 
-        if (r.getAx() == 0)
-            break prs3_set;//	;0なら計算しない
-        if ((r.getAx() & 0x8000) != 0)
-            break prs2_minus;
+                //正の場合
+                pcm86vol_chk();
+                pw._size1 = r.getAx(); // ; 正ならpcmサイズ＝指定値
+                pw._size2 = 0;
 
-        //正の場合
-        pcm86vol_chk();
-        pw._size1 = r.getAx(); // ; 正ならpcmサイズ＝指定値
-        pw._size2 = 0;
+                int a = r.getCx() * 0x10000 + r.getDx();
+                a -= r.getAx(); // リピートサイズから(旧サイズ-新サイズ)を引く
+                r.setDx((short) a);
+                r.setCx((short) (a >> 16));
 
-        a = r.getCx() * 0x10000 + r.getDx();
-        a -= r.getAx(); // リピートサイズから(旧サイズ-新サイズ)を引く
-        r.dx = (short) a;
-        r.cx = (short) (a >> 16);
+                a = pw.repeat_size2 * 0x10000 + pw.repeat_size1;
+                a -= r.getAx(); // リピートサイズ＝全体のサイズ-指定値
+                a -= r.getCx() * 0x10000;
+                pw.repeat_size1 = (short) a;
+                pw.repeat_size2 = (short) (a >> 16);
 
-        a = pw.repeat_size2 * 0x10000 + pw.repeat_size1;
-        a -= r.getAx(); // リピートサイズ＝全体のサイズ-指定値
-        a -= r.getCx() * 0x10000;
-        pw.repeat_size1 = (short) a;
-        pw.repeat_size2 = (short) (a >> 16);
+//                break prs3_set;
+            } else {
+                // 負の場合
+//prs2_minus:
+                r.setAx((short) (-r.getAx()));
+                pcm86vol_chk();
 
-        break prs3_set;
+                int a = pw.repeat_size2 * 0x10000 + pw.repeat_size1;
+                a -= r.getAx(); // リピートサイズから
+                // neg(指定値)を引く
+                pw.repeat_size1 = (short) a;
+                pw.repeat_size2 = (short) (a >> 16);
 
-        // 負の場合
-prs2_minus:
-        ;
-        r.ax = (short) (-r.getAx());
-        pcm86vol_chk();
-
-        a = pw.repeat_size2 * 0x10000 + pw.repeat_size1;
-        a -= r.getAx(); // リピートサイズから
-        // neg(指定値)を引く
-        pw.repeat_size1 = (short) a;
-        pw.repeat_size2 = (short) (a >> 16);
-
-        a = pw._size2 * 0x10000 + pw._size1;
-        a -= r.getAx(); // 本来のサイズから指定値を引く
-
+                a = pw._size2 * 0x10000 + pw._size1;
+                a -= r.getAx(); // 本来のサイズから指定値を引く
+            }
+        }
         //	３個目 = リリース開始位置
-prs3_set:
-        ;
-        r.cx = r.stack.pop();
-        r.dx = r.stack.pop(); // cx:dx=全体サイズ復帰
+//prs3_set:
+        r.setCx(r.stack.pop());
+        r.setDx(r.stack.pop()); // cx:dx=全体サイズ復帰
 
-        r.ax = (short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100);
-        r.si += 2;
+        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.addSi((short) 2);
 
-        if (r.getAx() == 0x8000)
-            break prs_exit; // 8000Hなら設定しない
-        r.carry = r.getAx() < 0x8000;
+        if (r.getAx() != 0x8000) { // break prs_exit; // 8000Hなら設定しない
+            r.carry = r.getAx() < 0x8000;
 
-        r.bx = pw._start_ofs;
-        pw.release_ofs = r.getBx();;
-        r.bx = pw._start_ofs2;
-        pw.release_ofs2 = r.getBx();; // release開始位置 = start位置に設定
-        pw.release_size1 = r.getDx();
-        pw.release_size2 = r.getCx(); // release_size = 今のsizeに設定
-        pw.release_flag1 = 1; // リリースするに設定
-        if (!r.carry) break prs3_minus;
+            r.setBx(pw._start_ofs);
+            pw.release_ofs = r.getBx();
+            r.setBx(pw._start_ofs2);
+            pw.release_ofs2 = r.getBx();
+            // release開始位置 = start位置に設定
+            pw.release_size1 = r.getDx();
+            pw.release_size2 = r.getCx(); // release_size = 今のsizeに設定
+            pw.release_flag1 = 1; // リリースするに設定
+            if (r.carry) { // break prs3_minus;
 
-        //正の場合
-        pcm86vol_chk();
-        // リリースサイズ＝全体のサイズ-指定値
-        a = pw.release_size2 * 0x10000 + pw.release_size1;
-        a -= r.getAx();
-        pw.release_size1 = (short) a;
-        pw.release_size2 = (short) (a >> 16);
+                //正の場合
+                pcm86vol_chk();
+                // リリースサイズ＝全体のサイズ-指定値
+                int a = pw.release_size2 * 0x10000 + pw.release_size1;
+                a -= r.getAx();
+                pw.release_size1 = (short) a;
+                pw.release_size2 = (short) (a >> 16);
 
-        //リリース開始位置から指定値を加算
-        a = pw.release_ofs2 * 0x10000 + pw.release_ofs;
-        a += r.getAx();
-        pw.release_ofs = (short) a;
-        pw.release_ofs2 = (short) (a >> 16);
+                //リリース開始位置から指定値を加算
+                a = pw.release_ofs2 * 0x10000 + pw.release_ofs;
+                a += r.getAx();
+                pw.release_ofs = (short) a;
+                pw.release_ofs2 = (short) (a >> 16);
 
-        break prs_exit;
+//                break prs_exit;
+            } else {
+                // 負の場合
+//prs3_minus:
+                r.setAx((short) (-r.getAx()));
+                pcm86vol_chk();
+                pw.release_size1 = r.getAx(); // リリースサイズ＝neg(指定値)
+                pw.release_size2 = 0;
 
-        // 負の場合
-prs3_minus:
-        ;
-        r.ax = (short) (-r.getAx());
-        pcm86vol_chk();
-        pw.release_size1 = r.getAx(); // リリースサイズ＝neg(指定値)
-        pw.release_size2 = 0;
+                int a = r.getCx() * 0x10000 + r.getDx();
+                a -= r.getAx();
+                r.setDx((short) a);
+                r.setCx((short) (a >> 16));
 
-        a = r.getCx() * 0x10000 + r.getDx();
-        a -= r.getAx();
-        r.dx = (short) a;
-        r.cx = (short) (a >> 16);
-
-        a = pw.release_ofs2 * 0x10000 + pw.release_ofs;
-        a += r.getDx(); // リリース開始位置に
-        a += r.getCx() * 0x10000; // (全体サイズ-指定値)を加算
-        pw.release_ofs = (short) a;
-        pw.release_ofs2 = (short) (a >> 16);
-
-prs_exit:
-        ;
-
+                a = pw.release_ofs2 * 0x10000 + pw.release_ofs;
+                a += r.getDx(); // リリース開始位置に
+                a += r.getCx() * 0x10000; // (全体サイズ-指定値)を加算
+                pw.release_ofs = (short) a;
+                pw.release_ofs2 = (short) (a >> 16);
+            }
+        }
+//prs_exit:
         return null;
     }
 
-
-    //409-422
     //==============================================================================
     //	/Sオプション指定時はAXを32倍する
     //==============================================================================
     private void pcm86vol_chk() {
         if (pw.pcm86_vol == 0) return;
 
-        r.ax += r.ax;
-        r.ax += r.ax;
-        r.ax += r.ax;
-        r.ax += r.ax;
-        r.ax += r.ax;
-
-not_p86chk:
-        ;
+        r.addAx(r.getAx());
+        r.addAx(r.getAx());
+        r.addAx(r.getAx());
+        r.addAx(r.getAx());
+        r.addAx(r.getAx());
+//not_p86chk:
     }
-
 
     //423-440
     //==============================================================================
@@ -634,7 +614,7 @@ not_p86chk:
     }
 
     private Supplier<Object> vupckm() {
-        if (r.carry) r.al = 255;
+        if (r.carry) r.al = (byte) 255;
         return vsetm();
     }
 
@@ -652,12 +632,11 @@ not_p86chk:
 
     // Ｖ２．３　ＥＸＴＥＮＤ
     public Supplier<Object> comvolupm2() {
-        r.al = (byte) pw.md[r.si++].dat;
+        r.al = (byte) pw.md[r.incSi()].dat;
         r.carry = (r.al + pw.partWk[r.di].volume) > 0xff;
         r.al += pw.partWk[r.di].volume;
         return vupckm();
     }
-
 
     //441-459
     //==============================================================================
@@ -673,7 +652,7 @@ not_p86chk:
 
     //    ; Ｖ２．３　ＥＸＴＥＮＤ
     public Supplier<Object> comvoldownm2() {
-        r.al = (byte) pw.md[r.si++].dat;
+        r.al = (byte) pw.md[r.incSi()].dat;
         r.ah = r.al;
         r.al = pw.partWk[r.di].volume;
         r.carry = r.al - r.ah < 0;
@@ -681,7 +660,6 @@ not_p86chk:
         if (r.carry) r.al = 0;
         return this::vsetm;
     }
-
 
     //460-486
     //==============================================================================
@@ -693,40 +671,35 @@ not_p86chk:
     //==============================================================================
     private Supplier<Object> pansetm() {
         r.ah = 0;
-        r.al = (byte) pw.md[r.si++].dat;
+        r.al = (byte) pw.md[r.incSi()].dat;
         r.al--;
-        if (r.al == 0) break psm_right;
-        r.al--;
-        if (r.al == 0) break psm_left;
-        r.al--;
-        if (r.al == 0) break psm_mid;
-        r.ah++; //逆相
-
-psm_mid:
-        ;
-        r.al = 0;
-        return this::set_pcm_pan;
-
-psm_left:
-        ;
-        r.al = 0x80; // -128;
-        return this::set_pcm_pan;
-
-psm_right:
-        ;
+        if (r.al != 0) { // break psm_right;
+            r.al--;
+            if (r.al != 0) { // break psm_left;
+                r.al--;
+                if (r.al != 0) { // break psm_mid;
+                    r.ah++; //逆相
+                }
+//psm_mid:
+                r.al = 0;
+                return this::set_pcm_pan;
+            }
+//psm_left:
+            r.al = (byte) 0x80; // -128;
+            return this::set_pcm_pan;
+        }
+//psm_right:
         r.al = +127;
         return this::set_pcm_pan;
     }
 
-
-    //487-527
     //==============================================================================
     //	COMMAND 'px' [Panning Set Extend]
     //	px-127～+127,0or1
     //==============================================================================
     private Supplier<Object> pansetm_ex() {
-        r.al = (byte) pw.md[r.si++].dat;
-        r.ah = (byte) pw.md[r.si++].dat;
+        r.al = (byte) pw.md[r.incSi()].dat;
+        r.ah = (byte) pw.md[r.incSi()].dat;
         return this::set_pcm_pan;
     }
 
@@ -738,52 +711,44 @@ psm_right:
     }
 
     private Supplier<Object> set_pcm_pan2() {
-        if ((r.al & 0x80) != 0)
-            break psmex_left;
-        if (r.al == 0)
-            break psmex_mid;
-
-        // 右寄り
-        pw.pcm86_pan_flag = 2; // Right
-        r.al = (byte) ~r.al;
-        r.al &= 127;
-        break psmex_gs_set;
-
-        // 左寄り
-psmex_left:
-        ;
-        pw.pcm86_pan_flag = 1; // Left
-        r.al += 128;
-        r.al &= 127;
-        break psmex_gs_set;
-
-        // 真ん中
-psmex_mid:
-        ;
-        pw.pcm86_pan_flag = 3; // Middle
-        r.al = 0;
-
-psmex_gs_set:
-        ;
+        if ((r.al & 0x80) == 0) { // break psmex_left;
+            if (r.al == 0) {
+//                break psmex_mid;
+                // 真ん中 // ↑
+//psmex_mid:
+                pw.pcm86_pan_flag = 3; // Middle
+                r.al = 0;
+            } else {
+                // 右寄り
+                pw.pcm86_pan_flag = 2; // Right
+                r.al = (byte) ~r.al;
+                r.al &= 127;
+//                break psmex_gs_set;
+            }
+        } else {
+            // 左寄り
+//psmex_left:
+            pw.pcm86_pan_flag = 1; // Left
+            r.al += 128;
+            r.al &= 127;
+//            break psmex_gs_set;
+        }
+//psmex_gs_set:
         pw.pcm86_pan_dat = r.al;
 
-        if ((r.ah & 1) == 0)
-            break psmex_ret;
+        if ((r.ah & 1) != 0) { // break psmex_ret;
 
-        pw.pcm86_pan_flag |= 4; // 逆相
-
-psmex_ret:
-        ;
+            pw.pcm86_pan_flag |= 4; // 逆相
+        }
+//psmex_ret:
         return null;
     }
 
-
-    //528-560
     //==============================================================================
     //	COMMAND '@' [NEIRO Change]
     //==============================================================================
     private Supplier<Object> comAtm() {
-        r.al = (byte) pw.md[r.si++].dat;
+        r.al = (byte) pw.md[r.incSi()].dat;
         pw.partWk[r.di].voicenum = r.al;
         return this::neiro_set;
     }
@@ -819,131 +784,126 @@ psmex_ret:
         return null;
     }
 
-
-    //561-
     //==============================================================================
     //	PCM VOLUME SET
     //==============================================================================
     private void volsetm() {
         r.al = pw.partWk[r.di].volpush;
-        if (r.al != 0)
-            break vsm_01;
-        r.al = pw.partWk[r.di].volume;
-vsm_01:
-        ;
+        if (r.al == 0) { // break vsm_01;
+            r.al = pw.partWk[r.di].volume;
+        }
+//vsm_01:
         r.dl = r.al;
         //------------------------------------------------------------------------------
         //	音量down計算
         //------------------------------------------------------------------------------
         r.al = pw.pcm_voldown;
-        if (r.al == 0)
-            break pcm_fade_calc;
-        r.al = (byte) -r.al;
-        r.ax = (short) (r.al * r.dl);
-        r.dl = r.ah;
+        if (r.al != 0) { // break pcm_fade_calc;
+            r.al = (byte) -r.al;
+            r.setAx((short) (r.al * r.dl));
+            r.dl = r.ah;
+        }
         //------------------------------------------------------------------------------
         //	Fadeout計算
         //------------------------------------------------------------------------------
-pcm_fade_calc:
-        ;
+//pcm_fade_calc:
         r.al = pw.fadeout_volume;
-        if (r.al == 0)
-            break pcm_env_calc;
-        r.al = (byte) -r.al;
-        r.ax = (short) (r.al * r.dl);
-        r.dl = r.ah;
+        if (r.al != 0) { // break pcm_env_calc;
+            r.al = (byte) -r.al;
+            r.setAx((short) (r.al * r.dl));
+            r.dl = r.ah;
+        }
         //------------------------------------------------------------------------------
         //	ENVELOPE 計算
         //------------------------------------------------------------------------------
-pcm_env_calc:
-        ;
+//pcm_env_calc:
         r.al = r.dl;
-        if (r.al == 0) // 音量0?
-        {
+        if (r.al == 0) { // 音量0?
             mv_out();
             return;
         }
-        if (pw.partWk[r.di].envf != 0xff) // -1
-            break normal_mvset;
-        // 拡張版 音量 = al * (eenv_vol + 1) / 16
-        r.dl = pw.partWk[r.di].eenv_volume;
-        if (r.dl == 0)
-            break mv_min;
-        r.dl++;
-        r.ax = (short) (r.al * r.dl);
-        r.ax >>= 3;
-        r.carry = ((r.ax % 2) != 0);
-        r.ax >>= 1;
-        if (!r.carry) break mvset;
-        r.ax++;
-        break mvset;
-normal_mvset:
-        ;
-        r.ah = pw.partWk[r.di].eenv_volume; // .penv;
-        if ((r.ah & 0x80) == 0)
-            break mvplus;
-        // -
-        r.ah = (byte) -r.ah;
-        r.ah += r.ah;
-        r.ah += r.ah;
-        r.ah += r.ah;
-        r.ah += r.ah;
-        r.carry = r.al - r.ah < 0;
-        r.al -= r.ah;
-        if (!r.carry) break mvset;
-mv_min:
-        ;
-        r.al = 0;
-        mv_out();
-        return;
-
-        // +
-mvplus:
-        ;
-        r.ah += r.ah;
-        r.ah += r.ah;
-        r.ah += r.ah;
-        r.ah += r.ah;
-        r.carry = r.al + r.ah > 0xff;
-        r.al += r.ah;
-        if (!r.carry) break mvset;
-        r.al = 255;
+        if (pw.partWk[r.di].envf == 0xff) { // -1 // break normal_mvset;
+            // 拡張版 音量 = al * (eenv_vol + 1) / 16
+            r.dl = pw.partWk[r.di].eenv_volume;
+            if (r.dl == 0) {
+//                break mv_min;
+//mv_min: // ↑
+                r.al = 0;
+                mv_out();
+                return;
+            }
+            r.dl++;
+            r.setAx((short) (r.al * r.dl));
+            r.srAx(3);
+            r.carry = ((r.getAx() % 2) != 0);
+            r.srAx(1);
+            if (r.carry) { // break mvset;
+                r.incAx();
+            }
+//            break mvset;
+        } else {
+//normal_mvset:
+            r.ah = pw.partWk[r.di].eenv_volume; // .penv;
+            if ((r.ah & 0x80) != 0) { // break mvplus;
+                // -
+                r.ah = (byte) -r.ah;
+                r.ah += r.ah;
+                r.ah += r.ah;
+                r.ah += r.ah;
+                r.ah += r.ah;
+                r.carry = r.al - r.ah < 0;
+                r.al -= r.ah;
+                if (r.carry) { // break mvset;
+//mv_min:
+                    r.al = 0;
+                    mv_out();
+                    return;
+                }
+            } else {
+                // +
+//mvplus:
+                r.ah += r.ah;
+                r.ah += r.ah;
+                r.ah += r.ah;
+                r.ah += r.ah;
+                r.carry = r.al + r.ah > 0xff;
+                r.al += r.ah;
+                if (r.carry) { // break mvset;
+                    r.al = (byte) 255;
+                }
+            }
+        }
         //------------------------------------------------------------------------------
         //	音量LFO計算
         //------------------------------------------------------------------------------
-mvset:
-        ;
+//mvset:
         if ((pw.partWk[r.di].lfoswi & 0x22) == 0) {
             mv_out();
             return;
         }
-        r.dx = 0;
+        r.setDx((short) 0);
         r.ah = r.dl;
-        if ((pw.partWk[r.di].lfoswi & 0x2) == 0)
-            break mv_nolfo1;
-        r.dx = pw.partWk[r.di].lfodat;
-mv_nolfo1:
-        ;
-        if ((pw.partWk[r.di].lfoswi & 0x20) == 0)
-            break mv_nolfo2;
-        r.dx += pw.partWk[r.di]._lfodat;
-mv_nolfo2:
-        ;
-        if ((r.dx & 0x8000) != 0)
-            break mvlfo_minus;
-        r.ax += r.dx;
-        if (r.ah == 0) {
+        if ((pw.partWk[r.di].lfoswi & 0x2) != 0) { // break mv_nolfo1;
+            r.setDx(pw.partWk[r.di].lfodat);
+        }
+//mv_nolfo1:
+        if ((pw.partWk[r.di].lfoswi & 0x20) != 0) { // break mv_nolfo2;
+            r.addDx(pw.partWk[r.di]._lfodat);
+        }
+//mv_nolfo2:
+        if ((r.getDx() & 0x8000) == 0) { // break mvlfo_minus;
+            r.addAx(r.getDx());
+            if (r.ah == 0) {
+                mv_out();
+                return;
+            }
+            r.al = (byte) 255;
             mv_out();
             return;
         }
-        r.al = 255;
-        mv_out();
-        return;
-
-mvlfo_minus:
-        ;
-        r.carry = r.getAx() + r.dx > 0xffff;
-        r.ax += r.dx;
+//mvlfo_minus:
+        r.carry = r.getAx() + r.getDx() > 0xffff;
+        r.addAx(r.getDx());
         if (r.carry) {
             mv_out();
             return;
@@ -957,35 +917,33 @@ mvlfo_minus:
     //------------------------------------------------------------------------------
     private void mv_out() {
         // 音量設定
-        if (pw.pcm86_vol == 0)
-            break pcm_normal_set;
-        // SPBと同様の音量設定
-        // al = sqr(al)
-        r.ah = r.al;
-        r.al = 0;
-        r.carry = true;
+        if (pw.pcm86_vol != 0) { // break pcm_normal_set;
+            // SPBと同様の音量設定
+            // al = sqr(al)
+            r.ah = r.al;
+            r.al = 0;
+            r.carry = true;
 
-sqr_loop:
-        ;
-        boolean c = (r.ah - (byte) (r.al + (r.carry ? 1 : 0))) < 0;
-        r.ah -= (byte) (r.al + (r.carry ? 1 : 0));
-        if (c) break pcm_vol_set;
+//sqr_loop:
+            while (true) {
+                boolean c = (r.ah - (byte) (r.al + (r.carry ? 1 : 0))) < 0;
+                r.ah -= (byte) (r.al + (r.carry ? 1 : 0));
+                if (c) break; // pcm_vol_set;
 
-        c = (r.ah - (byte) (r.al + (c ? 1 : 0))) < 0;
-        r.ah -= (byte) (r.al + (c ? 1 : 0));
-        if (c) break pcm_vol_set;
+                c = (r.ah - (byte) (r.al + (c ? 1 : 0))) < 0;
+                r.ah -= (byte) (r.al + (c ? 1 : 0));
+                if (c) break; // pcm_vol_set;
 
-        r.al++;
-        if (r.al == 15)
-            break pcm_vol_set;
-        break sqr_loop;
-
-pcm_normal_set:
-        ;
-        r.al >>= 4;
-
-pcm_vol_set:
-        ;
+                r.al++;
+                if (r.al == 15)
+                    break; // pcm_vol_set;
+//                break sqr_loop
+            }
+        } else {
+//pcm_normal_set:
+            r.al >>= 4;
+        }
+//pcm_vol_set:
         ChipDatum cd = new ChipDatum(4, 0, r.al);
         p86drv.apply(cd);
         //r.al &= 0b0000_1111;
@@ -995,26 +953,21 @@ pcm_vol_set:
         //pc98.OutPort(r.dx, r.al);
     }
 
-
-    //704-718
     //==============================================================================
     //	PCM KEYON
     //==============================================================================
     private void keyonm() {
-        if (pw.partWk[r.di].onkai != 0xff) //-1
-            break keyonm_00;
-        return; // キュウフ ノ トキ
-keyonm_00:
-        ;
-        r.stack.push(r.si);
+        if (pw.partWk[r.di].onkai == (byte) 0xff) { //-1 // break keyonm_00;
+            return; // when a rest
+        }
+//keyonm_00:
+        r.stack.push(r.getSi());
         r.stack.push(r.di);
         play_86pcm();
         r.di = r.stack.pop();
-        r.si = r.stack.pop();
+        r.setSi(r.stack.pop());
     }
 
-
-    //719-748
     //==============================================================================
     //	PCM KEYOFF
     //==============================================================================
@@ -1052,25 +1005,19 @@ keyonm_00:
         //        break kofm_ret;
 
         //    pmd.keyoffp();
-        return;
     }
 
-
-    //749-813
     //==============================================================================
     //	PCM 周波数設定
     //==============================================================================
     private void otodasim() {
-        r.bx = pw.partWk[r.di].fnum;
-        if (r.bx != 0)
-            break tone_set;
-        return;
-
-tone_set:
-        ;
-        r.ax = pw.partWk[r.di].fnum2;
-        if (pw.pcm86_vol == 1)//	;ADPCMに合わせる場合
-        {
+        r.setBx(pw.partWk[r.di].fnum);
+        if (r.getBx() == 0) { // break tone_set;
+            return;
+        }
+//tone_set:
+        r.setAx(pw.partWk[r.di].fnum2);
+        if (pw.pcm86_vol == 1) { //	;ADPCMに合わせる場合
             tone_set2(); // DetuneはCut
             return;
         }
@@ -1079,13 +1026,13 @@ tone_set:
             return;
         }
 
-        r.cx = r.getAx();
-        r.dx = r.getBx();;
+        r.setCx(r.getAx());
+        r.setDx(r.getBx());
 
-        int c = r.dx * 0x10000 + r.cx;
+        int c = r.getDx() * 0x10000 + r.getCx();
         c >>= 5;
-        r.dx = (short) (c >> 16);
-        r.cx = (short) c;
+        r.setDx((short) (c >> 16));
+        r.setCx((short) c);
 
         //for (int i = 0; i < 5; i++) // rept	5
         //{
@@ -1095,46 +1042,42 @@ tone_set:
         //    if (r.carry) r.cx |= 0x8000;
         //} // endm			;cx=zzzzzxxx xxxxxxxx
 
-        r.dx = pw.partWk[r.di].detune;
-        if ((r.dx & 0x8000) != 0)
-            break tsdt_minus;
-        r.carry = r.cx + r.dx > 0xffff;
-        r.cx += r.dx;
-        if (!r.carry) break tone_set1;
-        r.cx = 0xffff; // -1
-        break tone_set1;
-
-tsdt_minus:
-        ;
-        r.carry = r.getCx() + r.getDx() > 0xffff;
-        r.cx += r.getDx();
-        if (r.cx == 0) break tsdtm0;
-        if (r.carry) break tone_set1;
-
-tsdtm0:
-        ;
-        r.cx = 1; // 0にすると加算値0になる危険があるので1にする
-
-tone_set1:
-        ;
-        r.dx = 0;
+        r.setDx(pw.partWk[r.di].detune);
+        if ((r.getDx() & 0x8000) == 0) { // break tsdt_minus;
+            r.carry = (r.getCx() & 0xffff) + (r.getDx() & 0xffff) > 0xffff;
+            r.addCx(r.getDx());
+            if (r.carry) { // break tone_set1;
+                r.setCx((short) 0xffff); // -1
+            }
+//            break tone_set1;
+        } else {
+//tsdt_minus:
+            r.carry = (r.getCx() & 0xffff) + (r.getDx() & 0xffff) > 0xffff;
+            r.addCx(r.getDx());
+            if (r.getCx() == 0 && // break tsdtm0;
+                    !r.carry) { // break tone_set1;
+//tsdtm0:
+                r.setCx((short) 1); // 0にすると加算値0になる危険があるので1にする
+            }
+        }
+//tone_set1:
+        r.setDx((short) 0);
 
         c = r.getDx() * 0x10000 + r.getCx();
         c <<= 5;
-        r.dx = (short) (c >> 16);
-        r.cx = (short) c;
-        //for (int i = 0; i < 5; i++) // rept	5
-        //{
+        r.setDx((short) (c >> 16));
+        r.setCx((short) c);
+        //for (int i = 0; i < 5; i++) { // rept	5
         //    r.carry = (r.cx & 0x8000) != 0;
         //    r.cx <<= 1;
         //    r.dx <<= 1;
         //    if (r.carry) r.dx |= 0x0001;
         //} //    endm			;dx:cx=00000000 000zzzzz xxxxxxxx xxx00000
 
-        r.bx &= 0b1111_1111_1110_0000;
-        r.ax &= 0b0000_0000_0001_1111;
-        r.bx |= r.getDx();
-        r.ax |= r.getCx();
+        r.andBx((short) 0b1111_1111_1110_0000);
+        r.addAx((short) 0b0000_0000_0001_1111);
+        r.orBx(r.getDx());
+        r.orAx(r.getCx());
 
         tone_set2();
     }
@@ -1143,7 +1086,7 @@ tone_set1:
         pw.addsize2 = r.getAx();
         pw.addsize1 = r.bl;
         //pw.addsize1 &= 0x1f;
-        //Console.WriteLine("{0:x}  {1:x}", pw.addsize1, pw.addsize2);
+        //logger.log(Level.TRACE, "{0:x}  {1:x}", pw.addsize1, pw.addsize2);
         ChipDatum cd = new ChipDatum(5, pw.addsize1, pw.addsize2);
         p86drv.apply(cd);
 
@@ -1153,20 +1096,18 @@ tone_set1:
         //r.bl = r.rol(r.bl, 1);
         //r.bl &= 7;
         //r.bl ^= 7;
-        / // / 周波数設定
+        //// 周波数設定
         //r.dx = 0xa468;
-        / // /pushf
-        / // /cli
+        ////pushf
+        ////cli
         //r.al = pc98.InPort(r.dx);
         //pc98.OutPort(0x5f, r.al);
         //r.al &= 0xf8;
         //r.al |= r.bl;
         //pc98.OutPort(r.dx, r.al);
-        / // /popf
+        ////popf
     }
 
-
-    //814-853
     //==============================================================================
     //	PCM FNUM SET
     //==============================================================================
@@ -1178,22 +1119,18 @@ tone_set1:
             return;
         }
 
-        if (pw.pcm86_vol != 1)
-            break fsm_noad;
+        if (pw.pcm86_vol == 1) { // break fsm_noad;
 
-        if (r.al < 0x65) // o7e?
-            break fsm_noad;
-        r.al = 0x50; // o6
-        if (r.ah >= 5) // ah=onkai
-            break fsm_00;
-        r.al = 0x60; // o7
-
-fsm_00:
-        ;
-        r.al |= r.ah;
-
-fsm_noad:
-        ;
+            if (r.al >= 0x65) { // o7e? // break fsm_noad;
+                r.al = 0x50; // o6
+                if (r.ah < 5) { // ah=onkai // break fsm_00;
+                    r.al = 0x60; // o7
+                }
+//fsm_00:
+                r.al |= r.ah;
+            }
+        }
+//fsm_noad:
         pw.partWk[r.di].onkai = r.al;
 
         r.al &= 0xf0;
@@ -1204,22 +1141,20 @@ fsm_noad:
 
         r.bl += r.ah; // bl=octave*12 + 音階
         r.bh = 0;
-        r.ax = r.getBx();
+        r.setAx(r.getBx());
         //r.bx += r.bx;
         //r.bx += r.ax;
         //r.bx += 0; // offset pcm_tune_data
-        //Console.WriteLine("bx:%d",r.bx);
+        //logger.log(Level.TRACE, "bx:%d",r.bx);
         r.al = (byte) (int) pw.pcm_tune_data86[r.getBx()].getItem1();
-        r.ax |= 0xff00;
+        r.orAx(0xff00);
         pw.partWk[r.di].fnum = r.getAx(); // ax=0ff00h + addsize1
         //r.bx++;
-        r.ax = pw.pcm_tune_data86[r.getBx()].getItem2(); // ax=addsize2
+        r.setAx((short) (int) pw.pcm_tune_data86[r.getBx()].getItem2()); // ax=addsize2
         pw.partWk[r.di].fnum2 = r.getAx();
-        //Console.WriteLine("fnum:{0:x} fnum2:{1:x}", pw.partWk[r.di].fnum, pw.partWk[r.di].fnum2);
+        //logger.log(Level.TRACE, "fnum:{0:x} fnum2:{1:x}", pw.partWk[r.di].fnum, pw.partWk[r.di].fnum2);
     }
 
-
-    //854-908
     //==============================================================================
     //	FIFO int Subroutine
     //		*FIFOが来ている事を確認してから飛んで来ること。
@@ -1229,51 +1164,45 @@ fsm_noad:
         //------------------------------------------------------------------------------
         //	割り込み許可
         //------------------------------------------------------------------------------
-        if (pw.disint == 1)
-            break fifo_not_sti;
+        if (pw.disint != 1) { // break fifo_not_sti;
 
-        //sti			;早速割り込み許可
-fifo_not_sti:
-        ;
-
+            //sti			;早速割り込み許可
+        }
+//fifo_not_sti:
         //------------------------------------------------------------------------------
         //	PCM処理 main
         //------------------------------------------------------------------------------
-        if (pw.play86_flag == 0)//	;PCM再生中か？
-            break not_trans;
+        if (pw.play86_flag != 0) { //	;PCM再生中か？ // break not_trans;
 
-        if (pw.trans_flag != 0)//	;次を転送するか？
-            break i5_trans;
+            if (pw.trans_flag == 0) { //	;次を転送するか？ // break i5_trans;
 
-        stop_86pcm(); // ; PLAY中で且つ次にはもうデータはない= stop
-        return; // FIFOは許可しないで終了
+                stop_86pcm(); // ; PLAY中で且つ次にはもうデータはない= stop
+                return; // FIFOは許可しないで終了
+            }
+//i5_trans:
+            r.stack.push(r.getBx());
+            r.stack.push(r.getCx());
+            r.stack.push((short) (r.sign ? 1 : 0));
+            r.stack.push(r.di);
+            r.stack.push(r.bp);
 
-i5_trans:
-        ;
-        r.stack.push(r.getBx());
-        r.stack.push(r.getCx());
-        r.stack.push(r.sign);
-        r.stack.push(r.di);
-        r.stack.push(r.bp);
+            pcm_trans();
 
-        pcm_trans();
-
-        r.bp = r.stack.pop();
-        r.di = r.stack.pop();
-        r.si = r.stack.pop();
-        r.cx = r.stack.pop();
-        r.bx = r.stack.pop();
-
+            r.bp = r.stack.pop();
+            r.di = r.stack.pop();
+            r.setSi(r.stack.pop());
+            r.setCx(r.stack.pop());
+            r.setBx(r.stack.pop());
+        }
         //------------------------------------------------------------------------------
         //	割り込み禁止
         //------------------------------------------------------------------------------
-not_trans:
-        ;
+//not_trans:
         //	cli
         //------------------------------------------------------------------------------
         //	FIFO割り込みフラグreset
         //------------------------------------------------------------------------------
-        r.dx = 0xa468;
+        r.setDx((short) 0xa468);
         r.al = pc98.InPort(r.getDx());
         pc98.OutPort((short) 0x5f, r.al);
         r.al &= 0xef;
@@ -1281,22 +1210,19 @@ not_trans:
         pc98.OutPort((short) 0x5f, r.al);
         r.al |= 0x10;
         pc98.OutPort(r.getDx(), r.al); // FIFO割り込みフラグ消去解除
-        return;
     }
 
-
-    //909-1201
     //==============================================================================
     //	PCMdata 転送
     // use ax/bx/cx/dx/si/di/bp
     //==============================================================================
     private void pcm_trans2() {
-        r.cx = (short) pw.trans_size; // 転送するbytes
+        r.setCx((short) pw.trans_size); // 転送するbytes
         pcm_trans_main();
     }
 
     private void pcm_trans() {
-        r.cx = (short) (pw.trans_size / 2); // 転送するbytes
+        r.setCx((short) (pw.trans_size / 2)); // 転送するbytes
         pcm_trans_main();
     }
 
@@ -1312,17 +1238,16 @@ not_trans:
         //if (r.al < 0x10)
         //    break zero_trans; // ver.1.0以前の場合
 
-
         r.ah = 0;
         r.al = pw.pcm86_pan_flag;
-        r.ax += r.getAx();
-        r.ax += 0; // offset trans_table
+        r.addAx(r.getAx());
+        r.addAx((short) 0); // offset trans_table
         r.bp = r.getAx(); // bp=転送処理sub offset
 
-        r.dx = 0xa46c;
-        r.ax = pw.size1;
+        r.setDx((short) 0xa46c);
+        r.setAx(pw.size1);
         r.di = r.getAx(); // di=残りsize(下位16bit)
-        r.ax |= pw.size2;
+        r.orAx(pw.size2);
         if (r.getAx() == 0) {
             zero_trans();
             return;
@@ -1335,7 +1260,7 @@ not_trans:
         p86drv.apply(cd); // p86drv pushems
 
         r.ah = pw.addsize1;
-        r.bx = pw.addsize2;
+        r.setBx(pw.addsize2);
 
         get_data_offset(); // ds:si = data offset
         trans_table[r.bp / 2].run();
@@ -1345,8 +1270,6 @@ not_trans:
         p86drv.apply(cd); // p86drv popems
 
         //    pop ds
-
-        return;
     }
 
     //------------------------------------------------------------------------------
@@ -1354,8 +1277,7 @@ not_trans:
     //------------------------------------------------------------------------------
     private void double_trans() {
         r.bp = 0;
-double_trans_loop:
-        ;
+//double_trans_loop:
         do {
             //	mov al,[si]
             pc98.OutPort(r.getDx(), r.al); // 左
@@ -1365,7 +1287,7 @@ double_trans_loop:
                 trans_fin();
                 return;
             }
-            r.cx--;
+            r.decCx();
         } while (r.getCx() != 0);
         trans_exit();
     }
@@ -1374,7 +1296,6 @@ double_trans_loop:
         pw.start_ofs += r.bp; // bp=転送したサイズ
         pw.start_ofs2 += (short) (r.carry ? 1 : 0);
         pw.size1 = r.di;
-        return;
     }
 
     //------------------------------------------------------------------------------
@@ -1382,8 +1303,7 @@ double_trans_loop:
     //------------------------------------------------------------------------------
     private void double_trans_g() {
         r.bp = 0;
-double_trans_g_loop:
-        ;
+//double_trans_g_loop:
         do {
             //	mov al,[si]
             pc98.OutPort(r.getDx(), r.al); // 左
@@ -1394,7 +1314,7 @@ double_trans_g_loop:
                 trans_fin();
                 return;
             }
-            r.cx--;
+            r.decCx();
         } while (r.getCx() != 0);
         trans_exit();
     }
@@ -1404,23 +1324,22 @@ double_trans_g_loop:
     //------------------------------------------------------------------------------
     private void left_trans() {
         r.bp = 0;
-left_trans_loop:
-        ;
+//left_trans_loop:
         do {
             //	mov al,[si]
             pc98.OutPort(r.getDx(), r.al); // 左
             r.stack.push(r.getAx());
-            r.ax = (short) (r.getAx() * pw.pcm86_pan_dat);
-            r.ax += r.getAx();
+            r.setAx((short) (r.getAx() * pw.pcm86_pan_dat));
+            r.addAx(r.getAx());
             r.al = r.ah;
             pc98.OutPort(r.getDx(), r.al); // 右
-            r.ax = r.stack.pop();
+            r.setAx(r.stack.pop());
             add_address();
             if (r.carry) {
                 trans_fin();
                 return;
             }
-            r.cx--;
+            r.decCx();
         } while (r.getCx() != 0);
         trans_exit();
     }
@@ -1430,24 +1349,23 @@ left_trans_loop:
     //------------------------------------------------------------------------------
     private void left_trans_g() {
         r.bp = 0;
-left_trans_g_loop:
-        ;
+//left_trans_g_loop:
         do {
             //	mov al,[si]
             pc98.OutPort(r.getDx(), r.al); // 左
             r.al = (byte) -r.al;
             r.stack.push(r.getAx());
-            r.ax = (short) (r.getAx() * pw.pcm86_pan_dat);
-            r.ax += r.getAx();
+            r.setAx((short) (r.getAx() * pw.pcm86_pan_dat));
+            r.addAx(r.getAx());
             r.al = r.ah;
             pc98.OutPort(r.getDx(), r.al); // 右
-            r.ax = r.stack.pop();
+            r.setAx(r.stack.pop());
             add_address();
             if (r.carry) {
                 trans_fin();
                 return;
             }
-            r.cx--;
+            r.decCx();
         } while (r.getCx() != 0);
         trans_exit();
     }
@@ -1457,23 +1375,22 @@ left_trans_g_loop:
     //------------------------------------------------------------------------------
     private void right_trans() {
         r.bp = 0;
-right_trans_loop:
-        ;
+//right_trans_loop:
         do {
             //	mov al,[si]
             r.stack.push(r.getAx());
-            r.ax = (short) (r.getAx() * pw.pcm86_pan_dat);
-            r.ax += r.getAx();
+            r.setAx((short) (r.getAx() * pw.pcm86_pan_dat));
+            r.addAx(r.getAx());
             r.al = r.ah;
             pc98.OutPort(r.getDx(), r.al); // 左
-            r.ax = r.stack.pop();
+            r.setAx(r.stack.pop());
             pc98.OutPort(r.getDx(), r.al); // 右
             add_address();
             if (r.carry) {
                 trans_fin();
                 return;
             }
-            r.cx--;
+            r.decCx();
         } while (r.getCx() != 0);
         trans_exit();
     }
@@ -1483,16 +1400,15 @@ right_trans_loop:
     //------------------------------------------------------------------------------
     private void right_trans_g() {
         r.bp = 0;
-right_trans_g_loop:
-        ;
+//right_trans_g_loop:
         do {
             //	mov al,[si]
             r.stack.push(r.getAx());
-            r.ax = (short) (r.getAx() * pw.pcm86_pan_dat);
-            r.ax += r.getAx();
+            r.setAx((short) (r.getAx() * pw.pcm86_pan_dat));
+            r.addAx(r.getAx());
             r.al = r.ah;
             pc98.OutPort(r.getDx(), r.al); // 左
-            r.ax = r.stack.pop();
+            r.setAx(r.stack.pop());
             r.al = (byte) -r.al; // 逆相
             pc98.OutPort(r.getDx(), r.al); // 右
             add_address();
@@ -1500,8 +1416,8 @@ right_trans_g_loop:
                 trans_fin();
                 return;
             }
-            r.cx--;
-        } while (r.cx != 0);
+            r.decCx();
+        } while (r.getCx() != 0);
         trans_exit();
     }
 
@@ -1510,82 +1426,75 @@ right_trans_g_loop:
     //		cy=1 ・・・ 転送終了
     //------------------------------------------------------------------------------
     private void add_address() {
-        pw.addsizew += r.bx; // bx=addsize2
+        pw.addsizew += r.getBx(); // bx=addsize2
         //pushf
         r.al = r.ah;
         r.ah = 0; // ax=addsize1
         r.bp += (short) (r.getAx() + (r.carry ? 1 : 0)); // bpをaddsizeに従って加算
         //popf
         //pushf
-        r.si += (short) (r.getAx() + (r.carry ? 1 : 0)); // addressをaddsizeに従って加算
-        if (r.si < 0x4000) // 16K Over Check(for EMS)
-            break not_add_ofs2;
+        r.addSi((short) (r.getAx() + (r.carry ? 1 : 0))); // addressをaddsizeに従って加算
+        if (r.getSi() >= 0x4000) { // 16K Over Check(for EMS) break not_add_ofs2;
 
-        //[[[segment over]]]
-        r.carry = (pw.start_ofs + r.bp) > 0xffff;
-        pw.start_ofs += r.bp;
-        pw.start_ofs2 += (short) (0 + (r.carry ? 1 : 0));
+            //[[[segment over]]]
+            r.carry = (pw.start_ofs + r.bp) > 0xffff;
+            pw.start_ofs += r.bp;
+            pw.start_ofs2 += (short) (0 + (r.carry ? 1 : 0));
 
-        r.bp = 0; // 転送サイズのreset
-        get_data_offset();
-
-not_add_ofs2:
-        ;
+            r.bp = 0; // 転送サイズのreset
+            get_data_offset();
+        }
+//not_add_ofs2:
         //popf
         boolean c = (r.di - (short) (r.getAx() + (r.carry ? 1 : 0))) < 0;
         r.di -= (short) (r.getAx() + (r.carry ? 1 : 0)); // sizeをaddsizeに従って減算
         r.ah = r.al; // ah=addsize1 に戻す
-        if (c) break addadd_sizeseg;
-        if (r.di == 0) break addadd_justcheck;
-        return;
+        if (!c) { // break addadd_sizeseg;
+            if (r.di != 0) { // break addadd_justcheck;
+                return;
+            }
+//addadd_justcheck:
+            if (pw.size2 != 0) { // ジャスト０ // break addadd_repchk;
+                return;
+            }
+        } else {
+//addadd_sizeseg:
+            r.carry = (pw.size2 - 1) < 0;
+            pw.size2 -= 1;
+            if (!r.carry) { // break addadd_repchk;
+//                return;
+            }
+        }
+//addadd_repchk:
+        if (pw.repeat_flag != 0) { // break addadd_stc_ret;
 
-addadd_justcheck:
-        ;
-        if (pw.size2 == 0) // ジャスト０
-            break addadd_repchk;
-        return;
+            if (pw.release_flag2 != 1) { // break addadd_stc_ret;
 
-addadd_sizeseg:
-        ;
-        r.carry = (pw.size2 - 1) < 0;
-        pw.size2 -= 1;
-        if (r.carry) break addadd_repchk;
-        return;
+                // repeat設定
+                r.stack.push(r.getAx());
+                r.stack.push(r.getDx());
+                r.setAx(pw.repeat_size2);
+                pw.size2 = r.getAx();
+                r.di = pw.repeat_size1;
+                r.setAx(pw.repeat_ofs2);
+                pw.start_ofs2 = r.getAx();
+                r.setDx(pw.repeat_ofs);
+                pw.start_ofs = r.getDx();
+                r.bp = 0;
 
-addadd_repchk:
-        ;
-        if (pw.repeat_flag == 0)
-            break addadd_stc_ret;
+                r.ah = (byte) 0xfd;
+                ChipDatum cd = new ChipDatum(r.ah, -1, -1);
+                p86drv.apply(cd); // get data offset = ds:dx
 
-        if (pw.release_flag2 == 1)
-            break addadd_stc_ret;
-
-        // repeat設定
-        r.stack.push(r.getAx());
-        r.stack.push(r.getDx());
-        r.ax = pw.repeat_size2;
-        pw.size2 = r.getAx();
-        r.di = pw.repeat_size1;
-        r.ax = pw.repeat_ofs2;
-        pw.start_ofs2 = r.getAx();
-        r.dx = pw.repeat_ofs;
-        pw.start_ofs = r.getDx();
-        r.bp = 0;
-
-        r.ah = 0xfd;
-        ChipDatum cd = new ChipDatum(r.ah, -1, -1);
-        p86drv(cd); // get data offset = ds:dx
-
-        r.si = r.getDx(); // DS:SI= DATA ADDRESS
-        r.dx = r.stack.pop();
-        r.ax = r.stack.pop();
-        r.carry = false;
-        return;
-
-addadd_stc_ret:
-        ;
+                r.setSi(r.getDx()); // DS:SI= DATA ADDRESS
+                r.setDx(r.stack.pop());
+                r.setAx(r.stack.pop());
+                r.carry = false;
+                return;
+            }
+        }
+//addadd_stc_ret:
         r.carry = true;
-        return;
     }
 
     //------------------------------------------------------------------------------
@@ -1595,42 +1504,37 @@ addadd_stc_ret:
         r.stack.push(r.getAx());
         r.stack.push(r.getDx());
 
-        r.dx = pw.start_ofs; // cs:[start_ofs]
-        r.ax = pw.start_ofs2; // cs:[start_ofs2]
+        r.setDx(pw.start_ofs); // cs:[start_ofs]
+        r.setAx(pw.start_ofs2); // cs:[start_ofs2]
 
         r.ah = (byte) 0xfd;
         ChipDatum cd = new ChipDatum(r.ah, -1, -1);
         p86drv.apply(cd); // get data offset = ds:dx
 
-        r.si = r.getDx(); // DS:SI= DATA ADDRESS
+        r.setSi(r.getDx()); // DS:SI= DATA ADDRESS
 
-        r.dx = r.stack.pop();
-        r.ax = r.stack.pop();
-        return;
+        r.setDx(r.stack.pop());
+        r.setAx(r.stack.pop());
     }
 
     //------------------------------------------------------------------------------
     //	転送終了・・・残りを０で埋める
     //------------------------------------------------------------------------------
     private void trans_fin() {
-        r.cx--;
-        if (r.cx == 0) break tfin_ret;
+        r.decCx();
+        if (r.getCx() != 0) { // break tfin_ret;
 
-        r.al = 0;
-
-tfin_loop:
-        ;
-        do {
-            pc98.OutPort(r.getDx(), r.al); // 左
-            pc98.OutPort(r.getDx(), r.al); // 右
-            r.cx--;
-        } while (r.getCx() != 0);
-
-tfin_ret:
-        ;
+            r.al = 0;
+//tfin_loop:
+            do {
+                pc98.OutPort(r.getDx(), r.al); // 左
+                pc98.OutPort(r.getDx(), r.al); // 右
+                r.decCx();
+            } while (r.getCx() != 0);
+        }
+//tfin_ret:
         pw.size1 = r.getCx(); // cs:[size1]	;cx=0
         pw.size2 = r.getCx(); // cs:[size2]
-        return;
     }
 
     //------------------------------------------------------------------------------
@@ -1638,19 +1542,15 @@ tfin_ret:
     //------------------------------------------------------------------------------
     private void zero_trans() {
         r.al = 0;
-ztr_loop:
-        ;
+//ztr_loop:
         do {
             pc98.OutPort(r.getDx(), r.al); // 左
             pc98.OutPort(r.getDx(), r.al); // 右
-            r.cx--;
+            r.decCx();
         } while (r.getCx() != 0);
         pw.trans_flag = 0; // もう転送しないでいいよ
-        return;
     }
 
-
-    //1202-1296
     //==============================================================================
     //	86B play PCM
     //==============================================================================
@@ -1661,53 +1561,53 @@ ztr_loop:
         cd = new ChipDatum(7, 0, 0);
         p86drv.apply(cd);
 
-        / // /pushf
-        / // /cli
+        ////pushf
+        ////cli
 
         //r.dx = 0xa468;
         //r.al = pc98.InPort(r.dx);
-        / // /	A468 bit7をreset	（FIFO停止）
+        ////	A468 bit7をreset	（FIFO停止）
         //pc98.OutPort(0x5f, r.al);
         //r.al &= 0x7f;
         //pc98.OutPort(r.dx, r.al);
 
-        / // /	A468 bit6をreset	（CPU->FIFO モード）
+        ////	A468 bit6をreset	（CPU->FIFO モード）
         //pc98.OutPort(0x5f, r.al);
         //r.al &= 0xbf;
         //pc98.OutPort(r.dx, r.al);
 
-        / // /	A468 bit3をset		（FIFO リセット設定）
+        ////	A468 bit3をset		（FIFO リセット設定）
         //pc98.OutPort(0x5f, r.al);
         //r.al |= 8;
         //pc98.OutPort(r.dx, r.al);
 
-        / // /	A468 bit3をreset	（FIFO リセット解除）
+        ////	A468 bit3をreset	（FIFO リセット解除）
         //pc98.OutPort(0x5f, r.al);
         //r.al &= 0xf7;
         //pc98.OutPort(r.dx, r.al);
 
-        / // /	A468 bit5をreset	（FIFO割り込み禁止/A46A設定準備）
+        ////	A468 bit5をreset	（FIFO割り込み禁止/A46A設定準備）
         //pc98.OutPort(0x5f, r.al);
         //r.al &= 0xdf;
         //pc98.OutPort(r.dx, r.al);
 
-        / // /	A468 bit4をreset	（割り込みフラグ消去）
+        ////	A468 bit4をreset	（割り込みフラグ消去）
         //pc98.OutPort(0x5f, r.al);
         //r.al &= 0xef;
         //pc98.OutPort(r.dx, r.al);
 
-        / // /	A46A に PAN を OUT	（8bit L/Rch）
+        ////	A46A に PAN を OUT	（8bit L/Rch）
         //r.dx = 0xa46a;
         //r.al = 0xf2;
         //pc98.OutPort(r.dx, r.al);
 
-        / // /popf
+        ////popf
 
-        / // / 最初のdataを転送
+        //// 最初のdataを転送
         //r.si = 0; // offset _start_ofs
         //r.di = 0; // offset start_ofs
         //r.cx = 4;
-        / // /rep movsw
+        ////rep movsw
 
         //pw.addsizew = 0;
         //pw.release_flag2 = 0;
@@ -1716,35 +1616,35 @@ ztr_loop:
         //pcm_trans2();
         //r.bp = r.stack.pop();
 
-        / // /pushf
-        / // /cli
-        / // /------------------------------------------------------------------------------
-        / // /	割り込み設定
-        / // /------------------------------------------------------------------------------
+        ////pushf
+        ////cli
+        ////------------------------------------------------------------------------------
+        ////	割り込み設定
+        ////------------------------------------------------------------------------------
         //r.dx = 0xa468;
         //r.al = pc98.InPort(r.dx);
 
-        / // /	A468 bit4をset		（割り込みフラグ消去解除）
+        ////	A468 bit4をset		（割り込みフラグ消去解除）
         //pc98.OutPort(0x5f, r.al);
         //r.al |= 0x10;
         //pc98.OutPort(r.dx, r.al);
 
-        / // /	A468 bit5をset		（FIFO割り込み許可/A46A設定準備）
+        ////	A468 bit5をset		（FIFO割り込み許可/A46A設定準備）
         //pc98.OutPort(0x5f, r.al);
         //r.al |= 0x20;
         //pc98.OutPort(r.dx, r.al);
 
-        / // /	A46AのFIFO割り込みサイズを設定
+        ////	A46AのFIFO割り込みサイズを設定
         //r.dx = 0xa46a;
         //r.al = (byte)(+(pw.trans_size / 128) - 1);
         //pc98.OutPort(r.dx, r.al);
 
-        / // /------------------------------------------------------------------------------
-        / // /	再生開始
-        / // /------------------------------------------------------------------------------
+        ////------------------------------------------------------------------------------
+        ////	再生開始
+        ////------------------------------------------------------------------------------
         //r.dx = 0xa468;
         //r.al = pc98.InPort(r.dx);
-        / // /	A468 bit7をset		（PCM 再生開始）
+        ////	A468 bit7をset		（PCM 再生開始）
         //pc98.OutPort(0x5f, r.al);
         //r.al |= 0x80;
         //pc98.OutPort(r.dx, r.al);
@@ -1752,11 +1652,8 @@ ztr_loop:
         //pw.play86_flag = 1;
         //pw.trans_flag = 1;
 
-        / // /popf
-
-        return;
+        ////popf
     }
-
 
     //1297-1339
     //==============================================================================
@@ -1769,8 +1666,8 @@ ztr_loop:
         //r.stack.push(r.ax);
         //r.stack.push(r.dx);
 
-        / // /pushf
-        / // /cli
+        ////pushf
+        ////cli
 
         //r.dx = 0xa468;
         //r.al = pc98.InPort(r.dx);
@@ -1779,7 +1676,7 @@ ztr_loop:
         //r.al &= 0x7f;
         //pc98.OutPort(r.dx, r.al);
 
-        / // /	FIFO reset
+        ////	FIFO reset
         //pc98.OutPort(0x5f, r.al);
         //r.al |= 0x08;
         //pc98.OutPort(r.dx, r.al); // Reset処理
@@ -1788,12 +1685,12 @@ ztr_loop:
         //r.al &= 0xf7;
         //pc98.OutPort(r.dx, r.al); // Reset処理おわり
 
-        / // /	FIFO 割り込み禁止
+        ////	FIFO 割り込み禁止
         //pc98.OutPort(0x5f, r.al);
         //r.al &= 0xdf;
         //pc98.OutPort(r.dx, r.al);
 
-        / // /	FIFO 割り込みフラグreset
+        ////	FIFO 割り込みフラグreset
         //pc98.OutPort(0x5f, r.al);
         //r.al &= 0xef;
         //pc98.OutPort(r.dx, r.al);
@@ -1805,24 +1702,21 @@ ztr_loop:
         //pw.play86_flag = 0; // cs:[play86_flag]
         //pw.trans_flag = 0; // cs:[trans_flag]
 
-        / // /popf
+        ////popf
 
         //r.dx = r.stack.pop();
         //r.ax = r.stack.pop();
-        return;
     }
 
-
-    //1340-1382
     //==============================================================================
-    //	ＰＣＭ効果音ルーチン
+    //	PCM効果音ルーチン
     //		input dx  fnum
     //			ch Pan
     // cl Volume
     // al Number
     //==============================================================================
     private void pcm_effect() {
-        r.bx = 0; //offset part10
+        r.setBx((short) 0); //offset part10
         pw.partWk[pw.part10].partmask |= 2; // PCM Part Mask
         pw.pcmflag = 1;
         pw.pcm_effec_num = r.al;
@@ -1841,10 +1735,10 @@ ztr_loop:
         r.ah = 0;
         set_pcm_pan2();
 
-        r.bx = (short) pw._voice_delta_n;
-        r.ax = r.getBx();
+        r.setBx((short) pw._voice_delta_n);
+        r.setAx(r.getBx());
         r.bl = r.bh;
-        r.bx &= 0b0111_0000_0000_1111;
+        r.andBx((short) 0b0111_0000_0000_1111);
         r.bh <<= 1;
         r.bl |= r.bh;
         r.ah = r.al;
@@ -1856,7 +1750,5 @@ ztr_loop:
         //sti
 
         play_86pcm();
-
-        return;
     }
 }

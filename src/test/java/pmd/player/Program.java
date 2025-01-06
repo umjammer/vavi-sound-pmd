@@ -142,7 +142,7 @@ class Program {
 //                    waveProvider = new SineWaveProvider16();
 //                    waveProvider.SetWaveFormat((int) SamplingRate, 2);
                     callBack = Program::EmuCallback;
-                    audioOutput = AudioSystem.getSourceDataLine(new AudioFormat(SamplingRate, 16, 2, true, false));;
+                    audioOutput = AudioSystem.getSourceDataLine(new AudioFormat(SamplingRate, 16, 2, true, false));
                     audioOutput.open();
                     volume(audioOutput, Double.parseDouble(System.getProperty("mdm.volume", "0.2")));
                     audioOutput.start();
@@ -890,10 +890,9 @@ class Program {
         double o = sw.getElapsedMilliseconds() / swFreq;
         double oPPS = sw.getElapsedMilliseconds() / swFreq;
         double step = 1 / (double) SamplingRate;
-        int PPSSamplingRate = (int) (
-                userPPSFREQ == -1
-                        ? (device == 1 ? SamplingRatePPSGIMIC : SamplingRatePPSSCCI)
-                        : (int) userPPSFREQ);
+        int PPSSamplingRate = userPPSFREQ == -1
+                ? (device == 1 ? SamplingRatePPSGIMIC : SamplingRatePPSSCCI)
+                : userPPSFREQ;
         double stepPPS = 1 / (double) PPSSamplingRate;
 
         trdStopped = false;

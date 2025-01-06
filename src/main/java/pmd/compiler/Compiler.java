@@ -133,7 +133,7 @@ public class Compiler implements ICompiler {
 
     @Override
     public MmlDatum[] compile(Stream sourceMML, Function<String, Stream> appendFileReaderCallback) {
-        try (var ms = ReadAllBytesToMemoryStream(sourceMML)) {
+        try (var ms = readAllBytesToMemoryStream(sourceMML)) {
             ms.seek(0, SeekOrigin.Begin);
             int c = 0;
             int offset = 0;
@@ -223,11 +223,12 @@ public class Compiler implements ICompiler {
         return true;
     }
 
+    @Override
     public CompilerInfo getCompilerInfo() {
         return work.compilerInfo;
     }
 
-    public Tuple<String, String>[] GetTags(String srcBuf, Function<String, Stream> appendFileReaderCallback) {
+    public Tuple<String, String>[] getTags(String srcBuf, Function<String, Stream> appendFileReaderCallback) {
         this.appendFileReaderCallback = appendFileReaderCallback;
         List<String> lstTag = new ArrayList<>();
         List<Tuple<String, String>> tags = new ArrayList<>();
@@ -241,7 +242,7 @@ public class Compiler implements ICompiler {
                 lstTag.add(lin);
                 if (lin.toUpperCase().indexOf("#INCLUDE") != 0) continue;
 
-                GetTagReca(lstTag, lin);
+                getTagReca(lstTag, lin);
             }
 
             for (String tag : lstTag) {
@@ -261,23 +262,21 @@ public class Compiler implements ICompiler {
                 tags.add(keyVal);
             }
         } catch (Exception e) {
-            ;
         }
 
         return tags.toArray(Tuple[]::new);
     }
 
-    public void SetFfFileBuf(byte[] ffFileBuf) {
+    public void setFfFileBuf(byte[] ffFileBuf) {
         ffBuf = ffFileBuf;
     }
 
-
-    private byte[] ReadFile(String filename) {
+    byte[] readFile(String filename) {
         Stream strm = appendFileReaderCallback.apply(filename);
-        return ReadAllBytes(strm);
+        return readAllBytes(strm);
     }
 
-    private String ReadFileText(String mml_filename2) {
+    String readFileText(String mml_filename2) {
         Stream strm = appendFileReaderCallback.apply(mml_filename2);
         if (strm == null) {
             logger.log(Level.ERROR, String.format(rb.getString("E0201"), mml_filename2));
@@ -294,11 +293,10 @@ public class Compiler implements ICompiler {
         return text;
     }
 
-
-    private void GetTagReca(List<String> lstTag, String lin) {
+    private void getTagReca(List<String> lstTag, String lin) {
         if (lin.length() < 9) return;
 
-        String inc = ReadFileText(lin.substring(8).trim());
+        String inc = readFileText(lin.substring(8).trim());
         if (inc == null || inc.isEmpty()) return;
 
         String[] incList = inc.split("\r\n");
@@ -309,20 +307,20 @@ public class Compiler implements ICompiler {
             lstTag.add(ilin);
             if (ilin.toUpperCase().indexOf("#INCLUDE") != 0) continue;
 
-            GetTagReca(lstTag, ilin);
+            getTagReca(lstTag, ilin);
         }
     }
 
     /**
      * ストリームから一括でバイナリを読み込む
      */
-    private byte[] ReadAllBytes(Stream stream) {
-        try (var ms = ReadAllBytesToMemoryStream(stream)) {
+    private byte[] readAllBytes(Stream stream) {
+        try (var ms = readAllBytesToMemoryStream(stream)) {
             return ms != null ? ms.toArray() : null;
         }
     }
 
-    private MemoryStream ReadAllBytesToMemoryStream(Stream stream) {
+    private MemoryStream readAllBytesToMemoryStream(Stream stream) {
         if (stream == null) return null;
 
         var buf = new byte[8192];
@@ -340,7 +338,7 @@ public class Compiler implements ICompiler {
     @Override
     public GD3Tag getGD3TagInfo(byte[] srcBuf) {
         String text = new String(srcBuf, Charset.forName("shift_jis"));
-        Tuple<String, String>[] tags = GetTags(text, appendFileReaderCallback);
+        Tuple<String, String>[] tags = getTags(text, appendFileReaderCallback);
         GD3Tag gd3tag = new GD3Tag();
         gd3tag.items.clear();
         for (Tuple<String, String> ttag : tags) {

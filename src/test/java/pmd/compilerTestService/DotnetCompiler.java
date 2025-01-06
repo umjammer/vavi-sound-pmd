@@ -104,7 +104,7 @@ public class DotnetCompiler extends DosCompiler {
         try (var sourceMML = new FileStream(mmlFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)) {
             try (var sr = new StreamReader(sourceMML, Charset.forName("cp932"))) {
                 var srcText = sr.readToEnd();
-                var tags = compiler.GetTags(srcText, fnAppendFileReaderCallback);
+                var tags = compiler.getTags(srcText, fnAppendFileReaderCallback);
                 if (tags != null) {
                     for (var item : tags) {
                         // mcは3文字まで判定している為

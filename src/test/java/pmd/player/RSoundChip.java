@@ -81,11 +81,12 @@ public class RSoundChip {
             return false;
         }
 
-        / // <summary>
-        / // マスタークロックの設定
-        / // </summary>
-        / // <param name="mClock">設定したい値</param>
-        / // <returns>実際設定された値</returns>
+        /**
+         * マスタークロックの設定
+         *
+         * @param mClock 設定したい値
+         * @return 実際設定された値
+         */
         @Override
         public int SetMasterClock(int mClock) {
             //SCCIはクロックの変更不可
@@ -140,11 +141,12 @@ public class RSoundChip {
             return true;
         }
 
-        / // <summary>
-        / // マスタークロックの設定
-        / // </summary>
-        / // <param name="mClock">設定したい値</param>
-        / // <returns>実際設定された値</returns>
+        /**
+         * マスタークロックの設定
+         *
+         * @param mClock 設定したい値
+         * @return 実際設定された値
+         */
         @Override
         public int SetMasterClock(int mClock) {
 //            NIGimic2 gm = realChip.QueryInterface();

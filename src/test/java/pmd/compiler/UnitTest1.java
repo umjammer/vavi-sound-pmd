@@ -1,7 +1,6 @@
 
 package pmd.compiler;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -37,20 +36,20 @@ class UnitTest1 {
             logdir = GetLogDir();
         }
         Directory.createDirectory(logdir);
-        var logwriter = File.createText(Path.combine(logdir, "log.txt"));
-        try (var listener = new TextWriterTraceListener(logwriter.BaseStream)) {
-
-            try (var loggerFactory = LoggerFactory.Create(builder -> {
-                builder.AddConsole(configure ->
-                {
-                    configure.Format = ConsoleLoggerFormat.Systemd;
-                });
-                builder.AddTraceSource(new SourceSwitch("TraceSourceLog", SourceLevels.Verbose.toString()), listener);
-            })) {
-            }
-        }
-        var logger = loggerFactory.CreateLogger < PMDCompileTestService > ();
-        var service = new PMDCompileTestService(logger);
+//        var logwriter = Directory.createText(Path.combine(logdir, "log.txt"));
+//        try (var listener = new TextWriterTraceListener(logwriter.BaseStream)) {
+//
+//            try (var loggerFactory = LoggerFactory.Create(builder -> {
+//                builder.AddConsole(configure ->
+//                {
+//                    configure.Format = ConsoleLoggerFormat.Systemd;
+//                });
+//                builder.AddTraceSource(new SourceSwitch("TraceSourceLog", SourceLevels.Verbose.toString()), listener);
+//            })) {
+//            }
+//        }
+//        var logger = loggerFactory.CreateLogger < PMDCompileTestService > ();
+        var service = new PMDCompileTestService();
 
         var mmlfilesDir = GetMMLDir();
         assertTrue(service.MultiTest(mmlfilesDir, options, GetToolDir(), logdir));
