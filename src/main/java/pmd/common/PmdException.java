@@ -7,7 +7,7 @@ import java.util.ResourceBundle;
 
 public class PmdException extends RuntimeException implements Serializable {
 
-    static final ResourceBundle rb = ResourceBundle.getBundle("message");
+    static final ResourceBundle rb = ResourceBundle.getBundle("lang/message");
 
     public PmdException() {
     }

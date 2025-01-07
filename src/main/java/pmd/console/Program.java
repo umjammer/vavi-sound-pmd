@@ -34,7 +34,7 @@ class Program {
 
     private static final Logger logger = getLogger(Program.class.getName());
 
-    private static final ResourceBundle rb = ResourceBundle.getBundle("message");
+    private static final ResourceBundle rb = ResourceBundle.getBundle("lang/message");
 
     private static String srcFile;
     private static String ffFile;
@@ -64,7 +64,7 @@ class Program {
 
     private static int compile(String[] args, int argIndex) {
         try {
-            //mc向け引数のリストを作る
+            // mc向け引数のリストを作る
             List<String> lstMcArg = new ArrayList<>(Arrays.asList(args).subList(argIndex, args.length));
 
             Compiler compiler = new Compiler();
@@ -79,7 +79,7 @@ class Program {
             env.AddEnv("pmd");
             compiler.env = env.GetEnv();
 
-            //各種ファイルネームを得る
+            // 各種ファイルネームを得る
             int s = 0;
             for (String arg : compiler.mcArgs) {
                 if (arg == null || arg.isEmpty()) continue;
@@ -107,7 +107,7 @@ class Program {
 //#endif
 
             if (!isXml) {
-                //デフォルトはソースファイル名の拡張子を.Mに変更したものにする
+                // デフォルトはソースファイル名の拡張子を.Mに変更したものにする
                 String destFileName = "";
                 if (srcFile != null && !srcFile.isEmpty()) {
                     destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), String.format("%s.M", Path.getFileNameWithoutExtension(srcFile)));
@@ -124,22 +124,22 @@ class Program {
                 Tuple<String, String>[] tags = compiler.getTags(srcText, Program::appendFileReaderCallback);
                 if (tags != null && tags.length > 0) {
                     for (Tuple<String, String> tag : tags) {
-                        logger.log(Level.TRACE, String.format("%d\t: %d", tag.getItem1(), tag.getItem2()));
-                        //出力ファイル名を得る
+                        logger.log(Level.TRACE, String.format("%s\t: %s", tag.getItem1(), tag.getItem2()));
+                        // 出力ファイル名を得る
                         if (tag.getItem1().toUpperCase().indexOf("#FI") != 0) continue; // mcは3文字まで判定している為
                         outFileName = tag.getItem2();
                     }
                 }
 
-                //TagにFileName指定がある場合はそちらを適用する
+                // TagにFileName指定がある場合はそちらを適用する
                 if (outFileName != null && !outFileName.isEmpty()) {
                     if (outFileName.charAt(0) != '.') {
-                        //ファイル名指定の場合
+                        // ファイル名指定の場合
                         destFileName = Path.combine(
                                 Path.getDirectoryName(Path.getFullPath(srcFile))
                                 , outFileName);
                     } else {
-                        //拡張子のみの指定の場合
+                        // 拡張子のみの指定の場合
                         destFileName = Path.combine(
                                 Path.getDirectoryName(Path.getFullPath(srcFile))
                                 , "%s%s".formatted(
@@ -148,7 +148,7 @@ class Program {
                     }
                 }
 
-                //最終的にdesFileの指定がある場合は、そちらを優先する
+                // 最終的にdesFileの指定がある場合は、そちらを優先する
                 if (desFile != null) {
                     destFileName = desFile;
                 }
@@ -180,7 +180,7 @@ class Program {
                 }
                 MmlDatum[] dest = null;
 
-                //xmlの時はIDEモードでコンパイル
+                // xmlの時はIDEモードでコンパイル
                 compiler.setCompileSwitch("IDE");
 
                 try (FileStream sourceMML = new FileStream(srcFile, FileMode.Open, FileAccess.Read, FileShare.Read)) {

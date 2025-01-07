@@ -21,34 +21,34 @@ public class CompileResult {
         Match_WithoutMemo
     }
 
-    public CompileStatus Status;
+    public CompileStatus status;
 
     public CompileResult.CompileStatus getStatus() {
-        return Status;
+        return status;
     }
 
-    private int ExitCode;
+    private final int exitCode;
 
     public int getExitCode() {
-        return ExitCode;
+        return exitCode;
     }
 
-    private byte[] CompiledBinary;
+    private final byte[] compiledBinary;
 
     public byte[] getCompiledBinary() {
-        return CompiledBinary;
+        return compiledBinary;
     }
 
-    private String Log;
+    private final String log;
 
     public String getLog() {
-        return Log;
+        return log;
     }
 
-    private Integer MemoWriteAddress;
+    private final Integer memoWriteAddress;
 
     public int getMemoWriteAddress() {
-        return MemoWriteAddress;
+        return memoWriteAddress;
     }
 
     public CompileResult(boolean succeeded, byte[] compiledBinary, String log, Integer memoWriteAddress /* = null */) {
@@ -63,67 +63,66 @@ public class CompileResult {
         var succeeded = exitCode == 0;
         if (succeeded) {
             if (!log.contains("Warning")) {
-                Status = CompileStatus.Succeeded;
+                status = CompileStatus.Succeeded;
             } else {
-                Status = CompileStatus.Warning;
+                status = CompileStatus.Warning;
             }
         } else {
             if (!log.contains("Exception")) {
-                Status = CompileStatus.Failed;
+                status = CompileStatus.Failed;
             } else {
-                Status = CompileStatus.Exception;
+                status = CompileStatus.Exception;
             }
         }
-        ExitCode = exitCode;
-        CompiledBinary = compiledBinary;
-        Log = log;
-        MemoWriteAddress = memoWriteAddress < 0 ? null : memoWriteAddress;
+        this.exitCode = exitCode;
+        this.compiledBinary = compiledBinary;
+        this.log = log;
+        this.memoWriteAddress = memoWriteAddress < 0 ? null : memoWriteAddress;
     }
 
-    public void WriteLog(Logger logger) {
-        switch (Status) {
+    public void writeLog(Logger logger) {
+        switch (status) {
             case Failed:
-                logger.log(Level.ERROR, Log);
+                logger.log(Level.ERROR, log);
                 break;
             case Exception:
-                logger.log(Level.ERROR, Log);
+                logger.log(Level.ERROR, log);
                 break;
             case Warning:
-                logger.log(Level.WARNING, Log);
+                logger.log(Level.WARNING, log);
                 break;
         }
     }
 
-    public CompileResult.CompareResult Compare(CompileResult target) {
-        if (Status == CompileStatus.Failed || target.Status == CompileStatus.Failed ||
-                Status == CompileStatus.Exception || target.Status == CompileStatus.Exception ||
-                CompiledBinary == null || target.CompiledBinary == null) {
+    public CompileResult.CompareResult compare(CompileResult target) {
+        if (status == CompileStatus.Failed || target.status == CompileStatus.Failed ||
+                status == CompileStatus.Exception || target.status == CompileStatus.Exception ||
+                compiledBinary == null || target.compiledBinary == null) {
             return CompareResult.Unspecified;
         }
-        int size = Math.min(CompiledBinary.length, target.CompiledBinary.length);
+        int size = Math.min(compiledBinary.length, target.compiledBinary.length);
 
         for (int i = 0; i < size; i++) {
-            if (CompiledBinary[i] != target.CompiledBinary[i]) {
-                var offset = GetMemoOffset(CompiledBinary) != null ? MemoWriteAddress != null ? target.MemoWriteAddress != null ? size : 0 : 0 : 0;
+            if (compiledBinary[i] != target.compiledBinary[i]) {
+                var offset = getMemoOffset(compiledBinary) != null ? memoWriteAddress != null ? target.memoWriteAddress != null ? size : 0 : 0 : 0;
 
                 return i >= offset ? CompareResult.Match_WithoutMemo : CompareResult.Unmatch;
             }
         }
 
-        return CompiledBinary.length == target.CompiledBinary.length ? CompareResult.Match : CompareResult.Match_NotEqualLength;
+        return compiledBinary.length == target.compiledBinary.length ? CompareResult.Match : CompareResult.Match_NotEqualLength;
     }
 
-    public static Integer GetMemoOffset(byte[] array) {
-/*
+    public static Integer getMemoOffset(byte[] array) {
+
             //  正攻法 (/v あり時のみ)
-            if (array.length >= 0x1a && array[1] == 0x1a)
-            {
-                var offset = array[0x19] + array[0x1a] * 256 - 4 + 1;
-                offset = array[offset] + array[offset + 1] * 256 + 1;
-                offset = array[offset] + array[offset + 1] * 256;
-                return offset;
-            }
-*/
+//        if (array.length >= 0x1a && array[1] == 0x1a) {
+//            var offset = array[0x19] + array[0x1a] * 256 - 4 + 1;
+//            offset = array[offset] + array[offset + 1] * 256 + 1;
+//            offset = array[offset] + array[offset + 1] * 256;
+//            return offset;
+//        }
+
         if (array.length >= 4) {
             var offset = array[array.length - 4] + array[array.length - 3] * 256;
             offset++;

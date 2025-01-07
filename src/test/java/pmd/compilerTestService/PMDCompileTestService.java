@@ -1,25 +1,23 @@
 package pmd.compilerTestService;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import dotnet4j.io.Directory;
-import dotnet4j.io.File;
-import dotnet4j.io.FileAccess;
-import dotnet4j.io.FileMode;
-import dotnet4j.io.FileShare;
-import dotnet4j.io.FileStream;
-import dotnet4j.io.IOException;
-import dotnet4j.io.Path;
 import pmd.compilerTestService.CompileResult.CompareResult;
 import pmd.compilerTestService.CompileResult.CompileStatus;
 
 import static java.lang.System.getLogger;
+import static java.util.function.Predicate.not;
+import static pmd.compilerTestService.CompileResult.CompareResult.Match;
+import static pmd.compilerTestService.CompileResult.CompareResult.Match_NotEqualLength;
+import static pmd.compilerTestService.CompileResult.CompareResult.Match_WithoutMemo;
 
 
 public class PMDCompileTestService {
@@ -28,121 +26,110 @@ public class PMDCompileTestService {
 
     public static class TestResult {
 
-        private String MMLFilePath;
+        private final String mmlFilePath;
 
         public String getMMLFilePath() {
-            return MMLFilePath;
+            return mmlFilePath;
         }
 
-        private CompareResult CompareResult;
+        private final CompareResult compareResult;
 
         public CompareResult getCompareResult() {
-            return CompareResult;
+            return compareResult;
         }
 
-        private CompileStatus DotNetResult;
+        private final CompileStatus dotNetResult;
 
         public CompileStatus getDotNetResult() {
-            return DotNetResult;
+            return dotNetResult;
         }
 
-        private CompileStatus DosResult;
+        private final CompileStatus dosResult;
 
         public CompileStatus getDosResult() {
-            return DosResult;
+            return dosResult;
         }
 
-        private int DosExitCode;
+        private final int dosExitCode;
 
         public int getDosExitCode() {
-            return DosExitCode;
+            return dosExitCode;
         }
 
-        private String CompiledFilesDir;
+        private final String compiledFilesDir;
 
         public String getCompiledFilesDir() {
-            return CompiledFilesDir;
+            return compiledFilesDir;
         }
 
-        public TestResult(String mmlFilePath, CompareResult compareResult, CompileStatus dotnetResult, int dosExitCode, CompileStatus dosResult, String compiledFilesdir) {
-            MMLFilePath = mmlFilePath;
-            CompareResult = compareResult;
-            DotNetResult = dotnetResult;
-            DosResult = dosResult;
-            DosExitCode = dosExitCode;
-            CompiledFilesDir = compiledFilesdir;
+        public TestResult(String mmlFilePath, CompareResult compareResult, CompileStatus dotnetResult, int dosExitCode, CompileStatus dosResult, String compiledFilesDir) {
+            this.mmlFilePath = mmlFilePath;
+            this.compareResult = compareResult;
+            dotNetResult = dotnetResult;
+            this.dosResult = dosResult;
+            this.dosExitCode = dosExitCode;
+            this.compiledFilesDir = compiledFilesDir;
         }
 
-        public boolean IsPerfect() {
-            return
-                    CompareResult == CompareResult.Match &&
-                            DotNetResult == CompileStatus.Succeeded &&
-                            DosResult == CompileStatus.Succeeded;
+        public boolean isPerfect() {
+            return compareResult == Match &&
+                            dotNetResult == CompileStatus.Succeeded &&
+                            dosResult == CompileStatus.Succeeded;
         }
 
-        public boolean IsAllowed() {
-            return
-                    (CompareResult == CompareResult.Match || CompareResult == CompareResult.Match_NotEqualLength || CompareResult == CompareResult.Match_WithoutMemo) &&
-                            DotNetResult == CompileStatus.Succeeded &&
-                            DosResult == CompileStatus.Succeeded;
+        public boolean isAllowed() {
+            return (compareResult == Match || compareResult == Match_NotEqualLength || compareResult == Match_WithoutMemo) &&
+                            dotNetResult == CompileStatus.Succeeded &&
+                            dosResult == CompileStatus.Succeeded;
         }
 
-        public boolean IsWarning() {
-            return
-                    (CompareResult == CompareResult.Match || CompareResult == CompareResult.Match_NotEqualLength || CompareResult == CompareResult.Match_WithoutMemo) &&
-                            (DotNetResult == CompileStatus.Succeeded || DotNetResult == CompileStatus.Warning &&
-                                    (DosResult == CompileStatus.Succeeded || DosResult == CompileStatus.Warning));
+        public boolean isWarning() {
+            return (compareResult == Match || compareResult == Match_NotEqualLength || compareResult == Match_WithoutMemo) &&
+                            (dotNetResult == CompileStatus.Succeeded || dotNetResult == CompileStatus.Warning &&
+                                    (dosResult == CompileStatus.Succeeded || dosResult == CompileStatus.Warning));
         }
     }
 
-    public PMDCompileTestService.TestResult SingleTest(String mmlFilePath, String[] options, String tooldir, String logdir) {
-        logger.log(Level.INFO, "---- Test Start - %d", mmlFilePath);
+    public PMDCompileTestService.TestResult singleTest(String mmlFilePath, String[] options, Path toolDir) {
+        logger.log(Level.INFO, "---- Test Start - %s".formatted(mmlFilePath));
         if (options != null && options.length > 0) {
             var tmp = new StringBuilder();
             for (var item : options) {
                 tmp.append(" %s".formatted(item));
             }
 
-            logger.log(Level.INFO, "Compile Option:%d", tmp.toString());
+            logger.log(Level.INFO, "Compile Option:%s".formatted(tmp.toString()));
         }
         try {
-            var dotnet = DotnetCompiler.Compile(mmlFilePath, options);
-            logger.log(Level.INFO, ".NET Compile Result: %d", dotnet.getItem1().Status);
-            dotnet.getItem1().WriteLog(logger);
+            var dotnet = JavaCompiler.compile(mmlFilePath, options);
+            logger.log(Level.INFO, ".NET Compile Result: %s".formatted(dotnet.getItem1().status));
+            dotnet.getItem1().writeLog(logger);
 
-            var dos = DosCompiler.Compile(mmlFilePath, options, dotnet.getItem2(), tooldir);
-            logger.log(Level.INFO, "DOS Compile Result: %d", dos.Status);
-            dos.WriteLog(logger);
+            var dos = DosCompiler.compile(mmlFilePath, options, dotnet.getItem2(), toolDir);
+            logger.log(Level.INFO, "DOS Compile Result: %s".formatted(dos.status));
+            dos.writeLog(logger);
 
-            var compareResult = dotnet.getItem1().Compare(dos);
-            logger.log(Level.INFO, "Compare Result: %d", Optional.ofNullable(compareResult));
+            var compareResult = dotnet.getItem1().compare(dos);
+            logger.log(Level.INFO, "Compare Result: %s".formatted(compareResult));
 
-            String compiledFilesDir = null;
-            if (logdir != null && compareResult == CompareResult.Unmatch) {
-                var basename = Path.getFileNameWithoutExtension(mmlFilePath);
-                var dir = Path.combine(logdir, basename);
-                for (int i = 2; i < 100; i++) {
-                    if (!File.exists(dir)) {
-                        compiledFilesDir = dir;
-                        break;
-                    }
-                    dir = Path.combine(logdir, String.format("%d%d", basename, i));
-                }
+            Path compiledFilesDir = Path.of("tmp");
+            if (compareResult == CompareResult.Unmatch) {
+                var basename = mmlFilePath.substring(0, mmlFilePath.indexOf('.'));
                 if (compiledFilesDir != null) {
-                    Directory.createDirectory(compiledFilesDir);
+                    Files.createDirectory(compiledFilesDir);
 
-                    WriteFile(Path.combine(compiledFilesDir, "dotnet.m"), dotnet.getItem1().getCompiledBinary());
-                    WriteFile(Path.combine(compiledFilesDir, "dos.m"), dos.getCompiledBinary());
+                    writeFile(compiledFilesDir.resolve("dotnet.m"), dotnet.getItem1().getCompiledBinary());
+                    writeFile(compiledFilesDir.resolve("dos.m"), dos.getCompiledBinary());
                 }
             }
 
             return new PMDCompileTestService.TestResult(
                     mmlFilePath,
                     compareResult,
-                    dotnet.getItem1().Status,
+                    dotnet.getItem1().status,
                     dos.getExitCode(),
-                    dos.Status,
-                    compiledFilesDir
+                    dos.status,
+                    compiledFilesDir.toString()
             );
         } catch (Exception e) {
             logger.log(Level.ERROR, e.getMessage(), e);
@@ -154,84 +141,84 @@ public class PMDCompileTestService {
                     CompileStatus.Exception,
                     null);
         } finally {
-            logger.log(Level.INFO, "---- Test End - %d", mmlFilePath);
+            logger.log(Level.INFO, "---- Test End - %s".formatted(mmlFilePath));
         }
     }
 
-    static void WriteFile(String path, byte[] bin) {
+    static void writeFile(Path path, byte[] bin) throws IOException {
         if (bin != null && bin.length > 0) {
-            try (var fs = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite)) {
+            try (var fs = Files.newOutputStream(path)) {
                 fs.write(bin, 0, bin.length);
             }
         }
     }
 
-    public boolean MultiTest(String mmlFileDir, String[] options, String tooldir, String logdir) {
-        try (var mmls = Files.list(java.nio.file.Path.of(mmlFileDir))
-                    .filter(Files::isDirectory)
-                    .filter(p -> p.getFileName().toString().endsWith(".mml"))) {
+    public boolean multiTest(Path mmlFileDir, String[] options, Path toolDir) {
+        try (var mmls = Files.list(mmlFileDir)
+                    .filter(not(Files::isDirectory))
+                    .filter(p -> p.getFileName().toString().toLowerCase().endsWith(".mml"))) {
 
             var count = new AtomicInteger();
-            var allowfiles = new ArrayList<TestResult>();
-            var warningfiles = new ArrayList<TestResult>();
-            var doserrorfiles = new ArrayList<TestResult>();
-            var errorfiles = new ArrayList<TestResult>();
+            var allowFiles = new ArrayList<TestResult>();
+            var warningFiles = new ArrayList<TestResult>();
+            var dosErrorFiles = new ArrayList<TestResult>();
+            var errorFiles = new ArrayList<TestResult>();
             mmls.forEach(mml -> {
-                var r = SingleTest(mml.toString(), options, tooldir, logdir);
+                var r = singleTest(mml.toString(), options, toolDir);
 
-                if (!r.IsPerfect()) {
-                    if (r.IsAllowed()) {
-                        allowfiles.add(r);
-                    } else if (r.IsWarning()) {
-                        warningfiles.add(r);
-                    } else if (r.DosResult == CompileStatus.Failed) {
-                        doserrorfiles.add(r);
+                if (!r.isPerfect()) {
+                    if (r.isAllowed()) {
+                        allowFiles.add(r);
+                    } else if (r.isWarning()) {
+                        warningFiles.add(r);
+                    } else if (r.dosResult == CompileStatus.Failed) {
+                        dosErrorFiles.add(r);
                     } else {
-                        errorfiles.add(r);
+                        errorFiles.add(r);
                     }
                 }
                 count.getAndIncrement();
             });
-            logger.log(Level.INFO, "Test Files: %d files", count.get());
-            logger.log(Level.INFO, "Allowed Files: %d files", allowfiles.size());
-            logger.log(Level.INFO, "Warning Files: %d files", warningfiles.size());
-            logger.log(Level.INFO, "DOS Compiler Error Files: %d files", doserrorfiles.size());
-            logger.log(Level.INFO, "Error Files: %d files", errorfiles.size());
+            logger.log(Level.INFO, "Test Files: %d files".formatted(count.get()));
+            logger.log(Level.INFO, "Allowed Files: %d files".formatted(allowFiles.size()));
+            logger.log(Level.INFO, "Warning Files: %d files".formatted(warningFiles.size()));
+            logger.log(Level.INFO, "DOS Compiler Error Files: %d files".formatted(dosErrorFiles.size()));
+            logger.log(Level.INFO, "Error Files: %d files".formatted(errorFiles.size()));
 
-            if (!allowfiles.isEmpty()) {
+            if (!allowFiles.isEmpty()) {
                 logger.log(Level.INFO, "Allowed Files List:");
-                LogFiles(allowfiles);
+                LogFiles(allowFiles);
             }
 
-            if (!warningfiles.isEmpty()) {
+            if (!warningFiles.isEmpty()) {
                 logger.log(Level.INFO, "Warning Files List:");
-                LogFiles(warningfiles);
+                LogFiles(warningFiles);
             }
 
-            if (!doserrorfiles.isEmpty()) {
+            if (!dosErrorFiles.isEmpty()) {
                 logger.log(Level.INFO, "DOS Compiler Error Files List:");
-                for (var item : doserrorfiles) {
-                    logger.log(Level.INFO, "%d, Compare = %d, .NET = %d, DOS = %d (exitcode = %d)", item.MMLFilePath, item.CompareResult, item.DotNetResult, item.DosResult, item.DosExitCode);
+                for (var item : dosErrorFiles) {
+                    logger.log(Level.INFO, "%s, Compare = %s, .NET = %s, DOS = %s (exitcode = %s)".formatted(item.mmlFilePath, item.compareResult, item.dotNetResult, item.dosResult, item.dosExitCode));
                 }
             }
 
-            if (!errorfiles.isEmpty()) {
+            if (!errorFiles.isEmpty()) {
                 logger.log(Level.INFO, "Error Files List:");
-                LogFiles(errorfiles);
+                LogFiles(errorFiles);
             }
 
-            return errorfiles.isEmpty();
-        } catch (java.io.IOException e) {
-            throw new IOException(e);
+            return errorFiles.isEmpty();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
     static void LogFiles(List<TestResult> list) {
         for (var item : list) {
-            if (item.CompiledFilesDir != null) {
-                logger.log(Level.INFO, "%d, Compare = %d, .NET = %d, DOS = %d, Binary = %d", item.MMLFilePath, item.CompareResult, item.DotNetResult, item.DosResult, item.CompiledFilesDir);
+            if (item.compiledFilesDir != null) {
+                logger.log(Level.INFO, "%s, Compare = %s, .NET = %s, DOS = %s, Binary = %s".formatted(item.mmlFilePath, item.compareResult, item.dotNetResult, item.dosResult, item.compiledFilesDir));
             } else {
-                logger.log(Level.INFO, "%d, Compare = %d, .NET = %d, DOS = %d", item.MMLFilePath, item.CompareResult, item.DotNetResult, item.DosResult);
+                logger.log(Level.INFO, "%s, Compare = %s, .NET = %s, DOS = %s".formatted(item.mmlFilePath, item.compareResult, item.dotNetResult, item.dosResult));
             }
         }
     }

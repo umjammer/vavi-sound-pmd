@@ -32,7 +32,7 @@ public class Compiler implements ICompiler {
 
     private static final Logger logger = getLogger(Compiler.class.getName());
 
-    ResourceBundle rb = ResourceBundle.getBundle("message");
+    ResourceBundle rb = ResourceBundle.getBundle("lang/message");
 
     //入力データ
 
@@ -153,7 +153,7 @@ public class Compiler implements ICompiler {
             }
         }
 
-        //Console.WriteLine(srcBuf);
+        //logger.log(Level.TRACE, srcBuf);
 
         this.appendFileReaderCallback = appendFileReaderCallback;
 
@@ -182,7 +182,7 @@ public class Compiler implements ICompiler {
 
             //for (MmlDatum d : ret) {
             //    if (d.type == MMLType.Note) {
-            //        Console.WriteLine("%d %d", d.linePos.row, d.linePos.col);
+            //        logger.log(Level.TRACE, "%d %d", d.linePos.row, d.linePos.col);
             //        ;
             //    }
             //}
@@ -198,7 +198,7 @@ public class Compiler implements ICompiler {
 //            Work.compilerInfo.errorList.add(new Tuple3<Integer, Integer, String>(-1, -1, pe.getMessage()));
 //            logger.log(Level.ERROR, pe.getMessage());
         } catch (Exception e) {
-            work.compilerInfo.errorList.add(new Tuple3<Integer, Integer, String>(-1, -1, e.getMessage()));
+            work.compilerInfo.errorList.add(new Tuple3<>(-1, -1, e.getMessage()));
             logger.log(Level.ERROR, String.format(
                     rb.getString("E0000")
                     , e.getMessage()
@@ -217,7 +217,7 @@ public class Compiler implements ICompiler {
             if (md == null) {
                 destCompiledBin.writeByte((byte) 0);
             } else {
-                destCompiledBin.writeByte((byte) md.dat);
+                destCompiledBin.writeByte((byte) (md.dat & 0xff));
             }
         }
         return true;

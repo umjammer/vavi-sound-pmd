@@ -7,11 +7,11 @@ import musicDriverInterface.ChipDatum;
 
 public class Pc98 {
 
-    private Consumer<ChipDatum> WriteOPNARegister = null;
+    private Consumer<ChipDatum> WriteOPNARegister;
     private ChipDatum cd = new ChipDatum(0, 0, 0);
     private byte fm1_reg = 0;
     private byte fm2_reg = 0;
-    private PW pw = null;
+    private PW pw;
 
     private byte[] psgDat = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -42,7 +42,7 @@ public class Pc98 {
             return 0;
         }
 
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException(Integer.toHexString(v));
     }
 
     public void OutPort(short dx, byte al) {
@@ -56,8 +56,8 @@ public class Pc98 {
             cd.data = al;
             //cd.additionalData = pw.cmd;
 
-            if (fm1_reg < 0x10) {
-                psgDat[fm1_reg] = al;
+            if ((fm1_reg & 0xff) < 0x10) {
+                psgDat[fm1_reg & 0xff] = al;
             }
             WriteOPNARegister.accept(cd);
         } else if (dx == 0x18c) {

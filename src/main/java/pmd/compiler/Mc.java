@@ -20,23 +20,24 @@ import pmd.common.PmdException;
 import vavi.util.ByteUtil;
 
 import static java.lang.System.getLogger;
+import static pmd.compiler.FNumDatSeg.fnumTbl;
 
 
 public class Mc {
 
     private static final Logger logger = getLogger(Mc.class.getName());
 
-    ResourceBundle rb = ResourceBundle.getBundle("message");
+    ResourceBundle rb = ResourceBundle.getBundle("lang/message");
 
-    private Compiler compiler = null;
-    private String[] args = null;
-    private Work work = null;
-    private Lc lc = null;
-    private MSeg m_seg = null;
+    private Compiler compiler;
+    private String[] args;
+    private Work work;
+    private Lc lc;
+    private MSeg m_seg;
     private FNumDatSeg fnumdat_seg = null;
     private HsSeg hs_seg = null;
-    public MmlSeg mml_seg = null;
-    public VoiceSeg voice_seg = null;
+    public MmlSeg mml_seg;
+    public VoiceSeg voice_seg;
 
     //DotNET独自パラメータ
     public byte[] outVoiceBuf = null; // 音色出力用バッファ(ファイル名はv_filename)
@@ -51,27 +52,27 @@ public class Mc {
     //3 : 処理完了
     public int skipPointCol = -1; // スキップ処理:桁の位置をmml上の文字数に置き換えた値
 
-    //==============================================================================
+    /**
     //
     // MML Compiler/Effect Compiler FOR PC-9801/88VA
     //       ver 4.8s
     //
-    //==============================================================================
+     */
     // .186
 
-    public static String ver = "4.8s"; // version
-    public static int vers = 0x48;
-    public static String date = "2023/09/23"; // date
+    public static final String ver = "4.8s"; // version
+    public static final int vers = 0x48;
+    public static final String date = "2023/09/23"; // date
 
 //#if !hyouka
 //        public int hyouka = 0; // 1で評価版(save機能cut)
 //#endif
 
-    //#if !efc
+//#if !efc
     public int efc = 0; // FM効果音コンパイラかどうか
 //#endif
 
-    //==============================================================================
+    /**
     //
     // ＭＭＬコンパイラです．
     // MC filename[.MML](CR)
@@ -87,19 +88,19 @@ public class Mc {
     // EFC filename[.EML] voice_filename[.FF] (CR)
     // で，コンパイルして，filename.EFCというファイルを作成します．
     //
-    //==============================================================================
+     */
 
     public int olddat = 0; // v2.92以前のデータ作成
     public int split = 0; // 音色データがＳＰＬＩＴ形式かどうか
     public int tempo_old_flag = 0; // テンポ処理 新旧flag
     public int pmdvector = 0x60; // VRTC.割り込み
-    public static char cr = (char) 13;
-    public static char lf = (char) 10;
-    public static char eof = '$';
+    public static final char cr = (char) 13;
+    public static final char lf = (char) 10;
+    public static final char eof = '$';
 
-    //==============================================================================
+    /**
     // macros
-    //==============================================================================
+     */
 
     public void msdos_exit() {
         //プログラム終了(エラーコード0)
@@ -115,7 +116,7 @@ public class Mc {
         //コンソールへメッセージ表示
         String[] a = qq.split("" + Mc.cr + Mc.lf);
         for (String s : a)
-            logger.log(Level.INFO, s);
+            System.out.println(s);
     }
 
     public void print_mes_err(String qq) {
@@ -142,40 +143,40 @@ public class Mc {
         //ベクターからファンクション呼び出し
     }
 
-    public int mstart = 0;
-    public int mstop = 1;
-    public int fout = 2;
-    public int efcon = 3;
-    public int efcoff = 4;
-    public int getss = 5;
-    public int get_music_adr = 6;
-    public int get_tone_adr = 7;
-    public int getfv = 8;
-    public int board_check = 9;
-    public int get_status = 10;
-    public int get_efc_adr = 11;
-    public int fm_efcon = 12;
-    public int fm_efcoff = 13;
-    public int get_pcm_adr = 14;
-    public int pcm_efcon = 15;
-    public int get_workadr = 16;
-    public int get_fmefc_num = 17;
-    public int get_pcmefc_num = 18;
-    public int set_fm_int = 19;
-    public int set_efc_int = 20;
-    public int get_effon = 21;
-    public int get_joystick = 22;
-    public int get_pcmdrv_flag = 23;
-    public int set_pcmdrv_flag = 24;
-    public int set_fout_vol = 25;
-    public int pause_on = 26;
-    public int pause_off = 27;
-    public int ff_music = 28;
-    public int get_memo = 29;
+    public static final int mstart = 0;
+    public static final int mstop = 1;
+    public static final int fout = 2;
+    public static final int efcon = 3;
+    public static final int efcoff = 4;
+    public static final int getss = 5;
+    public static final int get_music_adr = 6;
+    public static final int get_tone_adr = 7;
+    public static final int getfv = 8;
+    public static final int board_check = 9;
+    public static final int get_status = 10;
+    public static final int get_efc_adr = 11;
+    public static final int fm_efcon = 12;
+    public static final int fm_efcoff = 13;
+    public static final int get_pcm_adr = 14;
+    public static final int pcm_efcon = 15;
+    public static final int get_workadr = 16;
+    public static final int get_fmefc_num = 17;
+    public static final int get_pcmefc_num = 18;
+    public static final int set_fm_int = 19;
+    public static final int set_efc_int = 20;
+    public static final int get_effon = 21;
+    public static final int get_joystick = 22;
+    public static final int get_pcmdrv_flag = 23;
+    public static final int set_pcmdrv_flag = 24;
+    public static final int set_fout_vol = 25;
+    public static final int pause_on = 26;
+    public static final int pause_off = 27;
+    public static final int ff_music = 28;
+    public static final int get_memo = 29;
 
-    //==============================================================================
+    /**
     // main program
-    //==============================================================================
+     */
 
     //code segment para public 'code'
     //assume cs:code,ss:stack
@@ -211,10 +212,9 @@ public class Mc {
             voice_seg.voice_buf[i] = ffBuf[i];
     }
 
-    //==============================================================================
+    /**
     //  compile start
-    //==============================================================================
-
+     */
     public MmlDatum[] compile_start() {
         print_mes(mml_seg.titmes);
 
@@ -222,7 +222,6 @@ public class Mc {
             usage();
             return null;
         }
-
 
         //コンパイルプロセス開始
         {
@@ -238,7 +237,6 @@ public class Mc {
             SetFromEnvironment();
         }
 
-
         enmPass2JumpTable ret = enmPass2JumpTable.Pass1;
         do {
             ret = Jumper(ret);
@@ -248,22 +246,19 @@ public class Mc {
 
         } while (true);
 
-
         //コンパイル完了
-
 
         //音色データ取得
         outVoiceBuf = write_ff();
 
         //.Mファイルデータの整形(m_bufが出力データの実態になるよう、m_startをはじめに追加する)
         List<MmlDatum> dst = new ArrayList<>();
-        dst.add(new MmlDatum(m_seg.m_start));
+        dst.add(new MmlDatum(m_seg.m_start & 0xff));
         for (int i = 0; i < m_seg.m_buf.size(); i++) dst.add(m_seg.m_buf.get(i));
         for (int i = 0; i < dst.size(); i++) m_seg.m_buf.set(i, dst.get(i));
 
         //コンパイル完了(メッセージを表示するのみ)
         compile_fin();
-
 
         return m_seg.m_buf.toArray(MmlDatum[]::new);
     }
@@ -286,7 +281,6 @@ public class Mc {
             case InitLoopCount:
                 ret = InitLoopCount();
                 break;
-
 
             //Pass2
 
@@ -491,11 +485,9 @@ public class Mc {
         bunsan_end
     }
 
-
-    //158-206
-    //==============================================================================
+    /**
     //  コマンドラインから /optionの読みとり
-    //==============================================================================
+     */
     private int ReadOption() {
         mml_seg.part = 0;
         mml_seg.ff_flg = 0;
@@ -508,8 +500,8 @@ public class Mc {
         mml_seg.pcm_flg = 1;
 
 //#if hyouka
-        mml_seg.play_flg = 1;
-        mml_seg.prg_flg = 2;
+//        mml_seg.play_flg = 1;
+//        mml_seg.prg_flg = 2;
 //#else
         mml_seg.play_flg = 0;
         mml_seg.prg_flg = 0;
@@ -534,11 +526,9 @@ public class Mc {
         return i;
     }
 
-
-    //207-252
-    //==============================================================================
+    /**
     //  コマンドラインから.mmlのファイル名の取り込み
-    //==============================================================================
+     */
     private void ReadMMLFileName(int i) {
         mml_seg.mml_filename = args[i];
         if (mml_seg.mml_filename.lastIndexOf('.') == -1) {
@@ -553,37 +543,31 @@ public class Mc {
         mml_seg.includeFileHistory.add(mml_seg.mml_filename);
     }
 
-
-    //253-337
-    //==============================================================================
+    /**
     //  .mmlファイルの読み込み
-    //==============================================================================
+     */
     private void ReadMMLFile() {
     }
 
-
-    //338-373
-    //==============================================================================
+    /**
     //  .mmlを.mに変更して設定
-    //==============================================================================
+     */
     private void ChangeMMLToMFileName() {
 //#if !hyouka
 //#if efc
-        m_seg.m_filename = mml_seg.mml_filename.substring(0, mml_seg.mml_filename.lastIndexOf('.')) + ".EFC";
+//        m_seg.m_filename = mml_seg.mml_filename.substring(0, mml_seg.mml_filename.lastIndexOf('.')) + ".EFC";
 //#else
         m_seg.m_filename = mml_seg.mml_filename.substring(0, mml_seg.mml_filename.lastIndexOf('.')) + ".M";
 //#endif
 //#endif
     }
 
-
-    //374-429
-    //==============================================================================
+    /**
     // 音色データ領域を転送してくる（PMD常駐時）又はクリア
-    //==============================================================================
+     */
     private void TransVoiceDataFromPMD() {
 
-        //PMDからもらってくる機能は省略
+        // PMDからもらってくる機能は省略
 
         mml_seg.pmd_flg = 0;
         if (voice_seg.voice_buf == null) {
@@ -592,11 +576,9 @@ public class Mc {
         }
     }
 
-
-    //430-439
-    //==============================================================================
+    /**
     //  コマンドラインから.ffのファイル名を取り込む
-    //==============================================================================
+     */
     private void get_ff(int i) {
         if (i < args.length) {
             mml_seg.ff_flg = 1;
@@ -604,35 +586,29 @@ public class Mc {
         }
     }
 
-
-    //440-453
-    //==============================================================================
+    /**
     //  音色テーブルの初期化
-    //==============================================================================
+     */
     private void clear_voicetable() {
         for (int i = 0; i < mml_seg.prg_num.length; i++) {
             mml_seg.prg_num[i] = 0;
         }
     }
 
-
-    //454-463
-    //==============================================================================
+    /**
     //  compile main
-    //==============================================================================
+     */
     private void CheckPrgFlgOnEfc() {
 //#if efc
-        if (mml_seg.prg_flg == 1) {
-            error(0, 28, 0);
-        }
+//        if (mml_seg.prg_flg == 1) {
+//            error(0, 28, 0);
+//        }
 //#endif
     }
 
-
-    //464-485
-    //==============================================================================
+    /**
     // 変数バッファ/文字列offsetバッファ初期化
-    //==============================================================================
+     */
     private void InitVariableBuffer() {
 
         for (int i = 0; i < hs_seg.hsbuf2.length; i++) {
@@ -647,13 +623,11 @@ public class Mc {
         }
     }
 
-
-    //486-509
-    //==============================================================================
+    /**
     // 環境変数 user = , composer = , arranger = を検索して設定
-    //==============================================================================
+     */
     private void SetFromEnvironment() {
-        //"USER=" 検索
+        // "USER=" 検索
         int[] index = new int[1], col = new int[1];
         if (search_env(mml_seg.user_txt, kankyo_seg, /* out */ index, /* out */ col)) {
             mml_seg.composer_adr = 0;
@@ -675,13 +649,12 @@ public class Mc {
         }
     }
 
-    //511-528
-    //==============================================================================
+    /**
     // Pass1
-    //==============================================================================
-    //==============================================================================
+    /**
+    /**
     // Workの初期化(pass1)
-    //==============================================================================
+     */
     private enmPass2JumpTable Pass1() {
         work.si = 0; // MmlSeg.mml_buf;
 
@@ -696,9 +669,9 @@ public class Mc {
     }
 
     //529-574
-    //==============================================================================
+    /**
     // Ｍain Ｌoop(pass1)
-    //==============================================================================
+     */
     private enmPass2JumpTable mainLoopPass1() {
         do {
             //p1cloop:
@@ -739,19 +712,17 @@ public class Mc {
         return enmPass2JumpTable.InitLoopCount;
     }
 
-    //575-580
-    //==============================================================================
+    /**
     // ループカウント初期化
-    //==============================================================================
+     */
     private enmPass2JumpTable InitLoopCount() {
         mml_seg.lopcnt = 0;
         return enmPass2JumpTable.Pass2CompileStart;
     }
 
-    //581-606
-    //==============================================================================
+    /**
     // Pass2 Compile Start
-    //==============================================================================
+     */
     private enmPass2JumpTable Pass2CompileStart() {
 
 //#if !efc || !olddat
@@ -775,27 +746,27 @@ public class Mc {
     }
 
     //607-641
-    //==============================================================================
+    /**
     // 音源の選択
-    //==============================================================================
+     */
     private enmPass2JumpTable cmloop() {
 //#if !efc
 
         int al = mml_seg.opl_flg;
         al |= mml_seg.x68_flg;
         if (al != 0) {
-            //==============================================================================
+            /**
             // OPM/OPLの場合
-            //==============================================================================
+             */
             if (mml_seg.part != 10) {
                 mml_seg.ongen = mml_seg.fm;
             } else {
                 mml_seg.ongen = mml_seg.pcm;
             }
         } else {
-            //==============================================================================
+            /**
             // OPNの場合
-            //==============================================================================
+             */
             al = mml_seg.part;
             byte ah = 0;
             while (al >= 4) {
@@ -808,9 +779,9 @@ public class Mc {
         return enmPass2JumpTable.part_stadr_set;
     }
 
-    //==============================================================================
+    /**
     // パートのスタートアドレスのセット
-    //==============================================================================
+     */
     private enmPass2JumpTable part_stadr_set() {
         int bx = mml_seg.part;
         bx--;
@@ -820,20 +791,20 @@ public class Mc {
         int dx = work.di;
         dx -= 0; // offset m_buf
 
-        MmlDatum ml = new MmlDatum((byte) dx);
-        MmlDatum mh = new MmlDatum((byte) (dx >> 8));
+        MmlDatum ml = new MmlDatum(dx & 0xff);
+        MmlDatum mh = new MmlDatum((dx & 0xff00) >> 8);
         m_seg.m_buf.set(bx++, ml);
         m_seg.m_buf.set(bx, mh);
 
         return enmPass2JumpTable.cmloop2;
     }
 
-    //==============================================================================
+    /**
     // Workの初期化
-    //==============================================================================
+     */
     private enmPass2JumpTable cmloop2() {
         work.si = 0; // offset mml_buf
-        logger.log(Level.DEBUG, String.format("chipCh:%d", mml_seg.chipCh));
+        logger.log(Level.DEBUG, "chipCh:%d".formatted(mml_seg.chipCh));
         cm_init();
 
         byte ah, al;
@@ -843,7 +814,7 @@ public class Mc {
             if (mml_seg.fm3_partchr1 != 0) {
 
                 al = (byte) 0xc6; // FM3 拡張パートの指定(partA)
-                m_seg.m_buf.set(work.di++, new MmlDatum(al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff));
                 mml_seg.fm3_ofsadr = work.di;
 
                 for (int cx = 0; cx < 3; cx++) {
@@ -870,29 +841,29 @@ public class Mc {
         if (mml_seg.part == 7) { // break not_partG;
 
             if (mml_seg.zenlen != 96) {
-                ah = (byte) mml_seg.zenlen;
+                ah = (byte) (mml_seg.zenlen & 0xff);
                 al = (byte) 0xdf;
-                m_seg.m_buf.set(work.di++, new MmlDatum(al)); // #Zenlenが指定されている場合は Zコマンド発行(partG)
-                m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // #Zenlenが指定されている場合は Zコマンド発行(partG)
+                m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
             }
 
 //#if !tempo_old_flag
 
-//        if (mml_seg.tempo != 0) {
-//            ah = (byte) 0xff;
-//            al = (byte) 0xfc;
-//            m_seg.m_buf.set(work.di++, new MmlDatum(al)); // #Tempoが指定されている場合は tコマンド発行(partG)
-//            m_seg.m_buf.set(work.di++, new MmlDatum(ah));
-//            al = (byte) mml_seg.tempo;
-//            m_seg.m_buf.set(work.di++, new MmlDatum(al));
-//        }
+        if (mml_seg.tempo != 0) {
+            ah = (byte) 0xff;
+            al = (byte) 0xfc;
+            m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // #Tempoが指定されている場合は tコマンド発行(partG)
+            m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
+            al = (byte) (mml_seg.tempo & 0xff);
+            m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff));
+        }
 
 //#endif
             if (mml_seg.timerb != 0) {
-                ah = (byte) mml_seg.timerb;
+                ah = (byte) (mml_seg.timerb & 0xff);
                 al = (byte) 0xfc;
-                m_seg.m_buf.set(work.di++, new MmlDatum(al)); // #Timerが指定されている場合は Tコマンド発行(partG)
-                m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // #Timerが指定されている場合は Tコマンド発行(partG)
+                m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
             }
 
             if (mml_seg.towns_flg != 1) { // break not_partG; // TOWNSは4.6f @@@@
@@ -900,135 +871,127 @@ public class Mc {
                 if (mml_seg.fm_voldown != 0) {
                     ah = (byte) 0xfe;
                     al = (byte) 0xc0;
-                    ah += (byte) mml_seg.fm_voldown_flag;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al));
-                    m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                    ah += (byte) (mml_seg.fm_voldown_flag & 0xff);
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
 
-                    al = (byte) mml_seg.fm_voldown;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al)); // #Voldownが指定されている場合は DFコマンド発行(partG)
+                    al = (byte) (mml_seg.fm_voldown & 0xff);
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // #Voldownが指定されている場合は DFコマンド発行(partG)
                 }
 
                 if (mml_seg.ssg_voldown != 0) {
                     ah = (byte) 0xfc;
                     al = (byte) 0xc0;
-                    ah += (byte) mml_seg.ssg_voldown_flag;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al));
-                    m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                    ah += (byte) (mml_seg.ssg_voldown_flag & 0xff);
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
 
-                    al = (byte) mml_seg.ssg_voldown;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al)); // #Voldownが指定されている場合は DSコマンド発行(partG)
+                    al = (byte) (mml_seg.ssg_voldown & 0xff);
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // #Voldownが指定されている場合は DSコマンド発行(partG)
                 }
 
                 if (mml_seg.pcm_voldown != 0) {
                     ah = (byte) 0xfa;
                     al = (byte) 0xc0;
-                    ah += (byte) mml_seg.pcm_voldown_flag;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al));
-                    m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                    ah += (byte) (mml_seg.pcm_voldown_flag & 0xff);
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
 
-                    al = (byte) mml_seg.pcm_voldown;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al)); // #Voldownが指定されている場合は DPコマンド発行(partG)
+                    al = (byte) (mml_seg.pcm_voldown & 0xff);
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // #Voldownが指定されている場合は DPコマンド発行(partG)
                 }
 
                 if (mml_seg.ppz_voldown != 0) {
                     ah = (byte) 0xf5;
                     al = (byte) 0xc0;
-                    ah += (byte) mml_seg.ppz_voldown_flag;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al));
-                    m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                    ah += (byte) (mml_seg.ppz_voldown_flag & 0xff);
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
 
-                    al = (byte) mml_seg.ppz_voldown;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al)); // #Voldownが指定されている場合は DZコマンド発行(partG)
+                    al = (byte) (mml_seg.ppz_voldown & 0xff);
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // #Voldownが指定されている場合は DZコマンド発行(partG)
                 }
 
                 if (mml_seg.rhythm_voldown != 0) {
                     ah = (byte) 0xf8;
                     al = (byte) 0xc0;
-                    ah += (byte) mml_seg.rhythm_voldown_flag;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al));
-                    m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                    ah += (byte) (mml_seg.rhythm_voldown_flag & 0xff);
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
 
-                    al = (byte) mml_seg.rhythm_voldown;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al)); // #Voldownが指定されている場合は DRコマンド発行(partG)
+                    al = (byte) (mml_seg.rhythm_voldown & 0xff);
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // #Voldownが指定されている場合は DRコマンド発行(partG)
                 }
             }
         }
 //not_partG:
 
         al = (byte) (mml_seg.opl_flg | mml_seg.x68_flg);
-        if (al == 0) // OPM/OPL=DX/EXを却下
-        {
+        if (al == 0) { // OPM/OPL=DX/EXを却下
             if (mml_seg.ext_detune != 0) {
                 if (mml_seg.ongen == mml_seg.psg) {
                     // PSGのみ
                     ah = (byte) 0x01;
                     al = (byte) 0xcc;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al)); // Extend Detune Set(Partの頭)
-                    m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // Extend Detune Set(Partの頭)
+                    m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
                 }
             }
 
             if (mml_seg.ext_env != 0) {
-                if (mml_seg.ongen >= mml_seg.psg) // FMは却下
-                {
-                    if (mml_seg.part != mml_seg.rhythm2) // Rhythmは却下
-                    {
+                if (mml_seg.ongen >= mml_seg.psg) { // FMは却下
+                    if (mml_seg.part != mml_seg.rhythm2) { // Rhythmは却下
                         ah = 0x01;
                         al = (byte) 0xc9;
-                        m_seg.m_buf.set(work.di++, new MmlDatum(al)); // Extend Envelope Set(Partの頭)
-                        m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                        m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // Extend Envelope Set(Partの頭)
+                        m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
                     }
                 }
             }
         }
 
         if (mml_seg.ext_lfo != 0) {
-            if (mml_seg.part != mml_seg.rhythm2) // Rhythmは却下
-            {
+            if (mml_seg.part != mml_seg.rhythm2) { // Rhythmは却下
                 ah = 0x01;
                 al = (byte) 0xca;
-                m_seg.m_buf.set(work.di++, new MmlDatum(al)); // Extend LFO Set(Partの頭)
-                m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // Extend LFO Set(Partの頭)
+                m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
 
-                if (mml_seg.towns_flg != 1) // TOWNSは4.6f @@@@
-                {
+                if (mml_seg.towns_flg != 1) { // TOWNSは4.6f @@@@
                     ah = 0x01;
                     al = (byte) 0xbb;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al)); // Extend LFO Set(Partの頭)
-                    m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // Extend LFO Set(Partの頭)
+                    m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
                 }
             }
         }
 
-        if (mml_seg.towns_flg != 1) // TOWNSは4.6f @@@@
-        {
+        if (mml_seg.towns_flg != 1) { // TOWNSは4.6f @@@@
             if (mml_seg.adpcm_flag != 255) {
-                if (mml_seg.part == mml_seg.pcmpart) // pcmのみ
-                {
+                if (mml_seg.part == mml_seg.pcmpart) { // pcmのみ
                     ah = (byte) 0xf7;
                     al = (byte) 0xc0;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al)); // ADPCM set(partの頭)
-                    m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // ADPCM set(partの頭)
+                    m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
 
-                    al = (byte) mml_seg.adpcm_flag;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(al));
+                    al = (byte) (mml_seg.adpcm_flag & 0xff);
+                    m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff));
                 }
             }
         }
 
         if (mml_seg.transpose != 0) {
-            if (mml_seg.part != mml_seg.rhythm2) // Rhythmは却下
-            {
-                ah = (byte) mml_seg.transpose;
+            if (mml_seg.part != mml_seg.rhythm2) { // Rhythmは却下
+                ah = (byte) (mml_seg.transpose & 0xff);
                 al = (byte) 0xb2;
-                m_seg.m_buf.set(work.di++, new MmlDatum(al)); // Master Transpose(Partの頭)
-                m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+                m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // Master Transpose(Partの頭)
+                m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
             }
         }
 
 //#endif
 
-        logger.log(Level.DEBUG, String.format("Part: %d compile start", (char) ('A' - 1 + mml_seg.part)));
+        logger.log(Level.DEBUG, "Part: %c compile start".formatted((char) ('A' - 1 + mml_seg.part)));
 
         //MmlSeg.includeFileHistoryPos = 0;
         //MmlSeg.currentMMLFile = MmlSeg.includeFileHistory(0);
@@ -1038,9 +1001,9 @@ public class Mc {
         return enmPass2JumpTable.cloop;
     }
 
-    //==============================================================================
+    /**
     // Main Loop
-    //==============================================================================
+     */
     private enmPass2JumpTable cloop() {
 
 //c_next:
@@ -1082,10 +1045,10 @@ public class Mc {
                             mml_seg.skip_flag ^= 1;
 
                             al_b = (byte) 0xc0;
-                            m_seg.m_buf.set(work.di++, new MmlDatum(al_b));
-                            al_b = (byte) mml_seg.skip_flag;
+                            m_seg.m_buf.set(work.di++, new MmlDatum(al_b & 0xff));
+                            al_b = (byte) (mml_seg.skip_flag & 0xff);
                             al_b &= 1;
-                            m_seg.m_buf.set(work.di++, new MmlDatum(al_b));
+                            m_seg.m_buf.set(work.di++, new MmlDatum(al_b & 0xff));
 //                            break c_next;
                             continue;
                         }
@@ -1094,8 +1057,8 @@ public class Mc {
                             mml_seg.skip_flag &= 0xfe;
                             ah_b = 0x00;
                             al_b = (byte) 0xc0;
-                            m_seg.m_buf.set(work.di++, new MmlDatum(al_b));
-                            m_seg.m_buf.set(work.di++, new MmlDatum(ah_b));
+                            m_seg.m_buf.set(work.di++, new MmlDatum(al_b & 0xff));
+                            m_seg.m_buf.set(work.di++, new MmlDatum(ah_b & 0xff));
 //                            break c_next;
                             continue;
                         }
@@ -1106,8 +1069,8 @@ public class Mc {
 //        al_b++;
 //        if (al_b == MmlSeg.part) break one_line_compile;
 //#else
-                    al_b = (byte) al;
-                    ah_b = (byte) mml_seg.part;
+                    al_b = (byte) (al & 0xff);
+                    ah_b = (byte) (mml_seg.part & 0xff);
                     ah_b += (byte) (char) ('A' - 1);
                     if (al_b == ah_b) {
                         return enmPass2JumpTable.one_line_compile;
@@ -1123,9 +1086,9 @@ public class Mc {
         }
     }
 
-    //==============================================================================
+    /**
     // Error Checks
-    //==============================================================================
+     */
     private enmPass2JumpTable part_end() {
         work.si = 0; // エラー位置は不定
         return enmPass2JumpTable.check_lopcnt;
@@ -1155,9 +1118,9 @@ public class Mc {
             }
         }
 //non_allloop_error:
-        //==============================================================================
+        /**
         // Part Endmark をセット
-        //==============================================================================
+         */
 
         List<Object> args = new ArrayList<>();
         args.add(null);
@@ -1169,9 +1132,9 @@ public class Mc {
 
         m_seg.m_buf.set(work.di, md);
         work.di++;
-        //==============================================================================
+        /**
         // PART INC. & LOOP
-        //==============================================================================
+         */
         mml_seg.part++;
         mml_seg.chipCh++;
         if (mml_seg.chipCh == 6) mml_seg.chipCh += 3;
@@ -1186,33 +1149,33 @@ public class Mc {
 //        break vdat_set;
 //#else
         if (mml_seg.part == mml_seg.max_part + 1) { // break fm3_check;
-            byte al = (byte) mml_seg.maxprg;
+            byte al = (byte) (mml_seg.maxprg & 0xff);
             if (mml_seg.towns_flg == 1) {
                 al = 0; // TOWNSはRパート無し
             }
 
             //maxprg_towns_chk:;
             mml_seg.kpart_maxprg = al; // K partのmaxprgを保存
-            al = (byte) mml_seg.deflng;
+            al = (byte) (mml_seg.deflng & 0xff);
             mml_seg.deflng_k = al; // l 値を保存
         }
-        //==============================================================================
+        /**
         // FM3 拡張パートがあればそれをcompile
-        //==============================================================================
+         */
 fm3_check:
         if (mml_seg.fm3_ofsadr == 0) { // break pcm_check; // 無し
 
-            byte al = (byte) mml_seg.fm3_partchr1;
+            byte al = (byte) (mml_seg.fm3_partchr1 & 0xff);
             mml_seg.fm3_partchr1 = 0;
             mml_seg.chipCh = 6;
             if (al == 0) { // break fm3c_main;
 
-                al = (byte) mml_seg.fm3_partchr2;
+                al = (byte) (mml_seg.fm3_partchr2 & 0xff);
                 mml_seg.fm3_partchr2 = 0;
                 mml_seg.chipCh = 7;
                 if (al == 0) { // break fm3c_main;
 
-                    al = (byte) mml_seg.fm3_partchr3;
+                    al = (byte) (mml_seg.fm3_partchr3 & 0xff);
                     mml_seg.fm3_partchr3 = 0;
                     mml_seg.chipCh = 8;
                     if (al == 0) break fm3_check; // pcm_check;
@@ -1222,8 +1185,8 @@ fm3_check:
             int bx = mml_seg.fm3_ofsadr;
             int dx = work.di;
             dx -= 0; // offset m_buf
-            m_seg.m_buf.set(bx + 0, new MmlDatum((byte) dx));
-            m_seg.m_buf.set(bx + 1, new MmlDatum((byte) (dx >> 8)));
+            m_seg.m_buf.set(bx + 0, new MmlDatum(dx & 0x00ff));
+            m_seg.m_buf.set(bx + 1, new MmlDatum((dx & 0xff00) >> 8));
             bx += 2;
             mml_seg.fm3_ofsadr = bx;
             al -= (byte) (char) ('A' - 1);
@@ -1231,9 +1194,9 @@ fm3_check:
             mml_seg.ongen = mml_seg.fm;
             return enmPass2JumpTable.cmloop2;
         }
-        //==============================================================================
+        /**
         // PCM 拡張パートがあればそれをcompile
-        //==============================================================================
+         */
 //pcm_check:
         if (mml_seg.pcm_ofsadr != 0) { // break rt; // 無し
 
@@ -1242,7 +1205,7 @@ fm3_check:
 
             //pcmc_loop:;
             for (int cx = 0; cx < 8; cx++) {
-                byte al = (byte) mml_seg.pcm_partchr[bx];
+                byte al = (byte) (mml_seg.pcm_partchr[bx] & 0xff);
                 mml_seg.pcm_partchr[bx] = (char) 0;
                 bx++;
                 mml_seg.chipCh++;
@@ -1252,8 +1215,8 @@ fm3_check:
                     bx = mml_seg.pcm_ofsadr;
                     int dx = work.di;
                     dx -= 0; // offset m_buf
-                    m_seg.m_buf.set(bx + 0, new MmlDatum((byte) dx));
-                    m_seg.m_buf.set(bx + 1, new MmlDatum((byte) (dx >> 8)));
+                    m_seg.m_buf.set(bx + 0, new MmlDatum(dx & 0x00ff));
+                    m_seg.m_buf.set(bx + 1, new MmlDatum((dx & 0xff00) >> 8));
                     bx += 2;
                     mml_seg.pcm_ofsadr = bx;
                     al -= (byte) (char) ('A' - 1);
@@ -1264,13 +1227,13 @@ fm3_check:
             }
 //            break rt;
         }
-        //==============================================================================
+        /**
         // R part Compile(efc.exeはしない)
-        //==============================================================================
+         */
 //rt:
-        //==============================================================================
+        /**
         // Ｒパートのスタートアドレスをセット
-        //==============================================================================
+         */
 
         int bx = 0; // offset m_buf
         bx += 2 * mml_seg.max_part;
@@ -1278,37 +1241,37 @@ fm3_check:
         mml_seg.ongen = mml_seg.pcm;
         int dx = work.di;
         dx -= 0; // offset m_buf
-        m_seg.m_buf.set(bx + 0, new MmlDatum((byte) dx));
-        m_seg.m_buf.set(bx + 1, new MmlDatum((byte) (dx >> 8)));
+        m_seg.m_buf.set(bx + 0, new MmlDatum(dx & 0x00ff));
+        m_seg.m_buf.set(bx + 1, new MmlDatum((dx & 0xff00) >> 8));
 
-        //==============================================================================
+        /**
         // リズムデータスタートアドレスを計算してｂｘへ
-        //==============================================================================
-        work.bx = (byte) mml_seg.kpart_maxprg;
+         */
+        work.bx = (byte) (mml_seg.kpart_maxprg & 0xff);
         work.bx += work.bx;
         work.bx += work.di;
 
-        //==============================================================================
+        /**
         // Ｒパートコンパイル開始
-        //==============================================================================
+         */
         mml_seg.pass = 2;
         work.si = 0; // offset mml_buf
         cm_init();
-        byte al = (byte) mml_seg.deflng_k;
+        byte al = (byte) (mml_seg.deflng_k & 0xff);
         mml_seg.deflng = al; // l 値だけKパートから引用
 
         return enmPass2JumpTable.rtloop;
     }
 
-    //==============================================================================
+    /**
     // データスタートアドレスをセット
-    //==============================================================================
+     */
     private enmPass2JumpTable rtloop() {
         if (mml_seg.kpart_maxprg != 0) {
             work.dx = work.bx;
             work.dx -= 0; // offset m_buf
-            m_seg.m_buf.set(work.di + 0, new MmlDatum((byte) work.dx));
-            m_seg.m_buf.set(work.di + 1, new MmlDatum((byte) (work.dx >> 8)));
+            m_seg.m_buf.set(work.di + 0, new MmlDatum(work.dx & 0x00ff));
+            m_seg.m_buf.set(work.di + 1, new MmlDatum((work.dx & 0xff00) >> 8));
             work.di += 2;
         }
 
@@ -1397,9 +1360,9 @@ fm3_check:
     }
 //#endif
 
-    //==============================================================================
+    /**
     // Part Init.
-    //==============================================================================
+     */
     private void cm_init() {
         mml_seg.maxprg = 0;
         mml_seg.volss = 0;
@@ -1430,27 +1393,27 @@ fm3_check:
         mml_seg.deflng = mml_seg.zenlen / 4;
     }
 
-    //==============================================================================
+    /**
     // Remark文箇所の設定
-    //==============================================================================
+     */
     private enmPass2JumpTable rem_set() {
 //#if !efc
         mml_seg.part = 0;
         if (mml_seg.towns_flg != 1) { // break tclc_towns_chk;
 
-            byte al = (byte) mml_seg.lc_flag;
+            byte al = (byte) (mml_seg.lc_flag & 0xff);
             lc.lc_proc(al);
 
             work.si = 0; // offset max_all;
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) lc.max_all)); // TC/LC書き込み(4.8a～)
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) (lc.max_all >> 8)));
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) (lc.max_all >> 16)));
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) (lc.max_all >> 24)));
+            m_seg.m_buf.set(work.di++, new MmlDatum(lc.max_all & 0xff)); // TC/LC書き込み(4.8a～)
+            m_seg.m_buf.set(work.di++, new MmlDatum((lc.max_all & 0xff00) >> 8));
+            m_seg.m_buf.set(work.di++, new MmlDatum((lc.max_all & 0xff0000) >> 16));
+            m_seg.m_buf.set(work.di++, new MmlDatum((lc.max_all & 0xff000000) >> 24));
 
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) lc.max_loop));
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) (lc.max_loop >> 8)));
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) (lc.max_loop >> 16)));
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) (lc.max_loop >> 24)));
+            m_seg.m_buf.set(work.di++, new MmlDatum(lc.max_loop & 0xff));
+            m_seg.m_buf.set(work.di++, new MmlDatum((lc.max_loop & 0xff00) >> 8));
+            m_seg.m_buf.set(work.di++, new MmlDatum((lc.max_loop & 0xff0000) >> 16));
+            m_seg.m_buf.set(work.di++, new MmlDatum((lc.max_loop & 0xff000000) >> 24));
         }
 //tclc_towns_chk:
         work.bp = work.di;
@@ -1460,9 +1423,9 @@ fm3_check:
             al = 0x46; // Townsは4.6f @@@@
         }
 //vers_towns_chk:
-        m_seg.m_buf.set(work.di++, new MmlDatum(al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff));
         al = (byte) 0xfe; // -2;
-        m_seg.m_buf.set(work.di++, new MmlDatum(al)); // Remarks Check Code(0feh)
+        m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // Remarks Check Code(0feh)
 //#endif
         return enmPass2JumpTable.vdat_set;
     }
@@ -1470,9 +1433,9 @@ fm3_check:
 //#if!hyouka
 
     //1190-1215
-    //==============================================================================
+    /**
     // V2.6以降用／音色データのセット
-    //==============================================================================
+     */
     private enmPass2JumpTable vdat_set() {
         if ((mml_seg.prg_flg & 1) == 0) return enmPass2JumpTable.memo_write;
 
@@ -1483,8 +1446,8 @@ fm3_check:
         work.si += 2 * (mml_seg.max_part + 1); // KUMA:? -> v48sで理解w
         int dx = work.di;
         dx -= 0; // offset m_buf
-        m_seg.m_buf.set(work.si, new MmlDatum((byte) dx));
-        m_seg.m_buf.set(work.si + 1, new MmlDatum((byte) (dx >> 8)));
+        m_seg.m_buf.set(work.si, new MmlDatum(dx & 0xff));
+        m_seg.m_buf.set(work.si + 1, new MmlDatum((dx & 0xff00) >> 8));
         work.bx = 0; // MmlSeg.prg_num;
         work.si = 0; // offset voice_buf
 //#if split
@@ -1496,18 +1459,18 @@ fm3_check:
 
         if (mml_seg.opl_flg != 1) return enmPass2JumpTable.nd_s_loop;
 
-        //==============================================================================
+        /**
         // OPL用
-        //==============================================================================
+         */
 //nd_s_opl_loop:
         do {
             if (mml_seg.prg_num[work.bx] != 0) { // break nd_s_opl_00;
 
-                m_seg.m_buf.set(work.di, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di, new MmlDatum(work.al & 0xff));
                 work.di++;
 
                 for (int rep = 0; rep < 9; rep++) { // １音色 9bytes
-                    m_seg.m_buf.set(work.di, new MmlDatum(voice_seg.voice_buf[work.si]));
+                    m_seg.m_buf.set(work.di, new MmlDatum(voice_seg.voice_buf[work.si] & 0xff));
                     work.di++;
                     work.si++;
                 }
@@ -1528,20 +1491,20 @@ fm3_check:
         return enmPass2JumpTable.nd_s_exit;
     }
 
-    //==============================================================================
+    /**
     // OPN用
-    //==============================================================================
+     */
     private enmPass2JumpTable nd_s_loop() {
         int cx = 256;
         do {
             if (mml_seg.prg_num[work.bx] != 0) { // break nd_s_00;
 
-                m_seg.m_buf.set(work.di, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di, new MmlDatum(work.al & 0xff));
                 work.di++;
 
                 for (int rep = 0; rep < 25; rep++) // １音色 25bytes
                 {
-                    m_seg.m_buf.set(work.di, new MmlDatum(voice_seg.voice_buf[work.si]));
+                    m_seg.m_buf.set(work.di, new MmlDatum(voice_seg.voice_buf[work.si] & 0xff));
                     work.di++;
                     work.si++;
                 }
@@ -1563,18 +1526,18 @@ fm3_check:
 
     private enmPass2JumpTable nd_s_exit() {
         int ax = 0xff00;
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) ax));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) (ax >> 8))); // 音色終了マーク
+        m_seg.m_buf.set(work.di++, new MmlDatum(ax & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum((ax & 0xff00) >> 8)); // 音色終了マーク
 
         return enmPass2JumpTable.memo_write;
     }
 //#endif
 
-    //==============================================================================
+    /**
     // その他メモ系文字列の書込み
-    //==============================================================================
+     */
     private enmPass2JumpTable memo_write() {
-        logger.log(Level.DEBUG, String.format("memo_writeAddress:%d", work.di));
+        logger.log(Level.DEBUG, "memo_writeAddress:%d".formatted(work.di));
         memo_writeAddress = work.di;
 
 //#if !efc
@@ -1611,13 +1574,13 @@ fm3_check:
 
             if (work.si == 0) { // break memow_trans0;
                 work.al = 0;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 //                break memow_exit0;
             } else {
 //memow_trans0:
                 ret = set_Strings2(); // 小文字＞大文字変換付き
                 bret = compiler.enc.getSjisArrayFromString(ret);
-                for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b));
+                for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
                 m_seg.m_buf.set(work.di++, new MmlDatum(0));
             }
 //memow_exit0:
@@ -1632,13 +1595,13 @@ fm3_check:
         mml_seg.title_adr = ax; // [bx] に替わりに転送先のアドレス(ofs)を入れておく
         if (work.si == 0) {
             work.al = 0;
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 //            break memow_exit;
         } else {
             //memow_trans:
             ret = set_Strings();
             bret = compiler.enc.getSjisArrayFromString(ret);
-            for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b));
+            for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
             m_seg.m_buf.set(work.di++, new MmlDatum(0));
         }
 //memow_exit:
@@ -1652,16 +1615,16 @@ fm3_check:
         if (work.si == 0) {
             if (mml_seg.composer_seg == null) {
                 work.al = 0;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             } else {
                 bret = compiler.enc.getSjisArrayFromString(mml_seg.composer_seg);
-                for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b));
+                for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
                 m_seg.m_buf.set(work.di++, new MmlDatum(0));
             }
         } else {
             ret = set_Strings();
             bret = compiler.enc.getSjisArrayFromString(ret);
-            for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b));
+            for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
             m_seg.m_buf.set(work.di++, new MmlDatum(0));
         }
 
@@ -1675,16 +1638,16 @@ fm3_check:
         if (work.si == 0) {
             if (mml_seg.arranger_seg == null) {
                 work.al = 0;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             } else {
                 bret = compiler.enc.getSjisArrayFromString(mml_seg.arranger_seg);
-                for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b));
+                for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
                 m_seg.m_buf.set(work.di++, new MmlDatum(0));
             }
         } else {
             ret = set_Strings();
             bret = compiler.enc.getSjisArrayFromString(ret);
-            for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b));
+            for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
             m_seg.m_buf.set(work.di++, new MmlDatum(0));
         }
 
@@ -1701,7 +1664,7 @@ fm3_check:
 
             ret = set_Strings();
             bret = compiler.enc.getSjisArrayFromString(ret);
-            for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b));
+            for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
             m_seg.m_buf.set(work.di++, new MmlDatum(0));
 
             work.bx += 2;
@@ -1711,8 +1674,8 @@ fm3_check:
         ax = work.di;
         ax -= 0; // offset m_buf
 
-        m_seg.m_buf.set(work.bp + 0, new MmlDatum((byte) ax)); // KUMA: tagのアドレステーブルへのアドレスをセット
-        m_seg.m_buf.set(work.bp + 1, new MmlDatum((byte) (ax >> 8)));
+        m_seg.m_buf.set(work.bp + 0, new MmlDatum(ax & 0xff)); // KUMA: tagのアドレステーブルへのアドレスをセット
+        m_seg.m_buf.set(work.bp + 1, new MmlDatum((ax & 0xff00) >> 8));
 
         work.si = mml_seg.ppzfile_adr; // offset ppzfile_adr
         if (mml_seg.towns_flg == 1) {
@@ -1722,30 +1685,30 @@ fm3_check:
         //memoofsset_loop:
 
         if (mml_seg.towns_flg == 0) {
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) mml_seg.ppzfile_adr));
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) (mml_seg.ppzfile_adr >> 8)));
+            m_seg.m_buf.set(work.di++, new MmlDatum(mml_seg.ppzfile_adr & 0xff));
+            m_seg.m_buf.set(work.di++, new MmlDatum((mml_seg.ppzfile_adr & 0xff00) >> 8));
         }
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) mml_seg.ppsfile_adr));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) (mml_seg.ppsfile_adr >> 8)));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) mml_seg.pcmfile_adr));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) (mml_seg.pcmfile_adr >> 8)));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) mml_seg.title_adr));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) (mml_seg.title_adr >> 8)));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) mml_seg.composer_adr));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) (mml_seg.composer_adr >> 8)));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) mml_seg.arranger_adr));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) (mml_seg.arranger_adr >> 8)));
+        m_seg.m_buf.set(work.di++, new MmlDatum(mml_seg.ppsfile_adr & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum((mml_seg.ppsfile_adr & 0xff00) >> 8));
+        m_seg.m_buf.set(work.di++, new MmlDatum(mml_seg.pcmfile_adr & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum((mml_seg.pcmfile_adr & 0xff00) >> 8));
+        m_seg.m_buf.set(work.di++, new MmlDatum(mml_seg.title_adr & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum((mml_seg.title_adr & 0xff00) >> 8));
+        m_seg.m_buf.set(work.di++, new MmlDatum(mml_seg.composer_adr & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum((mml_seg.composer_adr & 0xff00) >> 8));
+        m_seg.m_buf.set(work.di++, new MmlDatum(mml_seg.arranger_adr & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum((mml_seg.arranger_adr & 0xff00) >> 8));
         for (int i = 0; i < mml_seg.memo_adr.length; i++) {
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) mml_seg.memo_adr[i]));
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) (mml_seg.memo_adr[i] >> 8)));
+            m_seg.m_buf.set(work.di++, new MmlDatum(mml_seg.memo_adr[i] & 0xff));
+            m_seg.m_buf.set(work.di++, new MmlDatum((mml_seg.memo_adr[i] & 0xff00) >> 8));
             if (mml_seg.memo_adr[i] == 0) break;
         }
 
 //#endif
 
-        //==============================================================================
+        /**
         // 容量オーバーcheck
-        //==============================================================================
+         */
         if (m_seg.mbuf_end != 0x7f) {
             error((char) 0, 19, 0); // 容量オーバー
         }
@@ -1755,9 +1718,9 @@ fm3_check:
 
 //#if!hyouka
 
-    //==============================================================================
+    /**
     // .ffの書き込み
-    //==============================================================================
+     */
     private byte[] write_ff() {
         List<Byte> vBuf = null;
 
@@ -1789,9 +1752,9 @@ fm3_check:
         return ByteUtil.toByteArray(vBuf); //KUMA: .Mファイルの出力は戻り先で。
     }
 
-    //==============================================================================
+    /**
     // Disk Write
-    //==============================================================================
+     */
     //write_disk:
     // KUMA: ここでは不要
     // KUMA: ファイルを出力するときは
@@ -1806,9 +1769,9 @@ fm3_check:
     // KUMA: 不要
 //#endif
 
-    //==============================================================================
+    /**
     // Compile 終了
-    //==============================================================================
+     */
     private void compile_fin() {
         print_mes(mml_seg.finmes);
         //KUMA: コンパイラからPMDを呼び出し再生する機能は省略
@@ -1822,29 +1785,29 @@ fm3_check:
 
     }
 
-    //==============================================================================
+    /**
     // FF File read
     //  in.ds:si Strings
-    //==============================================================================
+     */
     private void read_fffile() {
         mml_seg.ff_flg = 1;
         byte ah = 0;
         //int di = 0; // offset v_filename
         voice_seg.v_filename = "";
 
-        //g_vfn_loop:;
+//g_vfn_loop:
         do {
             char al = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a;
             if (al == ' ') break;
             if (al == 13) break;
             if (al == '\\') ah = 0;
-            //g_vfn_notyen:;
+//g_vfn_notyen:
             if (al == '.') ah = 1;
-            //g_vfn_store:;
+//g_vfn_store:
             voice_seg.v_filename += al;
         } while (true);
 
-        //g_vfn_next:;
+//g_vfn_next:
         if (ah == 0) {
             voice_seg.v_filename += ".FF";
             if (mml_seg.opl_flg == 1) {
@@ -1854,9 +1817,9 @@ fm3_check:
 
         //vfn_ofs_notset:;
 
-        //==============================================================================
+        /**
         //  .ffファイルの読み込み
-        //==============================================================================
+         */
 
         try {
             voice_seg.voice_buf = compiler.readFile(voice_seg.v_filename);
@@ -1874,9 +1837,9 @@ fm3_check:
         voiceTrancer(voice_seg.voice_buf);
     }
 
-    //==============================================================================
+    /**
     // オプション文字列読み取り
-    //==============================================================================
+     */
     private boolean get_option(String val) {
         for (int[] col = new int[1]; col[0] < val.length(); col[0]++) {
             char a = val.charAt(col[0]);
@@ -1927,9 +1890,9 @@ fm3_check:
         return false;
     }
 
-    //==============================================================================
+    /**
     // /v,/vw option
-    //==============================================================================
+     */
     private void prgflg_set(String val, /* ref */ int[] col) {
         String c = col[0] + 1 == val.length() ? "" : String.valueOf(Character.toUpperCase(val.charAt(col[0] + 1)));
 
@@ -1945,18 +1908,18 @@ fm3_check:
         }
     }
 
-    //==============================================================================
+    /**
     // /p option
-    //==============================================================================
+     */
     private void playflg_set(String val, /* ref */ int[] col) {
 //#if !hyouka
         mml_seg.play_flg = 1;
 //#endif
     }
 
-    //==============================================================================
+    /**
     // /s option
-    //==============================================================================
+     */
     private void saveflg_reset(String val, /* ref */ int[] col) {
 //#if !hyouka
         mml_seg.save_flg = 0;
@@ -1964,9 +1927,9 @@ fm3_check:
 //#endif
     }
 
-    //==============================================================================
+    /**
     // /m option
-    //==============================================================================
+     */
     private void x68flg_set(String val, /* ref */ int[] col) {
         mml_seg.towns_flg = 0;
         mml_seg.x68_flg = 1;
@@ -1974,9 +1937,9 @@ fm3_check:
         mml_seg.dt2_flg = 1;
     }
 
-    //==============================================================================
+    /**
     // /n option
-    //==============================================================================
+     */
     private void x68flg_reset(String val, /* ref */ int[] col) {
         mml_seg.towns_flg = 0;
         mml_seg.x68_flg = 0;
@@ -1984,9 +1947,9 @@ fm3_check:
         mml_seg.dt2_flg = 0;
     }
 
-    //==============================================================================
+    /**
     // /t option
-    //==============================================================================
+     */
     private void townsflg_set(String val, /* ref */ int[] col) {
         mml_seg.towns_flg = 1;
         mml_seg.x68_flg = 0;
@@ -1994,38 +1957,38 @@ fm3_check:
         mml_seg.dt2_flg = 0;
     }
 
-    //==============================================================================
+    /**
     // /l option
-    //==============================================================================
+     */
     private void oplflg_set(String val, /* ref */ int[] col) {
         mml_seg.opl_flg = 1;
     }
 
-    //==============================================================================
+    /**
     // /o option
-    //==============================================================================
+     */
     private void memoflg_reset(String val, /* ref */ int[] col) {
         mml_seg.memo_flg = 0;
     }
 
-    //==============================================================================
+    /**
     // /a option
-    //==============================================================================
+     */
     private void pcmflg_reset(String val, /* ref */ int[] col) {
         mml_seg.pcm_flg = 0;
 
     }
 
-    //==============================================================================
+    /**
     // /c option
-    //==============================================================================
+     */
     private void lcflg_set(String val, /* ref */ int[] col) {
         mml_seg.lc_flag = 1;
     }
 
-    //==============================================================================
+    /**
     // マクロコマンド
-    //==============================================================================
+     */
     private enmPass2JumpTable macro_set() {
         int bx = work.si; //bxに現在のsiを保存
         String al = String.valueOf(Character.toUpperCase(mml_seg.mml_buf.charAt(work.si++))); // 小文字＞大文字変換(1文字目)
@@ -2101,14 +2064,14 @@ fm3_check:
 
 //#if!efc
 
-    //==============================================================================
+    /**
     // #PCMFile
-    //==============================================================================
+     */
     private void pcmfile_set(String ah, int bx) {
         if (ah.equals("P")) {
             ppsfile_set(bx);
             return;
-        } else if (ah != "C") {
+        } else if (!ah.equals("C")) {
             error('#', 7, work.si);
         }
 
@@ -2132,9 +2095,9 @@ fm3_check:
         mml_seg.pcmfile_adr = work.si;
     }
 
-    //==============================================================================
+    /**
     // #PCMVolume Extend/Normal
-    //==============================================================================
+     */
     private void pcmvolume_set() {
         String al = String.valueOf(Character.toUpperCase(mml_seg.mml_buf.charAt(work.si))); // 小文字＞大文字変換
 
@@ -2149,9 +2112,9 @@ fm3_check:
         error('#', 7, work.si); // ps_error
     }
 
-    //==============================================================================
+    /**
     // #PCMExtend
-    //==============================================================================
+     */
     private void pcmextend_set(int bx) {
 //#if !efc
         String al = String.valueOf(Character.toUpperCase(mml_seg.mml_buf.charAt(bx + 3))); // 小文字＞大文字変換(4文字目)
@@ -2194,16 +2157,16 @@ fm3_check:
 //#endif
     }
 
-    //==============================================================================
+    /**
     // #PPZFile
-    //==============================================================================
+     */
     private void ppzfile_set() {
         mml_seg.ppzfile_adr = work.si;
     }
 
-    //==============================================================================
+    /**
     // #PPSFile
-    //==============================================================================
+     */
     private void ppsfile_set(int bx) {
         String al = String.valueOf(Character.toUpperCase(mml_seg.mml_buf.charAt(bx + 2))); // 小文字＞大文字変換(3文字目)
 
@@ -2220,9 +2183,9 @@ fm3_check:
         mml_seg.ppsfile_adr = work.si;
     }
 
-    //==============================================================================
+    /**
     // #Title
-    //==============================================================================
+     */
     private void title_set(String ah, int bx) {
         if (ah.equals("E")) { // #TEmpo
             tempo_set();
@@ -2244,9 +2207,9 @@ fm3_check:
         mml_seg.title_adr = work.si;
     }
 
-    //==============================================================================
+    /**
     // #Composer
-    //==============================================================================
+     */
     private void composer_set() {
         mml_seg.composer_adr = work.si;
         //   mov[composer_seg],0
@@ -2260,11 +2223,11 @@ fm3_check:
         return ret;
     }
 
-    //==============================================================================
+    /**
     // #Arranger
-    //==============================================================================
+     */
     private void arranger_set(String ah) {
-        if (ah == "D") {
+        if (ah.equals("D")) {
             adpcm_set(ah);
             return;
         }
@@ -2272,9 +2235,9 @@ fm3_check:
         mml_seg.arranger_adr = work.si;
     }
 
-    //==============================================================================
+    /**
     // #ADPCM on/off
-    //==============================================================================
+     */
     private void adpcm_set(String ah) {
         String al = String.valueOf(Character.toUpperCase(mml_seg.mml_buf.charAt(work.si++))); // 小文字＞大文字変換
 
@@ -2297,9 +2260,9 @@ fm3_check:
         mml_seg.adpcm_flag = 1; // kuma:OFFでもflagたてる？
     }
 
-    //==============================================================================
+    /**
     // #Memo
-    //==============================================================================
+     */
     private void memo_set() {
         int bx = -1; // offset memo_adr-2
         do {
@@ -2309,9 +2272,9 @@ fm3_check:
         mml_seg.memo_adr[bx] = work.si;
     }
 
-    //==============================================================================
+    /**
     // #Transpose
-    //==============================================================================
+     */
     private void transpose_set() {
         byte[] dl = new byte[1]; int[] dummy = new int[1];
         getnum(/* out */ dummy, /* out */ dl); // 230923 FIXED
@@ -2326,9 +2289,9 @@ fm3_check:
         //MmlSeg.transpose = al;
     }
 
-    //==============================================================================
+    /**
     // #Detune Normal/Extend
-    //==============================================================================
+     */
     private void detune_select() {
         String al = String.valueOf(Character.toUpperCase(mml_seg.mml_buf.charAt(work.si++))); // 小文字＞大文字変換
         if (al.equals("N")) {
@@ -2342,9 +2305,9 @@ fm3_check:
         error('#', 7, work.si);
     }
 
-    //==============================================================================
+    /**
     // #LFOSpeed Normal/Extend
-    //==============================================================================
+     */
     private void LFOExtend_set(String ah) {
         if (ah.equals("O")) {
             loopdef_set();
@@ -2363,9 +2326,9 @@ fm3_check:
         error('#', 7, work.si);
     }
 
-    //==============================================================================
+    /**
     // #LoopDefault n
-    //==============================================================================
+     */
     private void loopdef_set() {
         int[] bx = new int[1]; byte[] al = new byte[1];
         if (lngset(/* out */ bx, /* out */ al)) {
@@ -2375,9 +2338,9 @@ fm3_check:
         mml_seg.loop_def = al[0];
     }
 
-    //==============================================================================
+    /**
     // #EnvSpeed Normal/Extend
-    //==============================================================================
+     */
     private void EnvExtend_set() {
         String al = String.valueOf(Character.toUpperCase(mml_seg.mml_buf.charAt(work.si++))); // 小文字＞大文字変換
         if (al.equals("N")) {
@@ -2391,9 +2354,9 @@ fm3_check:
         error('#', 7, work.si);
     }
 
-    //==============================================================================
+    /**
     // #VolumeDown
-    //==============================================================================
+     */
     private void VolDown_set() {
         do {
             int bh = 0; // FSPR select bit clear
@@ -2401,7 +2364,7 @@ fm3_check:
             String al;
             byte al_b;
 
-            //voldown_loop:
+//voldown_loop:
             do {
                 al_b = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
                 if (al_b < ((byte) '9' + 1)) break;
@@ -2415,14 +2378,14 @@ fm3_check:
                 else error('#', 1, work.si);
             } while (true);
 
-            //vd_noppz:
-            //vd_numget:;
+//vd_noppz:
+//vd_numget:
             work.si--;
             al = String.valueOf((char) al_b);
             if (!al.equals("+") && !al.equals("-"))
                 bl++; // 絶対指定
 
-            //vd_numget2:;
+//vd_numget2:
             if (bh == 0) // KUMA:指定なしの場合はエラー
                 error('#', 1, work.si);
 
@@ -2463,9 +2426,9 @@ fm3_check:
         } while (true);
     }
 
-    //==============================================================================
+    /**
     // #Jump
-    //==============================================================================
+     */
     private void JumpFlag_set() {
         int[] bx = new int[1]; byte[] al = new byte[1];
         if (lngset(/* out */ bx, /* out */ al))
@@ -2476,9 +2439,9 @@ fm3_check:
         mml_seg.jump_flag = bx[0];
     }
 
-    //==============================================================================
+    /**
     // #Tempo
-    //==============================================================================
+     */
     private void tempo_set() {
         int[] bx = new int[1]; byte[] al = new byte[1];
         if (lngset(/* out */  bx, /* out */  al))
@@ -2495,9 +2458,9 @@ fm3_check:
         }
     }
 
-    //==============================================================================
+    /**
     // #Timer
-    //==============================================================================
+     */
     private void tempo_set2() {
         int[] bx = new int[1]; byte[] al = new byte[1];
         if (lngset(/* out */ bx, /* out */ al))
@@ -2508,11 +2471,9 @@ fm3_check:
         mml_seg.timerb = al[0];
     }
 
-
-    //2491-2505
-    //==============================================================================
+    /**
     // #Zenlength
-    //==============================================================================
+     */
     private void zenlen_set() {
         int[] bx = new int[1]; byte[] al = new byte[1];
         if (lngset(/* out */ bx, /* out */ al))
@@ -2526,11 +2487,9 @@ fm3_check:
 
 //#endif
 
-
-    //2506-2541
-    //==============================================================================
+    /**
     // #FM3Extend
-    //==============================================================================
+     */
     private void FM3Extend_set(String ah) {
         if (ah.equals("I")) {
             file_name_set();
@@ -2580,11 +2539,9 @@ fm3_check:
 //#endif
     }
 
-
-    //2542-2566
-    //==============================================================================
+    /**
     // #Filename
-    //==============================================================================
+     */
     private void file_name_set() {
 //#if !hyouka
 
@@ -2614,21 +2571,17 @@ fm3_check:
 //#endif
     }
 
-
-    //2567-2577
-    //==============================================================================
+    /**
     // #FFFile
-    //==============================================================================
+     */
     private void fffile_set() {
         read_fffile();
 
     }
 
-
-    //2578-2601
-    //==============================================================================
+    /**
     // #DT2flag on/off
-    //==============================================================================
+     */
     private void dt2flag_set(String ah) {
 //#if !efc
 
@@ -2656,14 +2609,12 @@ fm3_check:
 
         mml_seg.dt2_flg = 0;
         return;
-        //dt2flag_norm:;
+//dt2flag_norm:
     }
 
-
-    //2602-2621
-    //==============================================================================
+    /**
     // #octave rev/norm
-    //==============================================================================
+     */
     private void octrev_set(String ah) {
         if (ah.equals("P")) {
             option_set();
@@ -2683,14 +2634,11 @@ fm3_check:
 
         comtbl[ou00] = new Tuple<>(">", this::octup);
         comtbl[od00] = new Tuple<>("<", this::octdown);
-        return;
     }
 
-
-    //2622-2628
-    //==============================================================================
+    /**
     // #Option
-    //==============================================================================
+     */
     private void option_set() {
         String val = "";
         char v = (char) 0;
@@ -2703,11 +2651,9 @@ fm3_check:
         get_option(val.trim().toUpperCase());
     }
 
-
-    //2629-2638
-    //==============================================================================
+    /**
     // #Bendrange
-    //==============================================================================
+     */
     private void bend_set() {
         int[] bx = new int[1]; byte[] al = new byte[1];
         if (lngset(/* out */ bx, /* out */ al))
@@ -2718,11 +2664,9 @@ fm3_check:
         mml_seg.bend = al[0];
     }
 
-
-    //2639-2801
-    //==============================================================================
+    /**
     // #Include
-    //==============================================================================
+     */
     private void include_set() {
         // 
         // ファイル名の取り込み
@@ -2805,9 +2749,9 @@ fm3_check:
         }
     }
 
-    //==============================================================================
+    /**
     // alの文字が使用中のパートかどうかcheck
-    //==============================================================================
+     */
     private boolean partcheck(char al) {
         if (al < 'L') {
             return true;
@@ -2824,10 +2768,10 @@ fm3_check:
         return false;
     }
 
-    //==============================================================================
+    /**
     // 文字列のセット
     //  crlfが来るまで
-    //==============================================================================
+     */
     private String set_Strings() {
         String ret = "";
 
@@ -2870,12 +2814,11 @@ fm3_check:
         return ret;
     }
 
-    //2861-2891
-    //==============================================================================
+    /**
     // 次のパラメータに強制移動する
     //  1.space又はtabをsearch
     //  2.文字列をsearch
-    //==============================================================================
+     */
     private boolean move_next_param() {
         char al;
 
@@ -2907,11 +2850,9 @@ fm3_check:
         return false;
     }
 
-
-    //2892-2974
-    //==============================================================================
+    /**
     // MML 変数の設定
-    //==============================================================================
+     */
     private enmPass2JumpTable hsset() {
         // push es
         int bx_p = work.bx;
@@ -2925,7 +2866,7 @@ fm3_check:
         work.al = al[0];
         if (!cy) { // break hsset3;
 
-            //hsset2:;
+//hsset2:
             int ax = work.al * 2;
             ax += 0; // offset hsbuf2
             hs_seg.currentBuf = hs_seg.hsbuf2;
@@ -2965,7 +2906,7 @@ hsset3b_loop:
                         hs_seg.currentBuf[work.di++] = (byte) alc;
                         cx--;
                     } while (cx > 0);
-                    //hsset3b_loop2:;
+//hsset3b_loop2:
                     do {
                         alc = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
                     } while (alc >= '!');
@@ -2988,8 +2929,8 @@ hsset_loop:
                     break hsset_loop; // hsset_fin;
                 }
             } while (alc >= (char) (' ' + 1));
-            hs_seg.currentBuf[work.bx + 0] = (byte) work.si;
-            hs_seg.currentBuf[work.bx + 1] = (byte) (work.si >> 8);
+            hs_seg.currentBuf[work.bx + 0] = (byte) (work.si & 0xff);
+            hs_seg.currentBuf[work.bx + 1] = (byte) ((work.si & 0xff00) >> 8);
         }
 //hsset_fin:
         work.si = si_p;
@@ -2998,7 +2939,7 @@ hsset_loop:
         //    pop es
         //    assume es:MSeg
 
-        work.al = (byte) mml_seg.pass;
+        work.al = (byte) (mml_seg.pass & 0xff);
         if (work.al == 0) return enmPass2JumpTable.p1c_fin;
 //#if !efc
         work.al--;
@@ -3013,7 +2954,7 @@ hsset_loop:
 //#endif
     }
 
-    //==============================================================================
+    /**
     // 音色の設定
     //  @ num,alg,fb
     //    ar,dr,sr,rr,sl,tl,ks,ml,dt,[dt2,] ams
@@ -3024,7 +2965,7 @@ hsset_loop:
     //  @ num,alg,fb
     //    ar,dr,rr,sl,tl,ksl,ml,ksr,egt,vib,am
     //    ar,dr,rr,sl,tl,ksl,ml,ksr,egt,vib,am
-    //==============================================================================
+     */
     private enmPass2JumpTable new_neiro_set() {
         int di_p = work.di;
         int bx_p = work.bx;
@@ -3107,7 +3048,6 @@ hsset_loop:
         nns_pname_set();
     }
 
-
     private void nns_pname_set() {
         work.bp = 0; // offset prg_name
         int cx = 7;
@@ -3123,11 +3063,9 @@ hsset_loop:
         }
     }
 
-
-    //3088-3151
-    //==============================================================================
+    /**
     // OPL版音色設定
-    //==============================================================================
+     */
     private void opl_nns() {
         //push es
         int si_p = work.si;
@@ -3142,14 +3080,14 @@ hsset_loop:
         work.bx = 0; // offset oplprg_table
         work.di = 0; // offset oplbuf
         int cx = 2 + 11 * 2;
-        //oplset_loop:;
+//oplset_loop:
         do {
             int bx_p = work.bx;
             get_param();
             work.bx = bx_p;
             work.al &= mml_seg.oplprg_table[work.bx + 1]; // max
             byte cl = mml_seg.oplprg_table[work.bx + 2]; // rot
-            for (int i = 0; i < cl; i++) work.al = (byte) ((work.al << 1) | ((work.al & 0x80) != 0 ? 1 : 0));
+            for (int i = 0; i < cl; i++) work.al = (byte) (((work.al & 0xff) << 1) | ((work.al & 0x80) != 0 ? 1 : 0));
             mml_seg.oplbuf[work.di + mml_seg.oplprg_table[work.bx]] |= work.al; // 設定
 
             work.bx += 3;
@@ -3169,11 +3107,9 @@ hsset_loop:
         nns_pname_set();
     }
 
-
-    //3152-3165
-    //==============================================================================
+    /**
     // スロット毎のデータを転送
-    //==============================================================================
+     */
     private void slot_trans(int slot) {
         work.bp = work.dx;
 
@@ -3188,11 +3124,9 @@ hsset_loop:
         } while (cx > 0);
     }
 
-
-    //3166-3228
-    //==============================================================================
+    /**
     // 各スロットの数値を読む
-    //==============================================================================
+     */
     private void slot_get(int slot) {
         get_param(); // AR
         work.al &= 0b0001_1111;
@@ -3247,11 +3181,9 @@ hsset_loop:
 
     }
 
-
-    //3229-3302
-    //==============================================================================
+    /**
     // 音色設定用パラメータの取り出し
-    //==============================================================================
+     */
     private void get_param() {
 
         char al;
@@ -3289,7 +3221,7 @@ hsset_loop:
                 work.si--;
                 if (al == '+' || al == '-') {
                     cy = getnum(/* out */ bx, /* out */ dl);
-                    work.al = (byte) work.dx;
+                    work.al = (byte) (work.dx & 0xff);
                     return;
                 }
                 byte[] alb = new byte[1];
@@ -3300,7 +3232,7 @@ hsset_loop:
                 work.si--;
                 //gp_gnm:
                 cy = getnum(/* out */ bx, /* out */ dl);
-                work.al = (byte) work.dx;
+                work.al = (byte) (work.dx & 0xff);
                 return;
             }
 //get_vname:
@@ -3334,13 +3266,13 @@ hsset_loop:
         } while (true);
     }
 
-    //==============================================================================
+    /**
     // 一行 Compile
     // INPUTS -- ds:si to MML POINTER
     //   -- es:di to M POINTER
     //   -- [PART]
     //        to PART
-    //==============================================================================
+     */
     private enmPass2JumpTable one_line_compile() {
 
 //#if DEBUG
@@ -3439,7 +3371,7 @@ notend: // ↑
 
                 byte dh = (byte) 0xc0;
                 byte dl = (byte) (mml_seg.skip_flag & 1);
-                work.dx = dh * 0x100 + dl;
+                work.dx = (dh & 0xff) * 0x100 + (dl & 0xff);
                 return enmPass2JumpTable.parset;
             }
 //nskp_01:
@@ -3448,10 +3380,10 @@ notend: // ↑
 
                 byte dh = (byte) 0xc0;
                 byte dl = 0x00;
-                work.dx = dh * 0x100 + dl;
+                work.dx = (dh & 0xff) * 0x100 + (dl & 0xff);
                 return enmPass2JumpTable.parset;
             }
-            //nskp_02:;
+//nskp_02:
 //#if !efc
             if (work.al == (byte) '|') return enmPass2JumpTable.skip_mml;
 //#endif
@@ -3464,9 +3396,9 @@ notend: // ↑
         }
 //notend:
         if (work.al != 13) return enmPass2JumpTable.olc00;
-        //olc_fin:;
+//olc_fin:
         work.si++;
-        //comend:;
+//comend:
         if (mml_seg.hsflag != 0)
             return enmPass2JumpTable.hscom_exit;
         return enmPass2JumpTable.cloop;
@@ -3489,12 +3421,12 @@ notend: // ↑
         return enmPass2JumpTable.olc03;
     }
 
-    //==============================================================================
+    /**
     // "|" command(Skip MML except selected Parts)
-    //==============================================================================
+     */
     private enmPass2JumpTable skip_mml() {
 //#if !efc
-        byte ah = (byte) mml_seg.part;
+        byte ah = (byte) (mml_seg.part & 0xff);
         ah += (byte) ('A' - 1);
 
         char ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
@@ -3509,9 +3441,9 @@ notend: // ↑
                 ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
                 if (ch == ah) {
 //                    break part_not_found;
-                    //==============================================================================
+                    /**
                     // Not Found --- Skip to Next "|" or Next line
-                    //==============================================================================
+                     */
 //part_not_found: // ↑
                     do {
                         ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
@@ -3550,9 +3482,9 @@ notend: // ↑
             } while (ch >= (char) (' ' + 1));
         }
 
-        //==============================================================================
+        /**
         // Found --- Compile Next
-        //==============================================================================
+         */
 //part_found:
         do {
             ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
@@ -3568,11 +3500,9 @@ notend: // ↑
         return enmPass2JumpTable.olc03;
     }
 
-
-    //3472-3489
-    //==============================================================================
+    /**
     // Command Jump
-    //==============================================================================
+     */
     private enmPass2JumpTable olc00() {
         //KUMA:スキップしたい桁まで移動していた場合は、スキップ処理の進捗をひとつあげる
         if (skipSW == 1 && skipPointCol <= work.si - 1) {
@@ -3596,11 +3526,10 @@ notend: // ↑
         int bdi = work.di;
 
         byte dh = work.al;
-        work.dx = (dh * 0x100) | (byte) work.dx;
+        work.dx = ((dh & 0xff) * 0x100) | (work.dx & 0xff);
         if (comtbl[work.bx].getItem2() != null) {
-//#if DEBUG
-            logger.log(Level.TRACE, String.format("olc00:command:%d", (char) dh));
-//#endif
+            logger.log(Level.TRACE, "olc00:command:%c".formatted((char) dh));
+
             enmPass2JumpTable ret = comtbl[work.bx].getItem2().get();
 
             //KUMA:スキップ位置を割り出す
@@ -3618,9 +3547,9 @@ notend: // ↑
         throw new PmdErrorExitException(String.format("まだ移植できてないコマンドを検出しました(%c)", (char) dh));
     }
 
-    //==============================================================================
+    /**
     // Command Table
-    //==============================================================================
+     */
 
     private int ou00 = 11;
     private int od00 = 12;
@@ -3706,9 +3635,9 @@ notend: // ↑
         };
     }
 
-    //==============================================================================
+    /**
     // A command(ADPCM set)
-    //==============================================================================
+     */
     private enmPass2JumpTable adp_set() {
         m_seg.m_buf.set(work.di++, new MmlDatum(0xc0));
         m_seg.m_buf.set(work.di++, new MmlDatum(0xf7));
@@ -3716,13 +3645,13 @@ notend: // ↑
         boolean cy;
         int[] bx = new int[1]; byte[] dl = new byte[1];
         cy = getnum(/* out */ bx, /* out */ dl);
-        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // O command(TL set)
-    //==============================================================================
+     */
     private enmPass2JumpTable tl_set() {
         boolean cy;
         int[] bx = new int[1]; byte[] dl = new byte[1];
@@ -3733,15 +3662,15 @@ notend: // ↑
             error('O', 17, work.si);
         }
 
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
         cy = getnum(/* out */ bx, /* out */ dl);
-        work.al = (byte) work.bx;
+        work.al = (byte) (work.bx & 0xff);
         if (work.al >= 16) {
             error('O', 6, work.si);
         }
 
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
 
         if (work.al != (byte) ',') {
@@ -3752,20 +3681,20 @@ notend: // ↑
         if (ch == '+' || ch == '-') { // break tl_slide; // TODO vavi check
 //            if (ch == '-') { // break tl_next;
 //tl_slide:
-            byte d = (byte) m_seg.m_buf.get(work.di - 1).dat;
-            d |= 0xf0;
-            m_seg.m_buf.set(work.di - 1, new MmlDatum(d));
+            byte d = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
+            d |= (byte) 0xf0;
+            m_seg.m_buf.set(work.di - 1, new MmlDatum(d & 0xff));
 //tl_next:
             cy = getnum(/* out */ bx, /* out */ dl);
             work.al = dl[0];
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         }
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // m command(part mask)
-    //==============================================================================
+     */
     private Mc.enmPass2JumpTable partmask_set() {
         boolean cy;
         int[] bx = new int[1]; byte[] al = new byte[1];
@@ -3783,9 +3712,9 @@ notend: // ↑
         return enmPass2JumpTable.parset;
     }
 
-    //==============================================================================
+    /**
     // s command(fm slot mask)
-    //==============================================================================
+     */
     private enmPass2JumpTable slotmask_set() {
         char ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
         if (ch == 'd') return slotdetune_set();
@@ -3809,13 +3738,13 @@ notend: // ↑
         work.al &= 0x0f;
         work.al |= work.ah;
 
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // sd command(slot detune) / sdd command(slot detune 相対)
-    //==============================================================================
+     */
     private enmPass2JumpTable slotdetune_set() {
         boolean cy;
         int[] bx = new int[1]; byte[] dl = new byte[1];
@@ -3828,10 +3757,10 @@ notend: // ↑
             work.si++;
         }
 //sds_set:
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         cy = getnum(/* out */ bx, /* out */ dl);
         work.al = dl[0];
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
         ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
         if (ch != ',') {
@@ -3839,52 +3768,52 @@ notend: // ↑
         }
         work.si++;
         cy = getnum(/* out */ bx, /* out */ dl);
-        work.al = (byte) work.bx;
-        work.ah = (byte) (work.bx >> 8);
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.ah));
+        work.al = (byte) (work.bx & 0xff);
+        work.ah = (byte) ((work.bx & 0xff) >> 8);
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.ah & 0xff));
 
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // sk command(slot keyon delay)
-    //==============================================================================
+     */
     private enmPass2JumpTable slotkeyondelay_set() {
         boolean cy;
         int[] bx = new int[1]; byte[] dl = new byte[1];
 
         work.al = (byte) 0xb5;
         work.si++;
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         cy = getnum(/* out */ bx, /* out */ dl);
         work.al = dl[0];
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
         char ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
         if (ch == ',') { // break sks_err;
 
             work.si++;
-            work.dx = ((byte) 's') * 0x100 + (byte) work.dx;
+            work.dx = 's' * 0x100 + (work.dx & 0xff);
             get_clock();
 
 //sks_exit:
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             return enmPass2JumpTable.olc0;
         }
 //sks_err:
         if (work.al == 0) {
 //            break sks_exit;
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al)); // <<
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff)); // <<
             return enmPass2JumpTable.olc0; // <<
         }
         error('s', 6, work.si);
         return enmPass2JumpTable.exit; // dummy
     }
 
-    //==============================================================================
+    /**
     // n command(ssg effect)
-    //==============================================================================
+     */
     private enmPass2JumpTable ssg_efct_set() {
         boolean cy;
         int[] bx = new int[1]; byte[] al = new byte[1];
@@ -3894,14 +3823,14 @@ notend: // ↑
         if (mml_seg.skip_flag != 0) return enmPass2JumpTable.olc03;
 
         m_seg.m_buf.set(work.di++, new MmlDatum(0xd4));
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // N command(fm effect)
-    //==============================================================================
+     */
     private enmPass2JumpTable fm_efct_set() {
         boolean cy;
         int[] bx = new int[1]; byte[] al = new byte[1];
@@ -3911,14 +3840,14 @@ notend: // ↑
         if (mml_seg.skip_flag != 0) return enmPass2JumpTable.olc03;
 
         m_seg.m_buf.set(work.di++, new MmlDatum(0xd3));
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // F command(fadeout)
-    //==============================================================================
+     */
     private enmPass2JumpTable fade_set() {
         char ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
         if (ch == 'B') return fb_set();
@@ -3929,14 +3858,14 @@ notend: // ↑
         cy = lngset(/* out */ bx, /* out */ al);
 
         m_seg.m_buf.set(work.di++, new MmlDatum(0xd2));
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // FB command(FeedBack set)
-    //==============================================================================
+     */
     private enmPass2JumpTable fb_set() {
         boolean cy;
         int[] bx = new int[1]; byte[] dl = new byte[1];
@@ -3944,7 +3873,7 @@ notend: // ↑
         work.si++;
 
         work.al = (byte) 0xb6;
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
         char ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
         if (ch != '+') { // break _fb_set;
@@ -3956,9 +3885,9 @@ notend: // ↑
                     error('F', 2, work.si);
                 }
 
-                work.al = (byte) work.bx;
+                work.al = (byte) (work.bx & 0xff);
 
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 return enmPass2JumpTable.olc0;
             }
         }
@@ -3969,15 +3898,15 @@ notend: // ↑
             error('F', 2, work.si);
         }
 
-        work.al = (byte) work.bx;
-        work.al |= 0x80;
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        work.al = (byte) (work.bx & 0xff);
+        work.al |= (byte) 0x80;
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // "{" Command [Portament_start] / "{{" Command [分散和音開始]
-    //==============================================================================
+     */
     private enmPass2JumpTable porta_start() {
         if (mml_seg.skip_flag != 0) return enmPass2JumpTable.olc03;
 
@@ -4002,9 +3931,9 @@ notend: // ↑
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // "}" Command [Portament_end] / "}}" Command [分散和音終了]
-    //==============================================================================
+     */
     private enmPass2JumpTable porta_end() {
         boolean cy;
         int[] bx = new int[1]; byte[] al = new byte[1];
@@ -4017,15 +3946,15 @@ notend: // ↑
                 error('}', 13, work.si);
             }
 
-            byte cch = (byte) m_seg.m_buf.get(work.di - 5).dat;
-            if (cch != 0xda) {
+            byte cch = (byte) (m_seg.m_buf.get(work.di - 5).dat & 0xff);
+            if (cch != (byte) 0xda) {
                 error('}', 14, work.si);
             }
-            cch = (byte) m_seg.m_buf.get(work.di - 4).dat;
+            cch = (byte) (m_seg.m_buf.get(work.di - 4).dat & 0xff);
             if (cch == 0x0f) {
                 error('}', 15, work.si);
             }
-            cch = (byte) m_seg.m_buf.get(work.di - 2).dat;
+            cch = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
             if (cch == 0x0f) {
                 error('}', 15, work.si);
             }
@@ -4040,8 +3969,8 @@ notend: // ↑
             dstMd.type = srcMd.type;
             srcMd.linePos = null;
 
-            work.al = (byte) m_seg.m_buf.get(work.di - 2).dat;
-            m_seg.m_buf.set(work.di - 3, new MmlDatum(work.al));
+            work.al = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
+            m_seg.m_buf.set(work.di - 3, new MmlDatum(work.al & 0xff));
 
             work.di -= 2;
 
@@ -4052,7 +3981,7 @@ notend: // ↑
             }
             lngcal();
             cy = futen();
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             if (cy) {
                 error('}', 8, work.si);
             }
@@ -4068,21 +3997,21 @@ notend: // ↑
                 }
                 lngcal();
                 cy = futen();
-                cch = (byte) m_seg.m_buf.get(work.di - 1).dat;
+                cch = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
                 if (work.al >= cch) // KUMA:ディレイ値が指定音長よりも長い場合はエラー
                 {
                     error('}', 8, work.si);
                 }
                 work.dx = m_seg.m_buf.get(work.di - 2).dat + m_seg.m_buf.get(work.di - 1).dat * 0x100;
-                m_seg.m_buf.set(work.di + 1, new MmlDatum((byte) work.dx));
-                m_seg.m_buf.set(work.di + 2, new MmlDatum((byte) (work.dx >> 8)));
+                m_seg.m_buf.set(work.di + 1, new MmlDatum(work.dx & 0xff));
+                m_seg.m_buf.set(work.di + 2, new MmlDatum((work.dx & 0xff00) >> 8));
                 work.dx = m_seg.m_buf.get(work.di - 4).dat + m_seg.m_buf.get(work.di - 3).dat * 0x100; // dh=start ontei
-                m_seg.m_buf.set(work.di - 1, new MmlDatum((byte) work.dx));
-                m_seg.m_buf.set(work.di + 0, new MmlDatum((byte) (work.dx >> 8)));
-                m_seg.m_buf.set(work.di - 4, new MmlDatum((byte) (work.dx >> 8)));
-                m_seg.m_buf.set(work.di - 3, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di - 1, new MmlDatum(work.dx & 0xff));
+                m_seg.m_buf.set(work.di + 0, new MmlDatum((work.dx & 0xff00) >> 8));
+                m_seg.m_buf.set(work.di - 4, new MmlDatum((work.dx & 0xff00) >> 8));
+                m_seg.m_buf.set(work.di - 3, new MmlDatum(work.al & 0xff));
                 m_seg.m_buf.set(work.di - 2, new MmlDatum(0xfb)); // "&"
-                cch = (byte) m_seg.m_buf.get(work.di + 2).dat;
+                cch = (byte) (m_seg.m_buf.get(work.di + 2).dat & 0xff);
                 cch -= work.al;
                 m_seg.m_buf.set(work.di + 2, new MmlDatum(cch));
                 work.di += 3;
@@ -4112,13 +4041,13 @@ notend: // ↑
         return enmPass2JumpTable.olc03;
     }
 
-    //==============================================================================
+    /**
     // "}}" Command[分散和音終了] 4.8r
     // {{cdeg
     //    }
     //}
     //lng[, cnt[, tie[, gate[, vol]]]]
-    //==============================================================================
+     */
     private enmPass2JumpTable bunsan_end() {
         boolean cy;
         int[] bx = new int[1];
@@ -4147,7 +4076,7 @@ notend: // ↑
 
         if (cx >= 17) error('}', 35, work.si); // 17音以上でエラー
 
-        mml_seg.bunsan_count = (byte) cx;
+        mml_seg.bunsan_count = (byte) (cx & 0xff);
 
         // bunsan_work に音階をセットしていく
 
@@ -4155,7 +4084,7 @@ notend: // ↑
 
         //bend_loop:;
         do {
-            work.al = (byte) m_seg.m_buf.get(work.bx).dat;
+            work.al = (byte) (m_seg.m_buf.get(work.bx).dat & 0xff);
             if ((work.al & 0x80) != 0) error('}', 35, work.si); // 音階ではない
 
             mml_seg.bunsan_work[work.bp] = work.al;
@@ -4244,7 +4173,7 @@ notend: // ↑
         //ループ回数チェック
         work.al = mml_seg.bunsan_1cnt;
         int ax = mml_seg.bunsan_count * work.al; // AX = 音符数 x 一音符の長さ = 1ループの長さ
-        work.al = (byte) ax;
+        work.al = (byte) (ax & 0xff);
         if ((ax & 0xff00) != 0) error('}', 35, work.si);
         mml_seg.bunsan_1loop = work.al;
 
@@ -4256,8 +4185,8 @@ notend: // ↑
         ax = tmp;
         if (cx < ax) { // break bunsan_last; // 1ループに満たない場合
 
-            work.al = (byte) (ax / cx); // AL = 全体の長さ \ 1ループの長さ = ループ回数
-            work.ah = (byte) (ax % cx);
+            work.al = (byte) ((ax / cx) & 0xff); // AL = 全体の長さ \ 1ループの長さ = ループ回数
+            work.ah = (byte) ((ax % cx) & 0xff);
             if (mml_seg.bunsan_tieflag != 0) { // break bunsan_setloop;
 
                 if (work.ah == 0) { // break bunsan_setloop; // タイありで割り切れた場合は
@@ -4271,7 +4200,7 @@ notend: // ↑
                 byte ah_p = work.ah;
 
                 work.al = (byte) 0xf9; // "[" Loop Start
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 work.bx = work.di; // BX = 戻り先
                 work.di += 2;
 
@@ -4281,29 +4210,29 @@ notend: // ↑
 
                 work.al = (byte) 0xf8; // "]" Loop End
 
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
                 work.ah = ah_p;
                 work.al = al_p;
 
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
                 work.al *= mml_seg.bunsan_1loop;
                 mml_seg.bunsan_length -= work.al;
                 ax = work.bx;
                 ax -= 0; // offset m_buf
 
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) ax));
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) (ax >> 8)));
+                m_seg.m_buf.set(work.di++, new MmlDatum(ax & 0xff));
+                m_seg.m_buf.set(work.di++, new MmlDatum((ax & 0xff00) >> 8));
 
                 ax = work.di - 4;  //    lea ax,[di-4]
                 ax -= 0; // offset m_buf
-                m_seg.m_buf.set(work.bx + 0, new MmlDatum((byte) ax));
-                m_seg.m_buf.set(work.bx + 1, new MmlDatum((byte) (ax >> 8))); // 戻り先セット
+                m_seg.m_buf.set(work.bx + 0, new MmlDatum(ax & 0xff));
+                m_seg.m_buf.set(work.bx + 1, new MmlDatum((ax & 0xff00) >> 8)); // 戻り先セット
 
-                work.ah = (byte) (ax >> 8);
-                work.al = (byte) ax;
+                work.ah = (byte) ((ax & 0xff00) >> 8);
+                work.al = (byte) (ax & 0xff);
 
 //                break bunsan_last;
             } else {
@@ -4324,7 +4253,7 @@ notend: // ↑
 //bunsan_last_loop:
             while (true) {
                 work.al = mml_seg.bunsan_work[work.bx];
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 work.bx++;
                 work.al = mml_seg.bunsan_1cnt;
                 work.ah = mml_seg.bunsan_length;
@@ -4332,29 +4261,29 @@ notend: // ↑
                 if (work.al >= work.ah)
                     break; // bunsan_lastnote;
 
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 mml_seg.bunsan_length -= work.al;
 
                 if (mml_seg.bunsan_tieflag != 1)
                     continue; // break bunsan_last_loop;
 
                 work.al = (byte) 0xfb;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
                 continue; // break bunsan_last_loop;
             }
 //bunsan_lastnote:
             work.al = work.ah;
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         }
         // 分散和音終了処理
 //bunsan_exit:
         work.ah = mml_seg.bunsan_gate; // Gateがある場合は休符追加
         if (work.ah != 0) { // break bunsan_exit2;
             work.al = 0xf;
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             work.al = work.ah;
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         }
 //bunsan_exit2:
         work.al = 0;
@@ -4374,14 +4303,14 @@ notend: // ↑
         //bunsan_s1l_loop:;
         do {
             work.al = mml_seg.bunsan_work[work.bx];
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al)); // 音階セット
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff)); // 音階セット
             work.bx++;
             work.al = mml_seg.bunsan_1cnt;
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al)); // 長さセット
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff)); // 長さセット
 
             if (mml_seg.bunsan_tieflag == 1) {
                 work.al = (byte) 0xfb; // "&"セット
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             }
             //bunsan_s1l_fin:;
             cx--;
@@ -4392,12 +4321,12 @@ notend: // ↑
             work.al = (byte) 0xe3; // )x
             if ((work.ah & 0x80) != 0) { // break bunsan_sl1_volset;
                 work.al--; // (x
-                work.ah = (byte) -work.ah;
+                work.ah = (byte) (-work.ah & 0xff);
             }
 //bunsan_sl1_volset:
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             work.al = work.ah;
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         }
 //bunsan_s1l_exit:
         return;
@@ -4438,10 +4367,10 @@ notend: // ↑
         return enmPass2JumpTable.olc03;
     }
 
-    //==============================================================================
+    /**
     // "~" Command[ＳＴＡＴＵＳの書き込み]
     // ~[+,-] n
-    //==============================================================================
+     */
     private enmPass2JumpTable status_write() {
         boolean cy;
         int[] bx = new int[1];
@@ -4462,16 +4391,16 @@ notend: // ↑
         return enmPass2JumpTable.parset;
     }
 
-    //==============================================================================
+    /**
     // "W" Command[擬似エコーの設定]
     // Wdelay[, +-depth][, tie / nextflag]
-    //==============================================================================
+     */
     private enmPass2JumpTable giji_echo_set() {
         boolean cy;
         int[] bx = new int[1];
         byte[] al = new byte[1], dl = new byte[1];
 
-        work.dx = ((byte) 'W') * 0x100 + (byte) work.dx;
+        work.dx = 'W' * 0x100 + (work.dx & 0xff);
         get_clock();
 
         mml_seg.ge_delay = work.al;
@@ -4531,10 +4460,10 @@ notend: // ↑
         return enmPass2JumpTable.olc03;
     }
 
-    //==============================================================================
+    /**
     // "S" Command[装飾音符の設定]
     // Sspeed[, depth]
-    //==============================================================================
+     */
     private enmPass2JumpTable sousyoku_onp_set() {
         boolean cy;
         int[] bx = new int[1];
@@ -4543,7 +4472,7 @@ notend: // ↑
         char ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
         if (ch == 'E') return ssgeg_set();
 
-        work.dx = (byte) 'S' * 0x100 + (byte) work.dx;
+        work.dx = 'S' * 0x100 + (work.dx & 0xff);
         get_clock();
 
         mml_seg.ss_speed = work.al;
@@ -4572,12 +4501,12 @@ notend: // ↑
                 }
             }
 //ss_exit:
-            work.ah = (byte) mml_seg.ss_depth;
+            work.ah = (byte) (mml_seg.ss_depth & 0xff);
             if ((work.ah & 0x80) != 0) { // break ss_exit_1;
                 work.ah = (byte) -work.ah;
             }
 //ss_exit_1:
-            work.al = (byte) mml_seg.ss_speed;
+            work.al = (byte) (mml_seg.ss_speed & 0xff);
             if (work.ah != 1) { // break ss_exit_2;
 
                 if (work.al * work.ah > 0xff) {
@@ -4603,10 +4532,10 @@ notend: // ↑
         return enmPass2JumpTable.olc03;
     }
 
-    //==============================================================================
+    /**
     // "SE" Command[SSGEG指定] →yコマンド変換
     // SEslot,num
-    //==============================================================================
+     */
     private enmPass2JumpTable ssgeg_set() {
         boolean cy;
         int[] bx = new int[1];
@@ -4649,7 +4578,7 @@ notend: // ↑
         byte ah_p = work.ah;
 
         cy = lngset2(/* out */ bx, /* out */ al); // AL=num
-        int cx = ah_p * 0x100 + al_p; // CL=slot
+        int cx = (ah_p & 0xff) * 0x100 + (al_p & 0xff); // CL=slot
 
         if (cy) {
             error('S', 6, work.si);
@@ -4712,13 +4641,13 @@ sss_notfm2:
 
     private void sss_set1slot(byte dh) {
         m_seg.m_buf.set(work.di++, new MmlDatum(0xef));
-        m_seg.m_buf.set(work.di++, new MmlDatum(dh));
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dh & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
     }
 
-    //==============================================================================
+    /**
     // "Z" Command[小節の長さ指定]
-    //==============================================================================
+     */
     private enmPass2JumpTable syousetu_lng_set() {
         int[] bx = new int[1]; byte[] al = new byte[1];
         lngset(/* out */ bx, /* out */ al);
@@ -4730,10 +4659,10 @@ sss_notfm2:
         return enmPass2JumpTable.parset;
     }
 
-    //==============================================================================
+    /**
     // "H" Command （ハードLFOの設定）
     //  Hpms[, ams][, dly]
-    //==============================================================================
+     */
     private enmPass2JumpTable hardlfo_set() {
 //#if efc
 //        error('H', 11, work.si);
@@ -4750,7 +4679,7 @@ sss_notfm2:
         char ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
         if (ch == ',') { // break pmsonly;
             work.si++;
-            int ax_p = work.ah * 0x100 + work.al;
+            int ax_p = (work.ah & 0xff) * 0x100 + (work.al & 0xff);
             cy = lngset(/* out */ bx, /* out */ al);
             work.bx = ax_p;
 
@@ -4766,16 +4695,16 @@ sss_notfm2:
         }
 //bxset00:
         work.al <<= 4;
-        work.al |= (byte) work.bx;
+        work.al |= (byte) (work.bx & 0xff);
         work.al &= 0b0011_0111;
         work.ah = work.al;
         work.al = (byte) 0xe1;
 
-        m_seg.m_buf.set(work.di + 0, new MmlDatum(work.al));
-        m_seg.m_buf.set(work.di + 1, new MmlDatum(work.ah));
+        m_seg.m_buf.set(work.di + 0, new MmlDatum(work.al & 0xff));
+        m_seg.m_buf.set(work.di + 1, new MmlDatum(work.ah & 0xff));
         work.di += 2;
 
-        work.dx = (byte) 'H' * 0x100 + (byte) work.dx;
+        work.dx = 'H' * 0x100 + (work.dx & 0xff);
         work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
 
         if (work.al == (byte) ',') return hdelay_set2();
@@ -4785,7 +4714,7 @@ sss_notfm2:
 //#endif
     }
 
-    //==============================================================================
+    /**
     // Command "#" （ハードLFOのスイッチ）
     //  #sw[,depth]
     // Command "#w/#p/#a/##" （OPM用）
@@ -4794,7 +4723,7 @@ sss_notfm2:
     //  #a amd
     //  ## wf,pmd,amd
     // Command "#D" ハードLFOディレイ
-    //==============================================================================
+     */
 //#if efc
 
 //    private enmPass2JumpTable hardlfo_onoff() {
@@ -4844,8 +4773,8 @@ sss_notfm2:
         return enmPass2JumpTable.parset;
     }
 
-    private enmPass2JumpTable hdelay_set() {
-        work.dx = (byte) '#' * 0x100 + (byte) work.dx;
+    private Mc.enmPass2JumpTable hdelay_set() {
+        work.dx = '#' * 0x100 + (work.dx & 0xff);
         return hdelay_set2();
     }
 
@@ -4897,7 +4826,7 @@ sss_notfm2:
         cy = getnum(/* out */ bx, /* out */ dl);
 
         m_seg.m_buf.set(work.di++, new MmlDatum(0xd7));
-        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
     }
 
     private void wf_set() {
@@ -4910,7 +4839,7 @@ sss_notfm2:
             error('#', 2, work.si);
         }
         m_seg.m_buf.set(work.di++, new MmlDatum(0xd9));
-        m_seg.m_buf.set(work.di++, new MmlDatum(al[0]));
+        m_seg.m_buf.set(work.di++, new MmlDatum(al[0] & 0xff));
     }
 
     private void pmd_set() {
@@ -4922,7 +4851,7 @@ sss_notfm2:
         dl[0] |= 0x80;
 
         m_seg.m_buf.set(work.di++, new MmlDatum(0xd8));
-        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
     }
 
     private void amd_set() {
@@ -4934,14 +4863,14 @@ sss_notfm2:
         dl[0] &= 0x7f;
 
         m_seg.m_buf.set(work.di++, new MmlDatum(0xd8));
-        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
     }
 
 //#endif
 
-    //==============================================================================
+    /**
     // "<",">" の反転
-    //==============================================================================
+     */
     private enmPass2JumpTable octrev() {
         if (comtbl[ou00].getItem1().equals(">")) {
             comtbl[ou00] = new Tuple<>("<", this::octup);
@@ -4954,9 +4883,9 @@ sss_notfm2:
         return enmPass2JumpTable.olc03;
     }
 
-    //==============================================================================
+    /**
     // "^" ... Length Multiple
-    //==============================================================================
+     */
     private enmPass2JumpTable lngmul() {
         boolean cy;
         int[] bx = new int[1];
@@ -4984,12 +4913,12 @@ sss_notfm2:
 
         int cx = work.al; //cx = 足す回数
 
-        work.al = (byte) m_seg.m_buf.get(work.di - 1).dat; // al = 足される数
+        work.al = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff); // al = 足される数
         work.ah = work.al; // ah = 足す数
 
         //lnml00:;
         do {
-            if (work.al + work.ah > 0xff) {
+            if ((work.al & 0xff) + (work.ah & 0xff) > 0xff) {
                 work.al += work.ah;
                 lm_over();
             } else {
@@ -4999,7 +4928,7 @@ sss_notfm2:
             cx--;
         } while (cx > 0);
 
-        m_seg.m_buf.set(work.di - 1, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di - 1, new MmlDatum(work.al & 0xff));
 
         return enmPass2JumpTable.olc03;
     }
@@ -5025,7 +4954,7 @@ sss_notfm2:
         }
 
         m_seg.m_buf.set(work.di, new MmlDatum(0xfb));
-        byte bl = (byte) m_seg.m_buf.get(work.di - 2).dat;
+        byte bl = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
         m_seg.m_buf.set(work.di + 1, new MmlDatum(bl));
         m_seg.m_buf.set(work.di + 2, new MmlDatum(0));
         work.di += 3;
@@ -5034,10 +4963,10 @@ sss_notfm2:
         return; // break lnml01;
     }
 
-    //==============================================================================
+    /**
     // "="  ... Length Rewrite
     // 数値 ... Length Rewrite
-    //==============================================================================
+     */
     private enmPass2JumpTable lngrew() {
         boolean cy;
         int[] bx = new int[1];
@@ -5058,7 +4987,7 @@ sss_notfm2:
         char ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
         if (ch == '.') { // break not_futen_rew;
 
-            work.al = (byte) m_seg.m_buf.get(work.di).dat;
+            work.al = (byte) (m_seg.m_buf.get(work.di).dat & 0xff);
             mml_seg.leng = work.al;
 //            break futen_rew;
         } else {
@@ -5074,7 +5003,7 @@ sss_notfm2:
 //futen_rew:
         cy = futen();
 
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         if (!cy) return enmPass2JumpTable.olc03;
 
         if ((mml_seg.prsok & 8) == 0) return enmPass2JumpTable.olc03; // ポルタ?
@@ -5089,9 +5018,9 @@ sss_notfm2:
         return lngrew();
     }
 
-    //==============================================================================
+    /**
     // "-"  ... Length 減算
-    //==============================================================================
+     */
     private enmPass2JumpTable lng_dec() {
         boolean cy;
         int[] bx = new int[1];
@@ -5111,13 +5040,13 @@ sss_notfm2:
         if (cy) {
             error('-', 8, work.si);
         }
-        byte d = (byte) m_seg.m_buf.get(work.di - 1).dat;
+        byte d = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
         if (d <= work.al) {
             error('-', 8, work.si);
             // c or z=1
         }
         d -= work.al;
-        m_seg.m_buf.set(work.di - 1, new MmlDatum(d));
+        m_seg.m_buf.set(work.di - 1, new MmlDatum(d & 0xff));
         return enmPass2JumpTable.olc03;
     }
 
@@ -5134,10 +5063,9 @@ sss_notfm2:
         return enmPass2JumpTable.olc03;
     }
 
-    //4372-4428
-    //==============================================================================
+    /**
     // c ～ b の時
-    //==============================================================================
+     */
     private enmPass2JumpTable otoc() {
         work.al = 0;
         work.ah = mml_seg.def_c;
@@ -5210,9 +5138,9 @@ sss_notfm2:
         if (mml_seg.part != mml_seg.rhythm)
             return ots000();
 
-        //==============================================================================
+        /**
         // リズム（Ｒ）パートで音程が指定された＝［＠ｎ ｃ］に変換
-        //==============================================================================
+         */
         int cx = mml_seg.lastprg;
         if (cx == 0) {
             error(work.dx >> 8, 30, work.si);
@@ -5220,10 +5148,10 @@ sss_notfm2:
 
         if (mml_seg.skip_flag != 0) return bp9();
 
-        cx = (byte) cx * 0x100 + ((cx & 0xff00) >> 8);
+        cx = (byte) (((cx & 0xff) * 0x100 + ((cx & 0xff00) >> 8)) & 0xff);
 
-        m_seg.m_buf.set(work.di + 0, new MmlDatum((byte) cx)); //KUMA: @n
-        m_seg.m_buf.set(work.di + 1, new MmlDatum((byte) (cx >> 8))); //KUMA: c
+        m_seg.m_buf.set(work.di + 0, new MmlDatum(cx & 0xff)); //KUMA: @n
+        m_seg.m_buf.set(work.di + 1, new MmlDatum((cx & 0xff00) >> 8)); //KUMA: c
         work.di += 2;
 
         mml_seg.length_check1 = 1; // 音長データがあったよ
@@ -5233,17 +5161,15 @@ sss_notfm2:
 //#endif
     }
 
-    //4429-4600
-    //==============================================================================
+    /**
     // =,+,- 判定
-    //==============================================================================
+     */
     private enmPass2JumpTable ots000() {
-        if (work.al == 0x0c) // x?
-        {
+        if (work.al == 0x0c) { // x?
             return otoset_x(); // なら素直にそのまま設定
         }
 
-        byte bh = (byte) mml_seg.octave;
+        byte bh = (byte) (mml_seg.octave & 0xff);
         byte bl;
         bh &= 0xf; // bh<-オクターブ
         char ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
@@ -5269,16 +5195,16 @@ sss_notfm2:
                 work.si++;
             }
 
-            //==============================================================================
+            /**
             // c- は 1oct 下へ, b+ は 1oct 上へ
-            //==============================================================================
+             */
 
             //bp3:;
             work.al &= 0xf;
             bl = work.al;
             if (bl == 0xf) {
                 bh--;
-                if (bh == 0xff) {
+                if (bh == (byte) 0xff) {
                     error(work.dx >> 8, 26, work.si);
                 }
                 bl = 0xb;
@@ -5296,12 +5222,12 @@ sss_notfm2:
             ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
         } while (ch == '+' || ch == '-');
 
-        //==============================================================================
+        /**
         // 音階データをblにセット
-        //==============================================================================
-        bh = (byte) (bh << 4);
+         */
+        bh = (byte) ((bh & 0x0f) << 4);
         bl |= bh; // bl=音階 DATA //KUMA: 上位4bit:オクターブ  下位4bit:音階
-        work.bx = bh * 0x100 + bl;
+        work.bx = (bh & 0xff) * 0x100 + (bl & 0xff);
         mml_seg.ontei = work.al;
 
         return enmPass2JumpTable.ots002;
@@ -5312,7 +5238,7 @@ sss_notfm2:
 
         // PITCH/DETUNE SET
         int bx_p = work.bx;
-        work.al = (byte) work.bx;
+        work.al = (byte) (work.bx & 0xff);
         work.bx = 0;
         if (mml_seg.pitch != 0) { // break bp6;
 
@@ -5335,7 +5261,7 @@ sss_notfm2:
                 //int dx_p = Work.dx; //KUMA:不要(x86ではidiv imulするとdxに影響がある)
                 work.dx = 0;
                 ax = 32;
-                work.bx = (byte) mml_seg.bend;
+                work.bx = (byte) (mml_seg.bend & 0xff);
                 ax *= work.bx;
                 work.bx = mml_seg.pitch;
                 ax *= work.bx;
@@ -5344,7 +5270,7 @@ sss_notfm2:
                 //Work.dx = dx_p; //KUMA:不要
 
                 work.bx = work.dx;
-                work.dx = fnumdat_seg.fnumTbl[work.bx]; // DX = PITCHを掛けない状態の Fnum値
+                work.dx = fnumTbl[work.bx]; // DX = PITCHを掛けない状態の Fnum値
                 ax *= 2;
                 work.bx += ax; // BX = PITCHを掛けた後のFnum値のある番地
 
@@ -5362,7 +5288,7 @@ sss_notfm2:
                     // break bp50; // KUMA:bp51のほうが無駄がないような気がする
                 }
 //bp52:
-                work.dx -= fnumdat_seg.fnumTbl[work.bx];
+                work.dx -= fnumTbl[work.bx];
                 work.bx = work.dx;
                 work.bx = -work.bx; // BX = PITCHをDETUNEに換算した値
             }
@@ -5374,9 +5300,9 @@ sss_notfm2:
             if (mml_seg.porta_flag != 1) { // break porta_pitchset;
                 work.al = (byte) 0xfa;
 
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) work.bx));
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) (work.bx >> 8)));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
+                m_seg.m_buf.set(work.di++, new MmlDatum((work.bx & 0xff00) >> 8));
 
 //bp6b:
                 mml_seg.alldet = work.bx;
@@ -5392,9 +5318,9 @@ sss_notfm2:
         }
         work.di--;
         work.al = (byte) 0xfa;
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) work.bx));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) (work.bx >> 8)));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum((work.bx & 0xff00) >> 8));
         m_seg.m_buf.set(work.di++, new MmlDatum(0xda));
 
 //        break bp6b;
@@ -5404,9 +5330,9 @@ sss_notfm2:
         return bp8(); // <<
     }
 
-    //==============================================================================
+    /**
     // REST 用 entry
-    //==============================================================================
+     */
     private enmPass2JumpTable rest() {
 //#if !efc
 
@@ -5428,11 +5354,9 @@ sss_notfm2:
         return bp8();
     }
 
-
-    //4617-4639
-    //==============================================================================
+    /**
     // 音階 DATA SET
-    //==============================================================================
+     */
     private enmPass2JumpTable bp8() {
         if (mml_seg.skip_flag != 0) { // break bp8b;
             if (mml_seg.acc_adr == work.di) {
@@ -5458,14 +5382,14 @@ sss_notfm2:
         mml_seg.length_check1 = 1; // 音長データがあった
         mml_seg.length_check2 = 1;
 
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) work.bx));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
 
         return bp9();
     }
 
-    //==============================================================================
+    /**
     // 音長計算
-    //==============================================================================
+     */
     private enmPass2JumpTable bp9() {
         MMLType mt = MMLType.Note;
         if (work.al == 0xf) {
@@ -5490,11 +5414,11 @@ sss_notfm2:
         if (!work.isIDE)
             press();
 
-        //==============================================================================
+        /**
         // 音長 DATA SET
-        //==============================================================================
+         */
 
-        work.al = (byte) mml_seg.leng;
+        work.al = (byte) (mml_seg.leng & 0xff);
 
         LinePos lp = MakeLinePos();
         MmlDatum dmy = m_seg.m_buf.get(work.di - 1);
@@ -5523,13 +5447,13 @@ sss_notfm2:
         dmy.linePos = lp;
 
 
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
-        //MSeg.m_buf.set(Work.di++, new MmlDatum(Work.al));
+        //MSeg.m_buf.set(Work.di++, new MmlDatum(Work.al & 0xff));
         mml_seg.prsok |= 1; // 音長flagをset
         mml_seg.prsok &= 0xf3; // 音長+タイ,ポルタflagをreset
 
-        work.al = (byte) m_seg.m_buf.get(work.di - 2).dat;
+        work.al = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
         work.al &= 0xf;
         if (work.al == 0xf) return bp10(); // 休符
         if (mml_seg.tie_flag != 0) return bp10();
@@ -5588,48 +5512,48 @@ sss_notfm2:
         return enmPass2JumpTable.olc02;
     }
 
-    //==============================================================================
+    /**
     // 擬似エコーのセット
-    //==============================================================================
+     */
     private void ge_set() {
         mml_seg.ge_depth = mml_seg.ge_depth2;
         //ge_loop:;
         do {
-            work.al = (byte) m_seg.m_buf.get(work.di - 1).dat;
-            if (work.al - (byte) mml_seg.ge_delay <= 0) {
-                work.al -= (byte) mml_seg.ge_delay;
+            work.al = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
+            if (work.al - (mml_seg.ge_delay & 0xff) <= 0) {
+                work.al -= (byte) (mml_seg.ge_delay & 0xff);
                 break; // 長さが足りない(cf or zf= 1)
             }
-            work.al -= (byte) mml_seg.ge_delay;
+            work.al -= (byte) (mml_seg.ge_delay & 0xff);
             byte dh = work.al; // dh=length-delay
-            byte dl = (byte) m_seg.m_buf.get(work.di - 2).dat; // dl=onkai
-            work.dx = dh * 0x100 + dl;
+            byte dl = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff); // dl=onkai
+            work.dx = (dh & 0xff) * 0x100 + (dl & 0xff);
 
-            work.al = (byte) mml_seg.ge_delay;
-            m_seg.m_buf.set(work.di - 1, new MmlDatum(work.al));
+            work.al = (byte) (mml_seg.ge_delay & 0xff);
+            m_seg.m_buf.set(work.di - 1, new MmlDatum(work.al & 0xff));
 
             if (mml_seg.ss_length != 0) { // break ge_ss1;
-                work.al = (byte) mml_seg.ss_length; // 長さが足りない
-                byte d = (byte) m_seg.m_buf.get(work.di - 1).dat;
-                if (work.al - d >= 0) {
+                work.al = (byte) (mml_seg.ss_length & 0xff); // 長さが足りない
+                byte d = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
+                if ((work.al & 0xff) - (d & 0xff) >= 0) {
                     work.al -= d;
 //                    break ge_ss1;
                 } else {
                     work.al -= d;
-                    work.al = (byte) mml_seg.ge_flag1; // (^の重複を避ける
+                    work.al = (byte) (mml_seg.ge_flag1 & 0xff); // (^の重複を避ける
                     if (work.al != 0) { // break no_dec_di;
 
-                        d = (byte) m_seg.m_buf.get(work.di - 4).dat;
+                        d = (byte) (m_seg.m_buf.get(work.di - 4).dat & 0xff);
                         if (work.al == d) { // break no_dec_di;
 
-                            work.al = (byte) mml_seg.ge_flag2;
-                            d = (byte) m_seg.m_buf.get(work.di - 3).dat;
+                            work.al = (byte) (mml_seg.ge_flag2 & 0xff);
+                            d = (byte) (m_seg.m_buf.get(work.di - 3).dat & 0xff);
                             if (work.al == d) { // break no_dec_di;
 
-                                int ax = (byte) m_seg.m_buf.get(work.di - 2).dat;
+                                int ax = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
                                 ax += (byte) m_seg.m_buf.get(work.di - 1).dat * 0x100;
-                                m_seg.m_buf.set(work.di - 4, new MmlDatum((byte) ax));
-                                m_seg.m_buf.set(work.di - 3, new MmlDatum((byte) (ax >> 8)));
+                                m_seg.m_buf.set(work.di - 4, new MmlDatum(ax & 0xff));
+                                m_seg.m_buf.set(work.di - 3, new MmlDatum((ax & 0xff00) >> 8));
                                 work.di -= 2;
                             }
                         }
@@ -5642,12 +5566,12 @@ sss_notfm2:
             }
 //ge_ss1:
             if ((mml_seg.ge_tie & 1) != 0) { // break ge_not_tie;
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) 0xfb)); // "&"
+                m_seg.m_buf.set(work.di++, new MmlDatum(0xfb)); // "&"
             }
 //ge_not_tie:
             ge_set_vol();
-            m_seg.m_buf.set(work.di + 0, new MmlDatum((byte) work.dx));
-            m_seg.m_buf.set(work.di + 1, new MmlDatum((byte) (work.dx >> 8)));
+            m_seg.m_buf.set(work.di + 0, new MmlDatum(work.dx & 0xff));
+            m_seg.m_buf.set(work.di + 1, new MmlDatum((work.dx & 0xff00) >> 8));
             work.di += 2;
             mml_seg.prsok |= 2; // 直前byte = 加工された音長
             if ((mml_seg.ge_tie & 2) != 0) break;
@@ -5670,19 +5594,19 @@ sss_notfm2:
                 return; // <<
             }
 
-            //==============================================================================
+            /**
             // 音量が上がる
-            //==============================================================================
+             */
             if (mml_seg.ge_dep_flag != 1) { // break gen_no_sel_vol;
                 ongen_sel_vol();
             }
 //gen_no_sel_vol:
             if (work.al != 0) { // break gen_not_set; // 0?
 
-                m_seg.m_buf.set(work.di, new MmlDatum((byte) 0xde));
+                m_seg.m_buf.set(work.di, new MmlDatum(0xde));
                 work.di++;
                 mml_seg.ge_flag1 = 0xde;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 mml_seg.ge_flag2 = work.al;
             }
 //gen_not_set:
@@ -5705,9 +5629,9 @@ sss_notfm2:
             mml_seg.ge_depth = 127; //    mov[ge_depth],+127
             return;
         } else {
-            //==============================================================================
+            /**
             // 音量が下がる
-            //==============================================================================
+             */
 //ge_minus:
             work.al = (byte) -work.al;
             if (mml_seg.ge_dep_flag != 1) { // break gem_no_sel_vol;
@@ -5716,10 +5640,10 @@ sss_notfm2:
 //gem_no_sel_vol:
             if (work.al != 0) { // break gem_not_set; // 0?
 
-                m_seg.m_buf.set(work.di, new MmlDatum((byte) 0xdd));
+                m_seg.m_buf.set(work.di, new MmlDatum(0xdd));
                 work.di++;
                 mml_seg.ge_flag1 = 0xdd;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 mml_seg.ge_flag2 = work.al;
             }
 //gem_not_set:
@@ -5744,9 +5668,9 @@ sss_notfm2:
         mml_seg.ge_depth = -127; //    mov[ge_depth],-127
     }
 
-    //==============================================================================
+    /**
     // 各音源によって音量の増減を変える
-    //==============================================================================
+     */
     private void ongen_sel_vol() {
 //#if !efc
         if (mml_seg.part != mml_seg.pcmpart) { // break sel_pcm;
@@ -5773,19 +5697,19 @@ sss_notfm2:
 //#endif
     }
 
-    //==============================================================================
+    /**
     // 装飾音符のセット
-    //==============================================================================
+     */
     private void ss_set() {
         work.al = (byte) mml_seg.ss_length;
-        byte d = (byte) m_seg.m_buf.get(work.di - 1).dat;
+        byte d = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
         if (work.al - d >= 0) {
             work.al -= d;
             return; // break ss_set_ret; // 長さが足りない
         }
         work.al -= d;
 
-        d = (byte) m_seg.m_buf.get(work.di - 2).dat;
+        d = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
         if (d == 0x0c) // x?
         {
             return; // break ss_set_ret; // なら装飾しない
@@ -5793,16 +5717,16 @@ sss_notfm2:
 
         work.di -= 2;
 
-        work.dx = (byte) m_seg.m_buf.get(work.di + 0).dat;
+        work.dx = (byte) (m_seg.m_buf.get(work.di + 0).dat & 0xff);
         work.dx += (byte) m_seg.m_buf.get(work.di + 1).dat * 0x100;
 
         work.dx = ((byte) (work.dx >> 8) | (work.dx << 8)) & 0xffff; // Dh=Onkai/Dl=Length
         work.al = (byte) mml_seg.ss_depth;
         if ((work.al & 0x80) != 0) { // break ss_plus;
 
-            //==============================================================================
+            /**
             // 下から上がる
-            //==============================================================================
+             */
             work.al = (byte) -work.al;
             int cx = work.al;            // cx = Depth
             work.bx = (work.dx & 0xff00) | (byte) work.bx; // bh = Onkai(for Move)
@@ -5815,14 +5739,14 @@ sss_notfm2:
             do {
                 if (mml_seg.ge_flag1 != 0) { // break ssm_non_ge;
                     work.al = (byte) mml_seg.ge_flag1;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                     work.al = (byte) mml_seg.ge_flag2;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 }
 //ssm_non_ge:
                 work.al = (byte) mml_seg.ss_speed;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.bx >> 8));
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum((work.bx & 0xff00) >> 8));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 if (mml_seg.ss_tie != 0) { // break ssm_not_tie;
                     m_seg.m_buf.set(work.di++, new MmlDatum(0xfb)); // "&"
                 }
@@ -5831,9 +5755,9 @@ sss_notfm2:
             } while ((work.bx & 0xff00) != (work.dx & 0xff00)); // break ss_minus_loop2;
 //            break ss_fin;
         } else {
-            //==============================================================================
+            /**
             // 上から下がる
-            //==============================================================================
+             */
 //ss_plus:
             int cx = work.al; // cx = Depth
             work.bx = (work.dx & 0xff00) | (byte) work.bx; // bh = Onkai(for Move)
@@ -5846,14 +5770,14 @@ sss_notfm2:
             do {
                 if (mml_seg.ge_flag1 != 0) { // break ssp_non_ge;
                     work.al = (byte) mml_seg.ge_flag1;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                     work.al = (byte) mml_seg.ge_flag2;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 }
 //ssp_non_ge:
                 work.al = (byte) mml_seg.ss_speed;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.bx >> 8));
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum((work.bx & 0xff00) >> 8));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 if (mml_seg.ss_tie != 0) { // break ssp_not_tie;
                     m_seg.m_buf.set(work.di++, new MmlDatum(0xfb)); // "&"
                 }
@@ -5861,30 +5785,30 @@ sss_notfm2:
                 one_down();
             } while ((work.bx & 0xff00) != (work.dx & 0xff00)); // break ss_plus_loop2;
         }
-        //==============================================================================
+        /**
         // 最後の音符を書き込む
-        //==============================================================================
+         */
 //ss_fin:
         if (mml_seg.ge_flag1 != 0) { // break ssf_non_ge;
             work.al = (byte) mml_seg.ge_flag1;
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             work.al = (byte) mml_seg.ge_flag2;
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         }
 //ssf_non_ge:
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.dx >> 8));
+        m_seg.m_buf.set(work.di++, new MmlDatum((work.dx & 0xff00) >> 8));
         byte dl = (byte) work.dx;
         dl -= (byte) mml_seg.ss_length;
-        m_seg.m_buf.set(work.di++, new MmlDatum(dl));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dl & 0xff));
         work.dx = (work.dx & 0xff00) | dl;
         mml_seg.prsok |= 2; // 直前byte = 加工された音長
 //ss_set_ret:
     }
 
-    //==============================================================================
+    /**
     // 音階を一つ下げる
     //  input/output bh to Onkai
-    //==============================================================================
+     */
     private void one_down() {
         byte bh = (byte) (work.bx >> 8);
         bh--;
@@ -5903,10 +5827,10 @@ sss_notfm2:
         //one_down_ret:;
     }
 
-    //==============================================================================
+    /**
     // 音階を一つ上げる
     //  input/output bh to Onkai
-    //==============================================================================
+     */
     private void one_up() {
         byte bh = (byte) (work.bx >> 8);
         bh++;
@@ -5926,11 +5850,9 @@ sss_notfm2:
         //one_up_ret:;
     }
 
-
-    //4998-5057
-    //==============================================================================
+    /**
     // 前も同じ音符で、しかも"&"で繋がっていた場合は、圧縮する処理
-    //==============================================================================
+     */
     private void press() {
         byte d;
 prs3: // ↑
@@ -5944,7 +5866,7 @@ prs200: // ↑
                     if (mml_seg.skip_flag != 0) return;
                     if ((mml_seg.prsok & 0x04) == 0) //直前 = +タイ？
                     {
-                        d = (byte) m_seg.m_buf.get(work.di - 1).dat;
+                        d = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
                         if (d != 0xf) return;
                         if ((mml_seg.prsok & 0x01) != 0) break restprs; //直前 = 音長？
                         return;
@@ -5955,8 +5877,8 @@ prs200: // ↑
 //#endif
 
 //prs0:
-                    byte ah = (byte) m_seg.m_buf.get(work.di - 1).dat;
-                    d = (byte) m_seg.m_buf.get(work.di - 4).dat;
+                    byte ah = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
+                    d = (byte) (m_seg.m_buf.get(work.di - 4).dat & 0xff);
                     if (ah != d) return;
 //prs1:
                     if (work.di - 1 == skipIndex) {
@@ -5966,8 +5888,8 @@ prs200: // ↑
 
                     mml_seg.prsok |= 2; // 加工したflag
 
-                    d = (byte) m_seg.m_buf.get(work.di).dat;
-                    if (work.al + d <= 255) {
+                    d = (byte) (m_seg.m_buf.get(work.di).dat & 0xff);
+                    if ((work.al & 0xff) + d <= 255) {
                         work.al += d;
                         break prs200;
                     }
@@ -5988,7 +5910,7 @@ prs200: // ↑
                     }
                     work.di--;
 
-                    m_seg.m_buf.set(work.di - 1, new MmlDatum(ah)); // r&r -> rr に変更
+                    m_seg.m_buf.set(work.di - 1, new MmlDatum(ah & 0xff)); // r&r -> rr に変更
                 }
 //prs200:
                 mml_seg.leng = work.al;
@@ -5999,7 +5921,7 @@ prs200: // ↑
             if (mml_seg.part != mml_seg.rhythm) { // break prs3;
 //#endif
 
-                d = (byte) m_seg.m_buf.get(work.di - 3).dat;
+                d = (byte) (m_seg.m_buf.get(work.di - 3).dat & 0xff);
                 if (d != 0xf) return;
             }
         }
@@ -6011,8 +5933,8 @@ prs200: // ↑
         work.di -= 2;
 
         mml_seg.prsok |= 2; // 加工したflag
-        d = (byte) m_seg.m_buf.get(work.di).dat;
-        if (work.al + d <= 255) {
+        d = (byte) (m_seg.m_buf.get(work.di).dat & 0xff);
+        if ((work.al & 0xff) + d <= 255) {
             work.al += d;
 //            break prs200;
             mml_seg.leng = work.al; // <<
@@ -6033,10 +5955,10 @@ prs200: // ↑
         return; // <<
     }
 
-    //==============================================================================
+    /**
     // 数値の読み出し（書かれていない時は１）
     //  output bx/al/[leng]
-    //==============================================================================
+     */
     private boolean lngset(/* out */ int[] bx, /* out */ byte[] al) {
         if (!lngset2(/* out */ bx, /* out */ al)) return false;
 
@@ -6049,11 +5971,11 @@ prs200: // ↑
         return true;
     }
 
-    //==============================================================================
+    /**
     // [si] から数値を読み出す
     // 数字が書かれていない場合は[deflng] の値が返り、cy=1になる
     //  output al/bx/[leng]
-    //==============================================================================
+     */
     private boolean lngset2(/* out */ int[] bx, /* out */ byte[] al) {
         char ch;
         bx[0] = 0;
@@ -6146,11 +6068,11 @@ prs200: // ↑
         }
     }
 
-    //==============================================================================
+    /**
     // 符点(.)があるかを見て、あれば[leng] を1.5倍する。
     // 符点が２個以上あっても可
     //  output al/bl/[leng]
-    //==============================================================================
+     */
     private boolean futen() {
         char ch;
 
@@ -6186,16 +6108,16 @@ prs200: // ↑
             if (mml_seg.part == mml_seg.rhythm) { // break ft1_r;
 //#endif
 //ft1_r:
-                m_seg.m_buf.set(work.di + 0, new MmlDatum((byte) 255)); // 音長255＋休符を設定
-                m_seg.m_buf.set(work.di + 1, new MmlDatum((byte) 0x0f));
+                m_seg.m_buf.set(work.di + 0, new MmlDatum(255)); // 音長255＋休符を設定
+                m_seg.m_buf.set(work.di + 1, new MmlDatum(0x0f));
                 work.di += 2;
 //                break ft2;
             } else {
-                m_seg.m_buf.set(work.di + 0, new MmlDatum((byte) 255)); // 音長255＋タイを設定
-                m_seg.m_buf.set(work.di + 1, new MmlDatum((byte) 0xfb));
+                m_seg.m_buf.set(work.di + 0, new MmlDatum(255)); // 音長255＋タイを設定
+                m_seg.m_buf.set(work.di + 1, new MmlDatum(0xfb));
                 work.di += 2;
-                byte bl = (byte) m_seg.m_buf.get(work.di - 3).dat;
-                m_seg.m_buf.set(work.di, new MmlDatum(bl)); // 音符
+                byte bl = (byte) (m_seg.m_buf.get(work.di - 3).dat & 0xff);
+                m_seg.m_buf.set(work.di, new MmlDatum(bl & 0xff)); // 音符
                 work.di++;
             }
 //ft2:
@@ -6212,7 +6134,6 @@ prs200: // ↑
         }
     }
 
-    //5220-5226
     private void futen_skip() {
         char ch;
         do {
@@ -6222,13 +6143,12 @@ prs200: // ↑
         work.si--;
     }
 
-    //5227-5243
-    //==============================================================================
+    /**
     // 0 ～ 9 の数値を得る
     //  inputs -- ds:si to mml pointer
     // outputs -- al
     //   -- cy[1 = error]
-    //==============================================================================
+     */
     private boolean numget(/* out */ byte[] al) {
         char ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
         al[0] = (byte) (ch - '0');
@@ -6245,10 +6165,9 @@ prs200: // ↑
         return false;
     }
 
-    //5244-5269
-    //==============================================================================
+    /**
     // COMMAND "o" オクターブの設定
-    //==============================================================================
+     */
     private Mc.enmPass2JumpTable octset() {
         char alc = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
         if (alc == '+' || alc == '-') {
@@ -6290,10 +6209,9 @@ prs200: // ↑
         octs0(al);
     }
 
-    //5270-5281
-    //==============================================================================
+    /**
     // COMMAND ">","<" オクターブup/down
-    //==============================================================================
+     */
     private enmPass2JumpTable octup() {
         byte al = (byte) (mml_seg.octave + 1);
         octs0(al);
@@ -6307,13 +6225,12 @@ prs200: // ↑
         return enmPass2JumpTable.olc03;
     }
 
-    //5282-5311
-    //==============================================================================
+    /**
     // COMMAND "l" デフォルト音長の設定
     // COMMAND "l=" 直前の音長の変更
     // COMMAND "l-" 直前の音長の減算
     // COMMAND "l^" 直前の音長の乗算
-    //==============================================================================
+     */
     private enmPass2JumpTable lengthset() {
         work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
         if (work.al == (byte) '=') return enmPass2JumpTable.lngrew;
@@ -6346,10 +6263,9 @@ prs200: // ↑
         return enmPass2JumpTable.olc03;
     }
 
-    //5312-5324
-    //==============================================================================
+    /**
     // COMMAND "C" 全音符の長さを設定
-    //==============================================================================
+     */
     private enmPass2JumpTable zenlenset() {
         boolean cy;
         int[] bx = new int[1];
@@ -6361,15 +6277,14 @@ prs200: // ↑
         return syousetu_lng_set_2();
     }
 
-    //5325-5347
-    //==============================================================================
+    /**
     // 音長から具体的な長さを得る
     //  INPUTS -- [leng]
     //        to 音長
     //   -- [zenlen]
     //        to 全音符の長さ
     // OUTPUTS -- al,[leng]
-    //==============================================================================
+     */
     private void lngcal() {
         work.al = (byte) mml_seg.leng;
         if (work.al == 0) {
@@ -6389,36 +6304,34 @@ prs200: // ↑
         mml_seg.leng = (byte) d;
     }
 
-
-    //5348-5356
-    //==============================================================================
+    /**
     // 2byte[dh / dl] の dataをセットして戻る
-    //==============================================================================
+     */
     private enmPass2JumpTable parset() {
-        byte b = (byte) work.dx;
-        work.dx = (work.dx >> 8) + b * 0x100;
+        byte b = (byte) (work.dx & 0xff);
+        work.dx = ((work.dx & 0xff00) >> 8) + (b & 0xff) * 0x100;
 
         MmlDatum cmd;
 
         if (work.ctype == MMLType.unknown) {
-            cmd = new MmlDatum((byte) work.dx);
+            cmd = new MmlDatum(work.dx & 0xff);
         } else {
-            cmd = new MmlDatum((byte) work.dx, work.ctype, MakeLinePos(), work.cargs);
+            cmd = new MmlDatum(work.dx & 0xff, work.ctype, MakeLinePos(), work.cargs);
             work.ctype = MMLType.unknown;
             work.cargs = null;
         }
 
         m_seg.m_buf.set(work.di + 0, cmd);
-        m_seg.m_buf.set(work.di + 1, new MmlDatum((byte) (work.dx >> 8)));
+        m_seg.m_buf.set(work.di + 1, new MmlDatum((work.dx & 0xff00) >> 8));
         work.di += 2;
 
         return enmPass2JumpTable.olc0;
     }
 
     //5357-5388
-    //==============================================================================
+    /**
     // COMMAND "t" / "T" テンポ／TimerBセット
-    //==============================================================================
+     */
     private enmPass2JumpTable tempoa() {
 //#if efc
         error('t', 12, work.si); // 効果音emlにはテンポは指定出来ない
@@ -6439,7 +6352,7 @@ prs200: // ↑
 
         m_seg.m_buf.set(work.di++, new MmlDatum(0xfc)); // t
         m_seg.m_buf.set(work.di++, new MmlDatum(0xff));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) work.bx));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
         return enmPass2JumpTable.olc0;
 //#else
         // call timerb_get
@@ -6449,11 +6362,9 @@ prs200: // ↑
 //#endif
     }
 
-    //5389-5428
-    //==============================================================================
+    /**
     // "T" Command Entry
-    //==============================================================================
-
+     */
     private enmPass2JumpTable tempob() {
 //#if efc
         error('T', 12, work.si); // 効果音emlにはテンポは指定出来ない
@@ -6466,7 +6377,7 @@ prs200: // ↑
         byte[] al = new byte[1];
         boolean cy = lngset(/* out */ bx, /* out */ al);
         //tset:;
-        if (cy || al[0] >= 251) // 251～255はエラー
+        if (cy || (al[0] & 0xff) >= 251) // 251～255はエラー
         {
             error('T', 2, work.si); // KUMA: t -> T
         }
@@ -6478,14 +6389,14 @@ prs200: // ↑
 
     private enmPass2JumpTable tempo_ss(byte ah) {
 //#if !efc
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) 0xfc));
-        m_seg.m_buf.set(work.di++, new MmlDatum(ah));
+        m_seg.m_buf.set(work.di++, new MmlDatum(0xfc));
+        m_seg.m_buf.set(work.di++, new MmlDatum(ah & 0xff));
         int[] bx = new int[1];
         byte[] dl = new byte[1];
         boolean cy = getnum(/* out */ bx, /* out */ dl);
         work.al = dl[0];
         if (work.al != 0) {
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             return enmPass2JumpTable.olc0;
         }
         //tss_non:;  ; t±0 T±0の時は無視
@@ -6494,15 +6405,13 @@ prs200: // ↑
 //#endif
     }
 
-
-    //5429-5449
-    //==============================================================================
+    /**
     // タイマＢの数値 を 計算
     //  INPUTS --  AL = TEMPO
     //  OUTPUTS -- DL = タイマＢの数値
     //
     // DL = 256 - [ 112CH / TEMPO]
-    //==============================================================================
+     */
     private void timerb_get(byte al, /* out */ byte[] dl) {
         dl[0] = 0;
         if (tempo_old_flag != 0) {
@@ -6514,18 +6423,18 @@ prs200: // ↑
             byte ah = (byte) (ax % bl);
             dl[0] = (byte) (0x100 - al);
 
-            if (ah > 127) {
+            if ((ah & 0xff) > 127) {
                 dl[0]--; // 四捨五入
             }
         }
     }
 
     //5450-5473
-    //==============================================================================
+    /**
     // clock値またはlength値を読み取る
     //  input dh  command name
     // output al  clock
-    //==============================================================================
+     */
     private void get_clock() {
         boolean cy;
         int[] bx = new int[1];
@@ -6555,19 +6464,19 @@ prs200: // ↑
         cy = lngset(/* out */ bx, /* out */ al);
     }
 
-    //==============================================================================
+    /**
     // COMMAND "q" step-gate time change
-    //==============================================================================
+     */
     private enmPass2JumpTable qset() {
         char al = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
         if (al != ',') { // break qsetb;
 
-            work.dx = ((byte) 'q') * 0x100 + (byte) work.dx;
+            work.dx = 'q' * 0x100 + (work.dx & 0xff);
             get_clock();
 
             //Work.dx = Work.al * 0x100 + (byte)0xfe;
-            //MSeg.m_buf.set(Work.di++, new MmlDatum((byte)Work.dx));
-            //MSeg.m_buf.set(Work.di++, new MmlDatum((byte)(Work.dx >> 8)));
+            //MSeg.m_buf.set(Work.di++, new MmlDatum(Work.dx & 0xff));
+            //MSeg.m_buf.set(Work.di++, new MmlDatum((Work.dx & 0xff00) >> 8)));
             work.ctype = MMLType.Gatetime;
             work.cargs = new Object[] {(int) work.al};
             work.dx = 0xfe00 + work.al;
@@ -6580,29 +6489,29 @@ prs200: // ↑
 
                 int dx_p = work.dx;
 
-                work.dx = ((byte) 'q') * 0x100 + (byte) work.dx;
+                work.dx = 'q' * 0x100 + (work.dx & 0xff);
                 get_clock();
-                work.dx = work.al * 0x100 + (byte) 0xb1;
+                work.dx = (work.al & 0xff) * 0x100 + 0xb1;
 
                 int ax = dx_p;
 
                 byte dh = (byte) (work.dx >> 8);
                 byte ah = (byte) (ax >> 8);
 
-                work.dx = ((byte) (dh - ah)) * 0x100 + (byte) work.dx;
+                work.dx = ((dh - ah) & 0xff) * 0x100 + (work.dx & 0xff);
                 if (dh - ah < 0) { // break qrnd_set;
                     dh = (byte) -(work.dx >> 8);
-                    dh |= 0x80;
-                    work.dx = dh * 0x100 + (byte) work.dx;
+                    dh |= (byte) 0x80;
+                    work.dx = (dh & 0xff) * 0x100 + (work.dx & 0xff);
                 }
 //qrnd_set:
                 if ((work.dx & 0xff00) != 0) { // break qseta;
 
-                    //MSeg.m_buf.set(Work.di++, new MmlDatum((byte)Work.dx));
-                    //MSeg.m_buf.set(Work.di++, new MmlDatum((byte)(Work.dx >> 8)));
+                    //MSeg.m_buf.set(Work.di++, new MmlDatum(Work.dx & 0xff));
+                    //MSeg.m_buf.set(Work.di++, new MmlDatum((Work.dx & 0xff00) >> 8)));
 
-                    byte b = (byte) work.dx;
-                    work.dx = (work.dx >> 8) + b * 0x100;
+                    byte b = (byte) (work.dx & 0xff);
+                    work.dx = ((work.dx & 0xff00) >> 8) + (b & 0xff) * 0x100;
                     work.ctype = MMLType.Gatetime;
                     work.cargs = new Object[] {(int) work.al};
                     parset();
@@ -6614,18 +6523,18 @@ prs200: // ↑
         }
 //qsetb:
         work.si++;
-        work.dx = ((byte) 'q') * 0x100 + (byte) work.dx;
+        work.dx = 'q' * 0x100 + (work.dx & 0xff);
         get_clock();
         work.dx = 0xb300 + work.al;
         work.ctype = MMLType.Gatetime;
-        work.cargs = new Object[] {(int) work.al};
+        work.cargs = new Object[] {work.al & 0xff};
         return enmPass2JumpTable.parset;
     }
 
     //5516-5548
-    //==============================================================================
+    /**
     // COMMAND "Q" step-gate time change 2
-    //==============================================================================
+     */
     private enmPass2JumpTable qset2() {
         boolean cy;
         int[] bx = new int[1];
@@ -6652,9 +6561,9 @@ prs200: // ↑
         return enmPass2JumpTable.parset;
     }
 
-    //==============================================================================
+    /**
     // COMMAND "Q%" step-gate time change 2
-    //==============================================================================
+     */
     private enmPass2JumpTable qset3() {
         work.si++;
 
@@ -6669,9 +6578,9 @@ prs200: // ↑
         return enmPass2JumpTable.parset;
     }
 
-    //==============================================================================
+    /**
     // COMMAND "v"/"V" volume_set
-    //==============================================================================
+     */
     private enmPass2JumpTable vseta() {
         char al = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
         if (al == '+') return enmPass2JumpTable.vss;
@@ -6717,7 +6626,7 @@ prs200: // ↑
         work.dx = 0xfd00 + (byte) work.dx;
         work.al = (byte) mml_seg.volss;
         work.al += (byte) work.dx;
-        if (work.al >= 0x80) { // break vset4;
+        if ((work.al & 0xff) >= 0x80) { // break vset4;
             if ((mml_seg.volss & 0x80) != 0) { // break vset3;
                 work.al = 0;
 //                break vset4;
@@ -6745,9 +6654,9 @@ prs200: // ↑
     }
 
     //5606-5621
-    //==============================================================================
+    /**
     // command "V" entry
-    //==============================================================================
+     */
     private enmPass2JumpTable vsetb() {
         int[] bx = new int[1];
         byte[] al = new byte[1];
@@ -6768,9 +6677,9 @@ prs200: // ↑
 //#if!efc
 
     //5622-5656
-    //==============================================================================
+    /**
     // PCM volset patch
-    //==============================================================================
+     */
     private enmPass2JumpTable vsetm() {
         if (mml_seg.pcm_vol_ext != 1) { // break vsetma;
             if ((byte) work.bx * 16 < 256) work.bx = (work.bx & 0xff00) + (byte) work.bx * 16;
@@ -6790,19 +6699,19 @@ prs200: // ↑
     }
 
     private enmPass2JumpTable vsetm1() {
-        work.dx = 0xfd00 + (byte) work.bx;
+        work.dx = 0xfd00 + (work.bx & 0xff);
         work.al = (byte) mml_seg.volss;
         if ((work.al & 0x80) != 0) { // break vsetm0;
-            boolean cy = (byte) work.dx + work.al > 255;
-            work.dx = (work.dx & 0xff00) + (byte) ((byte) work.dx + work.al);
+            boolean cy = (work.dx & 0xff) + (work.al & 0xff) > 255;
+            work.dx = (work.dx & 0xff00) + (((work.dx & 0xff) + (work.al & 0xff)) & 0xff);
             if (!cy) { // break vset4m;
                 work.dx = (work.dx & 0xff00);
             }
 //            break vset4m;
         } else {
 //vsetm0:
-            boolean cy = (byte) work.dx + work.al > 255;
-            work.dx = (work.dx & 0xff00) + (byte) ((byte) work.dx + work.al);
+            boolean cy = (work.dx & 0xff) + (work.al & 0xff) > 255;
+            work.dx = (work.dx & 0xff00) + (((work.dx & 0xff) + (work.al & 0xff)) & 0xff);
             if (cy) { // break vset4m;
                 work.dx = (work.dx & 0xff00) + 255;
             }
@@ -6811,19 +6720,19 @@ prs200: // ↑
         work.al = (byte) work.dx;
 
         //vset4相当
-        work.dx = (work.dx & 0xff00) + work.al;
+        work.dx = (work.dx & 0xff00) + (work.al & 0xff);
         mml_seg.nowvol = work.al;
 
         work.ctype = MMLType.Volume;
-        work.cargs = new Object[] {(int) work.al};
+        work.cargs = new Object[] {work.al & 0xff};
         return enmPass2JumpTable.parset;
     }
 //#endif
 
     //5657-5674
-    //==============================================================================
+    /**
     // command "v+"/"v-" entry
-    //==============================================================================
+     */
     private enmPass2JumpTable vss() {
         boolean cy;
         int[] bx = new int[1];
@@ -6843,9 +6752,9 @@ prs200: // ↑
     }
 
     //5675-5688
-    //==============================================================================
+    /**
     // command "v)"/"v(" entry
-    //==============================================================================
+     */
     private enmPass2JumpTable vss2() {
         work.si++;
 
@@ -6872,9 +6781,9 @@ prs200: // ↑
     }
 
     //5689-5798
-    //==============================================================================
+    /**
     // command "@" 音色の変更
-    //==============================================================================
+     */
     private enmPass2JumpTable neirochg() {
         int[] bx = new int[1];
         byte[] al = new byte[1], dl = new byte[1];
@@ -6899,10 +6808,10 @@ psgprg: // ↑
                 if (mml_seg.part != mml_seg.rhythm) { // break rhyprg;
                     if (mml_seg.ongen == mml_seg.psg) break psgprg;
 //#endif
-                    work.dx = 0xff00 + (byte) work.bx;
-                    work.bx = (work.bx & 0xff00) | (byte) (work.bx + 1);
-                    if (mml_seg.maxprg < (byte) work.bx) { // break nc00;
-                        mml_seg.maxprg = (byte) work.bx;
+                    work.dx = 0xff00 + (work.bx & 0xff);
+                    work.bx = (work.bx & 0xff00) | ((work.bx & 0xff) + 1);
+                    if (mml_seg.maxprg < (work.bx & 0xff)) { // break nc00;
+                        mml_seg.maxprg = (work.bx & 0xff);
 //#if efc
 //nc00:
 //        ;
@@ -6920,7 +6829,7 @@ psgprg: // ↑
                     if (mml_seg.towns_flg == 1) break repeat_check; // townsの K = PCM part
                     if (mml_seg.skip_flag != 0) return enmPass2JumpTable.olc0;
 
-                    MmlDatum cmd = new MmlDatum((byte) work.dx, MMLType.Instrument, MakeLinePos());
+                    MmlDatum cmd = new MmlDatum(work.dx & 0xff, MMLType.Instrument, MakeLinePos());
                     m_seg.m_buf.set(work.di++, cmd);
 
                     mml_seg.length_check1 = 1; // 音長データがあったよ
@@ -6942,7 +6851,7 @@ psgprg: // ↑
             //Work.bx *= 4;
             //Work.bx = (byte)Work.bx;
             work.bx += 0; // offset psgenvdat
-            MmlDatum cmd = new MmlDatum((byte) 0xf0, MMLType.Instrument, MakeLinePos());
+            MmlDatum cmd = new MmlDatum(0xf0, MMLType.Instrument, MakeLinePos());
             m_seg.m_buf.set(work.di++, cmd);
             cx = 4;
             //if (Work.bx > 9) {
@@ -6952,7 +6861,7 @@ psgprg: // ↑
             //pplop0:;
             for (int i = 0; i < 4; i++) {
                 work.al = (byte) mml_seg.psgenvdat[work.bx][i];
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             }
             //loop    pplop0
             return enmPass2JumpTable.olc0;
@@ -6966,19 +6875,19 @@ psgprg: // ↑
         }
 
         int ax = work.dx;
-        ax = (byte) (ax >> 8) | (((byte) ax) * 0x100);
+        ax = (byte) ((ax & 0xff00) >> 8) | ((ax & 0xff) * 0x100);
 
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) ax));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) (ax >> 8)));
+        m_seg.m_buf.set(work.di++, new MmlDatum(ax & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum((ax & 0xff00) >> 8));
 
         work.si++;
 
         cy = getnum(/* out */ bx, /* out */ dl);
         work.al = (byte) 0xce;
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         ax = work.bx;
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) ax));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) (ax >> 8)));
+        m_seg.m_buf.set(work.di++, new MmlDatum(ax & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum((ax & 0xff00) >> 8));
 
         ch = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
 noset_release: // ↑
@@ -6988,8 +6897,8 @@ noset_release: // ↑
                 work.si++;
                 cy = getnum(/* out */ bx, /* out */ dl);
                 ax = work.bx;
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) ax));
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) (ax >> 8)));
+                m_seg.m_buf.set(work.di++, new MmlDatum(ax & 0xff));
+                m_seg.m_buf.set(work.di++, new MmlDatum((ax & 0xff00) >> 8));
 
                 ch = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
                 if (ch != ',') break noset_release;
@@ -6997,28 +6906,28 @@ noset_release: // ↑
                 work.si++;
                 cy = getnum(/* out */ bx, /* out */ dl);
                 ax = work.bx;
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) ax));
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) (ax >> 8)));
+                m_seg.m_buf.set(work.di++, new MmlDatum(ax & 0xff));
+                m_seg.m_buf.set(work.di++, new MmlDatum((ax & 0xff00) >> 8));
 
                 return enmPass2JumpTable.olc0;
             }
 //noset_stop:
             ax = 0;
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) ax));
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) (ax >> 8)));
+            m_seg.m_buf.set(work.di++, new MmlDatum(ax & 0xff));
+            m_seg.m_buf.set(work.di++, new MmlDatum((ax & 0xff00) >> 8));
         }
 //noset_release:
         ax = 0x8000;
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) ax));
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) (ax >> 8)));
+        m_seg.m_buf.set(work.di++, new MmlDatum(ax & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum((ax & 0xff00) >> 8));
 
         return enmPass2JumpTable.olc0;
 //#endif
     }
 
-    //==============================================================================
+    /**
     // V2.6用 / FM音源の音色使用フラグセット
-    //==============================================================================
+     */
     private void set_prg() {
 //#if !efc
         if (mml_seg.ongen >= mml_seg.psg) return;
@@ -7032,11 +6941,11 @@ noset_release: // ↑
         return;
     }
 
-    //==============================================================================
+    /**
     // COMMAND "&" タイ
     // COMMAND "&&" スラー
     // COMMAND "+"     直前の音長の加算
-    //==============================================================================
+     */
     private enmPass2JumpTable tieset() {
         char ch = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
         if (ch == '&') return sular(); // スラー?
@@ -7071,23 +6980,22 @@ noset_release: // ↑
                 error('&', 8, work.si);
             }
 
-            byte ah = (byte) m_seg.m_buf.get(work.di).dat;
-            if (ah + work.al > 0xff) {
+            byte ah = (byte) (m_seg.m_buf.get(work.di).dat & 0xff);
+            if ((ah & 0xff) + (work.al & 0xff) > 0xff) {
                 ah += work.al;
 //                break tie_lng_over;
             } else {
                 ah += work.al;
                 work.al = ah;
 
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 mml_seg.prsok |= 2; // 直前 = 加工音長
                 return enmPass2JumpTable.olc02;
             }
 //tie_lng_over:
             work.di++;
 
-            if ((mml_seg.prsok & 8) != 0) // ポルタ?
-            {
+            if ((mml_seg.prsok & 8) != 0) { // ポルタ?
                 error('^', 8, work.si);
             }
 
@@ -7096,12 +7004,12 @@ noset_release: // ↑
 //#endif
 
                 m_seg.m_buf.set(work.di, new MmlDatum(0xfb));
-                ah = (byte) m_seg.m_buf.get(work.di - 2).dat;
+                ah = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
                 work.di++;
 
-                m_seg.m_buf.set(work.di, new MmlDatum(ah));
+                m_seg.m_buf.set(work.di, new MmlDatum(ah & 0xff));
                 work.di++;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
                 mml_seg.prsok = 1; // 直前 = 音長
                 return enmPass2JumpTable.olc02;
@@ -7110,7 +7018,7 @@ noset_release: // ↑
             m_seg.m_buf.set(work.di, new MmlDatum(0x0f)); //休符
             work.di++;
 
-            m_seg.m_buf.set(work.di, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di, new MmlDatum(work.al & 0xff));
             work.di++;
             mml_seg.prsok = 3; // 直前 = 加工音長
             return enmPass2JumpTable.olc02;
@@ -7145,15 +7053,14 @@ noset_release: // ↑
 
     private enmPass2JumpTable sular() {
 //#if !efc
-        if (mml_seg.part == mml_seg.rhythm) // R
-        {
+        if (mml_seg.part == mml_seg.rhythm) { // R
             error('&', 32, work.si);
         }
 //#endif
         work.si++;
         if (mml_seg.skip_flag != 0) return tie_skip();
         work.al = (byte) 0xc1;
-        m_seg.m_buf.set(work.di, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di, new MmlDatum(work.al & 0xff));
         work.di++;
 
         int si_p = work.si;
@@ -7169,13 +7076,13 @@ noset_release: // ↑
         work.si = si_p;
         if (cy) return enmPass2JumpTable.olc0;
 
-        byte bl = (byte) m_seg.m_buf.get(work.di - 3).dat; // bl=前の音階
+        byte bl = (byte) (m_seg.m_buf.get(work.di - 3).dat & 0xff); // bl=前の音階
         return enmPass2JumpTable.ots002; // 通常音程コマンド発行
     }
 
-    //==============================================================================
+    /**
     // COMMAND "D" デチューンの設定
-    //==============================================================================
+     */
     private enmPass2JumpTable detset() {
         boolean cy;
         int[] bx = new int[1];
@@ -7185,34 +7092,34 @@ noset_release: // ↑
         switch (work.al) {
             case (byte) 'D' -> {
                 // break detset_2;
-                //==============================================================================
+                /**
                 // COMMAND "DD" 相対デチューンの設定
-                //==============================================================================
+                 */
 //detset_2:
                 cy = getnum(/* out */ bx, /* out */ dl);
                 m_seg.m_buf.set(work.di++, new MmlDatum(0xd5, MMLType.Detune, MakeLinePos(), work.bx));
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) work.bx));
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) (work.bx >> 8)));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
+                m_seg.m_buf.set(work.di++, new MmlDatum((work.bx & 0xff00) >> 8));
                 return enmPass2JumpTable.olc0;
             }
             case (byte) 'X' -> {
 //            break extdet_set;
-                //==============================================================================
+                /**
                 // COMMAND "DX" 拡張デチューン指定
-                //==============================================================================
+                 */
 //extdet_set:
                 work.al = (byte) 0xcc;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 cy = getnum(/* out */ bx, /* out */ dl);
                 work.al = dl[0];
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 return enmPass2JumpTable.olc0;
             }
             case (byte) 'M' -> {
 //                break mstdet_set;
-                //==============================================================================
+                /**
                 // COMMAND "DM" マスターデチューン指定
-                //==============================================================================
+                 */
 //mstdet_set:
                 cy = getnum(/* out */ bx, /* out */ dl);
                 mml_seg.master_detune = bx[0];
@@ -7221,16 +7128,16 @@ noset_release: // ↑
 //detset_exit:
                 if (mml_seg.bend != 0) return enmPass2JumpTable.olc03;
                 work.al = (byte) 0xfa;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al, MMLType.Detune, MakeLinePos(), work.bx));
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) work.bx));
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) (work.bx >> 8)));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff, MMLType.Detune, MakeLinePos(), work.bx));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
+                m_seg.m_buf.set(work.di++, new MmlDatum((work.bx & 0xff00) >> 8));
                 return enmPass2JumpTable.olc0;
             }
             case (byte) 'F' -> {
 //                break vd_fm;
-                //==============================================================================
+                /**
                 // COMMAND "DF"/"DS"/"DP"/"DR" 音量ダウン設定
-                //==============================================================================
+                 */
 //vd_fm:
                 work.al = (byte) 0xfe;
 //                break vd_main;
@@ -7268,9 +7175,9 @@ noset_release: // ↑
 //detset_exit:
                 if (mml_seg.bend != 0) return enmPass2JumpTable.olc03;
                 work.al = (byte) 0xfa;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al, MMLType.Detune, MakeLinePos(), work.bx));
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) work.bx));
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) (work.bx >> 8)));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff, MMLType.Detune, MakeLinePos(), work.bx));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
+                m_seg.m_buf.set(work.di++, new MmlDatum((work.bx & 0xff00) >> 8));
                 return enmPass2JumpTable.olc0;
             }
         }
@@ -7284,17 +7191,17 @@ noset_release: // ↑
         }
 //vd_main2:
         m_seg.m_buf.set(work.di++, new MmlDatum(0xc0));
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         cy = getnum(/* out */ bx, /* out */ dl);
         work.al = dl[0];
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // 符号付き数値を読む
     //  OUTPUTS -- bx[word],dl[byte]
-    //==============================================================================
+     */
     private boolean getnum(/* out */ int[] bx, /* out */ byte[] dl) {
         char al;
         int dh = 0;
@@ -7330,11 +7237,9 @@ noset_release: // ↑
         return cy;
     }
 
-
-    //6060-6092
-    //==============================================================================
+    /**
     // COMMAND "[" [LOOP START]
-    //==============================================================================
+     */
     private enmPass2JumpTable stloop() {
         m_seg.m_buf.set(work.di++, new MmlDatum(0xf9));
 
@@ -7370,11 +7275,9 @@ noset_release: // ↑
         return enmPass2JumpTable.olc0;
     }
 
-
-    //6093-6203
-    //==============================================================================
+    /**
     // COMMAND "]" [LOOP END]
-    //==============================================================================
+     */
     private enmPass2JumpTable edloop() {
         MmlDatum md = new MmlDatum(0xf8);
         if (!m_seg.getMacroLst().isEmpty()) {
@@ -7412,7 +7315,7 @@ noset_release: // ↑
 
     // 繰り返し回数セット
     private void edl00b() {
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) work.bx));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
 
         if ((byte) work.bx == 0) { // break edl_nonmuloop;
 
@@ -7425,18 +7328,18 @@ noset_release: // ↑
         m_seg.m_buf.set(work.di++, new MmlDatum(0));
         mml_seg.lopcnt--;
         work.al = (byte) mml_seg.lopcnt;
-        if (work.al == 0xff) {
+        if (work.al == (byte) 0xff) {
             error(']', 23, work.si);
         }
         work.bx = work.al * 2; // offset loptbl
         //loptblに書いておいた値をセット
-        work.dx = mml_seg.loptbl[work.bx + 0] + mml_seg.loptbl[work.bx + 1] * 0x100;
-        m_seg.m_buf.set(work.di + 0, new MmlDatum((byte) work.dx));
-        m_seg.m_buf.set(work.di + 1, new MmlDatum((byte) (work.dx >> 8)));
+        work.dx = (mml_seg.loptbl[work.bx + 0] & 0xff) + (mml_seg.loptbl[work.bx + 1] & 0xff) * 0x100;
+        m_seg.m_buf.set(work.di + 0, new MmlDatum(work.dx & 0xff));
+        m_seg.m_buf.set(work.di + 1, new MmlDatum((work.dx & 0xff00) >> 8));
 
-        //==============================================================================
+        /**
         // "[" のあった所に今のアドレスを書く
-        //==============================================================================
+         */
         int bx_p = work.bx;
         work.dx += 0; // offset m_buf ;dx=[commandで２つ開けておいたアドレス
         work.bx = work.di;
@@ -7446,20 +7349,20 @@ noset_release: // ↑
         work.bx = work.dx;
         work.dx = a;
 
-        m_seg.m_buf.set(work.bx + 0, new MmlDatum((byte) work.dx)); // そこにもdxを書く
-        m_seg.m_buf.set(work.bx + 1, new MmlDatum((byte) (work.dx >> 8)));
+        m_seg.m_buf.set(work.bx + 0, new MmlDatum(work.dx & 0xff)); // そこにもdxを書く
+        m_seg.m_buf.set(work.bx + 1, new MmlDatum((work.dx & 0xff00) >> 8));
         work.bx = bx_p;
 
-        //==============================================================================
+        /**
         // ":" があった時にはそこにも書く
-        //==============================================================================
+         */
         //Work.bx += MmlSeg.loopnest * 2; // bx＝lextblの位置
         //Work.bx = MSeg.m_buf.get(Work.bx).dat + MSeg.m_buf.get(Work.bx).dat * 0x100; // bx＝lextblの値
-        work.bx = mml_seg.lextbl[work.bx] + mml_seg.lextbl[work.bx + 1] * 0x100; // bx＝lextblの値
+        work.bx = (mml_seg.lextbl[work.bx] & 0xff) + (mml_seg.lextbl[work.bx + 1] & 0xff) * 0x100; // bx＝lextblの値
         if (work.bx != 0) { // break nonexit; // ":"はない
 
-            m_seg.m_buf.set(work.bx + 0, new MmlDatum((byte) work.dx)); // そこにもdxを書く
-            m_seg.m_buf.set(work.bx + 1, new MmlDatum((byte) (work.dx >> 8)));
+            m_seg.m_buf.set(work.bx + 0, new MmlDatum(work.dx & 0xff)); // そこにもdxを書く
+            m_seg.m_buf.set(work.bx + 1, new MmlDatum((work.dx & 0xff00) >> 8));
             // DETUNE CANCEL(Bend On / ":"のあった時のみ)
             if (mml_seg.bend != 0) { // break nonexit;
                 mml_seg.alldet = 0x8000;
@@ -7470,13 +7373,13 @@ noset_release: // ↑
         //if (Work.si != 0) return enmPass2JumpTable.olc0; // pass2最後のcheck_loopか?
     }
 
-    //==============================================================================
+    /**
     // COMMAND ":" ループから脱出
-    //==============================================================================
+     */
     private enmPass2JumpTable extloop() {
         m_seg.m_buf.set(work.di++, new MmlDatum(0xf7));
 
-        work.al = (byte) mml_seg.lopcnt;
+        work.al = (byte) (mml_seg.lopcnt & 0xff);
         work.al--;
 
         if (work.al == (byte) 0xff) {
@@ -7485,14 +7388,14 @@ noset_release: // ↑
 
         work.bx = 0; // offset lextbl
         work.bx += work.al * 2;
-        work.dx = mml_seg.lextbl[work.bx + 0] + mml_seg.lextbl[work.bx + 1] * 0x100;
+        work.dx = (mml_seg.lextbl[work.bx + 0] & 0xff) + (mml_seg.lextbl[work.bx + 1] & 0xff) * 0x100;
 
         if (work.dx != 0) {
             error(':', 25, work.si); // ":"が２つ以上あった
         }
 
-        mml_seg.lextbl[work.bx + 0] = (byte) work.di; // lextblに開けておくアドレスをセット
-        mml_seg.lextbl[work.bx + 1] = (byte) (work.di >> 8);
+        mml_seg.lextbl[work.bx + 0] = (byte) (work.di & 0xff); // lextblに開けておくアドレスをセット
+        mml_seg.lextbl[work.bx + 1] = (byte) ((work.di & 0xff00) >> 8);
 
         //Work.di += 2; // ２つ、開けておく
         m_seg.m_buf.set(work.di++, new MmlDatum(0x00)); // KUMA: オリジナルではメモリの内容が不定のまま？
@@ -7502,9 +7405,9 @@ noset_release: // ↑
     }
 
     //6204-6220
-    //==============================================================================
+    /**
     // COMMAND "L" [LOOP SET]
-    //==============================================================================
+     */
     private enmPass2JumpTable lopset() {
 //#if efc
         error('L', 17, work.si);
@@ -7522,10 +7425,10 @@ noset_release: // ↑
     }
 
     //6221-6281
-    //==============================================================================
+    /**
     // COMMAND "_" [転調] , "__" [相対転調] , "_M" [Master転調]
     // "_{" Command[移調設定]
-    //==============================================================================
+     */
     private enmPass2JumpTable oshift() {
         boolean cy;
         int[] bx = new int[1];
@@ -7538,15 +7441,15 @@ noset_release: // ↑
             case '_': // osf00;
 //osf00:
                 cy = getnum(/* out */ bx, /* out */ dl);
-                work.dx = 0xf5 * 0x100 + dl[0];
+                work.dx = 0xf5 * 0x100 + (dl[0] & 0xff);
                 work.ctype = MMLType.KeyShift;
-                work.cargs = new Object[] {(int) dl[0]};
+                work.cargs = new Object[] {dl[0] & 0xff};
                 return enmPass2JumpTable.parset;            //_ command
             case 'M': // break master_trans_set;
 //master_trans_set:
                 work.si++;
                 cy = getnum(/* out */ bx, /* out */ dl);
-                work.dx = 0xb2 * 0x100 + dl[0];
+                work.dx = 0xb2 * 0x100 + (dl[0] & 0xff);
                 return enmPass2JumpTable.parset;            //_M command
             case '{': // break def_onkai_set;
 //def_onkai_set:
@@ -7604,17 +7507,17 @@ noset_release: // ↑
             default:
                 work.si++;
                 cy = getnum(/* out */ bx, /* out */ dl);
-                work.dx = 0xe7 * 0x100 + dl[0];
+                work.dx = 0xe7 * 0x100 + (dl[0] & 0xff);
                 work.ctype = MMLType.KeyShift;
-                work.cargs = new Object[] {(int) dl[0]}; // TODO vavi
+                work.cargs = new Object[] {dl[0] & 0xff}; // TODO vavi
                 return enmPass2JumpTable.parset;            //__ command
         }
     }
 
     //6282-6336
-    //==============================================================================
+    /**
     // COMMAND ")" volume up
-    //==============================================================================
+     */
     private enmPass2JumpTable volup() {
         boolean cy;
         int[] bx = new int[1];
@@ -7627,24 +7530,24 @@ noset_release: // ↑
             cy = lngset(/* out */ bx, /* out */ al);
             if (al[0] == 1) { // break volup2;
 
-                cmd = new MmlDatum((byte) 0xf4, MMLType.Volume, MakeLinePos(), (Object[]) null);
+                cmd = new MmlDatum(0xf4, MMLType.Volume, MakeLinePos(), (Object[]) null);
                 m_seg.m_buf.set(work.di++, cmd);
                 return enmPass2JumpTable.olc0;
             }
 //volup2:
-            cmd = new MmlDatum((byte) 0xe3, MMLType.Volume, MakeLinePos(), (Object[]) null);
+            cmd = new MmlDatum(0xe3, MMLType.Volume, MakeLinePos(), (Object[]) null);
             m_seg.m_buf.set(work.di++, cmd);
             ongen_sel_vol();
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             return enmPass2JumpTable.olc0;
         }
 //volup3:
         if (ch != '^') { // break volup4;
             work.si++;
             cy = lngset(/* out */ bx, /* out */ al);
-            cmd = new MmlDatum((byte) 0xe3, MMLType.Volume, MakeLinePos(), (Object[]) null);
+            cmd = new MmlDatum(0xe3, MMLType.Volume, MakeLinePos(), (Object[]) null);
             m_seg.m_buf.set(work.di++, cmd);
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             return enmPass2JumpTable.olc0;
         }
 //volup4:
@@ -7656,9 +7559,9 @@ noset_release: // ↑
             ongen_sel_vol();
             if (work.al == 0) return enmPass2JumpTable.olc03; // 0なら無視
 
-            cmd = new MmlDatum((byte) 0xde, MMLType.Volume, MakeLinePos());
+            cmd = new MmlDatum(0xde, MMLType.Volume, MakeLinePos());
             m_seg.m_buf.set(work.di++, cmd);
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
             if (mml_seg.skip_flag == 0) return enmPass2JumpTable.olc0;
             mml_seg.acc_adr = work.di;
@@ -7669,9 +7572,9 @@ noset_release: // ↑
         cy = lngset(/* out */ bx, /* out */ al);
         if (work.al == 0) return enmPass2JumpTable.olc03; // 0なら無視
 
-        cmd = new MmlDatum((byte) 0xde, MMLType.Volume, MakeLinePos());
+        cmd = new MmlDatum(0xde, MMLType.Volume, MakeLinePos());
         m_seg.m_buf.set(work.di++, cmd);
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
         if (mml_seg.skip_flag == 0) return enmPass2JumpTable.olc0;
         mml_seg.acc_adr = work.di;
@@ -7679,9 +7582,9 @@ noset_release: // ↑
     }
 
     //6337-6391
-    //==============================================================================
+    /**
     // COMMAND "(" volume down
-    //==============================================================================
+     */
     private enmPass2JumpTable voldown() {
         boolean cy;
         int[] bx = new int[1];
@@ -7697,23 +7600,23 @@ voldown4: // ↑
                 cy = lngset(/* out */ bx, /* out */ al);
                 if (al[0] == 1) { // break voldown2;
 
-                    cmd = new MmlDatum((byte) 0xf3, MMLType.Volume, MakeLinePos());
+                    cmd = new MmlDatum(0xf3, MMLType.Volume, MakeLinePos());
                     m_seg.m_buf.set(work.di++, cmd);
                     return enmPass2JumpTable.olc0;
                 }
 //voldown2:
-                cmd = new MmlDatum((byte) 0xe2, MMLType.Volume, MakeLinePos());
+                cmd = new MmlDatum(0xe2, MMLType.Volume, MakeLinePos());
                 m_seg.m_buf.set(work.di++, cmd);
                 ongen_sel_vol();
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                 return enmPass2JumpTable.olc0;
             }
 //voldown3:
             work.si++;
             cy = lngset(/* out */ bx, /* out */ al);
-            cmd = new MmlDatum((byte) 0xe2, MMLType.Volume, MakeLinePos());
+            cmd = new MmlDatum(0xe2, MMLType.Volume, MakeLinePos());
             m_seg.m_buf.set(work.di++, cmd);
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             return enmPass2JumpTable.olc0;
         }
 //voldown4:
@@ -7725,9 +7628,9 @@ voldown4: // ↑
             ongen_sel_vol();
             if (work.al == 0) return enmPass2JumpTable.olc03; // 0なら無視
 
-            cmd = new MmlDatum((byte) 0xdd, MMLType.Volume, MakeLinePos());
+            cmd = new MmlDatum(0xdd, MMLType.Volume, MakeLinePos());
             m_seg.m_buf.set(work.di++, cmd);
-            m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
             if (mml_seg.skip_flag == 0) return enmPass2JumpTable.olc0;
             mml_seg.acc_adr = work.di;
@@ -7738,9 +7641,9 @@ voldown4: // ↑
         cy = lngset(/* out */ bx, /* out */ al);
         if (work.al == 0) return enmPass2JumpTable.olc03; // 0なら無視
 
-        cmd = new MmlDatum((byte) 0xdd, MMLType.Volume, MakeLinePos());
+        cmd = new MmlDatum(0xdd, MMLType.Volume, MakeLinePos());
         m_seg.m_buf.set(work.di++, cmd);
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
         if (mml_seg.skip_flag == 0) return enmPass2JumpTable.olc0;
         mml_seg.acc_adr = work.di;
@@ -7748,9 +7651,9 @@ voldown4: // ↑
     }
 
     //6392-6633
-    //==============================================================================
+    /**
     // COMMAND "M" lfo set
-    //==============================================================================
+     */
     private enmPass2JumpTable lfoset() {
         boolean cy;
         int[] bx = new int[1];
@@ -7765,9 +7668,9 @@ voldown4: // ↑
         switch (work.al) {
             case (byte) 'X' -> {
 //            break extlfo_set;
-                //==============================================================================
+                /**
                 // COMMAND "MX" LFO Speed Extended Mode Set Ver.4.0m～
-                //==============================================================================
+                 */
 //extlfo_set:
                 work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
                 work.ah = (byte) 0xbb;
@@ -7778,19 +7681,19 @@ voldown4: // ↑
                     }
                 }
                 //extlfo_set_main:
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.ah));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.ah & 0xff));
                 cy = getnum(/* out */ bx, /* out */ dl);
                 work.al = dl[0];
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
                 return enmPass2JumpTable.olc0;
             }
             case (byte) 'P' -> {
 //            break portaset;
-                //==============================================================================
+                /**
                 // COMMAND "MP"[PORTAMENT SET] for PMD V2.3 -
                 // MPa[, b][, c] = Mb, c, a, 255 * 1 def.b = 0, c = 1
-                //==============================================================================
+                 */
 //portaset:
                 work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
                 work.ah = (byte) 0xbf;
@@ -7805,13 +7708,13 @@ voldown4: // ↑
                 byte al_p = work.al;
                 mml_seg.bend2 = 0;
                 mml_seg.bend3 = 1;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.ah));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.ah & 0xff));
                 cy = getnum(/* out */ bx, /* out */ dl);
                 mml_seg.bend1 = dl[0];
                 ch = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
                 if (ch == ',') { // break bset;
                     work.si++;
-                    work.dx = ((byte) 'M') * 0x100 + (byte) work.dx;
+                    work.dx = 'M' * 0x100 + (work.dx & 0xff);
                     get_clock();
                     mml_seg.bend2 = work.al;
 
@@ -7825,26 +7728,26 @@ voldown4: // ↑
                 }
 //bset:
                 work.al = (byte) mml_seg.bend2;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
                 work.al = (byte) mml_seg.bend3;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
                 work.al = (byte) mml_seg.bend1;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
                 work.al = (byte) 255;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
                 work.dx = (ah_p - 1) * 0x100 + 1;            //0f1h or 0beh
                 return enmPass2JumpTable.parset;
             }
             case (byte) 'D' -> {
 //            break depthset;
-                //==============================================================================
+                /**
                 // COMMAND "MD"[DEPTH SET] for PMD V3.3 -
                 // MDa, b
-                //==============================================================================
+                 */
 //depthset:
                 work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
                 work.ah = (byte) 0xbd;
@@ -7855,11 +7758,11 @@ voldown4: // ↑
                     }
                 }
 //depthset_main:
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.ah));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.ah & 0xff));
                 byte ah_p = work.ah;
                 byte al_p = work.al;
                 cy = getnum(/* out */ bx, /* out */ dl);
-                m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+                m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
                 if (dl[0] == 0) { // 0の場合は // break dps_nextparam;
                     dl[0] = 0;
 
@@ -7879,7 +7782,7 @@ voldown4: // ↑
                     work.si++;
                     cy = getnum(/* out */ bx, /* out */ dl);
 
-                    m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
 
                     work.ah = ah_p;
                     work.al = al_p;
@@ -7893,7 +7796,7 @@ voldown4: // ↑
 
                     // 値３(counter)   4.7a～
                     work.al = (byte) 0xb7;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
                     ah_p = work.ah;
                     al_p = work.al;
@@ -7912,20 +7815,20 @@ voldown4: // ↑
                     }
 //mdc_noa:
                     work.al = (byte) work.bx;
-                    m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+                    m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
                     return enmPass2JumpTable.olc0;
                 }
 //dps_param2set:
-                m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+                m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
                 work.ah = ah_p;
                 work.al = al_p;
                 return enmPass2JumpTable.olc0;
             }
             case (byte) 'W' -> {
 //            break waveset;
-                //==============================================================================
+                /**
                 // COMMAND "MW" [WAVE SET] for PMD V4.0j～
-                //==============================================================================
+                 */
 //waveset:
                 work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
                 work.ah = (byte) 0xbc;
@@ -7942,16 +7845,16 @@ voldown4: // ↑
                 work.ah = ah_p;
                 work.al = al_p;
 
-                work.dx = work.ah * 0x100 + (byte) work.dx;
+                work.dx = (work.ah & 0xff) * 0x100 + (work.dx & 0xff);
 
                 return enmPass2JumpTable.parset;
             }
             case (byte) 'M' -> {
                 //break lfomask_set;
 
-                //==============================================================================
+                /**
                 // COMMAND "MM" LFO Mask for PMD v4.2～
-                //==============================================================================
+                 */
 //lfomask_set:
                 work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
                 work.ah = (byte) 0xba;
@@ -7968,7 +7871,7 @@ voldown4: // ↑
                 work.ah = ah_p;
                 work.al = al_p;
 
-                work.dx = work.ah * 0x100 + (byte) work.dx;
+                work.dx = (work.ah & 0xff) * 0x100 + (work.dx & 0xff);
 
                 return enmPass2JumpTable.parset;
             }
@@ -7986,12 +7889,12 @@ voldown4: // ↑
         }
 //lfoset_main:
 
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.ah));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.ah & 0xff));
 
-        int ax_p = work.ah * 0x100 + work.al; // ah(A/B)保存
-        work.dx = ((byte) 'M') * 0x100 + (byte) work.dx;
+        int ax_p = (work.ah & 0xff) * 0x100 + (work.al & 0xff); // ah(A/B)保存
+        work.dx = 'M' * 0x100 + (work.dx & 0xff);
         get_clock(); //delay
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
         work.ah = (byte) (ax_p >> 8);
         work.al = (byte) ax_p;
@@ -8001,7 +7904,7 @@ voldown4: // ↑
         if (work.al == (byte) ',') { // break delay_only;
 
             cy = getnum(/* out */ bx, /* out */ dl); // speed
-            m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+            m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
 
             work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
 
@@ -8010,7 +7913,7 @@ voldown4: // ↑
             }
 
             cy = getnum(/* out */ bx, /* out */ dl); // depth1
-            m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+            m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
 
             work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
 
@@ -8019,7 +7922,7 @@ voldown4: // ↑
             }
 
             cy = getnum(/* out */ bx, /* out */ dl); // depth2
-            m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+            m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
 
             return enmPass2JumpTable.olc0;
         }
@@ -8037,9 +7940,9 @@ voldown4: // ↑
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // COMMAND "*" lfo switch
-    //==============================================================================
+     */
     private enmPass2JumpTable lfoswitch() {
         byte ah_p;
         byte al_p;
@@ -8066,14 +7969,14 @@ voldown4: // ↑
         ah_p = work.ah;
         al_p = work.al;
         cy = lngset(/* out */ bx, /* out */ al);
-        work.bx = ah_p * 0x100 + al_p;
+        work.bx = (ah_p & 0xff) * 0x100 + (al_p & 0xff);
         if (cy) {
             error('*', 6, work.si);
         }
         work.ah = work.al;
         work.al = (byte) (work.bx >> 8);
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.ah));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.ah & 0xff));
 
         ch = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
         if (ch != ',') return enmPass2JumpTable.olc0;
@@ -8097,26 +8000,26 @@ voldown4: // ↑
         ah_p = work.ah;
         al_p = work.al;
         cy = lngset(/* out */ bx, /* out */ al);
-        work.bx = ah_p * 0x100 + al_p;
+        work.bx = (ah_p & 0xff) * 0x100 + (al_p & 0xff);
         if (cy) {
             error('*', 6, work.si);
         }
 
-        byte d = (byte) m_seg.m_buf.get(work.di - 2).dat;
+        byte d = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
         if (ah_p != d) { // cmp bh,-2[di] ;対象が同じ? // break lsm2_0;
             work.si -= 2; // 後半が有効
         }
 //lsm2_0:
         work.ah = work.al;
-        work.al = (byte) (work.bx >> 8);
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.ah));
+        work.al = (byte) ((work.bx & 0xff00) >> 8);
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.ah & 0xff));
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // COMMAND "E" PSG Software_envelope
-    //==============================================================================
+     */
     private enmPass2JumpTable psgenvset() {
         char ch = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
         if (ch == 'X') return extenv_set();
@@ -8130,7 +8033,7 @@ voldown4: // ↑
 //pe0:;
         do {
             cy = getnum(/* out */ bx, /* out */ dl);
-            m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+            m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
 
             ch = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a;
             if (ch != ',') {
@@ -8140,7 +8043,7 @@ voldown4: // ↑
         } while (cx > 0);
 
         cy = getnum(/* out */ bx, /* out */ dl);
-        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
 
         ch = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
         if (ch != ',') { // break extend_psgenv;
@@ -8154,7 +8057,7 @@ voldown4: // ↑
         m_seg.m_buf.set(work.di - 1, new MmlDatum(m_seg.m_buf.get(work.di - 1).dat & 0xf));
         dl[0] <<= 4;
         dl[0] &= 0xf0;
-        m_seg.m_buf.set(work.di - 1, new MmlDatum(m_seg.m_buf.get(work.di - 1).dat | dl[0]));
+        m_seg.m_buf.set(work.di - 1, new MmlDatum(m_seg.m_buf.get(work.di - 1).dat | (dl[0] & 0xff)));
         dl[0] = 0;
 
         ch = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
@@ -8163,14 +8066,14 @@ voldown4: // ↑
             cy = getnum(/* out */ bx, /* out */ dl);
         }
 //not_set_al:
-        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
         work.dx = (work.dx & 0xff00) | dl[0];
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // COMMAND "EX" Envelope Speed Extended Mode Set
-    //==============================================================================
+     */
     private enmPass2JumpTable extenv_set() {
         work.si++;
         m_seg.m_buf.set(work.di++, new MmlDatum(0xc9));
@@ -8180,15 +8083,15 @@ voldown4: // ↑
         byte[] dl = new byte[1];
         cy = getnum(/* out */ bx, /* out */ dl);
 
-        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
 
         return enmPass2JumpTable.olc0;
     }
 
     //6756-6775
-    //==============================================================================
+    /**
     // COMMAND "y" OPN Register set
-    //==============================================================================
+     */
     private enmPass2JumpTable ycommand() {
         m_seg.m_buf.set(work.di++, new MmlDatum(0xef));
 
@@ -8196,7 +8099,7 @@ voldown4: // ↑
         int[] bx = new int[1];
         byte[] al = new byte[1];
         cy = lngset(/* out */ bx, /* out */ al);
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) work.bx));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
 
         work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
         if (work.al != (byte) ',') {
@@ -8204,14 +8107,14 @@ voldown4: // ↑
         }
 
         cy = lngset(/* out */ bx, /* out */ al);
-        m_seg.m_buf.set(work.di++, new MmlDatum((byte) work.bx));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
 
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // COMMAND "w" PSG noise 平均周波数設定
-    //==============================================================================
+     */
     private enmPass2JumpTable psgnoise() {
         boolean cy;
         int[] bx = new int[1];
@@ -8224,7 +8127,7 @@ voldown4: // ↑
 
                 cy = lngset(/* out */ bx, /* out */ al);
 
-                m_seg.m_buf.set(work.di++, new MmlDatum(al[0]));
+                m_seg.m_buf.set(work.di++, new MmlDatum(al[0] & 0xff));
 
                 return enmPass2JumpTable.olc0;
             }
@@ -8232,13 +8135,13 @@ voldown4: // ↑
 //psgnoise_move:
         m_seg.m_buf.set(work.di++, new MmlDatum(0xd0));
         cy = getnum(/* out */ bx, /* out */ dl);
-        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
         return enmPass2JumpTable.olc0;
     }
 
-    //==============================================================================
+    /**
     // COMMAND "P" PSG tone/noise/mix Select
-    //==============================================================================
+     */
     private enmPass2JumpTable psgpat() {
         m_seg.m_buf.set(work.di++, new MmlDatum(0xed));
         int[] bx = new int[1];
@@ -8265,15 +8168,15 @@ voldown4: // ↑
         work.al <<= 1;
         work.al |= ah;
 
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
         return enmPass2JumpTable.olc0;
     }
 
     //6834-6850
-    //==============================================================================
+    /**
     // COMMAND "B" ベンド幅の設定
-    //==============================================================================
+     */
     private enmPass2JumpTable bendset() {
         boolean cy;
         int[] bx = new int[1];
@@ -8292,9 +8195,9 @@ voldown4: // ↑
     }
 
     //6851-6858
-    //==============================================================================
+    /**
     // COMMAND "I" ピッチの設定
-    //==============================================================================
+     */
     private enmPass2JumpTable pitchset() {
         boolean cy;
         int[] bx = new int[1];
@@ -8307,9 +8210,9 @@ voldown4: // ↑
     }
 
     //6859-6891
-    //==============================================================================
+    /**
     // COMMAND "p" パンの設定
-    //==============================================================================
+     */
     private enmPass2JumpTable panset() {
         boolean cy;
         int[] bx = new int[1];
@@ -8323,7 +8226,7 @@ voldown4: // ↑
             }
 
             m_seg.m_buf.set(work.di++, new MmlDatum(0xec, MMLType.Pan, MakeLinePos(), work.bx));
-            m_seg.m_buf.set(work.di++, new MmlDatum((byte) work.bx));
+            m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
 
             return enmPass2JumpTable.olc0;
         }
@@ -8332,7 +8235,7 @@ voldown4: // ↑
         cy = getnum(/* out */ bx, /* out */ dl);
         int prm1 = dl[0];
         m_seg.m_buf.set(work.di++, new MmlDatum(0xc3, MMLType.Pan, MakeLinePos(), prm1, 0));
-        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
         m_seg.m_buf.set(work.di++, new MmlDatum(0));
 
         ch = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
@@ -8347,9 +8250,9 @@ voldown4: // ↑
     }
 
     //6892-7091
-    //==============================================================================
+    /**
     // COMMAND "\" リズム音源コントロール
-    //==============================================================================
+     */
     private Tuple<Character, Supplier<enmPass2JumpTable>>[] rcomtbl;
 
     private void setupRcomtbl() {
@@ -8402,14 +8305,14 @@ voldown4: // ↑
                     error('\\', 2, work.si);
                 }
 
-                m_seg.m_buf.set(work.di++, new MmlDatum((byte) work.bx));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
                 return enmPass2JumpTable.olc0;
             }
         }
 //mstvol_sft:
         cy = getnum(/* out */ bx, /* out */ dl);
         m_seg.m_buf.set(work.di++, new MmlDatum(0xe6));
-        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
         return enmPass2JumpTable.olc0;
     }
 
@@ -8420,15 +8323,15 @@ voldown4: // ↑
 
         rhysel();
 
-        int ax_p = work.ah * 0x100 + work.al;
+        int ax_p = (work.ah & 0xff) * 0x100 + (work.al & 0xff);
 
         char ch = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
         if (ch != '+') { // break rhyvol_sft;
             if (ch != '-') { // break rhyvol_sft;
                 cy = lngset(/* out */ bx, /* out */ al);
 
-                work.al = (byte) ax_p;
-                work.ah = (byte) (ax_p >> 8);
+                work.al = (byte) (ax_p & 0xff);
+                work.ah = (byte) ((ax_p & 0xff00) >> 8);
 
                 if (cy) {
                     error('\\', 6, work.si);
@@ -8448,20 +8351,20 @@ voldown4: // ↑
         work.ah = (byte) (ax_p >> 8);
 
         m_seg.m_buf.set(work.di++, new MmlDatum(0xe5));
-        work.al &= 0b1110_0000;
+        work.al &= (byte) 0b1110_0000;
         work.al >>= 5;
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
         cy = getnum(/* out */ bx, /* out */ dl);
-        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0]));
+        m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
         return enmPass2JumpTable.olc0;
     }
 
     private enmPass2JumpTable rc02() {
-        work.al &= 0b1110_0000;
+        work.al &= (byte) 0b1110_0000;
         work.bx &= 0xff1f;
         work.al |= (byte) work.bx;
-        m_seg.m_buf.set(work.di++, new MmlDatum(work.al));
+        m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
         return enmPass2JumpTable.olc0;
     }
 
@@ -8556,13 +8459,13 @@ voldown4: // ↑
 //rs01:
                 var o = m_seg.m_buf.get(work.di - 2);
                 if (o != null) { // break rs02;
-                    byte cch = (byte) m_seg.m_buf.get(work.di - 2).dat;
+                    byte cch = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
                     if (cch == (byte) 0xeb) { // break rs02;
-                        cch = (byte) m_seg.m_buf.get(work.di - 1).dat;
+                        cch = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
                         if ((cch & 0x80) == 0) { // break rs02;
                             if (mml_seg.prsok == 0x80) { // break rs02; // 直前byte = リズム?
                                 work.al |= cch;
-                                m_seg.m_buf.set(work.di - 1, new MmlDatum(work.al));
+                                m_seg.m_buf.set(work.di - 1, new MmlDatum(work.al & 0xff));
 //                                break rsexit;
                                 flag_rsexit = true;
                             }
@@ -8573,7 +8476,7 @@ voldown4: // ↑
 //rs02:
             if (!flag_rsexit) {
                 m_seg.m_buf.set(work.di, new MmlDatum(0xeb));
-                m_seg.m_buf.set(work.di + 1, new MmlDatum(work.al));
+                m_seg.m_buf.set(work.di + 1, new MmlDatum(work.al & 0xff));
                 work.di += 2;
                 if ((work.al & 0x80) != 0) { // break rsexit;
                     return enmPass2JumpTable.olc0;
@@ -8591,9 +8494,9 @@ voldown4: // ↑
     }
 
     //7092-7163
-    //==============================================================================
+    /**
     // MML 変数の使用
-    //==============================================================================
+     */
     private enmPass2JumpTable hscom() {
         char ch;
         int ax;
@@ -8683,7 +8586,7 @@ voldown4: // ↑
             args.add(cmd);
         }
 
-        ax = hs_seg.currentBuf[work.bx] + hs_seg.currentBuf[work.bx + 1] * 0x100;
+        ax = (hs_seg.currentBuf[work.bx] & 0xff) + (hs_seg.currentBuf[work.bx + 1] & 0xff) * 0x100;
 
         //    assume es:MSeg
 
@@ -8728,14 +8631,14 @@ voldown4: // ↑
         return enmPass2JumpTable.olc03;
     }
 
-    //==============================================================================
+    /**
     // 可変長変数検索
     //  in. ds:si mml_buffer
     //         es HsSeg
     //  out.bx hs3_offset
     //         ds:si next mml_buffer
     //   cy=1 no_match dx = near hs3_offset
-    //==============================================================================
+     */
     private boolean search_hs3() {
         int di_p = work.di;
 
@@ -8816,34 +8719,34 @@ hscom3_chk: // ↑
         return false;
     }
 
-    //==============================================================================
+    /**
     // ERRORの表示
     //  input dl      ERROR_NUMBER
     //   dh ERROR Command 0なら不定
     //   si ERROR address 0なら不定
     //   [part] part番号 0なら不定
-    //==============================================================================
+     */
     private void error(int dh, int dl, int si) {
         calc_line(/* ref */ si);
 
-        String mes = "";
+        StringBuilder mes = new StringBuilder();
         //  
         // filename,lineの表示
         //  
         if (si != 0) {
             try {
-                mes += Path.getFileName(mml_seg.mml_filename);
+                mes.append(Path.getFileName(mml_seg.mml_filename));
             } catch (Exception e) {
-                mes += mml_seg.mml_filename;
+                mes.append(mml_seg.mml_filename);
             }
-            mes += String.format("(%d) :", mml_seg.line);
+            mes.append(String.format("(%d) :", mml_seg.line));
         }
 
         //  
         // Error番号の表示
         //  
-        mes += ErrSeg.errmes_1;
-        mes += String.valueOf(dl);
+        mes.append(ErrSeg.errmes_1);
+        mes.append(String.valueOf(dl));
 
         //  
         // Partの表示
@@ -8854,27 +8757,27 @@ hscom3_chk: // ↑
         // Commandの表示
         //  
         if (dh != 0) {
-            mes += ErrSeg.errmes_3;
-            mes += String.valueOf((char) dh);
+            mes.append(ErrSeg.errmes_3);
+            mes.append(String.valueOf((char) dh));
         }
 
-        if (mes != null && !mes.isEmpty()) print_mes(mes);
+        if (mes != null && (mes.length() > 0)) print_mes(mes.toString());
 
         //  
         // Error Messageの表示
         //  
-        print_mes_err(ErrSeg.errmes_4 + rb.getString(String.format("E01{0:00}", dl))); // ErrSeg.err_table[dl]);
+        print_mes_err(ErrSeg.errmes_4 + rb.getString("E01%02d".formatted(dl))); // ErrSeg.err_table[dl]);
 
         //  
         // エラー箇所の表示
         //  
         if (si != 0 && mml_seg.line != 0) {
-            mes = "";
+            mes = new StringBuilder();
             int di = mml_seg.linehead;
             while (di < mml_seg.mml_buf.length() && mml_seg.mml_buf.charAt(di) != Mc.cr) {
-                mes += mml_seg.mml_buf.charAt(di++);
+                mes.append(mml_seg.mml_buf.charAt(di++));
             }
-            print_mes(mes);
+            print_mes(mes.toString());
             int s = si - 1 - mml_seg.linehead;
             if (s >= 0) print_mes(" ".repeat(s) + "^^");
         }
@@ -8882,9 +8785,9 @@ hscom3_chk: // ↑
         error_exit(1);
     }
 
-    //==============================================================================
+    /**
     // Error,Warning時のパート表示
-    //==============================================================================
+     */
     private void put_part() {
         if (mml_seg.part == 0) return;
 
@@ -8903,13 +8806,13 @@ hscom3_chk: // ↑
         print_mes(ErrSeg.errmes_5);
     }
 
-    //==============================================================================
+    /**
     // Error位置のline,lineheadを計算
     //  input DS:SI Error位置
     // output[line] Line
     //[linehead] Lineの頭位置
     //   [mml_filename] MMLのファイル名
-    //==============================================================================
+     */
     private void calc_line(/* ref */ int si) {
         if (si == 0) {
             mml_seg.line = 0;
@@ -9007,13 +8910,13 @@ cl_exit:
         //MmlSeg.mml_filename = MmlSeg.mml_filename.trim();
     }
 
-    //==============================================================================
+    /**
     // 環境の検索
     // input si 環境変数名+"="
     //       es 環境segment
     // output es:di 環境のaddress
     // cy 1なら無し
-    //==============================================================================
+    /**
 
     /**
      * 環境変数の検索
@@ -9047,9 +8950,9 @@ cl_exit:
         return false;
     }
 
-    //==============================================================================
+    /**
     //  usage put & exit
-    //==============================================================================
+     */
     private void usage() {
         print_mes(mml_seg.usames);
         error_exit(1);

@@ -21,28 +21,28 @@ import pmd.common.PmdException;
 import static java.lang.System.getLogger;
 
 
-//==============================================================================
-// Professional Music Driver[P.M.D.] version 4.8
-//     FOR PC98(+ Speak Board)
-// By M.Kajihara
-//==============================================================================
+/**
+ * Professional Music Driver[P.M.D.] version 4.8
+ * FOR PC98(+ Speak Board)
+ *
+ * @author M.Kajihara
+ */
 public class PMD {
 
     private static final Logger logger = getLogger(PMD.class.getName());
 
-    public PW pw = null;
-    private X86Register r = null;
-    private Pc98 pc98 = null;
-    private PPZDRV ppzdrv = null;
-    private PCMDRV pcmdrv = null;
-    private PCMDRV86 pcmdrv86 = null;
-    private EFCDRV efcdrv = null;
-    private Function<ChipDatum, Integer> ppz8em = null;
-    private Function<ChipDatum, Integer> ppsdrv = null;
-    private Function<ChipDatum, Integer> p86em = null;
-    public PCMLOAD pcmload = null;
-    public Consumer<ChipDatum> WriteOPNARegister = null;
-
+    public PW pw;
+    private final X86Register r;
+    private final Pc98 pc98;
+    private final PPZDRV ppzdrv;
+    private final PCMDRV pcmdrv;
+    private final PCMDRV86 pcmdrv86;
+    private final EFCDRV efcdrv;
+    private final Function<ChipDatum, Integer> ppz8em;
+    private final Function<ChipDatum, Integer> ppsdrv;
+    private final Function<ChipDatum, Integer> p86em;
+    public PCMLOAD pcmload;
+    public Consumer<ChipDatum> WriteOPNARegister;
 
     public PMD(
             MmlDatum[] mmlData,
@@ -110,36 +110,34 @@ public class PMD {
         }
     }
 
-
-    //PMD.ASM 127-259
-    //==============================================================================
-    // ＭＳ−ＤＯＳコールのマクロ
-    //==============================================================================
+    //
+    // MS-DOS コールのマクロ
+    //
 
     private void resident_exit() {
-        //特に何もしない
+        // 特に何もしない
     }
 
     private void resident_cut() {
-        //特に何もしない
+        // 特に何もしない
     }
 
     private void get_psp() {
-        //特に何もしない
+        // 特に何もしない
     }
 
     public void msdos_exit() {
-        //プログラム終了(エラーコード0)
+        // プログラム終了(エラーコード0)
         throw new PmdDosExitException("msdos_exit");
     }
 
     public void error_exit(int qq) {
-        //プログラム終了(エラーコードqq)
+        // プログラム終了(エラーコードqq)
         throw new PmdErrorExitException(String.format("error code:%d", qq));
     }
 
     public void print_mes(String qq) {
-        //コンソールへメッセージ表示
+        // コンソールへメッセージ表示
         String[] a = qq.split("" + (char) 13 + (char) 10);
         for (String s : a)
             logger.log(Level.INFO, s);
@@ -162,75 +160,68 @@ public class PMD {
 
     public void debug(int adr) {
 //#if DEBUG
-//            debugBuff.Set(adr, (byte)(debugBuff.Get(adr) + 1));
+//        debugBuff.Set(adr, (byte)(debugBuff.Get(adr) + 1));
 //#endif
     }
 
     public void debug2(int adr, byte dat) {
 //#if DEBUG
-//            debug2Buff.Set(adr * 2, dat);
+//        debug2Buff.Set(adr * 2, dat);
 //#endif
     }
 
     public void debug_pcm(int adr) {
 //#if DEBUG
-//            r.al = pc98.InPort(0xa468); // 86音源FIFO
-//            if ((r.al & 0x10) != 0)
-//            {
-//                debug(adr);
-//            }
+//        r.al = pc98.InPort(0xa468); // 86音源FIFO
+//        if ((r.al & 0x10) != 0) {
+//            debug(adr);
+//        }
 //#endif
     }
 
     public void _wait() {
-        //r.cx = (short)pw.wait_clock;
-        //do
-        //{
-        //    r.cx--;
-        //} while (r.cx > 0);
+//        r.cx = (short) pw.wait_clock;
+//        do {
+//            r.cx--;
+//        } while (r.cx > 0);
     }
 
     public void _waitP() {
-        //short p = r.cx;
-        //r.cx = (short)pw.wait_clock;
-        //do
-        //{
-        //    r.cx--;
-        //}
-        //while (r.cx > 0);
-        //r.cx = p;
+//        short p = r.cx;
+//        r.cx = (short) pw.wait_clock;
+//        do {
+//            r.cx--;
+//        } while (r.cx > 0);
+//        r.cx = p;
     }
 
-    public void _rwait() // リズム連続出力用wait
-    {
-        //short p = r.cx;
-        //r.cx = (short)(pw.wait_clock * 32);
-        //do
-        //{
-        //    r.cx--;
-        //}
-        //while (r.cx > 0);
-        //r.cx = p;
+    /** リズム連続出力用wait */
+    public void _rwait() {
+//        short p = r.cx;
+//        r.cx = (short) (pw.wait_clock * 32);
+//        do {
+//            r.cx--;
+//        } while (r.cx > 0);
+//        r.cx = p;
     }
 
-    public void rdychk() // Address out時用 break:ax
-    {
-        r.al = pc98.InPort(r.getDx()); // 無駄読み
+    /** Address out時用 break:ax */
+    public void rdychk() {
+        r.al = pc98.InPort(r.getDx() & 0xffff); // 無駄読み
         do {
-            r.al = pc98.InPort(r.getDx());
+            r.al = pc98.InPort(r.getDx() & 0xffff);
         } while ((r.al & 0x80) != 0);
     }
 
     public void _ppz() {
-        //local exit
+        // local exit
         if (pw.ppz != 0) {
             if (pw.ppz_call_seg >= 2) {
-                //  call dword ptr[ppz_call_ofs]
+                //call dword ptr[ppz_call_ofs]
                 throw new UnsupportedOperationException();
             }
         }
     }
-
 
     public void int60_main(short ax) {
         synchronized (r.lockobj) {
@@ -269,21 +260,15 @@ public class PMD {
         pw.int60_result = (byte) 0xff; // -1
     }
 
-
-    //377-380
     private void getss() {
         r.setAx(pw.syousetu);
     }
 
-
-    //381-385
     private void getst() {
         r.ah = pw.status;
         r.al = pw.status2; // KUMA: 0xff : 演奏終了?
     }
 
-
-    //386-388
     private void fout() {
         pw.fadeout_speed = r.al;
     }
@@ -292,14 +277,12 @@ public class PMD {
         set_option(pmdOption);
     }
 
-
-    //389-429
-    //==============================================================================
-    // FM効果音演奏メイン
-    //==============================================================================
+    /**
+     * FM効果音演奏メイン
+     */
     private void fm_efcplay() {
         r.setBx((short) pw.efcdat);
-        r.setAx((short) (pw.md[r.getBx() + 254].dat + pw.md[r.getBx() + 254 + 1].dat * 0x100));
+        r.setAx((short) (pw.md[(r.getBx() & 0xffff) + 254].dat + pw.md[(r.getBx() & 0xffff) + 254 + 1].dat * 0x100));
         r.addAx(r.getBx());
         pw.prgdat_adr2 = r.getAx();
         r.di = (short) pw.part_e; // offset part_e
@@ -336,11 +319,9 @@ public class PMD {
 //not_end_fmefc:
     }
 
-
-    //430-501
-    //==============================================================================
-    // 演奏開始
-    //==============================================================================
+    /**
+     * 演奏開始
+     */
     private void mstart_f() {
         r.al = pw.TimerAflag;
         r.al |= pw.TimerBflag;
@@ -354,18 +335,18 @@ public class PMD {
     }
 
     private void mstart() {
-        //------------------------------------------------------------------------------
+        //
         // 演奏停止
-        //------------------------------------------------------------------------------
+        //
         // pushf
         //  cli
-        pw.music_flag &= 0xfe;
+        pw.music_flag &= (byte) 0xfe;
         mstop();
         //  popf
 
-        //------------------------------------------------------------------------------
+        //
         // 演奏準備
-        //------------------------------------------------------------------------------
+        //
         data_init();
         play_init();
 
@@ -380,9 +361,9 @@ public class PMD {
                 r.setBx((short) pw.part10); // offset part10 //PCMを
                 pw.partWk[r.getBx()].partmask |= 0x10; // Mask(bit4)
             } else {
-                //------------------------------------------------------------------------------
+                //
                 // NECなYM2608なら PCMパートをMASK
-                //------------------------------------------------------------------------------
+                //
                 if (pw.pcm_gs_flag != 0) {
                     r.setBx((short) pw.part10); // offset part10 ;PCMを
                     pw.partWk[r.getBx()].partmask |= 4; // Mask(bit2)
@@ -392,9 +373,9 @@ public class PMD {
         }
 
         if (pw.ppz != 0) {
-            //------------------------------------------------------------------------------
+            //
             // PPZ8初期化
-            //------------------------------------------------------------------------------
+            //
             if (pw.ppz_call_seg != 0) {
                 r.setAx((short) 0x1901);
                 ChipDatum cd = new ChipDatum(0x19, 0, 0x01);
@@ -408,23 +389,23 @@ public class PMD {
             //not_init_ppz8:
         }
 
-        //------------------------------------------------------------------------------
+        //
         // OPN初期化
-        //------------------------------------------------------------------------------
+        //
         opn_init();
 
-        //------------------------------------------------------------------------------
+        //
         // 音楽の演奏を開始
-        //------------------------------------------------------------------------------
+        //
         setint();
 
         pw.play_flag = 1;
         pw.mstart_flag++;
     }
 
-    //==============================================================================
-    // 各パートのスタートアドレス及び初期値をセット
-    //==============================================================================
+    /**
+     * 各パートのスタートアドレス及び初期値をセット
+     */
     private void play_init() {
         r.setSi((short) pw.mmlbuf);
 
@@ -440,8 +421,8 @@ public class PMD {
             pw.prg_flg = 1;
         }
 
-        //not_prg:
-        //prg:
+//not_prg:
+//prg:
 
         r.setCx((short) pw.max_part2);
         r.dl = 0;
@@ -449,7 +430,7 @@ public class PMD {
         pw.part_data_table = new int[22];
         for (int i = 0; i < pw.part_data_table.length; i++) pw.part_data_table[i] = i; // KUMA:順に並んだ配列なので。
 
-        // din0:
+// din0:
         do {
             r.di = (short) pw.part_data_table[r.getBx()]; // di = part workarea // KUMA: 各partのIndexです
             r.incBx();
@@ -460,7 +441,7 @@ public class PMD {
             if (pw.md[r.getAx()].dat == 0x80) { // 先頭が80hなら演奏しない
                 r.setAx((short) 0);
             }
-            //din1:
+//din1:
 
             pw.partWk[r.di].address = r.getAx();
 
@@ -537,9 +518,9 @@ public class PMD {
 
         } while (r.getCx() > 0);
 
-        //------------------------------------------------------------------------------
+        //
         // Rhythm のアドレステーブルをセット
-        //------------------------------------------------------------------------------
+        //
         r.setAx(Common.GetLe16(pw.md, r.getSi())); // ax = part start addr
         r.addSi((short) 2);
         r.addAx((short) pw.mmlbuf);
@@ -549,9 +530,9 @@ public class PMD {
         pw.rd = pw.rdDmy; // rhyadrはrdDmy(ダミー向け演奏データ配列)を参照する
     }
 
-    //==============================================================================
-    // DATA AREA の イニシャライズ
-    //==============================================================================
+    /**
+     * Initializes DATA AREA
+     */
     private void data_init() {
         r.al = 0;
         pw.fadeout_volume = r.al;
@@ -648,9 +629,9 @@ public class PMD {
         pw.pcm86_vol = r.al;
     }
 
-    //==============================================================================
-    // OPN INIT
-    //==============================================================================
+    /**
+     * OPN INIT
+     */
     private void opn_init() {
         r.setDx((short) 0x2983);
         opnset44();
@@ -665,9 +646,9 @@ public class PMD {
         }
 //no_init_psnoi:
 
-        //==============================================================================
+        //
         // SSG - EG RESET(4.8s)
-        //==============================================================================
+        //
         if (pw.board2 != 0) {
             r.setBx((short) 2);
             sel44();
@@ -699,9 +680,9 @@ public class PMD {
             break;
         }
 
-        //==============================================================================
+        //
         // YM2203ならここでおしまい
-        //==============================================================================
+        //
         if (pw.board2 == 0) {
             if (pw.ongen == 0) // 2203 ?
             {
@@ -709,12 +690,12 @@ public class PMD {
             }
         }
 
-        //==============================================================================
+        //
         // 以下YM2608用
         // PAN / HARDLFO DEFAULT
-        //==============================================================================
-        //init_2608:
-        //endif
+        //
+//init_2608:
+//endif
 
         if (pw.board2 != 0) {
             r.setBx((short) 2);
@@ -726,10 +707,9 @@ public class PMD {
             r.setDx((short) 0xb4c0); // PAN = MID / HARDLFO = OFF
             r.setCx((short) 3);
 
-            //pd00:
+//pd00:
             do {
-pd03:
-                // ↑
+pd03: // ↑
                 {
                     if (pw.fm_effec_flag != 0) {
                         // ここbugってたわ…(4.8s) //KUMA:ややこしかったので整理。。。
@@ -762,9 +742,9 @@ pd03:
         opnset44();
 
         if (pw.board2 != 0) {
-            //==============================================================================
+            //
             // Rhythm Default = Pan : Mid , Vol: 15
-            //==============================================================================
+            //
             r.di = 0; // offset rdat
             r.setCx((short) 6);
             r.al = (byte) 0b1100_1111;
@@ -776,9 +756,9 @@ pd03:
             r.setDx((short) 0x10ff);
             opnset44(); // ; Rhythm All Dump
 
-            //==============================================================================
+            //
             // リズムトータルレベル セット
-            //==============================================================================
+            //
             //rtlset:
             r.dl = 48;
             r.al = pw.rhythm_voldown;
@@ -795,9 +775,9 @@ pd03:
             r.dh = 0x11;
             opnset44();
 
-            //==============================================================================
+            //
             // PCM reset &ＬＩＭＩＴ ＳＥＴ
-            //==============================================================================
+            //
             if (pw.ademu == 0) {
                 if (pw.pcm_gs_flag != 1) {
                     r.setDx((short) 0xcff);
@@ -808,9 +788,9 @@ pd03:
                 //pr_non_pcm:;
             }
 
-            //==============================================================================
+            //
             // PPZ Pan Init.
-            //==============================================================================
+            //
             if (pw.ppz + pw.ademu != 0) {
                 r.setDx((short) 5);
                 r.setAx((short) 0x1300);
@@ -842,11 +822,9 @@ pd03:
         }
     }
 
-
-    //871-896
-    //==============================================================================
-    // ＭＵＳＩＣ ＳＴＯＰ
-    //==============================================================================
+    /**
+     * Stops music.
+     */
     private void mstop_f() {
         r.al = pw.TimerAflag;
         r.al |= pw.TimerBflag;
@@ -866,7 +844,7 @@ pd03:
     private void mstop() {
         //    pushf
         //    cli
-        pw.music_flag &= 0xfd;
+        pw.music_flag &= (byte) 0xfd;
         r.setAx((short) 0);
         pw.play_flag = r.al;
         pw.pause_flag = r.al;
@@ -878,11 +856,9 @@ pd03:
         silence();
     }
 
-
-    //897-1024
-    //==============================================================================
-    // MUSIC PLAYER MAIN[FROM TIMER - B]
-    //==============================================================================
+    /**
+     * MUSIC PLAYER MAIN[FROM TIMER - B]
+     */
     private void mmain() {
         int w = 0; // kuma: added
 
@@ -997,7 +973,6 @@ pd03:
 
         if (pw.x68_flg == 0) { // break mmain_exit;
 
-
             r.di = (short) pw.part11; // offset part11
             w = 0;
             if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
@@ -1094,7 +1069,7 @@ pd03:
         }
 //mmain_exit:
 
-        //Console.WriteLine("loop counter:%d", pw.nowLoopCounter);
+        //logger.log(Level.TRACE, "loop counter:%d", pw.nowLoopCounter);
 
         if (pw.loop_work == 0) { // break mmain_loop;
             return;
@@ -1104,7 +1079,7 @@ pd03:
         r.setCx((short) pw.max_part1);
         r.setBx((short) 0); // offset part_data_table
 
-        //mm_din0:;
+//mm_din0:
         do {
             r.di = (short) pw.part_data_table[r.getBx()]; // [bx]; di = part workarea
             r.incBx();
@@ -1119,7 +1094,7 @@ pd03:
         if (pw.loop_work != 3) { // break mml_fin;
 
             pw.status2++;
-            if (pw.status2 == 0xff) { // -1にはさせない // break mml_ret;
+            if (pw.status2 == (byte) 0xff) { // -1にはさせない // break mml_ret;
 
                 pw.status2 = 1;
             }
@@ -1130,9 +1105,9 @@ pd03:
         pw.status2 = (byte) 0xff; // -1;
     }
 
-    //==============================================================================
-    // 裏FMセレクト
-    //==============================================================================
+    /**
+     * 裏FMセレクト
+     */
     private void sel46() {
         r.setAx((short) pw.fm2_port1);
         pw.fm_port1 = r.getAx();
@@ -1141,9 +1116,9 @@ pd03:
         pw.fmsel = 1;
     }
 
-    //==============================================================================
-    // 表に戻す
-    //==============================================================================
+    /**
+     * 表に戻す
+     */
     private void sel44() {
         r.setAx((short) pw.fm1_port1);
         pw.fm_port1 = r.getAx();
@@ -1152,14 +1127,13 @@ pd03:
         pw.fmsel = 0;
     }
 
-
-    //1047-1210
-    //==============================================================================
+    //
     // FM音源演奏メイン
-    //==============================================================================
-    //private void fmmain_ret() {
-    // ret
-    //}
+    //
+
+//    private void fmmain_ret() {
+//        ret
+//    }
 
     private void fmmain() {
         r.setSi(pw.partWk[pw.part_data_table[r.di]].address); // si = PART DATA ADDRESS
@@ -1199,7 +1173,7 @@ pd03:
     }
 
     private Supplier<Object> mp10() {
-        pw.partWk[r.di].lfoswi &= 0xf7; // Porta off
+        pw.partWk[r.di].lfoswi &= (byte) 0xf7; // Porta off
         return this::mp1;
     }
 
@@ -1214,9 +1188,9 @@ mp15: // ↑
                     //pw.jumpIndex = -1; // KUMA:Added
 
                     r.al = (byte) pw.md[r.incSi()].dat;
-                    if (r.al >= 0x80)
+                    if ((r.al & 0xff) >= 0x80)
                         break mp2;
-                    if (r.al == 0x80) break mp15;
+                    if (r.al == (byte) 0x80) break mp15;
 
                     // ELSE COMMANDS
                     Object o = commands();
@@ -1272,8 +1246,7 @@ mp15: // ↑
     public void FlashMacroList() {
         if (pw.cmd.args != null && pw.cmd.args.size() > 2) {
             Object obj = pw.cmd.args.get(2);
-            if (obj != null && obj instanceof MmlDatum[])
-            {
+            if (obj != null && obj instanceof MmlDatum[]) {
                 MmlDatum[] mds = (MmlDatum[]) obj;
                 for (MmlDatum md : mds) ExecIDESpecialCommand(md);
             }
@@ -1282,7 +1255,7 @@ mp15: // ↑
 
     private Supplier<Object> porta_return() {
         if (pw.partWk[r.di].volpush != 0) { // break mp_new;
-            if (pw.partWk[r.di].onkai != 0xff) { // break mp_new;
+            if (pw.partWk[r.di].onkai != (byte) 0xff) { // break mp_new;
                 pw.volpush_flag--;
                 if (pw.volpush_flag != 0) { // break mp_new;
                     pw.volpush_flag = 0;
@@ -1312,12 +1285,12 @@ mp15: // ↑
                 pw.partWk[r.di].hldelay_c--;
                 if (pw.partWk[r.di].hldelay_c == 0) {
                     r.dh = pw.partb;
-                    r.dh += 0xb4 - 1;
+                    r.dh += (byte) (0xb4 - 1);
                     r.dl = pw.partWk[r.di].fmpan;
                     opnset();
                 }
             }
-            //not_hldelay:;
+//not_hldelay:;
         }
         if (pw.partWk[r.di].sdelay_c != 0) {
             pw.partWk[r.di].sdelay_c--;
@@ -1327,7 +1300,7 @@ mp15: // ↑
                 }
             }
         }
-        //not_sdelay:;
+//not_sdelay:
         r.cl = pw.partWk[r.di].lfoswi;
         if ((r.cl & r.cl) == 0) {
             //break nolfosw; // 飛ばずに処理
@@ -1347,7 +1320,7 @@ mp15: // ↑
                 pw.lfo_switch |= r.al;
             }
         }
-        //not_lfo:
+//not_lfo:
         if ((r.cl & 0x30) != 0) {
             //pushf
             //cli
@@ -1360,25 +1333,25 @@ mp15: // ↑
                 r.al &= 0x30;
                 pw.lfo_switch |= r.al;
             } else {
-                //not_lfo1:
+//not_lfo1:
                 lfo_change();
-                //    popf
+                //popf
             }
         }
-        //not_lfo2:
+//not_lfo2:
         if ((pw.lfo_switch & 0x19) != 0) {
             if ((pw.lfo_switch & 8) != 0) {
                 porta_calc();
             }
-            //not_porta:
+//not_porta:
             otodasi();
         }
-        //vols:
+//vols:
         if ((pw.lfo_switch & 0x22) == 0) {
-            //nolfosw:
+//nolfosw:
             if (pw.fadeout_speed == 0) return this::mnp_ret;
         }
-        //vol_set:
+//vol_set:
         volset();
         return this::mnp_ret;
     }
@@ -1391,10 +1364,10 @@ mp15: // ↑
         return null;
     }
 
-    //==============================================================================
-    // Q値の計算
-    //  break dx
-    //==============================================================================
+    /**
+     * Q値の計算
+     *  break dx
+     */
     public void calc_q() {
         if (pw.md[r.getSi()].dat != 0xc1) { //&& // break cq_sular;
 
@@ -1463,11 +1436,12 @@ mp15: // ↑
         pw.partWk[r.di].qdat = 0;
     }
 
-    //==============================================================================
-    // FM音源演奏メイン：パートマスクされている時
-    //==============================================================================
-    // false : break mnp_ret
-    // true : break mp10
+    /**
+     * FM音源演奏メイン：パートマスクされている時
+     *
+     * false : break mnp_ret
+     * true : break mp10
+     */
     private Supplier<Object> fmmain_nonplay() {
         pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
         pw.partWk[r.di].leng--;
@@ -1475,7 +1449,7 @@ mp15: // ↑
 
         if ((pw.partWk[r.di].partmask & 2) != 0) { // bit1(FM効果音中？)をcheck
             if (pw.fm_effec_flag == 0) { // ; 効果音終了したか？
-                pw.partWk[r.di].partmask &= 0xfd; // bit1をclear
+                pw.partWk[r.di].partmask &= (byte) 0xfd; // bit1をclear
                 if (pw.partWk[r.di].partmask == 0) return this::mp10; // partmaskが0なら復活させる
             }
         }
@@ -1487,8 +1461,8 @@ mp15: // ↑
             do {
                 pw.cmd = pw.md[r.getSi()];
                 r.al = (byte) pw.md[r.incSi()].dat;
-                if (r.al == 0x80) break;
-                if (r.al < 0x80) return this::fmmnp_3;
+                if (r.al == (byte) 0x80) break;
+                if ((r.al & 0xff) < 0x80) return this::fmmnp_3;
 
                 Object o = commands();
                 Supplier<Object> fmmnp_1_ = this::fmmnp_1;
@@ -1502,15 +1476,15 @@ mp15: // ↑
 
             FlashMacroList();
 
-            //fmmnp_2:
-            // ; END OF MUSIC["L"があった時はそこに戻る]
+//fmmnp_2:
+            // END OF MUSIC["L"があった時はそこに戻る]
             r.decSi();
             pw.partWk[r.di].address = r.getSi();
             pw.partWk[r.di].loopcheck = 3;
             pw.partWk[r.di].onkai = (byte) 0xff; // -1
             r.subBx(pw.partWk[r.di].partloop);
             if ((r.getBx() & r.getBx()) == 0) return this::fmmnp_4;
-            //    ; "L"があった時
+            // "L"があった時
             r.setSi(r.getBx());
             pw.partWk[r.di].loopcheck = 1;
             pw.partWk[r.di].loopCounter++;
@@ -1543,11 +1517,11 @@ mp15: // ↑
         return this::mnp_ret;
     }
 
-    //==============================================================================
+    //
     // ＳＳＧ音源 演奏 メイン
-    //==============================================================================
+    //
     //psgmain_ret:
-    // ret
+    //ret
 
     private void psgmain() {
         r.setSi(pw.partWk[pw.part_data_table[r.di]].address); // si = PART DATA ADDRESS
@@ -1586,8 +1560,8 @@ mp15: // ↑
         return this::mp0p;
     }
 
-    private Supplier<Object> mp0p() // LENGTH CHECK
-    {
+    // LENGTH CHECK
+    private Supplier<Object> mp0p() {
         if (r.al != 0) return this::mpexitp;
 
         pw.partWk[r.di].lfoswi &= 0xf7; // Porta off
@@ -1595,16 +1569,16 @@ mp15: // ↑
         return this::mp1p;
     }
 
-    private Supplier<Object> mp1p() // DATA READ
-    {
+    // DATA READ
+    private Supplier<Object> mp1p() {
         pw.cmd = pw.md[r.getSi()];
 
         //if (r.si == pw.jumpIndex)
         //pw.jumpIndex = -1; // KUMA:Added
 
         r.al = (byte) pw.md[r.incSi()].dat;
-        if (r.al < 0x80) return this::mp2p;
-        if (r.al == 0x80) return this::mp15p;
+        if ((r.al & 0xff) < 0x80) return this::mp2p;
+        if (r.al == (byte) 0x80) return this::mp15p;
         return this::mp1cp;
     }
 
@@ -1640,7 +1614,8 @@ mp15: // ↑
         return this::mp1p;
     }
 
-    private Supplier<Object> mp2p() { // TONE SET
+    // TONE SET
+    private Supplier<Object> mp2p() {
         FlashMacroList();
 
         lfoinitp();
@@ -1701,7 +1676,7 @@ mp15: // ↑
                     pw.lfo_switch |= r.al;
                 }
             }
-            //not_lfop:
+//not_lfop:
             if ((r.cl & 0x30) != 0) {
                 // pushf
                 //    cli
@@ -1714,17 +1689,17 @@ mp15: // ↑
                     r.al &= 0x30;
                     pw.lfo_switch |= r.al;
                 } else {
-                    //not_lfo1:
+//not_lfo1:
                     lfo_change();
                     //    popf
                 }
             }
-            //not_lfop2:
+//not_lfop2:
             if ((pw.lfo_switch & 0x19) != 0) {
                 if ((pw.lfo_switch & 8) != 0) {
                     porta_calc();
                 }
-                //not_porta:
+//not_porta:
                 otodasip();
             }
         }
@@ -1737,14 +1712,14 @@ mp15: // ↑
                 }
             }
         }
-        //volsp2:;
+//volsp2:
         volsetp();
         return mnp_ret();
     }
 
-    //==============================================================================
-    // ＳＳＧ音源演奏メイン：パートマスクされている時
-    //==============================================================================
+    /**
+     * ＳＳＧ音源演奏メイン：パートマスクされている時
+     */
     private Supplier<Object> psgmain_nonplay() {
         pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
         pw.partWk[r.di].leng--;
@@ -1782,8 +1757,8 @@ psgmnp_4:
 
             } while (true);
 
-            //    ; END OF MUSIC["L"があった時はそこに戻る]
-            //psgmnp_2:
+            // END OF MUSIC["L"があった時はそこに戻る]
+//psgmnp_2:
 
             FlashMacroList();
 
@@ -1795,7 +1770,7 @@ psgmnp_4:
 
             if ((r.getBx() & r.getBx()) == 0) return this::fmmnp_4;
 
-            //    ; "L"があった時
+            // "L"があった時
             r.setSi(r.getBx());
             pw.partWk[r.di].loopcheck = 1;
             pw.partWk[r.di].loopCounter++;
@@ -1808,11 +1783,12 @@ psgmnp_4:
         return this::mp2p; // SSG復活
     }
 
-    //==============================================================================
-    // SSGドラムを消してSSGを復活させるかどうかcheck
-    //  input AL<- Command
-    // output cy = 1 : 復活させる
-    //==============================================================================
+    /**
+     * SSGドラムを消してSSGを復活させるかどうかcheck
+     *
+     * input AL<- Command
+     * output cy = 1 : 復活させる
+     */
     private void ssgdrum_check() {
         if ((pw.partWk[r.di].partmask & 1) == 0) { // bit0(SSGマスク中？)をcheck // break sdrchk_2; //SSGマスク中はドラムを止めない
             if ((pw.partWk[r.di].partmask & 2) != 0) { // bit1(SSG効果音中？)をcheck // break sdrchk_2; //SSGドラムは鳴ってない
@@ -1827,7 +1803,7 @@ psgmnp_4:
                             r.setAx(r.stack.pop());
                         }
 //sdrchk_1:
-                        pw.partWk[r.di].partmask &= 0xfd; // bit1をclear
+                        pw.partWk[r.di].partmask &= (byte) 0xfd; // bit1をclear
                         if (pw.partWk[r.di].partmask == 0) { // break sdrchk_2; // まだ何かでマスクされている
                             r.carry = true;
                             return; // partmaskが0なら復活させる
@@ -1840,9 +1816,10 @@ psgmnp_4:
         r.carry = false;
     }
 
-    //==============================================================================
+    //
     // リズムパート 演奏 メイン
-    //==============================================================================
+    //
+
 //    private void rhythmmain_ret() {
 //    }
 
@@ -1861,7 +1838,7 @@ psgmnp_4:
             return;
         }
 
-        //rhyms0:
+//rhyms0:
         r.setBx((short) pw.rhyadr);
         pw.checkJumpIndexSI = false;
         pw.checkJumpIndexBX = true;
@@ -1911,14 +1888,13 @@ psgmnp_4:
         mnp_ret();
     }
 
-    //private void mnp_ret()
-    //{
-    //    r.al = pw.loop_work;
-    //    r.al &= pw.partWk[r.di].loopcheck;
-    //    pw.loop_work = r.al;
-    //    _ppz();
-    //    return;
-    //}
+//    private void mnp_ret() {
+//        r.al = pw.loop_work;
+//        r.al &= pw.partWk[r.di].loopcheck;
+//        pw.loop_work = r.al;
+//        _ppz();
+//        return;
+//    }
 
     private void reom() {
         //KUMA: K part の解析
@@ -1948,7 +1924,7 @@ rfin: // ↑
 
                 //KUMA: R part に処理を切り替える準備
 
-                //Console.WriteLine("%d", pw.cmd);
+                //logger.log(Level.TRACE, "%d", pw.cmd);
 
                 FlashMacroList();
 
@@ -1958,14 +1934,14 @@ rfin: // ↑
                 cd.additionalData = md;
                 WriteDummy(cd);
 
-                //re00:
+//re00:
                 pw.partWk[r.di].address = r.getSi();
                 pw.checkJumpIndexSI = false;
                 r.ah = 0;
                 r.addAx(r.getAx());
                 r.addAx((short) pw.radtbl); // KUMA: R part　のアドレステーブル0x00～最大0x7f分存在しうる
                 r.setBx(r.getAx());
-                r.setAx((short) (pw.md[r.getBx()].dat + pw.md[r.getBx() + 1].dat * 0x100)); // mov ax,[bx]
+                r.setAx((short) (pw.md[r.getBx() & 0xffff].dat + pw.md[(r.getBx() & 0xffff) + 1].dat * 0x100)); // mov ax,[bx]
 
                 r.addAx((short) pw.mmlbuf);
                 pw.rhyadr = r.getAx();
@@ -1979,8 +1955,8 @@ rfin: // ↑
 
 //rhyms00:
                 while (true) {
-                    pw.cmd = pw.rd[r.getBx()];// mov al,[bx]
-                    r.al = (byte) pw.rd[r.getBx()].dat;// mov al,[bx]
+                    pw.cmd = pw.rd[r.getBx() & 0xffff];// mov al,[bx]
+                    r.al = (byte) pw.rd[r.getBx() & 0xffff].dat;// mov al,[bx]
                     r.incBx();
 
                     if (r.al == (byte) 0xff) { //KUMA: R part 終端の場合は K part 解析に戻る
@@ -2037,9 +2013,9 @@ rfin: // ↑
         mnp_ret();
     }
 
-    //==============================================================================
-    // PSGリズム ON
-    //==============================================================================
+    /**
+     * PSGリズム ON
+     */
     private int rhythmon() {
         if ((r.al & 0b0100_0000) != 0) { // KUMA: bit6が0の場合はリズム音の発音処理へ break rhy_shot;
 
@@ -2093,7 +2069,7 @@ rfin: // ↑
                 r.stack.push(r.getAx());
                 r.setBx((short) 0); // offset rhydat
                 r.setCx((short) 11);
-                //rsb2lp:;
+//rsb2lp:
                 do {
                     r.carry = ((r.getAx() & 1) != 0);
                     r.setAx((short) ((r.getAx() >> 1) | (r.carry ? 0x8000 : 0)));
@@ -2135,7 +2111,7 @@ rolop:
                     r.carry = ((r.getBx() & 1) != 0);
                     r.srBx(1);
                 } while (!r.carry); // break rhygo;
-//        break rolop;
+//                break rolop;
 //rhygo:
                 r.stack.push(r.di);
                 r.stack.push(r.getSi());
@@ -2161,8 +2137,8 @@ rolop:
 
     private void rshot() {
         if (pw.board2 != 0) {
-            //rshot:;
-            r.setDx((short) (pw.rhydat[r.getBx()] + pw.rhydat[r.getBx() + 1] * 0x100));
+//rshot:
+            r.setDx((short) ((pw.rhydat[r.getBx() & 0xffff] & 0xff) + (pw.rhydat[(r.getBx() & 0xffff) + 1] & 0xff) * 0x100));
             byte x = r.dh;
             r.dh = r.dl;
             r.dl = x;
@@ -2170,7 +2146,7 @@ rolop:
             r.incBx();
             opnset44();
             r.dh = 0x10;
-            r.dl = pw.rhydat[r.getBx()];
+            r.dl = pw.rhydat[r.getBx() & 0xffff];
             r.dl &= pw.rhythmmask;
             if (r.dl == 0)
                 return; // break rsb200;
@@ -2185,13 +2161,13 @@ rolop:
             }
 //rshot00:
             opnset44();
-            return; // break rsb200;
+//            return; // break rsb200;
         }
     }
 
-    //==============================================================================
-    // 各種特殊コマンド処理
-    //==============================================================================
+    /**
+     * 各種特殊コマンド処理
+     */
     private Supplier<Object> commands() {
         pw.currentCommandTable = cmdtbl;
         pw.currentWriter = 0;
@@ -2220,12 +2196,12 @@ rolop:
             }
         }
 
-        //if (r.si - 1 < pw.md.length && pw.md[r.si - 1].type == MMLType.IDE) { // KUMA: Added
-        //    //alレジスタは無関係でtypeがIDEならばIDE向け特殊コマンドとして処理する
-        //    //(コンパイラ側はIDEからのコンパイル要求時のみこの状態を作り出すように調整が必要。)
-        //    ExecIDESpecialCommand(pw.md[r.si - 1]);
-        //    return null;
-        //}
+//        if (r.si - 1 < pw.md.length && pw.md[r.si - 1].type == MMLType.IDE) { // KUMA: Added
+//            //alレジスタは無関係でtypeがIDEならばIDE向け特殊コマンドとして処理する
+//            //(コンパイラ側はIDEからのコンパイル要求時のみこの状態を作り出すように調整が必要。)
+//            ExecIDESpecialCommand(pw.md[r.si - 1]);
+//            return null;
+//        }
 
         if (r.al < pw.com_end) {
             return out_of_commands();
@@ -2250,11 +2226,10 @@ rolop:
 
     private Supplier<Object> out_of_commands() {
         r.decSi();
-        pw.md[r.getSi()].dat = 0x80; //Part END
+        pw.md[r.getSi()].dat = 0x80; // Part END
         return null;
     }
 
-    //1745-2033
     private Supplier<Object>[] cmdtbl;
 
     private void SetupCmdtbl() {
@@ -2357,7 +2332,7 @@ rolop:
         };
     }
 
-    //com_end equ 0b1h
+//    com_end equ 0b1h
 
     private Supplier<Object>[] cmdtblp;
 
@@ -2616,9 +2591,9 @@ rolop:
         return null;
     }
 
-    //==============================================================================
-    // 0c0hの追加special命令
-    //==============================================================================
+    /**
+     * 0c0hの追加special命令
+     */
     public Supplier<Object> special_0c0h() {
         if (r.al < pw.com_end_0c0h) {
             return this::out_of_commands;
@@ -2650,9 +2625,9 @@ rolop:
         };
     }
 
-    //==============================================================================
-    // /s option制御
-    //==============================================================================
+    /**
+     * /s option制御
+     */
     private Supplier<Object> pmd86_s() {
         r.al = (byte) pw.md[r.incSi()].dat;
         r.al &= 1;
@@ -2660,9 +2635,9 @@ rolop:
         return null;
     }
 
-    //==============================================================================
-    // 各種Voldown
-    //==============================================================================
+    /**
+     * 各種Voldown
+     */
     private Supplier<Object> vd_fm() {
         r.setBx((short) 0); // offset fm_voldown
 
@@ -2701,59 +2676,69 @@ rolop:
     }
 
     private Supplier<Object> _vd_fm() {
-        _vd_main(/* ref */ pw.fm_voldown, pw._fm_voldown);
+        byte[] tmp = new byte[1];
+        _vd_main(/* ref */ tmp, pw._fm_voldown);
+        pw.fm_voldown = tmp[0];
         return null;
     }
 
-    private void _vd_main(/* ref */ byte a, byte b) {
+    private void _vd_main(/* ref */ byte[] a, byte b) {
         r.al = (byte) pw.md[r.incSi()].dat;
         if (r.al != 0) { // break _vd_reset;
             if ((r.al & 0x80) == 0) { // break _vd_sign;
 
-                r.carry = a + r.al > 0xff;
-                a += r.al;
+                r.carry = (a[0] & 0xff) + (r.al & 0xff) > 0xff;
+                a[0] += r.al;
                 if (r.carry) { // break _vd_ret;
-                    a = (byte) 255;
+                    a[0] = (byte) 255;
                 }
 //_vd_ret:
                 return;
             }
 //_vd_sign:
-            r.carry = a + r.al > 0xff;
-            a += r.al;
+            r.carry = (a[0] & 0xff) + (r.al & 0xff) > 0xff;
+            a[0] += r.al;
             if (!r.carry) { // break _vd_ret;
                 return;
             }
-            a = 0;
+            a[0] = 0;
             return;
         }
 //_vd_reset:
-        a = b;
+        a[0] = b;
     }
 
     private Supplier<Object> _vd_ssg() {
-        _vd_main(/* ref */ pw.ssg_voldown, pw._ssg_voldown);
+        byte[] tmp = new byte[1];
+        _vd_main(/* ref */ tmp, pw._ssg_voldown);
+        pw.ssg_voldown = tmp[0];
         return null;
     }
 
     private Supplier<Object> _vd_pcm() {
-        _vd_main(/* ref */ pw.pcm_voldown, pw._pcm_voldown);
+        byte[] tmp = new byte[1];
+        _vd_main(/* ref */ tmp, pw._pcm_voldown);
+        pw.pcm_voldown = tmp[0];
         return null;
     }
 
     private Supplier<Object> _vd_rhythm() {
-        _vd_main(/* ref */ pw.rhythm_voldown, pw._rhythm_voldown);
+        byte[] tmp = new byte[1];
+        _vd_main(/* ref */ tmp, pw._rhythm_voldown);
+        pw.rhythm_voldown = tmp[0];
         return null;
     }
 
     private Supplier<Object> _vd_ppz() {
-        _vd_main(/* ref */ pw.ppz_voldown, pw._ppz_voldown);
+        byte[] tmp = new byte[1];
+        _vd_main(/* ref */ tmp, pw._ppz_voldown);
+        pw.ppz_voldown = tmp[0];
         return null;
     }
 
-    //==============================================================================
-    // slot keyon delay
-    //==============================================================================
+    /**
+     * slot keyon delay
+     */
     private Supplier<Object> slot_delay() {
         r.al = (byte) pw.md[r.incSi()].dat;
         r.al &= 0xf;
@@ -2770,9 +2755,9 @@ rolop:
         return null;
     }
 
-    //==============================================================================
-    // FB変化
-    //==============================================================================
+    /**
+     * FB変化
+     */
     private Supplier<Object> fb_set() {
         r.dh = (byte) (0xb0 - 1);
         r.dh += pw.partb; // dh=ALG/FB port address
@@ -2863,9 +2848,9 @@ _fb_notfm3:
         } // break fb_set3;
     }
 
-    //==============================================================================
-    // TL変化
-    //==============================================================================
+    /**
+     * TL変化
+     */
     private Supplier<Object> tl_set() {
         r.dh = 0x40 - 1;
         r.dh += pw.partb; // dh=TL FM Port Address
@@ -2986,9 +2971,9 @@ _fb_notfm3:
         return null;
     }
 
-    //==============================================================================
-    // 演奏中パートのマスクon/off
-    //==============================================================================
+    /**
+     * 演奏中パートのマスクon/off
+     */
     private Supplier<Object> fm_mml_part_mask() {
         logger.log(Level.TRACE, "fm_mml_part_mask");
 
@@ -3009,7 +2994,7 @@ _fb_notfm3:
         }
 //fm_mml_part_maskoff:
 
-        pw.partWk[r.di].partmask &= 0xbf;
+        pw.partWk[r.di].partmask &= (byte) 0xbf;
         if (pw.partWk[r.di].partmask != 0) {
 //            break fmpm_ret;
             return this::fmmnp_1; // パートマスク時の処理に移行 // <<
@@ -3068,9 +3053,9 @@ _fb_notfm3:
         return null;
     }
 
-    //==============================================================================
-    // FM音源の音色を再設定
-    //==============================================================================
+    /**
+     * FM音源の音色を再設定
+     */
     private void neiro_reset() {
         if (pw.partWk[r.di].neiromask != 0) { // break nr_ret;
 
@@ -3126,7 +3111,7 @@ _fb_notfm3:
 //nr_exit:
             if (pw.board2 != 0) {
                 r.dh = pw.partb;
-                r.dh += 0xb4 - 1;
+                r.dh += (byte) (0xb4 - 1);
                 calc_panout();
                 opnset(); // パン復帰
             }
@@ -3134,9 +3119,9 @@ _fb_notfm3:
 //nr_ret:
     }
 
-    //==============================================================================
-    // PDRのswitch
-    //==============================================================================
+    /**
+     * PDRのswitch
+     */
     private Supplier<Object> pdrswitch() {
         r.al = (byte) pw.md[r.incSi()].dat;
         if (pw.ppsdrv_flag != 0) { // break pdrsw_ret;
@@ -3152,9 +3137,9 @@ _fb_notfm3:
         return null;
     }
 
-    //==============================================================================
-    // 音量マスクslotの設定
-    //==============================================================================
+    /**
+     * 音量マスクslotの設定
+     */
     private Supplier<Object> volmask_set() {
         r.al = (byte) pw.md[r.incSi()].dat;
         r.al &= 0xf;
@@ -3198,9 +3183,9 @@ _fb_notfm3:
         return this::ch3_setting;
     }
 
-    //==============================================================================
-    // パートを判別してch3ならmode設定
-    //==============================================================================
+    /**
+     * パートを判別してch3ならmode設定
+     */
     private Supplier<Object> ch3_setting() {
 vms_not_p3: // ↑
         if (pw.partb == 3) { // break vms_not_p3;
@@ -3223,15 +3208,15 @@ vms_not_p3: // ↑
         return null;
     }
 
-    //==============================================================================
-    // FM3ch 拡張パートセット
-    //==============================================================================
+    /**
+     * FM3ch 拡張パートセット
+     */
     private Supplier<Object> fm3_extpartset() {
         logger.log(Level.TRACE, "fm3_extpartset");
 
         r.stack.push(r.di);
 
-        r.setAx((short) ((byte) pw.md[r.getSi()].dat + (byte) pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) ((byte) pw.md[r.getSi() & 0xffff].dat + (byte) pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
         r.addSi((short) 2);
         if (r.getAx() != 0) { // break fm3ext_part3c;
             r.addAx((short) pw.mmlbuf);
@@ -3240,7 +3225,7 @@ vms_not_p3: // ↑
         }
 //fm3ext_part3c:
 
-        r.setAx((short) ((byte) pw.md[r.getSi()].dat + (byte) pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) ((byte) pw.md[r.getSi() & 0xffff].dat + (byte) pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
         r.addSi((short) 2);
         if (r.getAx() != 0) { // break fm3ext_part3d;
             r.addAx((short) pw.mmlbuf);
@@ -3249,7 +3234,7 @@ vms_not_p3: // ↑
         }
 //fm3ext_part3d:
 
-        r.setAx((short) ((byte) pw.md[r.getSi()].dat + (byte) pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) ((byte) pw.md[r.getSi() & 0xffff].dat + (byte) pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
         r.addSi((short) 2);
         if (r.getAx() != 0) { // break fm3ext_exit;
 
@@ -3278,25 +3263,24 @@ vms_not_p3: // ↑
         r.al = pw.partWk[r.getBx()].fmpan;
         pw.partWk[r.di].fmpan = r.al; // FM PAN = CH3と同じ
         pw.partWk[r.di].partmask |= 0x20; // s0用 partmask
-        return;
     }
 
-    //==============================================================================
-    // Detune Extend Set
-    //==============================================================================
+    /**
+     * Detune Extend Set
+     */
     private Supplier<Object> detune_extend() {
         logger.log(Level.TRACE, "detune_extend");
 
         r.al = (byte) pw.md[r.incSi()].dat;
         r.al &= 1;
-        pw.partWk[r.di].extendmode &= 0xfe;
+        pw.partWk[r.di].extendmode &= (byte) 0xfe;
         pw.partWk[r.di].extendmode |= r.al;
         return null;
     }
 
-    //==============================================================================
-    // LFO Extend Set
-    //==============================================================================
+    /**
+     * LFO Extend Set
+     */
     public Supplier<Object> lfo_extend() {
         logger.log(Level.TRACE, "lfo_extend");
 
@@ -3304,14 +3288,14 @@ vms_not_p3: // ↑
         r.al &= 1;
         r.al <<= 1;
 
-        pw.partWk[r.di].extendmode &= 0xfd;
+        pw.partWk[r.di].extendmode &= (byte) 0xfd;
         pw.partWk[r.di].extendmode |= r.al;
         return null;
     }
 
-    //==============================================================================
-    // Envelope Extend Set
-    //==============================================================================
+    /**
+     * Envelope Extend Set
+     */
     public Supplier<Object> envelope_extend() {
         logger.log(Level.TRACE, "envelope_extend");
 
@@ -3320,14 +3304,14 @@ vms_not_p3: // ↑
         r.al <<= 1;
         r.al <<= 1;
 
-        pw.partWk[r.di].extendmode &= 0xfb;
+        pw.partWk[r.di].extendmode &= (byte) 0xfb;
         pw.partWk[r.di].extendmode |= r.al;
         return null;
     }
 
-    //==============================================================================
-    // LFOのWave選択
-    //==============================================================================
+    /**
+     * LFOのWave選択
+     */
     public Supplier<Object> lfowave_set() {
         logger.log(Level.TRACE, "lfowave_set");
 
@@ -3337,9 +3321,9 @@ vms_not_p3: // ↑
         return null;
     }
 
-    //==============================================================================
-    // PSG Envelope set(Extend)
-    //==============================================================================
+    /**
+     * PSG Envelope set(Extend)
+     */
     public Supplier<Object> extend_psgenvset() {
         logger.log(Level.TRACE, "extend_psgenvset");
 
@@ -3374,7 +3358,7 @@ vms_not_p3: // ↑
         r.al &= 0x0f;
         pw.partWk[r.di].eenv_al = r.al;
 
-        if (pw.partWk[r.di].envf != 0xff) { // break not_set_count; // ノーマル＞拡張に移行したか？
+        if (pw.partWk[r.di].envf != (byte) 0xff) { // break not_set_count; // ノーマル＞拡張に移行したか？
 
             pw.partWk[r.di].envf = (byte) 0xff;
 
@@ -3386,9 +3370,9 @@ vms_not_p3: // ↑
         return null;
     }
 
-    //==============================================================================
-    // Slot Detune Set(相対)
-    //==============================================================================
+    /**
+     * Slot Detune Set(相対)
+     */
     private Supplier<Object> slotdetune_set2() {
         logger.log(Level.TRACE, "slotdetune_set2");
 
@@ -3425,9 +3409,9 @@ vms_not_p3: // ↑
         return this::sds_check;
     }
 
-    //==============================================================================
-    // Slot Detune Set
-    //==============================================================================
+    /**
+     * Slot Detune Set
+     */
     private Supplier<Object> slotdetune_set() {
         logger.log(Level.TRACE, "slotdetune_set");
 
@@ -3485,9 +3469,9 @@ vms_not_p3: // ↑
         return null;
     }
 
-    //==============================================================================
-    // FM3のmodeを設定する
-    //==============================================================================
+    /**
+     * FM3のmodeを設定する
+     */
     private void ch3mode_set() {
         r.al = 1;
         if (r.di != pw.part3) { // break cmset_00;
@@ -3555,7 +3539,7 @@ cm_clear: // ↑
             pw.ch3mode = r.ah;
             r.dh = 0x27;
             r.dl = r.ah;
-            r.dl &= 0b1100_1111; // Resetはしない
+            r.dl &= (byte) 0b1100_1111; // Resetはしない
             opnset44();
 
             // 効果音モードに移った場合はそれ以前のFM3パートで音程書き換え
@@ -3603,9 +3587,9 @@ cm_clear: // ↑
         }
     }
 
-    //==============================================================================
-    // FM slotmask set
-    //==============================================================================
+    /**
+     * FM slotmask set
+     */
     private Supplier<Object> slotmask_set() {
         logger.log(Level.TRACE, "slotmask_set");
 
@@ -3653,7 +3637,7 @@ sm_notfm3: // ↑
             pw.partWk[r.di].carrier = r.al;
         }
 //sm_set:
-        r.ah &= 0xf0;
+        r.ah &= (byte) 0xf0;
         if (pw.partWk[r.di].slotmask != r.ah) { // break sm_no_change;
             pw.partWk[r.di].slotmask = r.ah;
             if ((r.ah & 0xf0) == 0) { // break sm_noset_pm;
@@ -3661,7 +3645,7 @@ sm_notfm3: // ↑
 //                break sms_ns;
             } else {
 //sm_noset_pm:
-                pw.partWk[r.di].partmask &= 0xdf; // s0以外の時パートマスク解除
+                pw.partWk[r.di].partmask &= (byte) 0xdf; // s0以外の時パートマスク解除
             }
 //sms_ns:
             ch3_setting(); // FM3chの場合のみ ch3modeの変更処理
@@ -3712,7 +3696,7 @@ sm_notfm3: // ↑
 //sms_n2:
             r.al = r.rol(r.al, 1); // slot1
             if (r.carry) { // break sms_n1;
-                r.ah |= 0b1000_1000;
+                r.ah |= (byte) 0b1000_1000;
             }
 //sms_n1:
             pw.partWk[r.di].neiromask = r.ah;
@@ -3734,9 +3718,9 @@ sm_notfm3: // ↑
 //ksm_ret:
     }
 
-    //==============================================================================
-    // ssg effect
-    //==============================================================================
+    /**
+     * ssg effect
+     */
     public Supplier<Object> ssg_efct_set() {
         logger.log(Level.TRACE, "ssg_efct_set");
 
@@ -3764,9 +3748,9 @@ sm_notfm3: // ↑
         return null;
     }
 
-    //==============================================================================
-    // fm effect
-    //==============================================================================
+    /**
+     * fm effect
+     */
     public Supplier<Object> fm_efct_set() {
         logger.log(Level.TRACE, "fm_efct_set");
 
@@ -3823,9 +3807,9 @@ sm_notfm3: // ↑
         }
     }
 
-    //==============================================================================
-    // fadeout
-    //==============================================================================
+    /**
+     * fadeout
+     */
     public Supplier<Object> fade_set() {
         logger.log(Level.TRACE, "fade_set");
 
@@ -3836,9 +3820,9 @@ sm_notfm3: // ↑
         return null;
     }
 
-    //==============================================================================
-    // LFO depth +- set
-    //==============================================================================
+    /**
+     * LFO depth +- set
+     */
     public Supplier<Object> mdepth_set() {
         logger.log(Level.TRACE, "mdepth_set");
 
@@ -3880,9 +3864,9 @@ sm_notfm3: // ↑
     }
 
     //3064-3081
-    //==============================================================================
-    // ポルタメント計算なのね
-    //==============================================================================
+    /**
+     * ポルタメント計算なのね
+     */
     public void porta_calc() {
         r.setAx(pw.partWk[r.di].porta_num2);
         pw.partWk[r.di].porta_num += r.getAx();
@@ -3901,9 +3885,9 @@ sm_notfm3: // ↑
     }
 
     //3082-3151
-    //==============================================================================
-    // ポルタメント(FM)
-    //==============================================================================
+    /**
+     * ポルタメント(FM)
+     */
     private Supplier<Object> porta() {
         if (pw.partWk[r.di].partmask == 0) { // break porta_notset;
 
@@ -3970,9 +3954,9 @@ sm_notfm3: // ↑
         return null;
     }
 
-    //==============================================================================
-    // ポルタメント(PSG)
-    //==============================================================================
+    /**
+     * ポルタメント(PSG)
+     */
     private Supplier<Object> portap() {
         if (pw.partWk[r.di].partmask != 0) {
             r.al = (byte) pw.md[r.incSi()].dat;
@@ -4016,9 +4000,9 @@ sm_notfm3: // ↑
         return this::porta_returnp;
     }
 
-    //==============================================================================
-    // STATUSに値を出力
-    //==============================================================================
+    /**
+     * STATUSに値を出力
+     */
     public Supplier<Object> status_write() {
         logger.log(Level.TRACE, "status_write");
 
@@ -4028,9 +4012,9 @@ sm_notfm3: // ↑
     }
 
     //3205-3214
-    //==============================================================================
-    // STATUSに値を加算
-    //==============================================================================
+    /**
+     * STATUSに値を加算
+     */
     public Supplier<Object> status_add() {
         logger.log(Level.TRACE, "status_add");
 
@@ -4042,15 +4026,15 @@ sm_notfm3: // ↑
     }
 
     //3215-3256
-    //==============================================================================
-    // ボリュームを次の一個だけ変更（V2.7拡張分）
-    //==============================================================================
+    /**
+     * ボリュームを次の一個だけ変更（V2.7拡張分）
+     */
     private Supplier<Object> vol_one_up_fm() {
         logger.log(Level.TRACE, "vol_one_up_fm");
 
         r.al = (byte) pw.md[r.incSi()].dat;
         r.al += pw.partWk[r.di].volume;
-        if (r.al < 128)
+        if ((r.al & 0xff) < 128)
             return this::vo_vset;
         r.al = 127;
         return this::vo_vset;
@@ -4078,14 +4062,14 @@ sm_notfm3: // ↑
         logger.log(Level.TRACE, "vol_one_up_pcm");
 
         r.al = (byte) pw.md[r.incSi()].dat;
-        r.carry = (r.al + pw.partWk[r.di].volume > 0xff);
+        r.carry = (r.al & 0xff) + (pw.partWk[r.di].volume & 0xff) > 0xff;
         r.al += pw.partWk[r.di].volume;
         if (r.carry) return this::voup_over;
         return this::vmax_check;
     }
 
     private Supplier<Object> vmax_check() {
-        if (r.al < 255)
+        if ((r.al & 0xff) < 255)
             return this::vo_vset;
         return this::voup_over;
     }
@@ -4109,9 +4093,9 @@ sm_notfm3: // ↑
     }
 
     //3257-3300
-    //==============================================================================
-    // FM音源ハードLFOの設定（Ｖ２．４拡張分）
-    //==============================================================================
+    /**
+     * FM音源ハードLFOの設定（Ｖ２．４拡張分）
+     */
     private Supplier<Object> hlfo_set() {
         r.al = (byte) pw.md[r.incSi()].dat;
         if (pw.board2 != 0) {
@@ -4149,9 +4133,9 @@ sm_notfm3: // ↑
     }
 
     //3301-3314
-    //==============================================================================
-    // FM音源ハードLFOのスイッチ（Ｖ２．４拡張分）
-    //==============================================================================
+    /**
+     * FM音源ハードLFOのスイッチ（Ｖ２．４拡張分）
+     */
     private Supplier<Object> hlfo_onoff() {
         r.al = (byte) pw.md[r.incSi()].dat;
         if (pw.board2 != 0) {
@@ -4166,9 +4150,9 @@ sm_notfm3: // ↑
     }
 
     //3315-3324
-    //==============================================================================
-    // FM音源ハードLFOのディレイ設定
-    //==============================================================================
+    /**
+     * FM音源ハードLFOのディレイ設定
+     */
     private Supplier<Object> hlfo_delay() {
         r.al = (byte) pw.md[r.incSi()].dat;
         if (pw.board2 != 0) {
@@ -4178,9 +4162,9 @@ sm_notfm3: // ↑
     }
 
     //3325-3332
-    //==============================================================================
-    // COMMAND 'Z' （小節の長さの変更）
-    //==============================================================================
+    /**
+     * COMMAND 'Z' （小節の長さの変更）
+     */
     public Supplier<Object> syousetu_lng_set() {
         logger.log(Level.TRACE, "syousetu_lng_set");
 
@@ -4189,7 +4173,7 @@ sm_notfm3: // ↑
 
         //IDE向け
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Tempo, null, (int) pw.tempo_d, (int) pw.syousetu_lng);
+        MmlDatum md = new MmlDatum(-1, MMLType.Tempo, null, pw.tempo_d & 0xff, pw.syousetu_lng & 0xff);
         cd.additionalData = md;
         WriteOPNARegister.accept(cd);
 
@@ -4197,9 +4181,9 @@ sm_notfm3: // ↑
     }
 
     //3333-3377
-    //==============================================================================
-    // COMMAND '@' [PROGRAM CHANGE]
-    //==============================================================================
+    /**
+     * COMMAND '@' [PROGRAM CHANGE]
+     */
     private Supplier<Object> comAt() {
         logger.log(Level.TRACE, "com@");
 
@@ -4264,9 +4248,9 @@ comAt_afset:
     }
 
     //3378-3394
-    //==============================================================================
-    // COMMAND 'q' [STEP-GATE CHANGE]
-    //==============================================================================
+    /**
+     * COMMAND 'q' [STEP-GATE CHANGE]
+     */
     public Supplier<Object> comq() {
         logger.log(Level.TRACE, "comq");
 
@@ -4298,9 +4282,9 @@ comAt_afset:
         return null;
     }
 
-    //==============================================================================
-    // COMMAND 'Q' [STEP-GATE CHANGE 2]
-    //==============================================================================
+    /**
+     * COMMAND 'Q' [STEP-GATE CHANGE 2]
+     */
     public Supplier<Object> comq2() {
         logger.log(Level.TRACE, "comq2");
 
@@ -4324,9 +4308,9 @@ comAt_afset:
         WriteDummy(cd);
     }
 
-    //==============================================================================
-    // COMMAND 'V' [VOLUME CHANGE]
-    //==============================================================================
+    /**
+     * COMMAND 'V' [VOLUME CHANGE]
+     */
     public Supplier<Object> comv() {
         logger.log(Level.TRACE, "comv");
 
@@ -4335,19 +4319,19 @@ comAt_afset:
 
         //IDE向け
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, (int) r.al);
+        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
         cd.additionalData = md;
         WriteDummy(cd);
 
         return null;
     }
 
-    //==============================================================================
-    // COMMAND 't' [TEMPO CHANGE1]
-    // COMMAND 'T' [TEMPO CHANGE2]
-    // COMMAND 't±' [TEMPO CHANGE 相対1]
-    // COMMAND 'T±' [TEMPO CHANGE 相対2]
-    //==============================================================================
+    /**
+     * COMMAND 't' [TEMPO CHANGE1]
+     * COMMAND 'T' [TEMPO CHANGE2]
+     * COMMAND 't±' [TEMPO CHANGE 相対1]
+     * COMMAND 'T±' [TEMPO CHANGE 相対2]
+     */
     public Supplier<Object> comt() {
         logger.log(Level.TRACE, "comt");
 
@@ -4382,7 +4366,7 @@ comAt_afset:
 
             r.ah = pw.tempo_d_push; // T± (FC FE)
             if ((r.al & 0x80) == 0) { // break comt_sp1_minus;
-                r.carry = (r.al + r.ah) > 0xff;
+                r.carry = (r.al & 0xff) + (r.ah & 0xff) > 0xff;
                 r.al += r.ah;
                 if (r.carry) { // break comt_sp1_exitc;
                     r.al = (byte) 250;
@@ -4393,7 +4377,7 @@ comAt_afset:
                 }
             } else {
 //comt_sp1_minus:
-                r.carry = (r.al + r.ah) > 0xff;
+                r.carry = (r.al & 0xff) + (r.ah & 0xff) > 0xff;
                 r.al += r.ah;
                 if (!r.carry) { // break comt_sp1_exitc;
                     r.al = 0;
@@ -4412,7 +4396,7 @@ comAt_afset:
 //comt_sp2:
         r.ah = pw.tempo_48_push; // t± (FC FD)
         if ((r.al & 0x80) == 0) { // break comt_sp2_minus;
-            r.carry = (r.al + r.ah) > 0xff;
+            r.carry = (r.al & 0xff) + (r.ah & 0xff) > 0xff;
             r.al += r.ah;
             if (r.carry) { // break comt_exit2;
                 r.al = (byte) 255;
@@ -4420,7 +4404,7 @@ comAt_afset:
 //            break comt_exit2;
         } else {
 //comt_sp2_minus:
-            r.carry = (r.al + r.ah) > 0xff;
+            r.carry = (r.al & 0xff) + (r.ah & 0xff) > 0xff;
             r.al += r.ah;
             if (!r.carry) {
 //                break comt_2c_over;
@@ -4445,11 +4429,11 @@ comAt_afset:
     }
 
     //3475-3496
-    //==============================================================================
-    // T->t 変換
-    // input[tempo_d]
-    //  output[tempo_48]
-    //==============================================================================
+    /**
+     * T->t 変換
+     * input[tempo_d]
+     *  output[tempo_48]
+     */
     private Supplier<Object> calc_tb_tempo() {
         // TEMPO = 112CH / [ 256 - TB] timerB -> tempo
         r.bl = 0;
@@ -4473,11 +4457,11 @@ comAt_afset:
     }
 
     //3497-3520
-    //==============================================================================
-    // t->T 変換
-    // input[tempo_48]
-    //  output[tempo_d]
-    //==============================================================================
+    /**
+     * t->T 変換
+     * input[tempo_48]
+     *  output[tempo_d]
+     */
     private Supplier<Object> calc_tempo_tb() {
         // TB = 256 - [ 112CH / TEMPO] tempo -> timerB
         r.bl = pw.tempo_48;
@@ -4504,9 +4488,9 @@ comAt_afset:
         return null;
     }
 
-    //==============================================================================
-    // COMMAND '&' [タイ]
-    //==============================================================================
+    /**
+     * COMMAND '&' [タイ]
+     */
     public Supplier<Object> comtie() {
         logger.log(Level.TRACE, "comtie");
 
@@ -4514,9 +4498,9 @@ comAt_afset:
         return null;
     }
 
-    //==============================================================================
-    // COMMAND 'D' [デチューン]
-    //==============================================================================
+    /**
+     * COMMAND 'D' [デチューン]
+     */
     public Supplier<Object> comd() {
         logger.log(Level.TRACE, "comd");
 
@@ -4535,9 +4519,9 @@ comAt_afset:
     }
 
     //3535-3541
-    //==============================================================================
-    // COMMAND 'DD' [相対デチューン]
-    //==============================================================================
+    /**
+     * COMMAND 'DD' [相対デチューン]
+     */
     public Supplier<Object> comdd() {
 //#if DEBUG
 //            logger.log(Level.TRACE, "comdd");
@@ -4558,9 +4542,9 @@ comAt_afset:
     }
 
     //3542-3557
-    //==============================================================================
-    // COMMAND '[' [ループ スタート]
-    //==============================================================================
+    /**
+     * COMMAND '[' [ループ スタート]
+     */
     public Supplier<Object> comstloop() {
         r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
         r.addSi((short) 2);
@@ -4578,9 +4562,9 @@ comAt_afset:
     }
 
     //3558-3586
-    //==============================================================================
-    // COMMAND ']' [ループ エンド]
-    //==============================================================================
+    /**
+     * COMMAND ']' [ループ エンド]
+     */
     public Supplier<Object> comedloop() {
 reloop: // ↑
         {
@@ -4617,9 +4601,9 @@ reloop: // ↑
     }
 
     //3587-3609
-    //==============================================================================
-    // COMMAND ':' [ループ ダッシュツ]
-    //==============================================================================
+    /**
+     * COMMAND ':' [ループ ダッシュツ]
+     */
     public Supplier<Object> comexloop() {
         r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
         r.addSi((short) 2);
@@ -4645,9 +4629,9 @@ reloop: // ↑
     }
 
     //3610-3616
-    //==============================================================================
-    // COMMAND 'L' [クリカエシ ループ セット]
-    //==============================================================================
+    /**
+     * COMMAND 'L' [クリカエシ ループ セット]
+     */
     public Supplier<Object> comlopset() {
         logger.log(Level.TRACE, "comlopset");
 
@@ -4657,9 +4641,9 @@ reloop: // ↑
     }
 
     //3617-3624
-    //==============================================================================
-    // COMMAND '_' [オンカイ シフト]
-    //==============================================================================
+    /**
+     * COMMAND '_' [オンカイ シフト]
+     */
     public Supplier<Object> comshift() {
         logger.log(Level.TRACE, "comshift");
 
@@ -4677,9 +4661,9 @@ reloop: // ↑
     }
 
     //3625-3633
-    //==============================================================================
-    // COMMAND '__' [相対転調]
-    //==============================================================================
+    /**
+     * COMMAND '__' [相対転調]
+     */
     public Supplier<Object> comshift2() {
         logger.log(Level.TRACE, "comshift2");
 
@@ -4698,9 +4682,9 @@ reloop: // ↑
     }
 
     //3634-3641
-    //==============================================================================
-    // COMMAND '_M' [Master転調値]
-    //==============================================================================
+    /**
+     * COMMAND '_M' [Master転調値]
+     */
     public Supplier<Object> comshift_master() {
         logger.log(Level.TRACE, "comshift_master");
 
@@ -4710,9 +4694,9 @@ reloop: // ↑
     }
 
     //3642-3654
-    //==============================================================================
-    // COMMAND ')' [VOLUME UP]
-    //==============================================================================
+    /**
+     * COMMAND ')' [VOLUME UP]
+     */
     // ; ＦＯＲ FM
     private Supplier<Object> comvolup() {
         logger.log(Level.TRACE, "comvolup");
@@ -4727,11 +4711,11 @@ reloop: // ↑
 
         //IDE向け
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.min(r.al, 127));
+        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.min(r.al & 0xff, 127));
         cd.additionalData = md;
         WriteDummy(cd);
 
-        if (r.al < 128)
+        if ((r.al & 0xff) < 128)
             return this::vset;
         r.al = 127;
         return this::vset;
@@ -4767,7 +4751,7 @@ reloop: // ↑
     private Supplier<Object> volupckp() {
         //IDE向け
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.min(r.al, 15));
+        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.min(r.al & 0xff, 15));
         cd.additionalData = md;
         WriteDummy(cd);
 
@@ -4787,9 +4771,9 @@ reloop: // ↑
     }
 
     //3678-3716
-    //==============================================================================
-    // COMMAND '(' [VOLUME DOWN]
-    //==============================================================================
+    /**
+     * COMMAND '(' [VOLUME DOWN]
+     */
     // ; for FM
     private Supplier<Object> comvoldown() {
         logger.log(Level.TRACE, "comvoldown");
@@ -4798,7 +4782,7 @@ reloop: // ↑
 
         //IDE向け
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max(r.al - 4, 0));
+        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - 4, 0));
         cd.additionalData = md;
         WriteDummy(cd);
 
@@ -4819,7 +4803,7 @@ reloop: // ↑
 
         //IDE向け
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max(r.al - r.ah, 0));
+        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - (r.ah & 0xff), 0));
         cd.additionalData = md;
         WriteDummy(cd);
 
@@ -4838,7 +4822,7 @@ reloop: // ↑
 
         //IDE向け
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max(r.al - 1, 0));
+        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - 1, 0));
         cd.additionalData = md;
         WriteDummy(cd);
 
@@ -4857,7 +4841,7 @@ reloop: // ↑
 
         //IDE向け
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max(r.al - r.ah, 0));
+        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - (r.ah & 0xff), 0));
         cd.additionalData = md;
         WriteDummy(cd);
 
@@ -4869,9 +4853,9 @@ reloop: // ↑
     }
 
     //3717-3721
-    //==============================================================================
-    // LFO２用処理
-    //==============================================================================
+    /**
+     * LFO２用処理
+     */
     public Supplier<Object> _lfoset() {
         r.setAx((short) 0); // offset lfoset
         return _lfo_main(this::lfoset);
@@ -4927,7 +4911,7 @@ reloop: // ↑
         r.al = r.rol(r.al, 1);
         r.al = r.rol(r.al, 1);
         r.al = r.rol(r.al, 1);
-        pw.partWk[r.di].lfoswi &= 0x8f;
+        pw.partWk[r.di].lfoswi &= (byte) 0x8f;
         pw.partWk[r.di].lfoswi |= r.al;
         lfo_change();
         lfoinit_main();
@@ -4942,9 +4926,9 @@ reloop: // ↑
     }
 
     //3766-3809
-    //==============================================================================
-    // LFO1<->LFO2 change
-    //==============================================================================
+    /**
+     * LFO1<->LFO2 change
+     */
     public void lfo_change() {
         r.setAx(pw.partWk[r.di].lfodat);
         pw.partWk[r.di].lfodat = pw.partWk[r.di]._lfodat;
@@ -5007,14 +4991,12 @@ reloop: // ↑
         r.al = pw.partWk[r.di].mdc2;
         pw.partWk[r.di].mdc2 = pw.partWk[r.di]._mdc2;
         pw.partWk[r.di]._mdc2 = r.al;
-
-        return;
     }
 
     //3810-3826
-    //==============================================================================
-    // LFO パラメータ セット
-    //==============================================================================
+    /**
+     * LFO パラメータ セット
+     */
     public Supplier<Object> lfoset() {
         logger.log(Level.TRACE, "lfoset");
 
@@ -5045,9 +5027,9 @@ reloop: // ↑
         return this::lfoinit_main;
     }
 
-    //==============================================================================
-    // LFO SWITCH
-    //==============================================================================
+    /**
+     * LFO SWITCH
+     */
     public Supplier<Object> lfoswitch() {
         logger.log(Level.TRACE, "lfoswitch");
 
@@ -5057,7 +5039,7 @@ reloop: // ↑
         }
 //ls_00:
         r.al &= 7;
-        pw.partWk[r.di].lfoswi &= 0xf8;
+        pw.partWk[r.di].lfoswi &= (byte) 0xf8;
         pw.partWk[r.di].lfoswi |= r.al;
         return this::lfoinit_main;
     }
@@ -5070,9 +5052,9 @@ reloop: // ↑
         return this::ch3_setting;
     }
 
-    //==============================================================================
-    // PSG ENVELOPE SET
-    //==============================================================================
+    /**
+     * PSG ENVELOPE SET
+     */
     public Supplier<Object> psgenvset() {
         logger.log(Level.TRACE, "psgenvset");
 
@@ -5097,9 +5079,9 @@ reloop: // ↑
         return null;
     }
 
-    //==============================================================================
-    // 'y' COMMAND[コイツガ イチバン カンタン]
-    //==============================================================================
+    /**
+     * 'y' COMMAND[コイツガ イチバン カンタン]
+     */
     public Supplier<Object> comy() {
         logger.log(Level.TRACE, "comy");
 
@@ -5109,9 +5091,9 @@ reloop: // ↑
         return null;
     }
 
-    //==============================================================================
-    // 'w' COMMAND[PSG NOISE ヘイキン シュウハスウ]
-    //==============================================================================
+    /**
+     * 'w' COMMAND[PSG NOISE ヘイキン シュウハスウ]
+     */
     private Supplier<Object> psgnoise() {
         logger.log(Level.TRACE, "psgnoise");
 
@@ -5138,9 +5120,9 @@ reloop: // ↑
     }
 
     //3903-3910
-    //==============================================================================
-    // 'P' COMMAND[PSG TONE / NOISE / MIX SET]
-    //==============================================================================
+    /**
+     * 'P' COMMAND[PSG TONE / NOISE / MIX SET]
+     */
     private Supplier<Object> psgsel() {
         logger.log(Level.TRACE, "psgsel");
 
@@ -5150,9 +5132,9 @@ reloop: // ↑
     }
 
     //3911-3956
-    //==============================================================================
-    // 'p' COMMAND[FM PANNING SET]
-    //==============================================================================
+    /**
+     * 'p' COMMAND[FM PANNING SET]
+     */
     private Supplier<Object> panset() {
         r.al = (byte) pw.md[r.incSi()].dat;
         if (pw.board2 != 0) {
@@ -5164,7 +5146,7 @@ reloop: // ↑
     private Supplier<Object> panset_main() {
         //IDE向け
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Pan, pw.cmd.linePos, (int) r.al);
+        cd.additionalData = new MmlDatum(-1, MMLType.Pan, pw.cmd.linePos, r.al & 0xff);
         WriteDummy(cd);
 
         r.al = r.ror(r.al, 1);
@@ -5194,7 +5176,7 @@ reloop: // ↑
         if (pw.partWk[r.di].partmask == 0) { // パートマスクされているか？ break panset_exit;
             r.dl = r.al;
             r.dh = pw.partb;
-            r.dh += 0xb4 - 1;
+            r.dh += (byte) (0xb4 - 1);
             calc_panout();
             opnset();
         }
@@ -5202,9 +5184,9 @@ reloop: // ↑
         return null;
     }
 
-    //==============================================================================
-    // 0b4h～に設定するデータを取得 out.dl
-    //==============================================================================
+    /**
+     * 0b4h～に設定するデータを取得 out.dl
+     */
     private void calc_panout() {
         if (pw.board2 != 0) {
             r.dl = pw.partWk[r.di].fmpan;
@@ -5215,9 +5197,9 @@ reloop: // ↑
         }
     }
 
-    //==============================================================================
-    // Pan setting Extend
-    //==============================================================================
+    /**
+     * Pan setting Extend
+     */
     private Supplier<Object> panset_ex() {
         r.al = (byte) pw.md[r.incSi()].dat;
         r.incSi(); // 逆走flagは読み飛ばす
@@ -5243,9 +5225,9 @@ reloop: // ↑
     }
 
     //3991-4060
-    //==============================================================================
-    // "\?" COMMAND[OPNA Rhythm Keyon / Dump]
-    //==============================================================================
+    /**
+     * "\?" COMMAND[OPNA Rhythm Keyon / Dump]
+     */
     public Supplier<Object> rhykey() {
         if (pw.board2 != 0) {
             r.dh = 0x10;
@@ -5325,9 +5307,9 @@ reloop: // ↑
     }
 
     //4061-4132
-    //==============================================================================
-    // "\v?n" COMMAND
-    //==============================================================================
+    /**
+     * "\v?n" COMMAND
+     */
     public Supplier<Object> rhyvs() {
         if (pw.board2 != 0) {
             r.al = (byte) pw.md[r.incSi()].dat;
@@ -5388,7 +5370,7 @@ reloop: // ↑
             r.al &= 0b0001_1111;
             r.dl = r.al;
             r.al = pw.rdat[r.getBx()];
-            r.al &= 0b1110_0000;
+            r.al &= (byte) 0b1110_0000;
             r.dl |= r.al;
             pw.rdat[r.getBx()] = r.dl;
             opnset44();
@@ -5399,9 +5381,9 @@ reloop: // ↑
         }
     }
 
-    //==============================================================================
-    // "\p?" COMMAND
-    //==============================================================================
+    /**
+     * "\p?" COMMAND
+     */
     public Supplier<Object> rpnset() {
         if (pw.board2 != 0) {
             r.al = (byte) pw.md[r.incSi()].dat;
@@ -5418,9 +5400,9 @@ reloop: // ↑
         }
     }
 
-    //==============================================================================
-    // "\Vn" COMMAND
-    //==============================================================================
+    /**
+     * "\Vn" COMMAND
+     */
     public Supplier<Object> rmsvs() {
         if (pw.board2 != 0) {
             r.al = (byte) pw.md[r.incSi()].dat;
@@ -5459,8 +5441,6 @@ reloop: // ↑
         }
     }
 
-
-    //4184-4204
     public Supplier<Object> rmsvs_sft() {
         if (pw.board2 != 0) {
             r.dh = 0x11;
@@ -5487,9 +5467,9 @@ reloop: // ↑
         }
     }
 
-    //==============================================================================
-    // SHIFT[di] 分移調する
-    //==============================================================================
+    /**
+     * SHIFT[di] 分移調する
+     */
     public void oshift() {
         //oshiftp:
         if (r.al == 0xf) // 休符
@@ -5512,7 +5492,7 @@ reloop: // ↑
             //
             //shiftminus:
             r.carry = false;
-            if (r.bl + r.dl > 0xff) r.carry = true;
+            if ((r.bl & 0xff) + (r.dl & 0xff) > 0xff) r.carry = true;
             r.bl += r.dl;
             if (!r.carry) { // break sfm2;
 
@@ -5520,13 +5500,13 @@ reloop: // ↑
                 do {
                     r.bh--;
                     r.carry = false;
-                    if (r.bl + 12 > 0xff) r.carry = true;
+                    if ((r.bl & 0xff) + 12 > 0xff) r.carry = true;
                     r.bl += 12;
                 } while (!r.carry);
             }
 //sfm2:
             r.al = r.bh;
-            r.al = (byte) ((r.al >> 4) | (byte) (r.al << 4)); // ror x4
+            r.al = (byte) ((r.al >>> 4) | ((r.al << 4) & 0xff)); // ror x4
             r.al |= r.bl;
             return;
         }
@@ -5544,7 +5524,7 @@ reloop: // ↑
         } while (true);
 //spm2:
         r.al = r.bh;
-        r.al = (byte) ((r.al >> 4) | (byte) (r.al << 4)); // ror x4
+        r.al = (byte) ((r.al >> 4) | ((r.al << 4) & 0xff)); // ror x4
         r.al |= r.bl;
 
         //osret: ret
@@ -5554,11 +5534,10 @@ reloop: // ↑
         oshift();
     }
 
-    //4262-4331
-    //==============================================================================
-    // FM BLOCK, F-NUMBER SET
-    // ; INPUTS -- AL[KEY#,0-7F]
-    //==============================================================================
+    /**
+     * FM BLOCK, F-NUMBER SET
+     * ; INPUTS -- AL[KEY#,0-7F]
+     */
     private void fnumset() {
         r.ah = r.al;
         r.ah &= 0xf;
@@ -5585,7 +5564,6 @@ reloop: // ↑
         //
         r.ah |= r.ch;
         pw.partWk[r.di].fnum = r.getAx();
-        return;
     }
 
     public void fnrest() {
@@ -5609,7 +5587,7 @@ reloop: // ↑
         pw.partWk[r.di].onkai = r.al;
 
         r.cl = r.al;
-        r.cl = (byte) ((r.cl >> 4) | (byte) (r.cl << 4)); // ror x4
+        r.cl = (byte) ((r.cl >> 4) | ((r.cl << 4) & 0xff)); // ror x4
         r.cl &= 0xf; // cl=oct
         r.bl = r.al;
         r.bl &= 0xf;
@@ -5627,9 +5605,9 @@ reloop: // ↑
         pw.partWk[r.di].fnum = r.getAx();
     }
 
-    //==============================================================================
-    // Set[FNUM / BLOCK + DETUNE + LFO]
-    //==============================================================================
+    /**
+     * Set[FNUM / BLOCK + DETUNE + LFO]
+     */
     private void otodasi() {
         r.setAx(pw.partWk[r.di].fnum);
         if (r.getAx() == 0) { // break od_00;
@@ -5682,7 +5660,7 @@ od_non_ch3: // ↑
             // SET BLOCK/FNUM TO OPN
             // input CX:AX
             r.orAx(r.getCx()); // AX=block/Fnum
-            r.dh += 0xa4 - 1;
+            r.dh += (byte) (0xa4 - 1);
             r.dl = r.ah;
             //    pushf
             //    cli
@@ -5695,10 +5673,10 @@ od_non_ch3: // ↑
 //od_exit:
     }
 
-    //==============================================================================
-    // ch3=効果音モード を使用する場合の音程設定
-    // input CX:block AX:fnum
-    //==============================================================================
+    /**
+     * ch3=効果音モード を使用する場合の音程設定
+     * input CX:block AX:fnum
+     */
     private void ch3_special() {
         r.stack.push(r.getSi());
         r.setSi(r.getCx()); // si=block
@@ -5757,8 +5735,7 @@ od_non_ch3: // ↑
 
         }
         // slot 3
-ns_sl3:
-        ;
+//ns_sl3:
         r.carry = (r.bl & 0x80) != 0;
         r.bl = (byte) ((r.bl << 1) | (r.bl >> 7));
         if (r.carry) { // break ns_sl2;
@@ -5800,8 +5777,7 @@ ns_sl3:
 
         }
         // slot 2
-ns_sl2:
-        ;
+//ns_sl2:
         r.carry = (r.bl & 0x80) != 0;
         r.bl = (byte) ((r.bl << 1) | (r.bl >> 7));
         if (r.carry) { // break ns_sl1;
@@ -5882,11 +5858,11 @@ ns_sl2:
         r.setSi(r.stack.pop());
     }
 
-    //==============================================================================
-    // FM音源のdetuneでオクターブが変わる時の修正
-    //  input CX:block / AX:fnum+detune
-    //  output CX:block / AX:fnum
-    //==============================================================================
+    /**
+     * FM音源のdetuneでオクターブが変わる時の修正
+     *  input CX:block / AX:fnum+detune
+     *  output CX:block / AX:fnum
+     */
     private void fm_block_calc() {
         r.sign = (r.getAx() & 0x8000) != 0;
 //od0:
@@ -5941,9 +5917,9 @@ ns_sl2:
 //od2:
     }
 
-    //==============================================================================
-    // ＰＳＧ 音程設定
-    //==============================================================================
+    /**
+     * ＰＳＧ 音程設定
+     */
     private void otodasip() {
         r.setAx(pw.partWk[r.di].fnum);
         if (r.getAx() == 0) { // break od_00p;
@@ -6050,24 +6026,24 @@ ns_sl2:
         //    popf
     }
 
-    //==============================================================================
-    // FM ＶＯＬＵＭＥ ＳＥＴ
-    //==============================================================================
-    //------------------------------------------------------------------------------
+    /**
+     * FM ＶＯＬＵＭＥ ＳＥＴ
+     */
+    //
     // スロット毎の計算 & 出力 マクロ
     //   in. dl 元のTL値
     // dh Outするレジスタ
     // al 音量変動値 中心=80h
-    //------------------------------------------------------------------------------
+    //
     private void volset_slot() {
-        r.carry = (r.al + r.dl > 0xff);
+        r.carry = (r.al & 0xff) + (r.dl & 0xff) > 0xff;
         r.al += r.dl;
         if (r.carry) { // break vsl_noover1;
             r.al = (byte) 255;
         }
 //vsl_noover1:
-        r.carry = (r.al < 0x80);
-        r.al -= 0x80;
+        r.carry = (r.al & 0xff) < 0x80;
+        r.al -= (byte) 0x80;
         if (r.carry) { // break vsl_noover2;
             r.al = 0;
         }
@@ -6076,9 +6052,9 @@ ns_sl2:
         opnset();
     }
 
-    //------------------------------------------------------------------------------
+    //
     // FM音量設定メイン
-    //------------------------------------------------------------------------------
+    //
     private void volset() {
         r.bl = pw.partWk[r.di].slotmask; // bl<- slotmask
         if (r.bl == 0) { // break vs_exec;
@@ -6104,9 +6080,9 @@ ns_sl2:
         pmdAsm_4743_voldown();
     }
 
-    //------------------------------------------------------------------------------
+    //
     // 音量down計算
-    //------------------------------------------------------------------------------
+    //
     private void pmdAsm_4743_voldown() {
         r.al = pw.fm_voldown;
         if (r.al == 0) {
@@ -6121,9 +6097,9 @@ ns_sl2:
         fm_fade_calc();
     }
 
-    //------------------------------------------------------------------------------
+    //
     // Fadeout計算
-    //------------------------------------------------------------------------------
+    //
     private void fm_fade_calc() {
         r.al = pw.fadeout_volume;
         if (r.al >= 2) {
@@ -6136,11 +6112,11 @@ ns_sl2:
         fmvs();
     }
 
-    //------------------------------------------------------------------------------
+    //
     // 音量をcarrierに設定 & 音量LFO処理
     //  input cl to Volume[0 - 127]
     // bl to SlotMask
-    //------------------------------------------------------------------------------
+    //
     private void fmvs() {
         r.bh = 0; // Vol Slot Mask
         r.ch = r.bl; // ch=SlotMask Push
@@ -6183,7 +6159,7 @@ ns_sl2:
         }
 //fmvs_04:
         r.subSi((short) 3);
-        if (r.cl != 255) { // 音量0? // break fmvs_no_lfo;
+        if (r.cl != (byte) 255) { // 音量0? // break fmvs_no_lfo;
 
             if ((pw.partWk[r.di].lfoswi & 2) != 0) { // break fmvs_not_vollfo1;
 
@@ -6240,9 +6216,9 @@ ns_sl2:
         r.setSi(r.stack.pop());
     }
 
-    //------------------------------------------------------------------------------
+    //
     // 音量LFO用サブ
-    //------------------------------------------------------------------------------
+    //
     private void fmlfo_sub() {
         r.stack.push(r.getCx());
         r.setCx((short) 4);
@@ -6278,9 +6254,9 @@ ns_sl2:
 
 
     //4887-4994
-    //==============================================================================
+    /**
     // ＰＳＧ ＶＯＬＵＭＥ ＳＥＴ
-    //==============================================================================
+     */
     private void volsetp() {
         if (pw.partWk[r.di].envf == 3) {
 //            break volsetp_ret;
@@ -6303,18 +6279,18 @@ ns_sl2:
         }
 //vsp_01:
         r.dl = r.al;
-        //------------------------------------------------------------------------------
+        //
         // 音量down計算
-        //------------------------------------------------------------------------------
+        //
         r.al = pw.ssg_voldown;
         if (r.al != 0) { // break psg_fade_calc;
             r.al = (byte) -r.al;
             r.setAx((short) (r.al * r.dl));
             r.dl = r.ah;
         }
-        //------------------------------------------------------------------------------
+        //
         // Fadeout計算
-        //------------------------------------------------------------------------------
+        //
 //psg_fade_calc:
         r.al = pw.fadeout_volume;
         if (r.al != 0) { // break psg_env_calc;
@@ -6322,9 +6298,9 @@ ns_sl2:
             r.setAx((short) (r.al * r.dl));
             r.dl = r.ah;
         }
-        //------------------------------------------------------------------------------
+        //
         // ENVELOPE 計算
-        //------------------------------------------------------------------------------
+        //
 //psg_env_calc:
 pv_out: // ↑
         if (r.dl != 0) { // 音量0? // break pv_out;
@@ -6356,7 +6332,7 @@ pv_out: // ↑
 //normal_pvset:
                 r.dl += pw.partWk[r.di].eenv_volume; // .penv;
                 if ((r.dl & 0x80) != 0) { // break pv0;
-pv_min:
+//pv_min:
                     r.dl = 0;
                 }
 //pv0:
@@ -6365,9 +6341,9 @@ pv_min:
                     r.dl = 15;
                 }
             }
-            //------------------------------------------------------------------------------
+            //
             // 音量LFO計算
-            //------------------------------------------------------------------------------
+            //
 //pv1:
             if ((pw.partWk[r.di].lfoswi & 0x22) != 0) { // break pv_out;
                 r.setAx((short) 0);
@@ -6392,19 +6368,19 @@ pv_min:
                 }
             }
         }
-        //------------------------------------------------------------------------------
+        //
         // 出力
-        //------------------------------------------------------------------------------
+        //
 //pv_out:
         r.dh = pw.partb;
         r.dh += 8 - 1;
-        //Console.WriteLine("%d %d", r.dh, r.dl);
+        //logger.log(Level.TRACE, "%d %d", r.dh, r.dl);
         opnset44();
     }
 
-    //==============================================================================
-    // FM ＫＥＹＯＮ
-    //==============================================================================
+    /**
+     * FM ＫＥＹＯＮ
+     */
     private void keyon() {
         if (pw.partWk[r.di].onkai == (byte) 0xff) { //-1 // break ko1;
             //keyon_ret:;
@@ -6448,13 +6424,12 @@ ura_keyon: // ↑
             r.dl |= r.al;
             r.dl |= 0b0000_0100; // Ura Port
             opnset44();
-            return;
         }
     }
 
-    //==============================================================================
-    // ＰＳＧ ＫＥＹＯＮ
-    //==============================================================================
+    /**
+     * ＰＳＧ ＫＥＹＯＮ
+     */
     private void keyonp() {
         if (pw.partWk[r.di].onkai == (byte) 0xff) { // -1 // break ko1p;
             return; // when a rest
@@ -6485,11 +6460,11 @@ ura_keyon: // ↑
 //psnoi_ret:
     }
 
-    //==============================================================================
-    // ＰＳＧ07hポートのKEYON/OFF準備(07Hを読み、マスクする値を算出)
-    // OUTPUT...al<- 07h Read Data
-    //      ah<- Mask Data
-    //==============================================================================
+    /**
+     * ＰＳＧ07hポートのKEYON/OFF準備(07Hを読み、マスクする値を算出)
+     * OUTPUT...al<- 07h Read Data
+     *      ah<- Mask Data
+     */
     private void psgmsk() {
         r.cl = pw.partb;
         r.al = 0;
@@ -6508,10 +6483,10 @@ ura_keyon: // ↑
         get07();
     }
 
-    //==============================================================================
-    // KEY OFF
-    // don't Break AL
-    //==============================================================================
+    /**
+     * KEY OFF
+     * don't Break AL
+     */
     private void keyoff() {
         if (pw.partWk[r.di].onkai != (byte) 0xff) {
             kof1();
@@ -6576,14 +6551,12 @@ ura_keyoff: // ↑
         pw.partWk[r.di].eenv_count = 4;
     }
 
-
-    //5138-5152
-    //==============================================================================
-    // 音色の設定
-    //  INPUTS -- [PARTB]
-    //   -- dl[TONE_NUMBER]
-    //   -- di[PART_DATA_ADDRESS]
-    //==============================================================================
+    /**
+     * 音色の設定
+     *  INPUTS -- [PARTB]
+     *   -- dl[TONE_NUMBER]
+     *   -- di[PART_DATA_ADDRESS]
+     */
     private void neiroset() {
         toneadr_calc();
         silence_fmpart();
@@ -6596,14 +6569,13 @@ ura_keyoff: // ↑
         neiroset_tl();
     }
 
-
-    //5153-5196
-    //==============================================================================
+    //
     // 音色設定メイン
-    //==============================================================================
-    //------------------------------------------------------------------------------
-    // AL/FBを設定
-    //------------------------------------------------------------------------------
+    //
+
+    /**
+     * AL/FBを設定
+     */
     private void neiroset_main() {
         r.dh = (byte) (0xb0 - 1);
         r.dh += pw.partb;
@@ -6651,11 +6623,9 @@ nss_notfm3: // ↑
         check_carrier();
     }
 
-
-    //5197-5220
-    //------------------------------------------------------------------------------
+    //
     // Carrierの位置を調べる(VolMaskにも設定)
-    //------------------------------------------------------------------------------
+    //
     private void check_carrier() {
         r.stack.push(r.getBx());
         r.bh = 0;
@@ -6713,7 +6683,7 @@ nss_notfm3: // ↑
         } while (r.getCx() != 0); // break ns01b;
 
         r.setCx((short) 16); // 残り
-ns01c:
+//ns01c:
         do {
             if (pw.inst != null && r.getBx() < pw.inst.length) r.dl = (byte) pw.inst[r.getBx()].dat;
             else r.dl = 0;
@@ -6751,14 +6721,13 @@ ns01c:
 
         r.di = r.stack.pop();
         r.setSi(r.stack.pop());
-        return;
     }
 
-    //==============================================================================
-    // TONE DATA START ADDRESS を計算
-    //  input dl  tone_number
-    //  output bx  address
-    //==============================================================================
+    /**
+     * TONE DATA START ADDRESS を計算
+     *  input dl  tone_number
+     *  output bx  address
+     */
     private void toneadr_calc() {
         if (pw.prg_flg == 0) { // break prgdat_get;
 
@@ -6798,11 +6767,11 @@ ns01c:
         r.incBx();
     }
 
-    //==============================================================================
-    // [PartB]
-    //        のパートの音を完璧に消す(TL= 127 and RR = 15 and KEY-OFF)
-    // cy=1 ・・・ 全スロットneiromaskされている
-    //==============================================================================
+    /**
+     * [PartB]
+     *        のパートの音を完璧に消す(TL= 127 and RR = 15 and KEY-OFF)
+     * cy=1 ・・・ 全スロットneiromaskされている
+     */
     private void silence_fmpart() {
         r.al = pw.partWk[r.di].neiromask;
         if (r.al != 0) { // break sfm_exit;
@@ -6812,7 +6781,7 @@ ns01c:
             r.dh += 0x40 - 1;
             r.setCx((short) 4);
             r.dl = 127; // TL = 127 / RR=15
-ns00c:
+//ns00c:
             do {
                 r.carry = ((r.al & 0x80) != 0);
                 r.al = (byte) ((r.al << 1) | ((r.al & 0x80) >> 7));
@@ -6839,16 +6808,16 @@ ns00c:
         r.carry = true;
     }
 
-    //==============================================================================
-    // LFO処理
-    //  Don't Break cl
-    //  output cy = 1    変化があった
-    //==============================================================================
+    /**
+     * LFO処理
+     *  Don't Break cl
+     *  output cy = 1    変化があった
+     */
     public void lfo() {
         //lfop:;
         if (pw.partWk[r.di].delay != 0) { // break lfo1;
             pw.partWk[r.di].delay--; // cy=0
-lfo_ret:
+//lfo_ret:
             return;
         }
 //lfo1:
@@ -6968,7 +6937,7 @@ lfo20: // ↑
                 r.setAx(r.al); // cbw
                 pw.partWk[r.di].lfodat += r.getAx();
                 r.al = pw.partWk[r.di].time;
-                if (r.al != 0xff) { // -1 // break nk_lfo3;
+                if (r.al != (byte) 0xff) { // -1 // break nk_lfo3;
                     r.al--;
                     if (r.al == 0) { // break nk_lfo3;
                         pw.partWk[r.di].lfodat = (short) -pw.partWk[r.di].lfodat;
@@ -6986,7 +6955,7 @@ lfo20: // ↑
             // ワンショット lfowave = 6
             r.al = pw.partWk[r.di].time;
             if (r.al != 0) { // break lfoone_ret;
-                if (r.al != 0xff) { // -1 // break lfoone_nodec;
+                if (r.al != (byte) 0xff) { // -1 // break lfoone_nodec;
                     r.al--;
                     pw.partWk[r.di].time = r.al;
                 }
@@ -7027,9 +6996,9 @@ lfo20: // ↑
         md_inc();
     }
 
-    //==============================================================================
-    // MDコマンドの値によってSTEP値を変更
-    //==============================================================================
+    /**
+     * MDコマンドの値によってSTEP値を変更
+     */
     private void md_inc() {
         pw.partWk[r.di].mdspd--;
         if (pw.partWk[r.di].mdspd != 0) {
@@ -7083,10 +7052,10 @@ lfo20: // ↑
         pw.partWk[r.di].step = r.al; // ↓
     }
 
-    //==============================================================================
-    // 乱数発生ルーチン INPUT : AX=MAX_RANDOM
-    //    OUTPUT: AX=RANDOM_NUMBER
-    //==============================================================================
+    /**
+     * 乱数発生ルーチン INPUT : AX=MAX_RANDOM
+     *    OUTPUT: AX=RANDOM_NUMBER
+     */
     private void rnd() {
         r.setCx(r.getAx());
         r.setAx((short) 259);
@@ -7102,12 +7071,12 @@ lfo20: // ↑
         r.setDx((short) (ans % r.getCx()));
     }
 
-    //==============================================================================
-    // LFOとＰＳＧ／PCMのソフトウエアエンベロープの初期化
-    //==============================================================================
-    //==============================================================================
-    // ＰＳＧ／PCM音源用 Entry
-    //==============================================================================
+    /**
+     * LFOとＰＳＧ／PCMのソフトウエアエンベロープの初期化
+     */
+    /**
+     * ＰＳＧ／PCM音源用 Entry
+     */
     public void lfoinitp() {
         r.ah = r.al; // キューフ ノ トキ ハ INIT シナイヨ
         r.ah &= 0xf;
@@ -7136,9 +7105,9 @@ lfo20: // ↑
         // ここまで
     }
 
-    //==============================================================================
-    // ソフトウエアエンベロープ初期化
-    //==============================================================================
+    /**
+     * ソフトウエアエンベロープ初期化
+     */
     private void seinit() {
         if (pw.partWk[r.di].envf != (byte) 0xff) { // break extenv_init;
 
@@ -7197,9 +7166,9 @@ lfo20: // ↑
         lfin1();
     }
 
-    //==============================================================================
-    // FM音源用 Entry
-    //==============================================================================
+    /**
+     * FM音源用 Entry
+     */
     private void lfoinit() {
         r.ah = r.al; // キューフ ノ トキ ハ INIT シナイヨ
         r.ah &= 0xf;
@@ -7248,18 +7217,18 @@ lfo20: // ↑
 
 
     //5681-5757
-    //==============================================================================
-    // LFO初期化
-    //==============================================================================
+    /**
+     * LFO初期化
+     */
     private void lfin1() {
         if (pw.board2 != 0) {
             r.ah = pw.partWk[r.di].hldelay;
             pw.partWk[r.di].hldelay_c = r.ah;
             if (r.ah != 0) { // break non_hldelay;
                 r.dh = pw.partb; //    mov dh,[partb]
-                r.dh += 0xb4 - 1;
+                r.dh += (byte) (0xb4 - 1);
                 r.dl = pw.partWk[r.di].fmpan;
-                r.dl &= 0xc0; // HLFO = OFF
+                r.dl &= (byte) 0xc0; // HLFO = OFF
                 opnset();
             }
 //non_hldelay:
@@ -7334,9 +7303,9 @@ lfo20: // ↑
         return null;
     }
 
-    //==============================================================================
-    // ＰＳＧ／PCMのソフトウエアエンベロープ
-    //==============================================================================
+    /**
+     * ＰＳＧ／PCMのソフトウエアエンベロープ
+     */
     public void soft_env() {
         if ((pw.partWk[r.di].extendmode & 4) == 0) // TimerAと合わせるか？
         {
@@ -7597,11 +7566,11 @@ lfo20: // ↑
         pw.partWk[r.di].eenv_rrc++;
     }
 
-    //==============================================================================
-    // FADE IN / OUT ROUTINE
+    /**
+     * FADE IN / OUT ROUTINE
     //
-    //  FROM Timer-A
-    //==============================================================================
+     *  FROM Timer-A
+     */
     private void fadeout() {
         if (pw.pause_flag == 1) { // pause中はfadeoutしない
 //            break fade_exit;
@@ -7614,7 +7583,7 @@ lfo20: // ↑
         }
         if ((r.al & 0x80) == 0) { // break fade_in;
 
-            r.carry = (r.al + pw.fadeout_volume > 0xff);
+            r.carry = (r.al & 0xff) + (pw.fadeout_volume & 0xff) > 0xff;
             r.al += pw.fadeout_volume;
             if (!r.carry) { // break fadeout_end;
 
@@ -7632,7 +7601,7 @@ lfo20: // ↑
             return;
         }
 //fade_in:
-        r.carry = (r.al + pw.fadeout_volume > 0xff);
+        r.carry = (r.al & 0xff) + (pw.fadeout_volume & 0xff) > 0xff;
         r.al += pw.fadeout_volume;
         if (r.carry) { // break fadein_end;
 
@@ -7648,10 +7617,10 @@ lfo20: // ↑
         }
     }
 
-    //==============================================================================
-    // インタラプト 設定
-    // FM音源専用
-    //==============================================================================
+    /**
+     * インタラプト 設定
+     * FM音源専用
+     */
     private void setint() {
         //pushf
         //cli; 割り込み禁止
@@ -7686,9 +7655,9 @@ lfo20: // ↑
         pw.syousetu_lng = 96;
     }
 
-    //==============================================================================
-    // ALL SILENCE
-    //==============================================================================
+    /**
+     * ALL SILENCE
+     */
     private void silence() {
         if (pw.board2 != 0) {
             sel44(); // mmainには飛ばない状況下なので大丈夫
@@ -7697,7 +7666,7 @@ lfo20: // ↑
         oploop();
     }
 
-    private void oploop() {
+    private void oploop() { // TODO vavi re-check
         byte[] bxTbl = null;
         if (pw.fm_effec_flag == 1) { // break opi_nef;
             if (pw.board2 != 0) {
@@ -7725,7 +7694,7 @@ lfo20: // ↑
             r.incBx();
             if (r.dh == (byte) 0xff) break; // opi1b;
 
-            r.dh += 0x80;
+            r.dh += (byte) 0x80;
             r.dl = (byte) 0xff; // FM Release = 15
             opnset();
 //            break opi0;
@@ -7789,7 +7758,7 @@ lfo20: // ↑
             get07();
             r.dl = r.al;
             r.dl &= 0b0011_1111;
-            r.dl |= 0b1001_1011;
+            r.dl |= (byte) 0b1001_1011;
             r.dh = 0x7;
             opnset44();
             //    popf
@@ -7838,10 +7807,10 @@ pcm_ef: // ↑
 
 
     //6166-6248
-    //==============================================================================
-    // SET DATA TO OPN
-    // INPUTS ---- D,E
-    //==============================================================================
+    /**
+     * SET DATA TO OPN
+     * INPUTS ---- D,E
+     */
     //
     // 表
     //
@@ -7931,10 +7900,10 @@ pcm_ef: // ↑
         r.setAx(r.stack.pop());
     }
 
-    //==============================================================================
-    // READ PSG 07H Port
-    // cliしてから来ること
-    //==============================================================================
+    /**
+     * READ PSG 07H Port
+     * cliしてから来ること
+     */
     public void get07() {
         r.stack.push(r.getDx());
         r.setDx((short) pw.fm1_port1);
@@ -7947,9 +7916,9 @@ pcm_ef: // ↑
         r.setDx(r.stack.pop());
     }
 
-    //==============================================================================
-    // ＩＮＴ６０Ｈのメイン
-    //==============================================================================
+    /**
+     * ＩＮＴ６０Ｈのメイン
+     */
     private void int60_start() {
         // TimerA/B 再入check
 
@@ -8036,7 +8005,7 @@ pcm_ef: // ↑
         };
     }
 
-    private int int60_max = 0x22;
+    private static final int int60_max = 0x22;
 
     private void get_ss() {
         getss();
@@ -8090,9 +8059,9 @@ pcm_ef: // ↑
 
 
     //6738-6789
-    //==============================================================================
-    // メモ文字列の取り出し
-    //==============================================================================
+    /**
+     * メモ文字列の取り出し
+     */
     public short get_memo(int al) {
         try {
 getmemo_errret: // ↑
@@ -8150,13 +8119,13 @@ getmemo_errret: // ↑
         }
     }
 
-    //==============================================================================
-    // 曲の頭だし
-    //  input DX<- 小節番号
-    // output AL<- return code   0:正常終了
-    //      1:その小節まで曲がない
-    //      2:曲が演奏されていない
-    //==============================================================================
+    /**
+     * 曲の頭だし
+     *  input DX<- 小節番号
+     * output AL<- return code   0:正常終了
+     *      1:その小節まで曲がない
+     *      2:曲が演奏されていない
+     */
     private void ff_music() {
         r.stack.push(r.getDx());
         r.setDx(pw.mask_adr);
@@ -8176,7 +8145,6 @@ getmemo_errret: // ↑
         r.al &= pw.mask_data2;
         pc98.OutPort(r.getDx(), r.al); // FM割り込みを許可
         //    popf
-        return;
     }
 
     private void ff_music_main() {
@@ -8265,9 +8233,9 @@ getmemo_errret: // ↑
         pw.skip_flag = 0;
     }
 
-    //==============================================================================
-    // 全パート一時マスク
-    //==============================================================================
+    /**
+     * 全パート一時マスク
+     */
     private void maskon_all() {
         r.setSi((short) 0); // offset part_table
         r.setCx((short) pw.max_part1);
@@ -8289,7 +8257,7 @@ getmemo_errret: // ↑
             r.ah = (byte) pw.part_table[r.incSi()];
 
             pw.partWk[r.di].partmask |= (byte) 0x80;
-            if (pw.partWk[r.di].partmask == 0x80) { // break maskon_next; // 既に他でマスクされてた
+            if (pw.partWk[r.di].partmask == (byte) 0x80) { // break maskon_next; // 既に他でマスクされてた
 
                 r.stack.push(r.getCx());
                 r.stack.push(r.di);
@@ -8305,9 +8273,9 @@ getmemo_errret: // ↑
         } while (r.getCx() != 0); // break maskon_loop;
     }
 
-    //==============================================================================
-    // 全パート一時マスク解除
-    //==============================================================================
+    /**
+     * 全パート一時マスク解除
+     */
     private void maskoff_all() {
         r.setSi((short) 0); // offset part_table
         r.setCx((short) pw.max_part1);
@@ -8344,9 +8312,9 @@ getmemo_errret: // ↑
         } while (r.getCx() != 0); // break maskoff_loop;
     }
 
-    //==============================================================================
-    // パートのマスク & Keyoff
-    //==============================================================================
+    /**
+     * パートのマスク & Keyoff
+     */
     private void part_mask() {
         r.ah = r.al;
         r.ah &= 0x7f;
@@ -8515,9 +8483,9 @@ pm_fm2: // ↑
         }
     }
 
-    //==============================================================================
-    // パートのマスク解除 & FM音源音色設定 in.AH=part番号
-    //==============================================================================
+    /**
+     * パートのマスク解除 & FM音源音色設定 in.AH=part番号
+     */
     private void part_on() {
         r.bh = 0;
         r.bl = r.ah;
@@ -8539,7 +8507,7 @@ pm_fm2: // ↑
         r.di = (short) pw.part_data_table[r.getBx()];
         if (pw.partWk[r.di].partmask == 0)
             return; // break po_ret; // ; マスクされてない
-        pw.partWk[r.di].partmask &= 0xfe;
+        pw.partWk[r.di].partmask &= (byte) 0xfe;
         if (pw.partWk[r.di].partmask != 0)
             return; // break po_ret; // 効果音でまだマスクされている
         if (pw.play_flag == 0)
@@ -8586,20 +8554,18 @@ pm_fm2: // ↑
             if (pw.partWk[r.di].address != 0) { // break pof2_not_set;
                 neiro_reset();
             }
-pof2_not_set:
+//pof2_not_set:
             //popf
-            return;
         }
     }
 
     private void rhythm_on() {
         pw.rhythmmask = (byte) 0xff; // Rhythm音源をMask解除
-        return;
     }
 
-    //==============================================================================
-    // ボードがない時
-    //==============================================================================
+    /**
+     * ボードがない時
+     */
     private void int60_start_not_board() {
         n_int60_jumptable[r.ah].run();
 
@@ -8607,7 +8573,6 @@ pof2_not_set:
         r.ah = pw.ah_push;
         r.setDx(pw.dx_push);
         int60_exit();
-        return;
     }
 
     private Runnable[] n_int60_jumptable;
@@ -8656,7 +8621,6 @@ pof2_not_set:
         pw.al_push = (byte) 255;
     }
 
-    //7333-7334
     private void nothing() {
     }
 
@@ -8665,13 +8629,13 @@ pof2_not_set:
         get_255();
     }
 
-    //==============================================================================
-    // FM効果音ルーチン
-    //==============================================================================
-    //==============================================================================
-    // 発音
-    //  input AL to number_of_data
-    //==============================================================================
+    /**
+     * FM効果音ルーチン
+    /**
+    /**
+     * 発音
+     *  input AL to number_of_data
+     */
     private void fm_effect_on() {
         if (pw.efcdat == -1) return; // KUMA: 将来効果音使うときまで封印
 
@@ -8731,9 +8695,9 @@ pof2_not_set:
         //ret
     }
 
-    //==============================================================================
-    // 消音
-    //==============================================================================
+    /**
+     * 消音
+     */
     private void fm_effect_off() {
         //pushf
         //cli
@@ -8775,7 +8739,7 @@ pof2_not_set:
                     pw.ch3mode = r.al;
                     r.dh = 0x27;
                     r.dl = r.al;
-                    r.dl &= 0b1100_1111; // Resetはしない
+                    r.dl &= (byte) 0b1100_1111; // Resetはしない
                     opnset44();
                 }
             }
@@ -8784,17 +8748,17 @@ pof2_not_set:
         // popf
     }
 
-    //==============================================================================
-    // FM TimerA/B 処理 Main
-    //  *Timerが来ている事を確認してから飛んで来ること。
-    //   pushしてあるレジスタは ax/dx/ds のみ。
-    //==============================================================================
+    /**
+     * FM TimerA/B 処理 Main
+     *  *Timerが来ている事を確認してから飛んで来ること。
+     *   pushしてあるレジスタは ax/dx/ds のみ。
+     */
     private void FM_Timer_main() {
         //push cx
-        //------------------------------------------------------------------------------
+        //
         // Timer Reset
         // 同時にFM割り込み Timer AorB どちらが来たかを読み取る
-        //------------------------------------------------------------------------------
+        //
         r.setDx((short) pw.fm1_port1);
         rdychk();
         r.al = 0x27;
@@ -8811,17 +8775,17 @@ pof2_not_set:
 
         //r.ah = (byte)(pw.timer.StatReg & 3); // ah = TimerA/B flag
 
-        //------------------------------------------------------------------------------
+        //
         // 割り込み許可
-        //------------------------------------------------------------------------------
+        //
         if (pw.disint != 1) { // break not_sti;
             //sti
         }
 //not_sti:
 
-        //------------------------------------------------------------------------------
+        //
         // どちらが来たかで場合分け処理
-        //------------------------------------------------------------------------------
+        //
 
         r.ah--; // Timer Aか？
         if (r.ah == 0) { // break TimerA_int; // Timer Aの方を処理
@@ -8845,9 +8809,9 @@ pof2_not_set:
         //    cli
     }
 
-    //==============================================================================
-    // TimerBの処理[メイン]
-    //==============================================================================
+    /**
+     * TimerBの処理[メイン]
+     */
     private void TimerB_main() {
         if (pw.sync != 0) return;
         opnint_sub();
@@ -8872,7 +8836,7 @@ pof2_not_set:
             r.al = pw.TimerAtime;
             pw.lastTimerAtime = r.al;
         }
-not_play:
+//not_play:
         pw.TimerBflag = 0;
         if ((pw.intfook_flag & 1) != 0) { // break TimerB_nojump;
             //    call dword ptr[fmint_ofs]
@@ -8880,9 +8844,9 @@ not_play:
 //TimerB_nojump:
     }
 
-    //==============================================================================
-    // TimerAの処理[メイン]
-    //==============================================================================
+    /**
+     * TimerAの処理[メイン]
+     */
     private void TimerA_main() {
         pw.TimerAflag = 1;
         pw.TimerAtime++;
@@ -8948,9 +8912,9 @@ vtc000: // ↑
 //TimerA_nojump:
     }
 
-    //==============================================================================
-    // 小節のカウント
-    //==============================================================================
+    /**
+     * 小節のカウント
+     */
     private void syousetu_count() {
         r.al = pw.opncount;
         r.al++;
@@ -8962,9 +8926,9 @@ vtc000: // ↑
         pw.opncount = r.al;
     }
 
-    //==============================================================================
-    // テンポ設定
-    //==============================================================================
+    /**
+     * テンポ設定
+     */
     private void settempo_b() {
         r.ah = pw.grph_sp_key;
         check_grph();
@@ -8984,13 +8948,12 @@ vtc000: // ↑
         pw.TimerB_speed = r.dl;
         r.dh = 0x26;
         opnset44();
-        return;
         //stb_ret:
     }
 
-    //==============================================================================
-    // 巻き戻し処理
-    //==============================================================================
+    /**
+     * 巻き戻し処理
+     */
     private void rew() {
         r.ah = pw.rew_sp_key;
         check_grph();
@@ -9010,17 +8973,16 @@ vtc000: // ↑
             r.decDx();
             {
                 ff_music_main();
-                return;
             }
         }
 //rew_ret:
     }
 
-    //==============================================================================
-    // GRPH key check
-    //  in AH sp_key
-    //  out CY 1で押されている
-    //==============================================================================
+    /**
+     * GRPH key check
+     *  in AH sp_key
+     *  out CY 1で押されている
+     */
     private void check_grph() {
         if (pw.key_check == 0) // cy=0
             return;
@@ -9029,24 +8991,24 @@ vtc000: // ↑
     }
 
     private void comstart() {
-        //==============================================================================
+        /**
         // ＰＭＤコマンドスタート
-        //==============================================================================
+         */
 
         print_mes(pw.mes_title); // タイトル表示
 
-        //==============================================================================
+        /**
         // ＰＭＤ常駐CHECK
-        //==============================================================================
+         */
         //略
 
-        //==============================================================================
+        /**
         // 常駐処理
-        //==============================================================================
+         */
         //resident_main:
-        //==============================================================================
+        /**
         // オプション初期設定
-        //==============================================================================
+         */
         r.setAx((short) 0);
 
         pw.mmldat_lng = (byte) pw.mdata_def; // Default 16K
@@ -9103,35 +9065,34 @@ vtc000: // ↑
         pw.music_flag = r.al;
         pw.message_flag = 1;
 
-        //==============================================================================
+        /**
         // FM音源のcheck(INT / PORT選択)
-        //==============================================================================
+         */
 
         //TBD
 
-        //==============================================================================
+        /**
         // オプションを取り込む
-        //==============================================================================
+         */
 
         //TBD "PMDOPT=" 検索
         set_option(pw.pmdOption);
 
-        //==============================================================================
+        /**
         // vmapエリアに"PMD"文字列書込み
-        //==============================================================================
+         */
 
         //TBD
 
-
-        //==============================================================================
+        /**
         // Memory Check &Init
-        //==============================================================================
+         */
 
         //TBD
 
-        //==============================================================================
+        /**
         // 曲データ，音色データ格納番地を設定
-        //==============================================================================
+         */
 
         r.setAx((short) 1); // offset dataarea+1
         pw.mmlbuf = r.getAx();
@@ -9152,9 +9113,9 @@ vtc000: // ↑
         Random rnd = new Random();
         pw.seed = (short) rnd.nextInt(0, 0xffff);
 
-        //==============================================================================
+        /**
         // 効果音 / FMINT / EFCINTを初期化
-        //==============================================================================
+         */
         r.setAx((short) 0);
         pw.fmint_seg = r.getAx();
         pw.fmint_ofs = r.getAx();
@@ -9172,14 +9133,14 @@ vtc000: // ↑
         pw.fm_effec_num = r.al;
         pw.pcm_effec_num = r.al;
 
-        //==============================================================================
+        /**
         // 割り込み設定
-        //==============================================================================
+         */
         if (pw.board != 0) { // break not_set_opnvec;
 
-            //==============================================================================
+            /**
             // OPN 初期化
-            //==============================================================================
+             */
             int_init();
 
             // ------------------------------------------------------------------------------
@@ -9240,7 +9201,7 @@ opninit_exec: // ↑
                         //popf
 
                         r.subDx((short) 2);
-                        r.al &= 0xc0;
+                        r.al &= (byte) 0xc0;
                         if (r.al == pw.opn_0eh) { // int番号を比較 // break opninit_next; // ; 非一致なら初期化しない
 
                             r.setAx((short) 0x2900);
@@ -9263,9 +9224,9 @@ opninit_exec: // ↑
                 } while (r.getCx() != 0);
             }
 
-            //==============================================================================
+            /**
             // ＯＰＮ 割り込みベクトル 退避
-            //==============================================================================
+             */
             //  cli
             r.setAx((short) 0);
             //r.es = r.ax;
@@ -9274,9 +9235,9 @@ opninit_exec: // ↑
             pw.int5ofs = r.getBx();
             pw.int5seg = 0; // r.es;
 
-            //==============================================================================
+            /**
             // ＯＰＮ 割り込みベクトル 設定
-            //==============================================================================
+             */
             //r.es = r.ax;
             //r.bx = pw.vector;
             //es:[bx] = 0; // offset opnint
@@ -9284,9 +9245,9 @@ opninit_exec: // ↑
         }
 //not_set_opnvec:
 
-        //==============================================================================
+        /**
         // INT60 割り込みベクトル 退避
-        //==============================================================================
+             */
         //cli
         r.setAx((short) 0);
         //r.es = r.ax;
@@ -9294,31 +9255,29 @@ opninit_exec: // ↑
         pw.int60ofs = r.getBx();
         pw.int60seg = 0; // r.es;
 
-        //==============================================================================
+        //
         // INT60 割り込みベクトル 設定
-        //==============================================================================
+        //
         //r.es = r.ax;
         //es:[pmdvector*4] = 0; // offset int60_head
         //es:[pmdvector*4 + 2] = r.cs;
 
-        //==============================================================================
-        // ＯＰＮ割り込み開始
-        //==============================================================================
+        //
+        // OPN 割り込み開始
+        //
         opnint_start();
         //sti
     }
 
-    //8896-
     private void int_init() {
         //不要?
 
         pps_chk();
     }
 
-    //8970-9029
-    //------------------------------------------------------------------------------
+    //
     // ppsdrv/ppz8常駐CHECK
-    //------------------------------------------------------------------------------
+    //
     private void pps_chk() {
 ppschk_exit: // ↑
         {
@@ -9337,7 +9296,7 @@ ppschk_exit: // ↑
             if (!r.carry) { // break ppschk_01;
 
                 pw.ppsdrv_flag = 1;
-                if (pw.kp_rhythm_flag != 0xff)
+                if (pw.kp_rhythm_flag != (byte) 0xff)
                     break ppschk_exit;
 
                 pw.kp_rhythm_flag = 0;
@@ -9345,7 +9304,7 @@ ppschk_exit: // ↑
             }
 //ppschk_01:
             pw.ppsdrv_flag = 0;
-            if (pw.kp_rhythm_flag != 0xff)
+            if (pw.kp_rhythm_flag != (byte) 0xff)
                 break ppschk_exit;
 
             pw.kp_rhythm_flag = 1;
@@ -9392,37 +9351,32 @@ ppschk_exit: // ↑
         }
     }
 
-    //9030-9079
-    //------------------------------------------------------------------------------
+    //
     // MASK/EOIの出力先の設定
-    //------------------------------------------------------------------------------
+    //
     private void mask_eoi_set() {
         //なにもしない
     }
 
-    //9080-9105
-    //==============================================================================
-    // ppsdrv常駐CHECK
-    //==============================================================================
+    /**
+     * ppsdrv常駐CHECK
+     */
     public void ppsdrv_check() {
         r.carry = !pw.usePPSDRV; // PPSDRV常駐しています！
     }
 
-
-    //9106-9132
-    //==============================================================================
-    // ppz8常駐CHECK
-    //==============================================================================
+    /**
+     * ppz8常駐CHECK
+     */
     private void ppz8_check() {
         if (pw.ppz != 0) {
             r.carry = false; // PPZ8常駐しています！(TBD)
         }
     }
 
-    //9133-9166
-    //==============================================================================
-    // ＯＰＮ割り込み許可処理
-    //==============================================================================
+    /**
+     * ＯＰＮ割り込み許可処理
+     */
     private void opnint_start() {
         if (pw.board != 0) { // break not_opnint_start; // ; ボードがない
 
@@ -9460,13 +9414,12 @@ ppschk_exit: // ↑
 //not_opnint_start:
     }
 
-    //9167-9189
-    //==============================================================================
-    // OPN out for 088/188/288/388 INIT用
-    //  input ah  reg
-    //   al data
-    // dx port
-    //==============================================================================
+    /**
+     * OPN out for 088/188/288/388 INIT用
+     *  input ah  reg
+     *   al data
+     * dx port
+     */
     private void opnset_fmc() {
         if (pw.va == 0) {
             //pushf
@@ -9499,15 +9452,13 @@ ppschk_exit: // ↑
         }
     }
 
-    //9856-9894
     private void intset() {
         //不要?
     }
 
-    //9982-10003
-    //==============================================================================
-    // /D? option
-    //==============================================================================
+    /**
+     * /D? option
+     */
     private void fmvd_set(String op) {
         char c = op.charAt(0);
         int n = 0;
@@ -9543,7 +9494,6 @@ ppschk_exit: // ↑
         }
     }
 
-    //10043-10105
     private void keycheck(String op) {
         char c = op.charAt(0);
         int n = 0;
@@ -9559,7 +9509,7 @@ ppschk_exit: // ↑
                     r.al = r.ror(r.al, 1);
                     r.al = r.ror(r.al, 1);
                     r.al = r.ror(r.al, 1);
-                    r.al &= 0b1110_0000;
+                    r.al &= (byte) 0b1110_0000;
                 }
                 pw.grph_sp_key = r.al;
                 break;
@@ -9569,7 +9519,7 @@ ppschk_exit: // ↑
                     r.al = r.ror(r.al, 1);
                     r.al = r.ror(r.al, 1);
                     r.al = r.ror(r.al, 1);
-                    r.al &= 0b1110_0000;
+                    r.al &= (byte) 0b1110_0000;
                 }
                 pw.rew_sp_key = r.al;
                 break;
@@ -9579,7 +9529,7 @@ ppschk_exit: // ↑
                     r.al = r.ror(r.al, 1);
                     r.al = r.ror(r.al, 1);
                     r.al = r.ror(r.al, 1);
-                    r.al &= 0b1110_0000;
+                    r.al &= (byte) 0b1110_0000;
                 }
                 pw.esc_sp_key = r.al;
                 break;
@@ -9589,12 +9539,12 @@ ppschk_exit: // ↑
         }
     }
 
-    //==============================================================================
-    // オプション処理
-    //  input cs:bx option_data
-    // ds:si command_line
-    // es pmd_segment
-    //==============================================================================
+    /**
+     * オプション処理
+     *  input cs:bx option_data
+     * ds:si command_line
+     * es pmd_segment
+     */
     private void set_option(String[] pmdOption) {
         if (pmdOption == null) return;
         for (int i = 0; i < pmdOption.length; i++) {
@@ -9644,10 +9594,10 @@ ppschk_exit: // ↑
                 case 'R':
                 case 'Z':
                 case 'O':
-                    logger.log(Level.WARNING, String.format("PMDDotNETは指定のオプションをサポートしません。無視します。(%d)", op));
+                    logger.log(Level.WARNING, "PMDDotNETは指定のオプションをサポートしません。無視します。(%s)".formatted(op));
                     break;
                 default:
-                    logger.log(Level.ERROR, String.format("オプションの解析に失敗しました。無視します。(%d)", op));
+                    logger.log(Level.ERROR, "オプションの解析に失敗しました。無視します。(%s)".formatted(op));
                     break;
             }
         }
@@ -9667,7 +9617,7 @@ ppschk_exit: // ↑
     }
 
     public void ExecIDESpecialCommand(MmlDatum md) {
-        //Console.WriteLine("%d", md);
+        //logger.log(Level.TRACE, "%d", md);
 
         List<Object> obj = md.args;
         MmlDatum mmd = (MmlDatum) obj.get(0);

@@ -1,6 +1,7 @@
 package pmd.driver;
 
-import java.util.Stack;
+import java.util.Deque;
+import java.util.LinkedList;
 
 
 public class X86Register {
@@ -11,12 +12,12 @@ public class X86Register {
     public byte ah;
 
     public short getAx() {
-        return (short) (ah * 0x100 + al);
+        return (short) ((ah & 0xff) * 0x100 + (al & 0xff));
     }
 
     public void setAx(short value) {
-        ah = (byte) (value >> 8);
-        al = (byte) value;
+        ah = (byte) ((value & 0xff00) >> 8);
+        al = (byte) (value & 0xff);
     }
 
     public void addAx(short value) {
@@ -54,7 +55,7 @@ public class X86Register {
     public byte bh;
 
     public short getBx() {
-        return (short) (bh * 0x100 + bl);
+        return (short) ((bh & 0xff) * 0x100 + (bl & 0xff));
     }
 
     public void setBx(short value) {
@@ -63,8 +64,8 @@ public class X86Register {
                 pw.jumpIndex = -1;
         }
 
-        bh = (byte) (value >> 8);
-        bl = (byte) value;
+        bh = (byte) ((value & 0xff00) >> 8);
+        bl = (byte) (value & 0xff);
     }
 
     public void addBx(short value) {
@@ -105,12 +106,12 @@ public class X86Register {
     public byte ch;
 
     public short getCx() {
-        return (short) (ch * 0x100 + cl);
+        return (short) ((ch & 0xff) * 0x100 + (cl & 0xff));
     }
 
     public void setCx(short value) {
-        ch = (byte) (value >> 8);
-        cl = (byte) value;
+        ch = (byte) ((value & 0xff00) >> 8);
+        cl = (byte) (value & 0xff);
     }
 
     public void addCx(short value) {
@@ -137,12 +138,12 @@ public class X86Register {
     public byte dh;
 
     public short getDx() {
-        return (short) (dh * 0x100 + dl);
+        return (short) ((dh & 0xff) * 0x100 + (dl & 0xff));
     }
 
     public void setDx(short value) {
-        dh = (byte) (value >> 8);
-        dl = (byte) value;
+        dh = (byte) ((value & 0xff00) >> 8);
+        dl = (byte) (value & 0xff);
     }
 
     public void addDx(short value) {
@@ -234,22 +235,22 @@ public class X86Register {
         return zero;
     }
 
-    public Stack<Short> stack = new Stack<>();
+    public final Deque<Short> stack = new LinkedList<>();
 
-    public Object lockobj = new Object();
+    public final Object lockobj = new Object();
 
-    private int[] bitMask = new int[] {0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff};
+    private static final int[] bitMask = new int[] {0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff};
 
     public byte rol(byte r, int n) {
         n &= 7;
-        byte ans = (byte) ((r << n) | ((r >> (8 - n)))); // & bitMask[n]));
+        byte ans = (byte) (((r & 0xff) << n) | (r & 0xff) >> 8 - n); // & bitMask[n]));
         carry = ((ans & 0x01) != 0);
         return ans;
     }
 
     public byte ror(byte r, int n) {
         n &= 7;
-        byte ans = (byte) ((r << (8 - n)) | ((r >> n))); // & bitMask[8 - n]));
+        byte ans = (byte) (((r & 0xff) << (8 - n)) | (r & 0xff) >> n); // & bitMask[8 - n]));
         carry = ((ans & 0x80) != 0);
         return ans;
     }
@@ -257,9 +258,9 @@ public class X86Register {
     public byte rcl(byte r, int n) {
         n &= 7;
         byte ans = (byte) (
-                (r << n)
+                ((r & 0xff) << n)
                         | ((carry ? 1 : 0) << n)
-                        | (n < 2 ? 0 : (r >> (9 - n)))
+                        | (n < 2 ? 0 : ((r & 0xff) >> (9 - n)))
         ); // & bitMask[n]));
         carry = ((r & (0x100 >> n)) != 0);
         return ans;
@@ -268,9 +269,9 @@ public class X86Register {
     public byte rcr(byte r, int n) {
         n &= 7;
         byte ans = (byte) (
-                (n < 2 ? 0 : (r << (9 - n)))
+                (n < 2 ? 0 : ((r & 0xff) << (9 - n)))
                         | ((carry ? 0x100 : 0) >> n)
-                        | (r >> n)
+                        | ((r & 0xff) >> n)
         ); // & bitMask[n]));
         carry = ((r & (0x100 >> n)) != 0);
         return ans;

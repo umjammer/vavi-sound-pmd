@@ -8,10 +8,10 @@ import musicDriverInterface.MmlDatum;
 
 public class EFCDRV {
 
-    private PMD pmd = null;
-    private PW pw = null;
-    private X86Register r = null;
-    private Function<ChipDatum, Integer> ppsdrv = null;
+    private PMD pmd;
+    private PW pw;
+    private X86Register r;
+    private Function<ChipDatum, Integer> ppsdrv;
 
     public EFCDRV(PMD pmd, PW pw, X86Register r, Function<ChipDatum, Integer> ppsdrv) {
         this.pmd = pmd;
@@ -22,7 +22,7 @@ public class EFCDRV {
 
     public void effgo() {
         if (pw.ppsdrv_flag != 0) { //break effgo2;
-            r.al |= 0x80;
+            r.al |= (byte) 0x80;
             r.zero = pw.last_shot_data == r.al;
             pw.last_shot_data = r.al;
             if (r.zero) { // break effgo2;
@@ -108,7 +108,7 @@ public class EFCDRV {
                         }
                     }
 
-                    cd = new ChipDatum(0x01, (r.al << 8) | r.bh, r.bl);
+                    cd = new ChipDatum(0x01, ((r.al & 0xff) << 8) | (r.bh & 0xff), r.bl);
                     ppsdrv.apply(cd); // .Play(r.al, r.bh, r.bl); // ppsdrv keyon
                 }
 //ppsdrm_ret:
@@ -125,7 +125,7 @@ public class EFCDRV {
         //r.bx += 0; // offset efftbl
 
         r.al = pw.effon;
-        if (r.al > pw.efftbl.get(r.getBx()).getItem1())//	cmp al,[bx]; 優先順位
+        if (r.al > pw.efftbl.get(r.getBx()).getItem1()) // cmp al,[bx]; 優先順位
             return; // break eg_ret;
 
         if (pw.ppsdrv_flag != 0) { // break eok_nonppsdrv;
@@ -175,7 +175,7 @@ public class EFCDRV {
     }
 
     private void efffor() {
-        r.al = (byte) pw.crtEfcDat[r.incSi()].dat;
+        r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff);
         if (r.al == (byte) 0xff) { // -1
             effend();
             return;
@@ -192,13 +192,13 @@ public class EFCDRV {
         //popf
         r.ch = r.dl;
         pw.eswthz = r.getCx();
-        r.dl = (byte) pw.crtEfcDat[r.getSi()].dat;
+        r.dl = (byte) (pw.crtEfcDat[r.getSi()].dat & 0xff);
         pw.eswnhz = r.dl;
         r.dh = 6;
         efsnd(); // ノイズ
         pw.psnoi_last = r.dl;
 
-        r.al = (byte) pw.crtEfcDat[r.incSi()].dat; // データ
+        r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff); // データ
         r.dl = r.al;
         r.dl = r.rol(r.dl, 1);
         r.dl = r.rol(r.dl, 1);
@@ -207,7 +207,7 @@ public class EFCDRV {
         //pushf
         //cli
         pmd.get07();
-        r.al &= 0b1101_1011;
+        r.al &= (byte) 0b1101_1011;
         r.dl |= r.al;
         pmd.opnset44(); // MIX CONTROLL...
         //popf
@@ -218,25 +218,23 @@ public class EFCDRV {
         efsnd();
         efsnd(); // エンベロープPATTARN
 
-        r.al = (byte) pw.crtEfcDat[r.incSi()].dat;
+        r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff);
 
         r.setAx(r.al); //    cbw
         pw.eswtst = r.getAx(); // スイープ増分(TONE)
-        r.al = (byte) pw.crtEfcDat[r.incSi()].dat;
+        r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff);
         pw.eswnst = r.al; // スイープ増分(NOISE)
         r.al &= 15;
         pw.eswnct = r.al; // スイープカウント(NOISE)
         pw.effadr = r.getSi();
         //effret:;
-        return;
     }
 
     private void efsnd() {
-        r.al = (byte) pw.crtEfcDat[r.incSi()].dat;
+        r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff);
         r.dl = r.al;
         pmd.opnset44();
         r.dh++;
-        return;
     }
 
     public void effoff() {
@@ -259,13 +257,12 @@ public class EFCDRV {
         //cli
         pmd.get07();
         r.dl = r.al; // NOISE CUT
-        r.dl &= 0b1101_1011;
+        r.dl &= (byte) 0b1101_1011;
         r.dl |= 0b0010_0100;
         pmd.opnset44();
         //popf
         pw.effon = 0;
         pw.psgefcnum = (byte) 0xff; // -1
-        return;
     }
 
     // 普段の処理
@@ -302,6 +299,5 @@ public class EFCDRV {
         r.dh = 6;
         pmd.opnset44();
         pw.psnoi_last = r.dl;
-        return;
     }
 }

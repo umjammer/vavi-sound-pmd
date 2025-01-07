@@ -13,9 +13,9 @@ public class Lc {
 
     private static final Logger logger = getLogger(Lc.class.getName());
 
-    private Work work = null;
-    private MSeg m_seg = null;
-    private Mc mc = null;
+    private Work work;
+    private MSeg m_seg;
+    private Mc mc;
 
     public Lc(Mc mc, Work work, MSeg m_seg) {
         this.mc = mc;
@@ -24,11 +24,10 @@ public class Lc {
         setJumpTable();
     }
 
-    //1-30
-    //==============================================================================
+    /**
     //	音長計算用 include file
     //		in.al print_flag(0で非表示)
-    //==============================================================================
+     */
     //_print_mes macro   ofs
     //local   exit
     //   cmp[print_flag],0
@@ -46,7 +45,7 @@ public class Lc {
         //    MmlDatum o = MSeg.m_buf.Get(i);
         //    dst.add((byte)(o == null ? 0xff : o.dat));
         //}
-        //System.IO.File.WriteAllBytes("c:\\temp\\debug", dst.ToArray());
+        //Files.write(Path.of("c:\\temp\\debug"), dst.ToArray());
 
         do {
             switch (ret) {
@@ -84,10 +83,9 @@ public class Lc {
         } while (ret != enmPart_ends.exit);
     }
 
-    //31-39
-    //==============================================================================
+    /**
     //	計算開始
-    //==============================================================================
+     */
     private enmPart_ends calc_start(byte al) {
         print_flag = al;
         part_chr = 'A';
@@ -96,12 +94,11 @@ public class Lc {
         return enmPart_ends.part_loop;
     }
 
-    //40-73
-    //==============================================================================
+    /**
     //	パート毎のループ
-    //==============================================================================
+     */
     private enmPart_ends part_loop() {
-        work.si = (byte) m_seg.m_buf.get(work.bp).dat + (byte) m_seg.m_buf.get(work.bp + 1).dat * 0x100;
+        work.si = (m_seg.m_buf.get(work.bp).dat & 0xff) + (m_seg.m_buf.get(work.bp + 1).dat & 0xff) * 0x100;
         work.si += 0; // offset m_buf
         work.bp += 2;
 
@@ -113,27 +110,26 @@ public class Lc {
         loop_length = -1;
         loop_flag = 0;
 
-        //==============================================================================
+        /**
         //	(Part Aの場合) 拡張のFM3ch目があるか調べる
-        //==============================================================================
+         */
         if (part_chr != 'A') return enmPart_ends.check_j;
         if (m_seg.m_buf.get(work.si).dat != 0xc6) return enmPart_ends.check_j;
 
         work.si++;
 
         for (int i = 0; i < 3; i++) {
-            byte l = (byte) m_seg.m_buf.get(work.si++).dat;
-            byte h = (byte) m_seg.m_buf.get(work.si++).dat;
-            fm3_adr[i] = h * 0x100 + l;
+            byte l = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
+            byte h = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
+            fm3_adr[i] = (h & 0xff) * 0x100 + (l & 0xff);
         }
 
         return enmPart_ends.check_j;
     }
 
-    //74-93
-    //==============================================================================
+    /**
     //	(Part Jの場合) 拡張のPCMパートがあるか調べる
-    //==============================================================================
+     */
     private enmPart_ends check_j() {
         if (part_chr != 'J') return enmPart_ends.com_loop; //jnz com_loop
         if (m_seg.m_buf.get(work.si).dat != 0xb4) return enmPart_ends.com_loop;
@@ -141,30 +137,27 @@ public class Lc {
         work.si++;
 
         for (int i = 0; i < 8; i++) {
-            byte l = (byte) m_seg.m_buf.get(work.si++).dat;
-            byte h = (byte) m_seg.m_buf.get(work.si++).dat;
+            byte l = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
+            byte h = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
             pcm_adr[i] = h * 0x100 + l;
         }
 
         return enmPart_ends.com_loop;
     }
 
-
-    //94-112
-    //==============================================================================
+    /**
     //	コマンド毎のループ
-    //==============================================================================
+     */
     private enmPart_ends com_loop() {
 
-        logger.log(Level.DEBUG, String.format("partType:%d partCh:%d partNum:%d", part_type, part_chr, part_num));
+        logger.log(Level.DEBUG, "partType:%s partCh:%c partNum:%d".formatted(part_type, part_chr, part_num));
 
         do {
             MmlDatum al;
             do {
-//#if DEBUG
                 logger.log(Level.TRACE, String.format("si:%d", work.si));
-//#endif
-                        al = (work.si < m_seg.m_buf.size() ? m_seg.m_buf.get(work.si++) : new MmlDatum(0x80));
+
+                al = (work.si < m_seg.m_buf.size() ? m_seg.m_buf.get(work.si++) : new MmlDatum(0x80));
                 if (al.dat == 0x80) return enmPart_ends.part_ends;
                 if (al.dat >= 0x80) break;
 
@@ -175,7 +168,7 @@ public class Lc {
             } while (true);
 
             //cl_00:;
-            command_exec((byte) al.dat);
+            command_exec((byte) (al.dat & 0xff));
             if (loop_flag != 0) return enmPart_ends.part_ends;
 
         } while (true);
@@ -183,11 +176,9 @@ public class Lc {
         //return enmPart_ends.part_ends;
     }
 
-
-    //113-151
-    //==============================================================================
+    /**
     //	パート終了
-    //==============================================================================
+     */
     private enmPart_ends part_ends() {
         print_length();
 
@@ -202,7 +193,7 @@ public class Lc {
         work.di = 0; // offset fm3_adr1
         int bx = 0; // offset _fm3_partchr1;in cs
         int cx = 3 + 8;
-        //extend_check_loop:;
+//extend_check_loop:;
         do {
             work.si = work.di < 3 ? fm3_adr[work.di] : pcm_adr[work.di - 3];
             if (work.si != 0) { // break extend_check_next;
@@ -217,8 +208,7 @@ public class Lc {
                 work.di = di;
                 return enmPart_ends.part_loop2;
             }
-extend_check_next:
-            ;
+//extend_check_next:
             work.di++;
             bx++;
             cx--;
@@ -228,18 +218,16 @@ extend_check_next:
         return enmPart_ends.partk_start;
     }
 
-
-    //152-169
-    //==============================================================================
+    /**
     //	Part K
-    //==============================================================================
+     */
     private enmPart_ends partk_start() {
         part_chr = 'K';
         all_length = 0;
         loop_length = -1;
         loop_flag = 0;
 
-        //Console.WriteLine("bp:%d", Work.bp);
+        //logger.log(Level.TRACE, "bp:%d", Work.bp);
         work.si = m_seg.m_buf.get(work.bp).dat + (m_seg.m_buf.get(work.bp + 1).dat * 0x100);
         work.si += 0; // offset m_buf
         work.bp += 2;
@@ -249,19 +237,17 @@ extend_check_next:
         return enmPart_ends.kcom_loop;
     }
 
-
-    //170-191
-    //==============================================================================
+    /**
     //	Kpart/コマンド毎のループ
-    //==============================================================================
+     */
     private enmPart_ends kcom_loop() {
         do {
             MmlDatum ald;
             byte al;
             ald = (work.si < m_seg.m_buf.size()) ? m_seg.m_buf.get(work.si++) : (new MmlDatum(0x80));
-            al = (byte) ald.dat;
-            if (al == 0x80) return enmPart_ends.kpart_end;
-            if (al >= 0x80) {
+            al = (byte) (ald.dat & 0xff);
+            if (al == (byte) 0x80) return enmPart_ends.kpart_end;
+            if ((al & 0xff) >= 0x80) {
                 work.al = al;
                 return enmPart_ends.kl_00;
             }
@@ -273,7 +259,7 @@ extend_check_next:
             int bx = work.bx;
             work.bx += al;
             work.si = m_seg.m_buf.get(work.bx).dat + (m_seg.m_buf.get(work.bx + 1).dat * 0x100);
-            //Console.WriteLine("bx:%d si:%d", Work.bx, Work.si);
+            //logger.log(Level.TRACE, "bx:%d si:%d", Work.bx, Work.si);
             work.si += 0; // offset m_buf
             rcom_loop();
             work.bx = bx;
@@ -283,11 +269,9 @@ extend_check_next:
         } while (true);
     }
 
-
-    //192-202
-    //==============================================================================
+    /**
     //	Kpart/各種特殊コマンド
-    //==============================================================================
+     */
     private enmPart_ends kl_00() {
         int bx = work.bx;
         command_exec(work.al);
@@ -297,16 +281,13 @@ extend_check_next:
         return enmPart_ends.kcom_loop;
     }
 
-
-    //203-209
-    //==============================================================================
+    /**
     //	Kpart/計算終了
-    //==============================================================================
+     */
     private enmPart_ends kpart_end() {
         print_length();
         return enmPart_ends.exit;
     }
-
 
     private enum enmPart_ends {
         calc_start,
@@ -322,11 +303,9 @@ extend_check_next:
         exit
     }
 
-
-    //210-243
-    //==============================================================================
+    /**
     //	Rpart/コマンド毎のループ
-    //==============================================================================
+     */
     private void rcom_loop() {
 rpart_end:
         do {
@@ -344,22 +323,21 @@ rpart_end:
                 all_length += al.dat;
 
             } while (true);
-            //==============================================================================
+            /**
             // Rpart / 各種特殊コマンド処理
-            //==============================================================================
+             */
             // rl_00:
-            command_exec((byte) al.dat);
+            command_exec((byte) (al.dat & 0xff));
             if (loop_flag != 0) break rpart_end;
         } while (true);
-        //==============================================================================
+        /**
         // Rpart / 計算終了
-        //==============================================================================
+         */
     }
 
-    //244-264
-    //==============================================================================
+    /**
     //	各種コマンド
-    //==============================================================================
+     */
     private void command_exec(byte al) {
         al = (byte) ~al;
         int ax = al;
@@ -399,43 +377,39 @@ rpart_end:
         work.si += 0;
     }
 
-    //265-275
-    //==============================================================================
+    /**
     //	tempo
-    //==============================================================================
+     */
     private void _tempo() {
-        byte al = (byte) m_seg.m_buf.get(work.si++).dat;
+        byte al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
         if (al >= (byte) 251) {
             work.si++; // 相対
         }
         //tempo_ret:;
     }
 
-    //276-287
-    //==============================================================================
+    /**
     //	ポルタメント
-    //==============================================================================
+     */
     private void porta() {
         work.si += 2;
 
-        byte al = (byte) m_seg.m_buf.get(work.si++).dat;
+        byte al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
         all_length += al;
     }
 
-    //288-297
-    //==============================================================================
+    /**
     //	L command
-    //==============================================================================
+     */
     private void loop_set() {
         loop_length = all_length;
     }
 
-    //298-307
-    //==============================================================================
+    /**
     //	[command
-    //==============================================================================
+     */
     private void loop_start() {
-        int ax = (byte) m_seg.m_buf.get(work.si++).dat;
+        int ax = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
         ax += m_seg.m_buf.get(work.si++).dat * 0x100;
 
         work.bx = ax;
@@ -443,16 +417,15 @@ rpart_end:
         m_seg.m_buf.set(work.bx, new musicDriverInterface.MmlDatum(0));
     }
 
-    //308-332
-    //==============================================================================
+    /**
     //	] command
-    //==============================================================================
+     */
     private void loop_end() {
-        byte al = (byte) m_seg.m_buf.get(work.si++).dat;
+        byte al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
         if (al != 0) { // break loop_fset; // 無条件loopがあった
             byte ah = al;
             m_seg.m_buf.set(work.si, new musicDriverInterface.MmlDatum(m_seg.m_buf.get(work.si).dat + 1));
-            al = (byte) m_seg.m_buf.get(work.si++).dat;
+            al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
             if (ah == al) { // break reloop;
                 work.si++;
                 work.si++;
@@ -460,7 +433,7 @@ rpart_end:
             }
 //reloop:
 
-            int ax = (byte) m_seg.m_buf.get(work.si++).dat;
+            int ax = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
             ax += m_seg.m_buf.get(work.si++).dat * 0x100;
             ax += 2; // offset m_buf+2
             work.si = ax;
@@ -470,16 +443,15 @@ rpart_end:
         loop_flag = 1;
     }
 
-    //333-350
-    //==============================================================================
+    /**
     //	: command
-    //==============================================================================
+     */
     private void loop_exit() {
-        int ax = (byte) m_seg.m_buf.get(work.si++).dat;
+        int ax = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
         ax += m_seg.m_buf.get(work.si++).dat * 0x100;
         work.bx = ax;
         work.bx += 0; // offset m_buf
-        byte dl = (byte) m_seg.m_buf.get(work.bx).dat;
+        byte dl = (byte) (m_seg.m_buf.get(work.bx).dat & 0xff);
         dl--;
         work.bx++;
         if (dl != (byte) m_seg.m_buf.get(work.bx).dat) { // break loopexit;
@@ -490,12 +462,11 @@ rpart_end:
         work.si = work.bx;
     }
 
-    //351-367
-    //==============================================================================
+    /**
     //	0c0h + ?? special control
-    //==============================================================================
+     */
     private void special_0c0h() {
-        byte al = (byte) m_seg.m_buf.get(work.si++).dat;
+        byte al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
         if (al >= 2) { // break spc0_ret;
             al = (byte) ~al;
             al += 0; // offset jumptable_0c0h
@@ -504,10 +475,9 @@ rpart_end:
 //spc0_ret:
     }
 
-    //368-428
-    //==============================================================================
+    /**
     //	長さを表示
-    //==============================================================================
+     */
     private void print_length() {
         int tc = 0;
         int lc = 0;
@@ -682,13 +652,13 @@ rpart_end:
     }
 
 
-    public String part_mes = "Part ";
+    public static final String part_mes = "Part ";
     public String part_type = "FMOPN";
     public char part_chr = ' ';
     public int part_num = 0;
-    private String part_chr_n = "\tLength : ";
-    private String loop_mes = "\t/ Loop : ";
-    private String loop_mes2 = "\t/ Found Infinite Local Loop!";
+    private static final String part_chr_n = "\tLength : ";
+    private static final String loop_mes = "\t/ Loop : ";
+    private static final String loop_mes2 = "\t/ Found Infinite Local Loop!";
     //private String _crlf_mes = "\r\n$";
 
     public byte print_flag = 0;
@@ -697,18 +667,18 @@ rpart_end:
     public int max_all = 0; // new int[2] { 0, 0 };
     public int max_loop = 0; // new int[2] { 0, 0 };
 
-    public int[] fm3_adr = {0, 0, 0};
-    public int[] pcm_adr = {0, 0, 0, 0, 0, 0, 0, 0};
+    public final int[] fm3_adr = {0, 0, 0};
+    public final int[] pcm_adr = {0, 0, 0, 0, 0, 0, 0, 0};
 
     public byte loop_flag = 0;
 
-    public char[] _fm3_partchr = {
+    public final char[] _fm3_partchr = {
             (char) 0,
             (char) 0,
             (char) 0
     };
 
-    public char[] _pcm_partchr = {
+    public final char[] _pcm_partchr = {
             (char) 0,
             (char) 0,
             (char) 0,

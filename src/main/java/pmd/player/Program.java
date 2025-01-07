@@ -6,11 +6,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.SourceDataLine;
 
+import com.github.kwhat.jnativehook.GlobalScreen;
+import com.github.kwhat.jnativehook.NativeHookException;
+import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
+import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 import dotnet4j.io.File;
 import dotnet4j.io.FileAccess;
 import dotnet4j.io.FileMode;
@@ -34,15 +39,35 @@ import musicDriverInterface.MmlDatum;
 import pmd.common.Environment;
 import pmd.common.PmdException;
 import pmd.driver.Driver;
-import pmd.driver.PMDDotNETOption;
+import pmd.driver.PMDOption;
 
-import static hal8999.emu.ui.Sound80.volume;
 import static java.lang.System.getLogger;
+import static vavi.sound.SoundUtil.volume;
 
 
 class Program {
 
     private static final Logger logger = getLogger(Program.class.getName());
+
+    static class KeyboardHook {
+        static AtomicBoolean typed = new AtomicBoolean();
+        static {
+            try {
+                GlobalScreen.registerNativeHook();
+            } catch (NativeHookException e) {
+                throw new IllegalStateException("There was a problem registering the native hook.", e);
+            }
+            GlobalScreen.addNativeKeyListener(new NativeKeyListener() {
+                @Override
+                public void nativeKeyTyped(NativeKeyEvent nativeEvent) {
+                    typed.set(true);
+                }
+            });
+        }
+        static boolean kbhit() {
+            return typed.get();
+        }
+    }
 
     private static SourceDataLine audioOutput = null;
 
@@ -55,7 +80,7 @@ class Program {
     private static StopWatch sw = null;
     private static double swFreq = 0;
     public static boolean trdClosed = false;
-    private static Object lockObj = new Object();
+    private static final Object lockObj = new Object();
     private static boolean _trdStopped = true;
     static boolean trdStopped;
 
@@ -105,7 +130,7 @@ class Program {
     private static int ppsdrvWait = 1;
 
     public static void main(String[] args) {
-        int fnIndex = AnalyzeOption(args);
+        int fnIndex = analyzeOption(args);
         int mIndex = -1;
 
         if (args != null) {
@@ -141,7 +166,7 @@ class Program {
                 case 0:
 //                    waveProvider = new SineWaveProvider16();
 //                    waveProvider.SetWaveFormat((int) SamplingRate, 2);
-                    callBack = Program::EmuCallback;
+                    callBack = Program::emuCallback;
                     audioOutput = AudioSystem.getSourceDataLine(new AudioFormat(SamplingRate, 16, 2, true, false));
                     audioOutput.open();
                     volume(audioOutput, Double.parseDouble(System.getProperty("mdm.volume", "0.2")));
@@ -149,7 +174,7 @@ class Program {
                     break;
                 case 1:
                 case 2:
-                    trdMain = new Thread(Program::RealCallback);
+                    trdMain = new Thread(Program::realCallback);
                     trdMain.setPriority(Thread.MAX_PRIORITY);
                     trdMain.setDaemon(true);
                     trdMain.setName("trdVgmReal");
@@ -165,7 +190,7 @@ class Program {
             chip.samplingRate = SamplingRate;
             chip.clock = opnaMasterClock;
             chip.volume = 0;
-            chip.option = new Object[] {GetApplicationFolder()};
+            chip.option = new Object[] {getApplicationFolder()};
 
             MDSound.Chip chipp = new MDSound.Chip();
             //type = MDSound.MDSound.enmInstrumentType.PPZ8,
@@ -192,7 +217,7 @@ class Program {
             );
             chipps.clock = opnaMasterClock;
             chipps.volume = 0;
-            chipps.option = device == 0 ? null : (new Object[] {(BiConsumer<Integer, Integer>) Program::PPSDRVpsg});
+            chipps.option = device == 0 ? null : (new Object[] {(BiConsumer<Integer, Integer>) Program::psgPPSDRV});
 
             MDSound.Chip chip86 = new MDSound.Chip();
             chip86.id = 0;
@@ -204,8 +229,8 @@ class Program {
             chip86.option = null;
 
             mds = new MDSound(SamplingRate, samplingBuffer, new MDSound.Chip[] {chip, chipp, chipps, chip86});
-            //ppz8em = new PPZ8em(SamplingRate);
-            //ppsdrv = new PPSDRV(SamplingRate);
+//            ppz8em = new PPZ8em(SamplingRate);
+//            ppsdrv = new PPSDRV(SamplingRate);
 
             Environment env = new Environment();
             env.AddEnv("pmd");
@@ -217,11 +242,8 @@ class Program {
             opt.addAll(Arrays.asList(args).subList(fnIndex, args.length));
             mIndex += (envPmdOpt == null ? 0 : envPmdOpt.length) - fnIndex;
 
-//#if NETCOREAPP
-//            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-//#endif
             drv = new Driver();
-            PMDDotNETOption dop = new PMDDotNETOption();
+            PMDOption dop = new PMDOption();
             dop.isAUTO = isAUTO;
             dop.isNRM = isNRM;
             dop.isSPB = isSPB;
@@ -230,8 +252,8 @@ class Program {
             dop.usePPZ = usePPZ;
             dop.isLoadADPCM = false;
             dop.loadADPCMOnly = false;
-            //dop.ppz8em = ppz8em;
-            //dop.ppsdrv = ppsdrv;
+//            dop.ppz8em = ppz8em;
+//            dop.ppsdrv = ppsdrv;
             dop.envPmd = envPmd;
             dop.srcFile = srcFile;
             dop.jumpIndex = -1; // -1;
@@ -249,35 +271,33 @@ class Program {
 
             ((Driver) drv).init(
                     srcFile
-                    , Program::OPNAWrite
-                    , Program::OPNAWaitSend
+                    , Program::writeOPNA
+                    , Program::waitSendOPNA
                     , dop
                     , pop.toArray(String[]::new)
                     , Program::appendFileReaderCallback
-                    , Program::PPZ8Write
-                    , Program::PPSDRVWrite
-                    , Program::P86Write
+                    , Program::writePPZ8
+                    , Program::writePPSDRV
+                    , Program::writeP86
             );
 
-
-            //AUTO指定の場合に構成が変わるので、構成情報を受け取ってから音量設定を行う
+            // AUTO指定の場合に構成が変わるので、構成情報を受け取ってから音量設定を行う
             isNRM = dop.isNRM;
             isSPB = dop.isSPB;
             isVA = dop.isVA;
             usePPS = dop.usePPS;
             usePPZ = dop.usePPZ;
-            String[] pmdOptionVol = SetVolume();
-            //ユーザーがコマンドラインでDオプションを指定していない場合はpmdVolを適用させる
+            String[] pmdOptionVol = setVolume();
+            // ユーザーがコマンドラインでDオプションを指定していない場合はpmdVolを適用させる
             if (!pmdvolFound && pmdOptionVol != null && pmdOptionVol.length > 0) {
                 ((Driver) drv).resetOption(pmdOptionVol);//
             }
-
 
             List<Tuple<String, String>> tags = drv.getTags();
             if (tags != null) {
                 for (Tuple<String, String> tag : tags) {
                     if (Objects.equals(tag.getItem1(), "")) continue;
-                    WriteLine2(Level.INFO, String.format("%-16s : %s", tag.getItem1(), tag.getItem2()), 16 + 3);
+                    writeLine2(Level.INFO, String.format("%-16s : %s", tag.getItem1(), tag.getItem2()), 16 + 3);
                 }
             }
 
@@ -297,23 +317,23 @@ class Program {
                     break;
             }
 
-            logger.log(Level.INFO, "演奏を終了する場合は何かキーを押してください(実chip時は特に。)");
+            logger.log(Level.INFO, "To end the playback, press any key (especially when playing a real chip).");
 
             while (true) {
                 Thread.sleep(1);
-                if (System.in.available() != 0) {
+                if (KeyboardHook.kbhit()) {
                     break;
                 }
-                //ステータスが0(終了)又は0未満(エラー)の場合はループを抜けて終了
+                // If the status is 0 (finished) or less than 0 (error), exit the loop and
                 if (drv.getStatus() <= 0) {
                     if (drv.getStatus() == 0) {
-                        Thread.sleep((int) (latency * 2.0)); // 実際の音声が発音しきるまでlatency*2の分だけ待つ
+                        Thread.sleep((int) (latency * 2.0)); // Wait for latency*2 until the actual voice is fully pronounced
                     }
                     break;
                 }
 
                 if (loop != 0 && drv.getNowLoopCounter() > loop) {
-                    Thread.sleep((int) (latency * 2.0)); // 実際の音声が発音しきるまでlatency*2の分だけ待つ
+                    Thread.sleep((int) (latency * 2.0)); // Wait for latency*2 until the actual voice is fully pronounced
                     break;
                 }
             }
@@ -324,18 +344,18 @@ class Program {
         } catch (PmdException pe) {
             logger.log(Level.ERROR, pe.getMessage());
         } catch (Exception ex) {
-            logger.log(Level.ERROR, "演奏失敗");
+            logger.log(Level.ERROR, "Failed to play");
             logger.log(Level.ERROR, ex.getMessage(), ex);
         } finally {
             if (((Driver) drv).renderingException != null) {
-                logger.log(Level.ERROR, "演奏失敗");
+                logger.log(Level.ERROR, "Failed to play");
                 logger.log(Level.ERROR, ((Driver) drv).renderingException.getMessage(), ((Driver) drv).renderingException);
             }
 
             if (audioOutput != null) {
                 audioOutput.stop();
                 while (audioOutput.isRunning()) {
-                    try { Thread.sleep(1); } catch (InterruptedException e) {}
+                    try { Thread.sleep(1); } catch (InterruptedException ignore) {}
                 }
                 audioOutput.close();
                 audioOutput = null;
@@ -343,7 +363,7 @@ class Program {
             if (trdMain != null) {
                 trdClosed = true;
                 while (!trdStopped) {
-                    try { Thread.sleep(1); } catch (InterruptedException e) {}
+                    try { Thread.sleep(1); } catch (InterruptedException ignore) {}
                 }
             }
 //            if (nc86ctl != null) {
@@ -357,50 +377,50 @@ class Program {
         }
     }
 
-    private static String[] SetVolume() {
+    private static String[] setVolume() {
         List<String> ret = new ArrayList<>();
 
         if (device == 0 || device == 3) { //EMU or wav
-            //fmgen向け設定
-            //fm:ssg = 1:0.25で調整
+            // Settings for fmgen
+            // Adjusted at fm : ssg = 1 : 0.25
             //
-            //  pmd内で1:(0.45～0.50)に補正される
-            //  ・OPNの場合のみpmdのコード上でfmの音量を下げるコードを通過する
-            //  ・GIMIC ProとLiteのターミナルでも mファイルを再生し確認
+            //  Corrected to 1:(0.45-0.50) within pmd
+            //  ・Only in the case of OPN, pass the code to lower the volume of fm on the code of pmd
+            //  ・Check the m-file on the GIMIC Pro and Lite terminals
             VolumeV = new int[] {0, 0, 0, 0};
             if (isNRM) {
-                //PC98のOPNを想定
-                VolumeV[0] = 12; // FM  98は88よりFMが大きい
+                // Assumes PC98 OPN
+                VolumeV[0] = 12; // FM The 98 has a louder FM volume than the 88.
                 VolumeV[1] = -5; // SSG
                 VolumeV[2] = -191; // Rhythm
                 VolumeV[3] = -191; // Adpcm
             } else {
-                //OPNA(-86/SPB)を想定
+                // Assume OPNA(-86/SPB)
                 VolumeV[0] = 0; // FM
                 VolumeV[1] = -5; // SSG
-                VolumeV[2] = 0; // Rhythm //未調査
-                VolumeV[3] = 0; // Adpcm //未調査
+                VolumeV[2] = 0; // Rhythm // Unexplored
+                VolumeV[3] = 0; // Adpcm // Unexplored
             }
-        } else if (device == 1) { //GIMIC
+        } else if (device == 1) { // GIMIC
             if (VolumeR == null) {
                 VolumeR = new int[] {0};
                 if (isNRM)
-                    VolumeR[0] = 31; // GMC-OPNA に31を送信
+                    VolumeR[0] = 31; // Send 31 to GMC-OPNA
                 else
-                    VolumeR[0] = 66; // GMC-OPNA に66を送信
+                    VolumeR[0] = 66; // Send 66 to GMC-OPNA
             }
 
-            //GMC-OPNA以外のOPNA系モジュール
+            // OPNA-based modules other than GMC-OPNA
             if (!isGimicOPNA) {
-                //pmdのオプションで調整
+                // Adjust with pmd options
                 ret.add("/DF12");
                 ret.add("/DS0");
             }
         } else if (device == 2) { //SCCI
-            //SCCIの場合はバランス調整はユーザー任せ
+            // With SCCI, balance adjustment is left to the user
         }
 
-        //一度目の音量設定時は反映を行わない
+        // The first volume setting is not reflected.
         if (VolumeV != null) {
 //            mds.setVolumeYM2608FM(VolumeV[0]);
 //            mds.setVolumeYM2608PSG(VolumeV[1]);
@@ -411,7 +431,7 @@ class Program {
         if (VolumeR != null) {
             if (isGimicOPNA) { //GMC-OPNA
 //                rsc.setSSGVolume((byte) VolumeR[0]);
-                // 少し休む(即再生を始めると音が飛ぶ)
+                // Take a short break (if you start playing immediately, the sound will skip)
                 try { Thread.sleep(500); } catch (InterruptedException e) {}
             }
         }
@@ -419,7 +439,7 @@ class Program {
         return ret.toArray(String[]::new);
     }
 
-    public static String GetApplicationFolder() {
+    public static String getApplicationFolder() {
         String path = Path.getDirectoryName(System.getProperty("user.home"));
         if (path != null && !path.isEmpty()) {
             path += path.charAt(path.length() - 1) == '\\' ? "" : "\\";
@@ -427,7 +447,7 @@ class Program {
         return path;
     }
 
-    static void WriteLine2(Level level, String msg, int wrapPos /* = 0 */) {
+    static void writeLine2(Level level, String msg, int wrapPos /* = 0 */) {
         if (wrapPos == 0) {
             logger.log(level, msg);
         } else {
@@ -460,7 +480,7 @@ class Program {
         return strm;
     }
 
-    private static int AnalyzeOption(String[] args) {
+    private static int analyzeOption(String[] args) {
         if (args == null || args.length < 1) return 0;
 
         int i = 0;
@@ -473,15 +493,15 @@ class Program {
             else if (op.equals("D=GIMIC")) device = 1;
             else if (op.equals("D=SCCI")) device = 2;
             else if (op.equals("D=WAVE")) device = 3;
-            else if (op.length() > 2 && op.startsWith("L=")) OptionSetLoop(op);
-            else if (op.equals("H") || op.equals("?")) OptionDispHelp();
-            else if (op.length() > 2 && op.startsWith("B=")) OptionSetBoard(op.substring(2));
-            else if (op.length() > 3 && op.startsWith("VV=")) OptionSetVolumeV(op.substring(3));
-            else if (op.length() > 3 && op.startsWith("VR=")) OptionSetVolumeR(op.substring(3));
-            else if (op.length() > 4 && op.startsWith("PPS=")) OptionSetPPS(op.substring(4));
-            else if (op.length() > 4 && op.startsWith("PPZ=")) OptionSetPPZ(op.substring(4));
-            else if (op.length() > 8 && op.startsWith("PPSFREQ=")) OptionSetPPSFREQ(op.substring(8));
-            else if (op.length() > 8 && op.startsWith("PPSWAIT=")) OptionSetPPSWAIT(op.substring(8));
+            else if (op.length() > 2 && op.startsWith("L=")) optionSetLoop(op);
+            else if (op.equals("H") || op.equals("?")) optionDispHelp();
+            else if (op.length() > 2 && op.startsWith("B=")) optionSetBoard(op.substring(2));
+            else if (op.length() > 3 && op.startsWith("VV=")) optionSetVolumeV(op.substring(3));
+            else if (op.length() > 3 && op.startsWith("VR=")) optionSetVolumeR(op.substring(3));
+            else if (op.length() > 4 && op.startsWith("PPS=")) optionSetPPS(op.substring(4));
+            else if (op.length() > 4 && op.startsWith("PPZ=")) optionSetPPZ(op.substring(4));
+            else if (op.length() > 8 && op.startsWith("PPSFREQ=")) optionSetPPSFREQ(op.substring(8));
+            else if (op.length() > 8 && op.startsWith("PPSWAIT=")) optionSetPPSWAIT(op.substring(8));
             else break;
 
             i++;
@@ -491,7 +511,7 @@ class Program {
         return i;
     }
 
-    private static void OptionSetPPZ(String v) {
+    private static void optionSetPPZ(String v) {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
@@ -500,7 +520,7 @@ class Program {
         }
     }
 
-    private static void OptionSetPPS(String v) {
+    private static void optionSetPPS(String v) {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
@@ -509,7 +529,7 @@ class Program {
         }
     }
 
-    private static void OptionSetPPSFREQ(String v) {
+    private static void optionSetPPSFREQ(String v) {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
@@ -518,7 +538,7 @@ class Program {
         }
     }
 
-    private static void OptionSetPPSWAIT(String v) {
+    private static void optionSetPPSWAIT(String v) {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
@@ -527,7 +547,7 @@ class Program {
         }
     }
 
-    private static void OptionSetLoop(String op) {
+    private static void optionSetLoop(String op) {
         try {
             loop = Integer.parseInt(op.substring(2));
             loop = 0;
@@ -535,7 +555,7 @@ class Program {
         }
     }
 
-    private static void OptionSetVolumeR(String v) {
+    private static void optionSetVolumeR(String v) {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
@@ -544,7 +564,7 @@ class Program {
         }
     }
 
-    private static void OptionSetVolumeV(String v) {
+    private static void optionSetVolumeV(String v) {
         if (v == null || v.isEmpty()) return;
         String[] prm = v.split(",");
         if (prm == null || prm.length < 1) return;
@@ -560,7 +580,7 @@ class Program {
         }
     }
 
-    private static void OptionSetBoard(String v) {
+    private static void optionSetBoard(String v) {
         if (v == null || v.isEmpty()) return;
         if (v.equals("AUTO")) {
             isAUTO = true;
@@ -592,7 +612,7 @@ class Program {
         }
     }
 
-    private static void OptionDispHelp() {
+    private static void optionDispHelp() {
         logger.log(Level.INFO, """
                 Welcome to PMDDotNET !
                 
@@ -601,141 +621,141 @@ class Program {
                             PMD options] [file.m]
                 
                  Options
-                  オプションは大文字小文字を区別しません。
+                  Options are not case sensitive.
                 
                    -D=
-                     -D=オプションを指定することにより再生デバイスを変更できます。
+                     You can change the playback device by specifying the -D= option.
                        -D=EMU
-                         デフォルト値です。
-                         エミュレーションによる再生をWindowsの音声デバイスから行います。
+                         This is the default value.
+                         Playback using emulation is performed from the Windows audio device.
                        -D=GIMIC
-                         G.I.M.I.CのOPNAモジュールによる再生を行います。モジュールが見つからない場合はEMUと同じ動作になります。
+                         Playback is performed using the G.I.M.I.C OPNA module. If the module is not found, it will behave the same as EMU.
                        -D=SCCI
-                         SCCIのOPNAモジュールによる再生を行います。モジュールが見つからない場合はEMUと同じ動作になります。
+                         Playback is performed using the SCCI OPNA module. If the module is not found, it will behave the same as EMU.
                 
                    -L=n
-                     ループ回数を0以上の数値で指定します。(TBD)
-                     但し0は無限ループになります。デフォルト値は0です。
-                     ループ回数というオプションですが実際は演奏回数です。つまり1を指定した場合、一通り演奏するとループせずに終了します。
-                     解析できない数値を指定した場合は0(無限ループ)となります。
-                     再生デバイスがWAVEの場合に0を指定した場合は1に修正されます。
+                     Specify the number of loops as a number greater than or equal to 0. (TBD)
+                     However, 0 will result in an infinite loop. The default value is 0.
+                     This is an option for the number of loops, but it is actually the number of times the sound is played. In other words, if you specify 1, it will end without looping after playing once.
+                     If you specify a number that cannot be analyzed, it will become 0 (infinite loop).
+                     If you specify 0 when the playback device is WAVE, it will be corrected to 1.
                 
                    -B=
-                     想定する音源ボードを指定します。
-                     PMDの振る舞いが変わるほか、エミュレーションや実チップに設定するボリューム値も設定します。
-                     ボリューム値については後述の-VV=などにて変更可能です。
+                     Specify the assumed sound source board.
+                     In addition to changing the behavior of PMD, it also sets the volume value to be set for emulation and the actual chip.
+                     The volume value can be changed using -VV=, described below.
                        -B=AUTO
-                         デフォルト値です。
-                         -B= -PPS= -PPZ=のオプションが自動で設定されます。
-                         設定は曲データ中タグのPCMファイル指定状況から判断されます。以下の通りです。
+                         This is the default value.
+                         -B= -PPS= -PPZ= options are set automatically.
+                         The setting is determined from the PCM file specification in the tag in the song data. As follows:
                 
-                             #    .PPC(ヘッダ)  .PPS    .PZI       自動設定オプション
+                             #    .PPC(header)  .PPS      .PZI       automatic configuration options
                              ------------------------------------------------------------
-                             01   未使用        未使用  未使用     -B=SPB -PPS=0 -PPZ=0
-                             02   .PPC/.PVI     未使用  未使用     -B=SPB -PPS=0 -PPZ=0
-                             03   .P86          未使用  未使用     -B=86B -PPS=0 -PPZ=0
-                             04   未使用          使用  未使用     -B=SPB -PPS=1 -PPZ=0
-                             05   .PPC/.PVI       使用  未使用     -B=SPB -PPS=1 -PPZ=0
-                             06   .P86            使用  未使用     -B=86B -PPS=1 -PPZ=0
-                             07   未使用        未使用    使用     -B=SPB -PPS=0 -PPZ=1
-                             08   .PPC/.PVI     未使用    使用     -B=SPB -PPS=0 -PPZ=1
-                             09   .P86          未使用    使用     -B=86B -PPS=0 -PPZ=1
-                             10   未使用          使用    使用     -B=SPB -PPS=1 -PPZ=1
-                             11   .PPC/.PVI       使用    使用     -B=SPB -PPS=1 -PPZ=1
-                             12   .P86            使用    使用     -B=86B -PPS=1 -PPZ=1
+                             01   Not used      Not used  Not used   -B=SPB -PPS=0 -PPZ=0
+                             02   .PPC/.PVI     Not used  Not used   -B=SPB -PPS=0 -PPZ=0
+                             03   .P86          Not used  Not used   -B=86B -PPS=0 -PPZ=0
+                             04   Not used      Used      Not used   -B=SPB -PPS=1 -PPZ=0
+                             05   .PPC/.PVI     Used      Not used   -B=SPB -PPS=1 -PPZ=0
+                             06   .P86          Used      Not used   -B=86B -PPS=1 -PPZ=0
+                             07   Not used      Not used  Used       -B=SPB -PPS=0 -PPZ=1
+                             08   .PPC/.PVI     Not used  Used       -B=SPB -PPS=0 -PPZ=1
+                             09   .P86          Not used  Used       -B=86B -PPS=0 -PPZ=1
+                             10   Not used      Used      Used       -B=SPB -PPS=1 -PPZ=1
+                             11   .PPC/.PVI     Used      Used       -B=SPB -PPS=1 -PPZ=1
+                             12   .P86          Used      Used       -B=86B -PPS=1 -PPZ=1
                 
                        -B=NRM|OPN|2203|26
-                         ノーマル音源(OPN)を指定します。
-                         以下のオプションが暗黙で指定されます。
+                         Specifies the normal sound source (OPN).
+                         The following options are implicitly specified.
                            -VV=12,-5,-191,-191
-                         GIMIC GMC-OPNAの場合
+                         For GIMIC GMC-OPNA
                            -VR=31
-                         GIMIC GMC-OPNA以外のモジュールの場合(PMDのオプション)
+                         For modules other than GIMIC GMC-OPNA (PMD options)
                            -DF12 -DS0
-                         SCCIの場合(PMDのオプション)
+                         For SCCI (PMD options)
                            -DF1 -DS0
                        -B=86|86B|SPB|OPNA|2608
-                         拡張音源(OPNA)を指定します。
-                         SPB/OPNA/2608を指定するとADPCMを利用します。(PMDB2相当)
-                         .PPC/.PVIファイルが指定されている場合は再生前にADPCMデータを転送する処理が発生します。
-                         (エミュレーションの場合以外は転送に時間がかかります。)
-                         以下のオプションが暗黙で指定されます。
+                         Specifies the extended sound source (OPNA).
+                         Specifying SPB/OPNA/2608 uses ADPCM. (Equivalent to PMDB2)
+                         If a .PPC/.PVI file is specified, a process to transfer ADPCM data will occur before playback.
+                         (Transfer will take time except in the case of emulation.)
+                         The following options are implicitly specified.
                            -VV=0,-5,0,0
-                         GIMIC GMC-OPNAの場合
+                         For GIMIC GMC-OPNA
                            -VR=66
-                         GIMIC GMC-OPNA以外のモジュールの場合(PMDのオプション)
+                         For modules other than GIMIC GMC-OPNA (PMD options)
                            -DF12 -DS0
-                         SCCIの場合(PMDのオプション)(TBD)
+                         For SCCI (PMD options) (TBD)
                            -DF1 -DS0
                        -B=VA_NRM
-                         PC-88VAノーマル音源を指定します。(TBD)
-                         以下のオプションが暗黙で指定されます。(TBD)
+                         Specifies the PC-88VA normal sound source. (TBD)
+                         The following options are implicitly specified. (TBD)
                            -VV=0,0,0,0
-                         GIMIC GMC-OPNAの場合(TBD)
+                         For GIMIC GMC-OPNA (TBD)
                            -VR=31
-                         GIMIC GMC-OPNA以外のモジュール又はSCCIの場合(PMDのオプション)(TBD)
+                         For modules other than GIMIC GMC-OPNA or SCCI (PMD options) (TBD)
                            -DFn -DSn -DRn -DPn -DZn
                        -B=VA_86
-                         PC-88VA拡張音源を指定します。(TBD)
-                         以下のオプションが暗黙で指定されます。(TBD)
+                         Specifies the PC-88VA extended sound source. (TBD)
+                         The following options are implicitly specified. (TBD)
                            -VV=0,0,0,0
-                         GIMIC GMC-OPNAの場合(TBD)
+                         For GIMIC GMC-OPNA (TBD)
                            -VR=31
-                         GIMIC GMC-OPNA以外のモジュール又はSCCIの場合(PMDのオプション)(TBD)
+                         For modules other than GIMIC GMC-OPNA or SCCI (PMD option) (TBD)
                            -DFn -DSn -DRn -DPn -DZn
                 
                    -VV=n,n,n,n
-                     エミュレーション向けボリューム値を設定します。
-                     カンマ区切りでFM,SSG,Rhythm,Adpcmの順に音量を指定します。
-                     nの指定可能範囲は-191～20です。
+                     Sets the volume value for emulation.
+                     Specify the volumes in the order of FM, SSG, Rhythm, and Adpcm, separated by commas.
+                     The range of n that can be specified is -191 to 20.
                 
                    -VR=n
-                     実チップ向けボリューム値を設定します。
-                     実質、GIMICのOPNAモジュール専用オプションで、SSGの音量を0～127で指定します。
+                     Sets the volume value for the real chip.
+                     This is essentially an option for GIMIC's OPNA module only, and specifies the SSG volume from 0 to 127.
                 
                    -PPS=n
-                     PPSDRVを使用するときは1を指定します。0を指定すると使用しません。
-                     デフォルト値は0です。
-                     nの指定可能値は0または1です。
+                     Specify 1 when using PPSDRV. Specify 0 to disable use.
+                     The default value is 0.
+                     The possible values of n are 0 or 1.
                 
                    -PPZ=n
-                     PPZ8を使用するときは1を指定します。0を指定すると使用しません。
-                     デフォルト値は0です。
-                     nの指定可能値は0または1です。
+                     Specify 1 when using PPZ8. If you specify 0, it will not be used.
+                     The default value is 0.
+                     The value n can be 0 or 1.
                 
                    -PPSFREQ=n
-                     PPSDRVの周波数(Hz)を指定します。
-                     実Chipのみ有効です。
-                     デフォルト値はGIMICは44100、SCCIは16000です。
-                     nの指定可能値は2000～192000です。
+                     Specifies the frequency (Hz) of PPSDRV.
+                     Only valid for real chips.
+                     The default value is 44100 for GIMIC and 16000 for SCCI.
+                     The specifiable values for n are 2000 to 192000.
                 
                    -PPSWAIT=n
-                     SCCIへ送信する同期の為のウエイト値を指定します。
-                     SCCIのみ有効です。
-                     デフォルト値は1です。
-                     -1の場合は送信しません。
-                     nの指定可能値は-1～100です。
+                     Specifies the wait value for synchronization sent to SCCI.
+                     Only valid for SCCI.
+                     The default value is 1.
+                     If -1 is specified, no transmission will occur.
+                     The specifiable values for n are -1 to 100.
                 
                    [PMD options]
-                     オリジナルのPMDへ送るオプションを指定します。
-                     実際には上記以外のオプションや、ファイル名を指定すると全てオリジナルのPMDへ指定したものと解釈されます。
+                     Specifies the options to send to the original PMD.
+                     If you specify options other than those listed above or a file name, they will all be interpreted as having been specified for the original PMD.
                 
                    [file.m]
-                     .mファイルを指定します。拡張子のチェックはしません。
+                     Specifies a .m file. Extensions are not checked.
                 """);
     }
 
-    private static void OPNAWaitSend(long elapsed, int size) {
+    private static void waitSendOPNA(long elapsed, int size) {
         switch (device) {
             case 0: // EMU
                 return;
             case 1: // GIMIC
 
-                //サイズと経過時間から、追加でウエイトする。
-                int m = Math.max((int) (size / 20 - elapsed), 0); // 20 閾値(magic number)
+                // Add additional weight based on size and elapsed time.
+                int m = Math.max((int) (size / 20 - elapsed), 0); // 20 Threshold (magic number)
                 try { Thread.sleep(m); } catch (InterruptedException e) {}
 
-                //ポートも一応見る
+                // Check the port as well
 //                int n = nc86ctl.getNumberOfChip();
 //                for (int i = 0; i < n; i++) {
 //                    NIRealChip rc = nc86ctl.getChipInterface(i);
@@ -757,12 +777,12 @@ class Program {
         }
     }
 
-//    private static RSoundChip CheckDevice() {
+//    private static RSoundChip checkDevice() {
 //        SChipType ct = null;
 //        int iCount = 0;
 //
 //        switch (device) {
-//            case 1: // GIMIC存在チェック
+//            case 1: // GIMIC existence check
 //                nc86ctl = new Nc86ctl.Nc86ctl();
 //                try {
 //                    nc86ctl.initialize();
@@ -818,7 +838,7 @@ class Program {
 //                rsc.setSSGVolume(63); // PC-8801
 //            }
 //            return rsc;
-//            case 2: // SCCI存在チェック
+//            case 2: // SCCI Presence Check
 //                nScci = new NScci.NScci();
 //                iCount = nScci.NSoundInterfaceManager_.getInterfaceCount();
 //                if (iCount == 0) {
@@ -865,12 +885,12 @@ class Program {
 //        return null;
 //    }
 
-    private static int EmuCallback(short[] buffer, int offset, int count) {
+    private static int emuCallback(short[] buffer, int offset, int count) {
         try {
             long bufCnt = count / 2;
 
             for (int i = 0; i < bufCnt; i++) {
-                mds.update(emuRenderBuf, 0, 2, Program::OneFrame);
+                mds.update(emuRenderBuf, 0, 2, Program::oneFrame);
                 //ppz8em.Update(emuRenderBuf);
                 //ppsdrv.Update(emuRenderBuf);
 
@@ -885,7 +905,7 @@ class Program {
         return count;
     }
 
-    private static void RealCallback() {
+    private static void realCallback() {
 
         double o = sw.getElapsedMilliseconds() / swFreq;
         double oPPS = sw.getElapsedMilliseconds() / swFreq;
@@ -902,7 +922,7 @@ class Program {
 
                 double el1 = sw.getElapsedMilliseconds() / swFreq;
                 if (el1 - o >= step) {
-                    if (el1 - o >= step * SamplingRate / 100.0) // 閾値10ms
+                    if (el1 - o >= step * SamplingRate / 100.0) // Threshold 10ms
                     {
                         do {
                             o += step;
@@ -911,11 +931,11 @@ class Program {
                         o += step;
                     }
 
-                    OneFrame();
+                    oneFrame();
                 }
 
                 if (el1 - oPPS >= stepPPS) {
-                    if (el1 - oPPS >= stepPPS * PPSSamplingRate / 100.0) // 閾値10ms
+                    if (el1 - oPPS >= stepPPS * PPSSamplingRate / 100.0) // Threshold 10ms
                     {
                         do {
                             oPPS += stepPPS;
@@ -933,11 +953,11 @@ class Program {
         trdStopped = true;
     }
 
-    private static void OneFrame() {
+    private static void oneFrame() {
         drv.render();
     }
 
-    private static void OPNAWrite(ChipDatum dat) {
+    private static void writeOPNA(ChipDatum dat) {
         if (dat != null && dat.additionalData != null) {
             MmlDatum md = (MmlDatum) dat.additionalData;
             if (md.linePos != null) {
@@ -964,7 +984,7 @@ class Program {
         }
     }
 
-    private static int PPZ8Write(ChipDatum arg) {
+    private static int writePPZ8(ChipDatum arg) {
         if (arg == null) return 0;
 
         if (arg.port == 0x03) {
@@ -974,7 +994,7 @@ class Program {
         }
     }
 
-    private static int PPSDRVWrite(ChipDatum arg) {
+    private static int writePPSDRV(ChipDatum arg) {
         if (arg == null) return 0;
 
         if (arg.port == 0x05) {
@@ -987,7 +1007,7 @@ class Program {
     //static int aold = -1;
     //static int dold = -1;
 
-    private static void PPSDRVpsg(int a, int d) {
+    private static void psgPPSDRV(int a, int d) {
         switch (device) {
             case 0:
                 mds.write(Ym2608Inst.class, 0, 0, a, d);
@@ -1006,7 +1026,7 @@ class Program {
         }
     }
 
-    private static int P86Write(ChipDatum arg) {
+    private static int writeP86(ChipDatum arg) {
         if (arg == null) return 0;
 
         if (arg.port == 0x00) {

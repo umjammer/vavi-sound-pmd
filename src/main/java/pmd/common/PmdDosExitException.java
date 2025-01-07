@@ -1,4 +1,3 @@
-
 package pmd.common;
 
 import java.io.Serializable;

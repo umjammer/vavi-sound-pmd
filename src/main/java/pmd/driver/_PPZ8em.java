@@ -80,9 +80,9 @@ public class _PPZ8em {
 
     /**
      * 0x01 PCM発音
-     * </summary>
-     * <param name="al">PCMチャンネル(0-7)</param>
-     * <param name="dx">PCMの音色番号</param>
+     *
+     * @param al PCMチャンネル(0-7)
+     * @param dx PCMの音色番号
      */
     public void PlayPCM(byte al, short dx) {
 //#if DEBUG
@@ -95,19 +95,19 @@ public class _PPZ8em {
         chWk[al].num = num;
 
         if (pcmData[bank] != null) {
-            chWk[al].ptr = pcmData[bank][num * 0x12 + 32]
-                    + pcmData[bank][num * 0x12 + 1 + 32] * 0x100
-                    + pcmData[bank][num * 0x12 + 2 + 32] * 0x10000
-                    + pcmData[bank][num * 0x12 + 3 + 32] * 0x1000000
+            chWk[al].ptr = (pcmData[bank][num * 0x12 + 32] & 0xff)
+                    + (pcmData[bank][num * 0x12 + 1 + 32] & 0xff) * 0x100
+                    + (pcmData[bank][num * 0x12 + 2 + 32] & 0xff) * 0x10000
+                    + (pcmData[bank][num * 0x12 + 3 + 32] & 0xff) * 0x1000000
                     + 0x20 + 0x12 * 128;
             if (chWk[al].ptr >= pcmData[bank].length) {
                 chWk[al].ptr = pcmData[bank].length - 1;
             }
             chWk[al].end = chWk[al].ptr
-                    + pcmData[bank][num * 0x12 + 4 + 32]
-                    + pcmData[bank][num * 0x12 + 5 + 32] * 0x100
-                    + pcmData[bank][num * 0x12 + 6 + 32] * 0x10000
-                    + pcmData[bank][num * 0x12 + 7 + 32] * 0x1000000
+                    + (pcmData[bank][num * 0x12 + 4 + 32] & 0xff)
+                    + (pcmData[bank][num * 0x12 + 5 + 32] & 0xff) * 0x100
+                    + (pcmData[bank][num * 0x12 + 6 + 32] & 0xff) * 0x1_0000
+                    + (pcmData[bank][num * 0x12 + 7 + 32] & 0xff) * 0x10_00000
             ;
             if (chWk[al].end >= pcmData[bank].length) {
                 chWk[al].end = pcmData[bank].length - 1;
@@ -117,19 +117,19 @@ public class _PPZ8em {
             chWk[al].loopStartOffset = chWk[al]._loopStartOffset;
             if (chWk[al]._loopStartOffset == -1) {
                 chWk[al].loopStartOffset = 0
-                        + pcmData[bank][num * 0x12 + 8 + 32]
-                        + pcmData[bank][num * 0x12 + 9 + 32] * 0x100
-                        + pcmData[bank][num * 0x12 + 10 + 32] * 0x10000
-                        + pcmData[bank][num * 0x12 + 11 + 32] * 0x1000000
+                        + (pcmData[bank][num * 0x12 + 8 + 32] & 0xff)
+                        + (pcmData[bank][num * 0x12 + 9 + 32] & 0xff) * 0x100
+                        + (pcmData[bank][num * 0x12 + 10 + 32] & 0xff) * 0x1_0000
+                        + (pcmData[bank][num * 0x12 + 11 + 32] & 0xff) * 0x100_0000
                 ;
             }
             chWk[al].loopEndOffset = chWk[al]._loopEndOffset;
             if (chWk[al]._loopEndOffset == -1) {
                 chWk[al].loopEndOffset = 0
-                        + pcmData[bank][num * 0x12 + 12 + 32]
-                        + pcmData[bank][num * 0x12 + 13 + 32] * 0x100
-                        + pcmData[bank][num * 0x12 + 14 + 32] * 0x10000
-                        + pcmData[bank][num * 0x12 + 15 + 32] * 0x1000000
+                        + (pcmData[bank][num * 0x12 + 12 + 32] & 0xff)
+                        + (pcmData[bank][num * 0x12 + 13 + 32] & 0xff) * 0x100
+                        + (pcmData[bank][num * 0x12 + 14 + 32] & 0xff) * 0x1_0000
+                        + (pcmData[bank][num * 0x12 + 15 + 32]  & 0xff)* 0x100_0000
                 ;
             }
             if (chWk[al].loopStartOffset == 0xffff && chWk[al].loopEndOffset == 0xffff) {
@@ -151,32 +151,27 @@ public class _PPZ8em {
         chWk[al].playing = true;
     }
 
-
     /**
      * 0x02 PCM停止
-     * </summary>
-     * <param name="al">PCMチャンネル(0-7)</param>
+     *
+     * @param al PCMチャンネル(0-7)
      */
     public void StopPCM(byte al) {
-//#if DEBUG
         logger.log(Level.TRACE, String.format("ppz8em: StopPCM: ch:%d", al));
-//#endif
 
         chWk[al].playing = false;
     }
 
     /**
      * 0x03 PVIファイルの読み込み＆PCMへの変換
-     * </summary>
-     * <param name="bank">0:PCMバッファ0  1:PCMバッファ1</param>
-     * <param name="mode">0:.PVI (ADPCM)  1:.PZI(PCM)</param>
-     * <param name="pcmData">ファイル内容</param>
+     *
+     * @param bank 0:PCMバッファ0  1:PCMバッファ1
+     * @param mode 0:.PVI (ADPCM)  1:.PZI(PCM)
+     * @param pcmData ファイル内容
      * <returns></returns>
      */
     public int LoadPcm(byte bank, byte mode, byte[] pcmData) {
-//#if DEBUG
         logger.log(Level.TRACE, String.format("ppz8em: LoadPCM: bank:%d mode:%d", bank, mode));
-//#endif
 
         bank &= 1;
         mode &= 1;
@@ -202,22 +197,20 @@ public class _PPZ8em {
 
     /**
      * 0x04 ステータスの読み込み
-     * </summary>
-     * <param name="al"></param>
+     *
+     * @param al 
      */
     public void ReadStatus(byte al) {
         switch (al) {
             case 0xd:
-//#if DEBUG
                 logger.log(Level.TRACE, "ppz8em: ReadStatus: PCM0のテーブルアドレス");
-//#endif
+
                 bank = 0;
                 ptr = 0;
                 break;
             case 0xe:
-//#if DEBUG
                 logger.log(Level.TRACE, "ppz8em: ReadStatus: PCM1のテーブルアドレス");
-//#endif
+
                 bank = 1;
                 ptr = 0;
                 break;
@@ -226,48 +219,45 @@ public class _PPZ8em {
 
     /**
      * 0x07 ボリュームの変更
-     * </summary>
-     * <param name="al">PCMチャネル(0~7)</param>
-     * <param name="dx">ボリューム(0-15 / 0-255)</param>
+     *
+     * @param al PCMチャネル(0~7)
+     * @param dx ボリューム(0-15 / 0-255)
      */
     public void SetVolume(byte al, short dx) {
-//#if DEBUG
-        logger.log(Level.TRACE, String.format("ppz8em: SetVolume: Ch:%d vol:%d", al, dx));
-//#endif
+        logger.log(Level.TRACE, "ppz8em: SetVolume: Ch:%d vol:%d".formatted(al, dx));
+
         chWk[al].volume = dx;
     }
 
     /**
      * 0x0B PCMの音程周波数の指定
-     * </summary>
-     * <param name="al">PCMチャネル(0~7)</param>
-     * <param name="dx">PCMの音程周波数DX</param>
-     * <param name="cx">PCMの音程周波数CX</param>
+     *
+     * @param al PCMチャネル(0~7)
+     * @param dx PCMの音程周波数DX
+     * @param cx PCMの音程周波数CX
      */
     public void SetFrequency(byte al, short dx, short cx) {
-//#if DEBUG
-        logger.log(Level.TRACE, String.format("ppz8em: SetFrequency: 0x{0:x8}", dx * 0x10000 + cx));
-//#endif
-        chWk[al].frequency = dx * 0x10000 + cx;
+        logger.log(Level.TRACE, "ppz8em: SetFrequency: 0x%08x".formatted(dx * 0x1_0000 + cx));
+
+        chWk[al].frequency = (dx & 0xffff) * 0x1_0000 + (cx & 0xffff);
     }
 
     /**
      * 0x0e ループポインタの設定
-     * </summary>
-     * <param name="al">PCMチャネル(0~7)</param>
-     * <param name="lpStOfsDX">ループ開始オフセットDX</param>
-     * <param name="lpStOfsCX">ループ開始オフセットCX</param>
-     * <param name="lpEdOfsDI">ループ終了オフセットDI</param>
-     * <param name="lpEdOfsSI">ループ終了オフセットSI</param>
+     *
+     * @param al PCMチャネル(0~7)
+     * @param lpStOfsDX ループ開始オフセットDX
+     * @param lpStOfsCX ループ開始オフセットCX
+     * @param lpEdOfsDI ループ終了オフセットDI
+     * @param lpEdOfsSI ループ終了オフセットSI
      */
     public void SetLoopPoint(byte al, short lpStOfsDX, short lpStOfsCX, short lpEdOfsDI, short lpEdOfsSI) {
-//#if DEBUG
-        logger.log(Level.TRACE, String.format("ppz8em: SetLoopPoint: St:0x{0:x8} Ed:0x{1:x8}"
-                , lpStOfsDX * 0x10000 + lpStOfsCX, lpEdOfsDI * 0x10000 + lpEdOfsSI));
-//#endif
+        logger.log(Level.TRACE, "ppz8em: SetLoopPoint: St:0x%08x Ed:0x%08x".formatted(
+                (lpStOfsDX & 0xffff) * 0x1_0000 + (lpStOfsCX & 0xffff), (lpEdOfsDI & 0xffff) * 0x1_0000 + (lpEdOfsSI & 0xffff)));
+
         al &= 7;
-        chWk[al]._loopStartOffset = lpStOfsDX * 0x10000 + lpStOfsCX;
-        chWk[al]._loopEndOffset = lpEdOfsDI * 0x10000 + lpEdOfsSI;
+        chWk[al]._loopStartOffset = (lpStOfsDX & 0xffff) * 0x1_0000 + (lpStOfsCX & 0xffff);
+        chWk[al]._loopEndOffset = (lpEdOfsDI & 0xffff) * 0x1_0000 + (lpEdOfsSI & 0xffff);
 
         if (chWk[al]._loopStartOffset == 0xffff || chWk[al]._loopStartOffset >= chWk[al]._loopEndOffset) {
             chWk[al]._loopStartOffset = -1;
@@ -279,22 +269,20 @@ public class _PPZ8em {
      * 0x12 PCMの割り込みを停止
      */
     public void StopInterrupt() {
-//#if DEBUG
         logger.log(Level.TRACE, "ppz8em: StopInterrupt");
-//#endif
+
         interrupt = true;
     }
 
     /**
      * 0x13 PAN指定
-     * </summary>
-     * <param name="al">PCMチャネル(0~7)</param>
-     * <param name="dx">PAN(0~9)</param>
+     *
+     * @param al PCMチャネル(0~7)
+     * @param dx PAN(0~9)
      */
     public void SetPan(byte al, short dx) {
-//#if DEBUG
-        logger.log(Level.TRACE, String.format("ppz8em: SetPan: %d", dx));
-//#endif
+        logger.log(Level.TRACE, "ppz8em: SetPan: %d".formatted(dx));
+
         chWk[al].pan = dx;
         chWk[al].panL = (chWk[al].pan < 6 ? 1.0 : (0.25 * (9 - chWk[al].pan)));
         chWk[al].panR = (chWk[al].pan > 4 ? 1.0 : (0.25 * chWk[al].pan));
@@ -302,14 +290,13 @@ public class _PPZ8em {
 
     /**
      * 0x15 元データ周波数設定
-     * </summary>
-     * <param name="al">PCMチャネル(0~7)</param>
-     * <param name="dx">元周波数</param>
+     *
+     * @param al PCMチャネル(0~7)
+     * @param dx 元周波数
      */
     public void SetSrcFrequency(byte al, short dx) {
-//#if DEBUG
-        logger.log(Level.TRACE, String.format("ppz8em: SetSrcFrequency: %d", dx));
-//#endif
+        logger.log(Level.TRACE, "ppz8em: SetSrcFrequency: %d".formatted(dx));
+
         chWk[al]._srcFrequency = dx;
     }
 
@@ -317,9 +304,8 @@ public class _PPZ8em {
      * 0x16 全体ボリューム
      */
     public void SetAllVolume(int vol) {
-//#if DEBUG
-        logger.log(Level.TRACE, String.format("ppz8em: SetAllVolume: %d", vol));
-//#endif
+        logger.log(Level.TRACE, "ppz8em: SetAllVolume: %d".formatted(vol));
+
         if (vol < 16 && vol != PCM_VOLUME) {
             PCM_VOLUME = vol;
             MakeVolumeTable(volume);
@@ -337,20 +323,19 @@ public class _PPZ8em {
 
     /**
      * 0x18  チャネル7のADPCMのエミュレート設定
-     * </summary>
-     * <param name="al">0:チャネル7でADPCMのエミュレートしない  1:する</param>
+     *
+     * @param al 0:チャネル7でADPCMのエミュレートしない  1:する
      */
     public void SetAdpcmEmu(byte al) {
-//#if DEBUG
-        logger.log(Level.TRACE, String.format("ppz8em: SetAdpcmEmu: %d", al));
-//#endif
+        logger.log(Level.TRACE, "ppz8em: SetAdpcmEmu: %d".formatted(al));
+
         adpcmEmu = al;
     }
 
     /**
      * 0x19 常駐解除許可、禁止設定
-     * </summary>
-     * <param name="v">0:常駐解除許可 1:常駐解除禁止</param>
+     *
+     * @param v 0:常駐解除許可 1:常駐解除禁止
      */
     public void SetReleaseFlag(int v) {
         // なにもしない
@@ -384,7 +369,7 @@ public class _PPZ8em {
             if (chWk[i].pan == 0) continue;
 
             if (i == 6) {
-                //Console.WriteLine(VolumeTable[chWk[i].volume][pcmData[chWk[i].bank][chWk[i].ptr]]
+                //logger.log(Level.TRACE, VolumeTable[chWk[i].volume][pcmData[chWk[i].bank][chWk[i].ptr]]
                 //* chWk[i].panL);
             }
 
@@ -433,9 +418,9 @@ public class _PPZ8em {
         //音色テーブルのコンバート
         long size2 = 0;
         for (int i = 0; i < instCount; i++) {
-            int startaddress = (pcmData[bank][i * 4 + 0x10] + pcmData[bank][i * 4 + 0x11] * 0x100) << (5 + 1);
-            int size = ((pcmData[bank][i * 4 + 0x12] + pcmData[bank][i * 4 + 0x13] * 0x100)
-                    - (pcmData[bank][i * 4 + 0x10] + pcmData[bank][i * 4 + 0x11] * 0x100) + 1)
+            int startaddress = ((pcmData[bank][i * 4 + 0x10] & 0xff) + (pcmData[bank][i * 4 + 0x11] & 0xff) * 0x100) << (5 + 1);
+            int size = (((pcmData[bank][i * 4 + 0x12] & 0xff) + (pcmData[bank][i * 4 + 0x13] & 0xff) * 0x100)
+                    - ((pcmData[bank][i * 4 + 0x10] & 0xff) + (pcmData[bank][i * 4 + 0x11] & 0xff) * 0x100) + 1)
                     << (5 + 1); // endAdr - startAdr
             size2 += size;
             short rate = 16000;   // 16kHz
@@ -443,7 +428,7 @@ public class _PPZ8em {
             o.add((byte) startaddress);
             o.add((byte) (startaddress >> 8));
             o.add((byte) (startaddress >> 16));
-            o.add((byte) (startaddress >> 24));
+            o.add((byte) (startaddress >>> 24));
             o.add((byte) size);
             o.add((byte) (size >> 8));
             o.add((byte) (size >> 16));
@@ -488,40 +473,38 @@ public class _PPZ8em {
             int X_N = 0x80; // Xn (ADPCM>PCM 変換用)
             int DELTA_N = 127; // DELTA_N(ADPCM>PCM 変換用)
 
-            int size = ((pcmData[bank][i * 4 + 0x12] + pcmData[bank][i * 4 + 0x13] * 0x100)
-                    - (pcmData[bank][i * 4 + 0x10] + pcmData[bank][i * 4 + 0x11] * 0x100) + 1)
+            int size = (((pcmData[bank][i * 4 + 0x12] & 0xff) + (pcmData[bank][i * 4 + 0x13] & 0xff) * 0x100)
+                    - ((pcmData[bank][i * 4 + 0x10] & 0xff) + (pcmData[bank][i * 4 + 0x11] & 0xff) * 0x100) + 1)
                     << (5 + 1); // endAdr - startAdr
 
             for (int j = 0; j < size / 2; j++) {
                 byte psrc = pcmData[bank][psrcPtr++];
 
                 int n = X_N + table1[(psrc >> 4) & 0x0f] * DELTA_N / 8;
-                //Console.WriteLine(n);
+                //logger.log(Level.TRACE, n);
                 X_N = Math.max(Math.min(n, 32767), -32768);
 
                 n = DELTA_N * table2[(psrc >> 4) & 0x0f] / 64;
-                //Console.WriteLine(n);
+                //logger.log(Level.TRACE, n);
                 DELTA_N = Math.max(Math.min(n, 24576), 127);
 
                 o.add((byte) (X_N / (32768 / 128) + 128));
 
 
                 n = X_N + table1[psrc & 0x0f] * DELTA_N / 8;
-                //Console.WriteLine(n);
+                //logger.log(Level.TRACE, n);
                 X_N = Math.max(Math.min(n, 32767), -32768);
 
                 n = DELTA_N * table2[psrc & 0x0f] / 64;
-                //Console.WriteLine(n);
+                //logger.log(Level.TRACE, n);
                 DELTA_N = Math.max(Math.min(n, 24576), 127);
 
                 o.add((byte) (X_N / (32768 / 128) + 128));
-
-
             }
         }
 
         pcmData[bank] = ByteUtil.toByteArray(o);
-        //System.IO.File.WriteAllBytes("a.raw", pcmData[bank]);
+//        Files.write(Path.of("a.raw"), pcmData[bank]);
         return 0;
     }
 }

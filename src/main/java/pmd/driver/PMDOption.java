@@ -1,6 +1,6 @@
 package pmd.driver;
 
-public class PMDDotNETOption {
+public class PMDOption {
 
     public boolean isLoadADPCM;
     public boolean loadADPCMOnly;

@@ -43,17 +43,17 @@ public class PCMDRV {
 
         //if (r.si == pw.jumpIndex) pw.jumpIndex = -1; // KUMA:Added
 
-        Supplier<Object> ret = null;
-        if (pw.partWk[r.di].partmask != 0)
-            ret = this::pcmmain_nonplay;
-        else
-            ret = this::pcmmain_c_1;
-
-        if (ret != null) {
-            do {
-                ret = (Supplier<Object>) ret.get();
-            } while (ret != null);
-        }
+//        Supplier<Object> ret = null;
+//        if (pw.partWk[r.di].partmask != 0)
+//            ret = this::pcmmain_nonplay;
+//        else
+//            ret = this::pcmmain_c_1;
+//
+//        if (ret != null) {
+//            do {
+//                ret = (Supplier<Object>) ret.get();
+//            } while (ret != null);
+//        }
     }
 
     private Supplier<Object> pcmmain_c_1() {
@@ -75,7 +75,7 @@ public class PCMDRV {
     }
 
     private Supplier<Object> mp1m0() {
-        pw.partWk[r.di].lfoswi &= 0xf7; // Porta off
+        pw.partWk[r.di].lfoswi &= (byte) 0xf7; // Porta off
         return this::mp1m;
     }
 
@@ -89,7 +89,7 @@ public class PCMDRV {
 
             r.incSi();
 
-            if (r.al <= (byte) 0x80) break; // mp15m;
+            if ((r.al & 0xff) <= 0x80) break; // mp15m;
 
             // ELSE COMMANDS
             Object o = commandsm();
@@ -107,7 +107,7 @@ public class PCMDRV {
 
         // END OF MUSIC[If there is an 'L', go back to it]
 //mp15m:
-        if (r.al >= (byte) 0x80) { // break mp2m;
+        if ((r.al & 0xff) >= 0x80) { // break mp2m;
             pmd.FlashMacroList();
 
             r.decSi();
@@ -138,7 +138,7 @@ public class PCMDRV {
 
     private Supplier<Object> porta_returnm() {
         if (pw.partWk[r.di].volpush != 0) { // break mp_newm;
-            if (pw.partWk[r.di].onkai != 0xff) { // break mp_newm;
+            if (pw.partWk[r.di].onkai != (byte) 0xff) { // break mp_newm;
                 pw.volpush_flag--;
                 if (pw.volpush_flag != 0) { // break mp_newm;
                     pw.volpush_flag = 0;
@@ -238,7 +238,7 @@ public class PCMDRV {
             return this::pcmmnp_1; // まだ割り込みPCMが鳴っている
         pw.pcmflag = 0; // PCM効果音終了
         pw.pcm_effec_num = (byte) 255;
-        pw.partWk[r.di].partmask &= 0xfd; // bit1をclear
+        pw.partWk[r.di].partmask &= (byte) 0xfd; // bit1をclear
         if (pw.partWk[r.di].partmask == 0)
             return this::mp1m0; // partmaskが0なら復活させる
         return this::pcmmnp_1;
@@ -249,8 +249,8 @@ public class PCMDRV {
             do {
                 pw.cmd = pw.md[r.getSi()];
                 r.al = (byte) pw.md[r.incSi()].dat;
-                if (r.al == 0x80) break;
-                if (r.al < 0x80) return pmd::fmmnp_3;
+                if (r.al == (byte) 0x80) break;
+                if ((r.al & 0xff) < 0x80) return pmd::fmmnp_3;
 
                 Object o = commandsm();
                 Supplier<Object> _pcmmnp_1 = this::pcmmnp_1;
@@ -281,7 +281,6 @@ public class PCMDRV {
         } while (true);
     }
 
-    //182-
     // 
     // PCM音源特殊コマンド処理
     // 
@@ -395,7 +394,6 @@ public class PCMDRV {
         if (pw.ppz != 0) cmdtblm[75] = ppzdrv::ppz_extpartset; // 0b4h in ppzdrv.asm(75)
     }
 
-    //288-313
     // 
     // 演奏中パートのマスクon/off
     // 
@@ -421,7 +419,7 @@ public class PCMDRV {
             return this::pcmmnp_1;
         }
 //pcm_part_maskoff_ret:
-        pw.partWk[r.di].partmask &= 0xbf;
+        pw.partWk[r.di].partmask &= (byte) 0xbf;
         if (pw.partWk[r.di].partmask != 0) {
 //            break pmpm_ret;
             return this::pcmmnp_1; // <<
@@ -430,7 +428,6 @@ public class PCMDRV {
         return this::mp1m; // パート復活
     }
 
-    //314-351
     // 
     // リピート設定
     // 
@@ -478,7 +475,6 @@ public class PCMDRV {
         return null;
     }
 
-    //352-397
     // 
     // ポルタメント(PCM)
     // 
@@ -525,7 +521,7 @@ public class PCMDRV {
     //
     public Supplier<Object> comvolupm() {
         r.al = pw.partWk[r.di].volume;
-        r.carry = (r.al + 16) > 0xff;
+        r.carry = (r.al & 0xff) + 16 > 0xff;
         r.al += 16;
         return vupckm();
     }
@@ -540,7 +536,7 @@ public class PCMDRV {
 
         //IDE向け
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, (int) r.al);
+        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
         cd.additionalData = md;
         pmd.WriteDummy(cd);
 
@@ -550,7 +546,7 @@ public class PCMDRV {
     // v2.3 extend
     public Supplier<Object> comvolupm2() {
         r.al = (byte) pw.md[r.incSi()].dat;
-        r.carry = (r.al + pw.partWk[r.di].volume) > 0xff;
+        r.carry = (r.al & 0xff) + (pw.partWk[r.di].volume & 0xff) > 0xff;
         r.al += pw.partWk[r.di].volume;
         return vupckm();
     }
@@ -577,7 +573,6 @@ public class PCMDRV {
         return this::vsetm;
     }
 
-    //434-445
     // 
     // COMMAND 'p' [Panning Set]
     // 
@@ -589,12 +584,11 @@ public class PCMDRV {
     private Supplier<Object> pansetm_main() {
         r.al = r.ror(r.al, 1);
         r.al = r.ror(r.al, 1);
-        r.al &= 0b1100_0000;
+        r.al &= (byte) 0b1100_0000;
         pw.partWk[r.di].fmpan = r.al;
         return null;
     }
 
-    //446-463
     // 
     // Pan setting Extend
     // 
@@ -616,7 +610,6 @@ public class PCMDRV {
         return this::pansetm_main;
     }
 
-    //464-485
     //
     // COMMAND '@' [NEIRO Change]
     //
@@ -638,11 +631,11 @@ public class PCMDRV {
 
         r.setBx((short) 0); // offset pcmadrs
         r.addBx(r.getAx());
-        r.setAx((short) (pw.pcmWk[r.getBx()] + pw.pcmWk[r.getBx() + 1] * 0x100)); // pw.pcmadrs[r.bx];
+        r.setAx((short) ((pw.pcmWk[r.getBx()] & 0xff) + (pw.pcmWk[r.getBx() + 1] & 0xff) * 0x100)); // pw.pcmadrs[r.bx];
         r.incBx();
         r.incBx();
         pw.pcmstart = r.getAx();
-        r.setAx((short) (pw.pcmWk[r.getBx()] + pw.pcmWk[r.getBx() + 1] * 0x100)); // pw.pcmadrs[r.bx];
+        r.setAx((short) ((pw.pcmWk[r.getBx()] & 0xff) + (pw.pcmWk[r.getBx() + 1] & 0xff) * 0x100)); // pw.pcmadrs[r.bx];
         pw.pcmstop = r.getAx();
         pw.pcmrepeat1 = 0;
         pw.pcmrepeat2 = 0;
@@ -651,7 +644,6 @@ public class PCMDRV {
         return null;
     }
 
-    //486-602
     // 
     // PCM VOLUME SET
     // 
@@ -689,7 +681,7 @@ public class PCMDRV {
 //pcm_env_calc:
         r.al = r.dl;
         if (r.al != 0) { // 音量0? // break mv_out;
-            if (pw.partWk[r.di].envf == 0xff) { // -1 // break normal_mvset;
+            if (pw.partWk[r.di].envf == (byte) 0xff) { // -1 // break normal_mvset;
                 // 拡張版 音量 = al * (eenv_vol + 1) / 16
                 r.dl = pw.partWk[r.di].eenv_volume;
                 if (r.dl == 0) {
@@ -740,7 +732,7 @@ mv_min:
                     r.ah += r.ah;
                     r.ah += r.ah;
                     r.ah += r.ah;
-                    r.carry = r.al + r.ah > 0xff;
+                    r.carry = (r.al & 0xff) + (r.ah & 0xff) > 0xff;
                     r.al += r.ah;
                     if (r.carry) { // break mvset;
                         r.al = (byte) 255;
@@ -770,7 +762,7 @@ mv_min:
 //                    break mv_out;
                 } else {
 //mvlfo_minus:
-                    r.carry = r.getAx() + r.getDx() > 0xffff;
+                    r.carry = (r.getAx() & 0xffff) + (r.getDx() & 0xffff) > 0xffff;
                     r.addAx(r.getDx());
                     if (!r.carry) { // break mv_out;
                         r.al = 0;
@@ -787,12 +779,11 @@ mv_min:
         pmd.opnset46();
     }
 
-    //603-672
     // 
     // PCM KEYON
     // 
     private void keyonm() {
-        if (pw.partWk[r.di].onkai == 0xff) { //-1 // break keyonm_00;
+        if (pw.partWk[r.di].onkai == (byte) 0xff) { //-1 // break keyonm_00;
             return; // when a rest
         }
 //keyonm_00:
@@ -848,7 +839,6 @@ mv_min:
         pmd.opnset46();
     }
 
-    //673-714
     //
     // PCM KEYOFF
     //
@@ -894,13 +884,12 @@ mv_min:
     public void keyoffp() {
         if (pw.partWk[r.di].onkai != (byte) 0xff) {
             kofp1();
-            return;
         }
-        return; // when a rest
+        // when a rest
     }
 
     private void kofp1() {
-        if (pw.partWk[r.di].envf != 0xff) { // break kofp1_ext;
+        if (pw.partWk[r.di].envf != (byte) 0xff) { // break kofp1_ext;
             pw.partWk[r.di].envf = 2;
             return;
         }
@@ -909,7 +898,6 @@ mv_min:
         pw.partWk[r.di].eenv_count = 4;
     }
 
-    //715-767
     //
     // PCM OTODASI
     //
@@ -947,7 +935,7 @@ mv_min:
             }
         } else {
 //odm_minus:
-            r.carry = r.getBx() + r.getDx() > 0xffff;
+            r.carry = (r.getBx() & 0xffff) + (r.getDx() & 0xffff) > 0xffff;
             r.addBx(r.getDx());
             if (!r.carry) { // break odm_main;
                 r.setBx((short) 0);
@@ -968,7 +956,6 @@ mv_min:
         //popf
     }
 
-    //768-813
     //
     // PCM FNUM SET
     //

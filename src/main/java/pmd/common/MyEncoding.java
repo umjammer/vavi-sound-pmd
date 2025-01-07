@@ -1,4 +1,3 @@
-
 package pmd.common;
 
 import java.nio.charset.Charset;

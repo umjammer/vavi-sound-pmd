@@ -143,7 +143,7 @@ public class PCMLOAD {
     private void read_ppz8() {
         // 拡張子判別(PVI / PZI)
         String ext = Path.getExtension(pw.filename_ofs).toUpperCase().trim();
-        if (ext == null || ext.isEmpty()) pw.filename_ofs = Path.changeExtension(pw.filename_ofs, ".PZI");
+        if (ext.isEmpty()) pw.filename_ofs = Path.changeExtension(pw.filename_ofs, ".PZI");
         if (ext.equals(".PZI")) r.ch = 1;
         else if (ext.equals(".PVI")) r.ch = 0;
 
@@ -374,7 +374,7 @@ public class PCMLOAD {
             pcmData = GetPCMDataFromFile(fn); //MMLの指定で読み込んでみる
 
             if (pcmData == null || pcmData.length < 1) {
-                logger.log(Level.ERROR, String.format("PPSファイル[%d]の読み込みに失敗しました。", pw.filename_ofs));
+                logger.log(Level.ERROR, "PPSファイル[%s]の読み込みに失敗しました。".formatted(pw.filename_ofs));
                 pw.usePPSDRV = false;
                 pw.ppsdrv_flag = 0;
             }
@@ -384,8 +384,6 @@ public class PCMLOAD {
         }
     }
 
-
-    //389-583
     //
     // .PPC/.P86 一括load
     //  in cs:[filename_ofs/seg] Filename
@@ -534,7 +532,7 @@ public class PCMLOAD {
         }
 
         r.setBx((short) 30); // pw.pcmwork_ofs; // cs:[pcmwork_ofs]
-        r.setAx((short) (pcmData[r.getBx()] + pcmData[r.getBx() + 1] * 0x100)); // ds:[bx] ;AX=PCM Next Start Address
+        r.setAx((short) ((pcmData[r.getBx()] & 0xff) + (pcmData[r.getBx() + 1] & 0xff) * 0x100)); // ds:[bx] ;AX=PCM Next Start Address
         r.subAx((short) 0x26); // 実際にこれから転送するデータ量に変換
 
         pw.pcmload_pcmstart = 0x26;
@@ -614,8 +612,8 @@ public class PCMLOAD {
 
         short max = 0;
         for (int i = 0; i < 128; i++) {
-            short st = (short) ((pcmData[i * 4 + 0x10] + pcmData[i * 4 + 0x11] * 0x100) + 0x26);
-            short ed = (short) ((pcmData[i * 4 + 0x12] + pcmData[i * 4 + 0x13] * 0x100) + 0x26);
+            short st = (short) (((pcmData[i * 4 + 0x10] & 0xff) + (pcmData[i * 4 + 0x11] & 0xff) * 0x100) + 0x26);
+            short ed = (short) (((pcmData[i * 4 + 0x12] & 0xff) + (pcmData[i * 4 + 0x13] & 0xff) * 0x100) + 0x26);
             if (max < st) max = st;
             if (max < ed) max = ed;
             o.add((byte) st);
@@ -1001,7 +999,7 @@ middle_store:
         r.setDx(pw.mmask_port);
         r.al = pc98.InPort(r.getDx());
         pw.mmask_push = r.al;
-        r.al |= 0b1110_1111; // RSのみ変化させない
+        r.al |= (byte) 0b1110_1111; // RSのみ変化させない
         pc98.OutPort(r.getDx(), r.al);
         //sti
         r.setDx(r.stack.pop());
@@ -1021,7 +1019,6 @@ middle_store:
         //sti
         r.setDx(r.stack.pop());
         r.setAx(r.stack.pop());
-        return;
     }
 
     //
@@ -1092,7 +1089,7 @@ middle_store:
             pw.pcm_access = 1;
             pw.pcmflag = 0; // 追加(効果音対策)
             pw.pcm_effec_num = (byte) 255;
-            pw.partWk[r.di].partmask &= 0xfd; // bit1をclear
+            pw.partWk[r.di].partmask &= (byte) 0xfd; // bit1をclear
             r.carry = true; // cf=1
         }
 //kcr_exit:

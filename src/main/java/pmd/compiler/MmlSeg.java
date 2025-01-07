@@ -9,9 +9,9 @@ import musicDriverInterface.LinePos;
 
 public class MmlSeg {
 
-    //==============================================================================
+    /**
     //	Work Area
-    //==============================================================================
+     */
     public String warning_mes = "Warning ";
     public String not_ff_mes = ": 音色ファイル名が指定されていません．";
     public String ff_readerr_mes = ": 音色ファイルが読み込めません．";
