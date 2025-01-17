@@ -1,70 +1,101 @@
-# PMDDotNET  
-  PMDの.NET版です。  
-  
-[概要]  
-  PMDを.NET版に移植したものです。  
-  
-[機能、特徴]  
- PMDのコンパイラ、ドライバの機能が使用できます。  
-  
-[必要な環境]  
- ・Windows7以降のOSがインストールされたPC  
- ・テキストエディタ  
- ・気合と根性  
-  
-[ご使用の前に]  
- アーカイブに同梱されているremoveZoneIdent.batを実行し、ゾーン識別子を削除してください。  
- (ゾーン識別子とは意図せずにダウンロードしたプログラムを実行した際に、動作を抑制するためにファイルに追加される、  
- セキュリティに関する情報です。意図したダウンロードであっても付加されますので動作に支障がある場合があります。)  
-  
-[クイックスタート]  
-  コンパイル  
-    同梱のcompile.batにmmlファイルをドロップしてコンパイルを行います。  
-  演奏  
-    同梱のplay.batにmファイルをドロップして演奏を行います。  
-  オプションなどの指定は上記のbatファイルを編集して指定してください。  
-  (もちろんコマンドラインから直接指定したり環境変数を利用することもできます。)  
-  
-[著作権・免責]  
-PMDDotNETはGPLv3ライセンスとします。  
-著作権は作者が保有しています。  
-このソフトは無保証であり、このソフトを使用した事による  
-いかなる損害も作者は一切の責任を負いません。  
-  
-以下のソフトウェアのソースコードをC#向けに改変し使用しています。  
-又はコード/dllを使用させていただいております。  
-これらのソース/バイナリは各著作者が著作権を持ちます。  
-ライセンスに関しては、各ドキュメントを参照してください。  
-  
- ・PMD/MC               -> ?               -> コード参考、移植、改変  
- ・PMDwin               -> ?               -> コード参考 一部使用  
- ・PPZ8                 -> ?               -> コード参考  
- ・musicDriverInterface -> MIT             -> dll動的リンクで使用  
-  
-  
-[SpecialThanks]  
- 本ツールは以下の方々にお世話になっております。また以下のソフトウェア、ウェブページを参考、使用しています。  
- 特にKAJAさん、C60さん、sio29(Ukky)さんの作成されたアプリケーションのソースがなければPMDDotNETは存在しませんでした。  
- ソースコードの参照、使用のお願いに快諾を頂いたこと、また作成中にデバッグやアドバイスまで頂いたこと、  
- 本当に感謝しております。ありがとうございます。これからもよろしくお願いしますw  
- また、音量バランスはそんそんさんに監修いただいております。こちらもありがとうございます。  
- ・KAJA さん  
- ・TAN-Y さん  
- ・UME-3 さん  
- ・C60 さん  
- ・sio29(Ukky) さん  
- ・mucom さん  
- ・ぼうきち さん  
- ・M.S さん  
- ・くろま さん  
- ・そんそん さん  
+[![Release](https://jitpack.io/v/umjammer/vavi-sound-pmd.svg)](https://jitpack.io/#umjammer/vavi-sound-pmd)
+[![Java CI](https://github.com/umjammer/vavi-sound-pmd/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/vavi-sound-pmd/actions/workflows/maven.yml)
+[![CodeQL](https://github.com/umjammer/vavi-sound-pmd/actions/workflows/codeql.yml/badge.svg)](https://github.com/umjammer/vavi-sound-pmd/actions/workflows/codeql.yml)
+![Java](https://img.shields.io/badge/Java-17-b07219)
 
- ・PMD / MC  
- ・FMPMD  
- ・PMDwin  
- ・PPZ8  
- ・Visual Studio Community 2019  
- ・さくらエディター  
- ・NAUDIO  
- ・沢山の素晴らしい音楽データ並びにそのプログラマの方々  
+# vavi-sound-pmd
 
+Java version of PMD.
+
+this is a fork of [PMDDotNET](https://github.com/kuma4649/PMDDotNET)
+
+## Install
+
+ * [maven](https://jitpack.io/#umjammer/vavi-sound-pmd)
+
+## Usage
+
+## References
+
+* https://github.com/gzaffin/pmdmini
+
+## TODO
+
+
+---
+
+# [Original](https://github.com/kuma4649/PMDDotNET)
+
+## Overview
+
+.NET version of PMD.
+
+## Functions, Features
+
+PMD compiler and driver functions can be used.
+
+## Required environment
+
+- PC with Windows 7 or later OS installed
+- Text editor
+- Motivation and guts
+
+## Before use
+
+Run removeZoneIdent.bat included in the archive to remove the zone identifier.
+(A zone identifier is security information that is added to a file to prevent it from working when you run a program that you have downloaded unintentionally. It is added even if you download it intentionally, so it may cause problems.)
+
+## Quick start
+
+### Compile
+
+Drop an mml file into the included compile.bat to compile.
+
+### Play
+
+Drop an m file into the included play.bat to play.
+Edit the above bat file to specify options, etc. (Of course, you can also specify it directly from the command line or use an environment variable.)
+
+## Copyright / Disclaimer
+
+PMDDotNET is licensed under GPLv3.
+The copyright is held by the author.
+This software is not guaranteed, and the author is not responsible for any damages caused by the use of this software.
+
+The source code of the following software has been modified for C# and used.
+Or code/dll is used.
+These sources/binaries are copyrighted by their respective authors.
+For the license, please refer to each document.
+
+- PMD/MC -> ? -> Code reference, porting, modification
+- PMDwin -> ? -> Code reference, partially used
+- PPZ8 -> ? -> Code reference
+- musicDriverInterface -> MIT -> Used with dll dynamic linking
+
+## Special Thanks
+
+This tool is indebted to the following people. The following software and web pages have also been referenced and used.
+PMDDotNET would not have existed without the application sources created by KAJA, C60, and sio29 (Ukky).
+We are especially grateful to them for allowing us to reference and use their source code, and for the debugging and advice they gave us during the creation process.
+Thank you so much. We look forward to working with you in the future lol.
+Additionally, the volume balance was overseen by Sonson. Thank you for that as well.
+
+- KAJA
+- TAN-Y
+- UME-3
+- C60
+- sio29(Ukky)
+- mucom
+- boukichi
+- M.S
+- kurouma
+- sonson
+
+- PMD / MC
+- FMPMD
+- PMDwin
+- PPZ8
+- Visual Studio Community 2019
+- Sakura Editor
+- NAUDIO
+- Lots of great music data and its programmers
