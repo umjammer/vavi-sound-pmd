@@ -624,7 +624,7 @@ public class PCMDRV86 {
         ChipDatum cd = new ChipDatum(-1, -1, -1);
         MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
         cd.additionalData = md;
-        pmd.WriteDummy(cd);
+        pmd.writeDummy(cd);
 
         return null;
     }
@@ -1202,12 +1202,12 @@ public class PCMDRV86 {
         //------------------------------------------------------------------------------
         r.setDx((short) 0xa468);
         r.al = pc98.InPort(r.getDx());
-        pc98.OutPort((short) 0x5f, r.al);
+        pc98.outPort((short) 0x5f, r.al);
         r.al &= (byte) 0xef;
-        pc98.OutPort(r.getDx(), r.al); // FIFO割り込みフラグ消去
-        pc98.OutPort((short) 0x5f, r.al);
+        pc98.outPort(r.getDx(), r.al); // FIFO割り込みフラグ消去
+        pc98.outPort((short) 0x5f, r.al);
         r.al |= 0x10;
-        pc98.OutPort(r.getDx(), r.al); // FIFO割り込みフラグ消去解除
+        pc98.outPort(r.getDx(), r.al); // FIFO割り込みフラグ消去解除
     }
 
     /**
@@ -1278,8 +1278,8 @@ public class PCMDRV86 {
 //double_trans_loop:
         do {
             //	mov al,[si]
-            pc98.OutPort(r.getDx(), r.al); // 左
-            pc98.OutPort(r.getDx(), r.al); // 右
+            pc98.outPort(r.getDx(), r.al); // 左
+            pc98.outPort(r.getDx(), r.al); // 右
             add_address();
             if (r.carry) {
                 trans_fin();
@@ -1304,9 +1304,9 @@ public class PCMDRV86 {
 //double_trans_g_loop:
         do {
             //	mov al,[si]
-            pc98.OutPort(r.getDx(), r.al); // 左
+            pc98.outPort(r.getDx(), r.al); // 左
             r.al = (byte) -r.al;
-            pc98.OutPort(r.getDx(), r.al); // 右
+            pc98.outPort(r.getDx(), r.al); // 右
             add_address();
             if (r.carry) {
                 trans_fin();
@@ -1325,12 +1325,12 @@ public class PCMDRV86 {
 //left_trans_loop:
         do {
             //	mov al,[si]
-            pc98.OutPort(r.getDx(), r.al); // 左
+            pc98.outPort(r.getDx(), r.al); // 左
             r.stack.push(r.getAx());
             r.setAx((short) (r.getAx() * pw.pcm86_pan_dat));
             r.addAx(r.getAx());
             r.al = r.ah;
-            pc98.OutPort(r.getDx(), r.al); // 右
+            pc98.outPort(r.getDx(), r.al); // 右
             r.setAx(r.stack.pop());
             add_address();
             if (r.carry) {
@@ -1350,13 +1350,13 @@ public class PCMDRV86 {
 //left_trans_g_loop:
         do {
             //	mov al,[si]
-            pc98.OutPort(r.getDx(), r.al); // 左
+            pc98.outPort(r.getDx(), r.al); // 左
             r.al = (byte) -r.al;
             r.stack.push(r.getAx());
             r.setAx((short) (r.getAx() * pw.pcm86_pan_dat));
             r.addAx(r.getAx());
             r.al = r.ah;
-            pc98.OutPort(r.getDx(), r.al); // 右
+            pc98.outPort(r.getDx(), r.al); // 右
             r.setAx(r.stack.pop());
             add_address();
             if (r.carry) {
@@ -1380,9 +1380,9 @@ public class PCMDRV86 {
             r.setAx((short) (r.getAx() * pw.pcm86_pan_dat));
             r.addAx(r.getAx());
             r.al = r.ah;
-            pc98.OutPort(r.getDx(), r.al); // 左
+            pc98.outPort(r.getDx(), r.al); // 左
             r.setAx(r.stack.pop());
-            pc98.OutPort(r.getDx(), r.al); // 右
+            pc98.outPort(r.getDx(), r.al); // 右
             add_address();
             if (r.carry) {
                 trans_fin();
@@ -1405,10 +1405,10 @@ public class PCMDRV86 {
             r.setAx((short) (r.getAx() * pw.pcm86_pan_dat));
             r.addAx(r.getAx());
             r.al = r.ah;
-            pc98.OutPort(r.getDx(), r.al); // 左
+            pc98.outPort(r.getDx(), r.al); // 左
             r.setAx(r.stack.pop());
             r.al = (byte) -r.al; // 逆相
-            pc98.OutPort(r.getDx(), r.al); // 右
+            pc98.outPort(r.getDx(), r.al); // 右
             add_address();
             if (r.carry) {
                 trans_fin();
@@ -1525,8 +1525,8 @@ public class PCMDRV86 {
             r.al = 0;
 //tfin_loop:
             do {
-                pc98.OutPort(r.getDx(), r.al); // 左
-                pc98.OutPort(r.getDx(), r.al); // 右
+                pc98.outPort(r.getDx(), r.al); // 左
+                pc98.outPort(r.getDx(), r.al); // 右
                 r.decCx();
             } while (r.getCx() != 0);
         }
@@ -1542,8 +1542,8 @@ public class PCMDRV86 {
         r.al = 0;
 //ztr_loop:
         do {
-            pc98.OutPort(r.getDx(), r.al); // 左
-            pc98.OutPort(r.getDx(), r.al); // 右
+            pc98.outPort(r.getDx(), r.al); // 左
+            pc98.outPort(r.getDx(), r.al); // 右
             r.decCx();
         } while (r.getCx() != 0);
         pw.trans_flag = 0; // もう転送しないでいいよ

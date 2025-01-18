@@ -1504,7 +1504,8 @@ public class PW {
     //EFFECT.INC
     public final List<Tuple<Integer, MmlDatum[]>> efftbl;
 
-    //#region 効果音データ
+//#region 効果音データ
+
     private static final int[] D_000 = { // Bass Drum                1990-06-22 05:47:11
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
             1, 220, 5, 31, 54, 15, 0, 0, 0, 127, 0

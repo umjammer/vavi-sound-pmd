@@ -45,7 +45,7 @@ public class Pc98 {
         throw new UnsupportedOperationException(Integer.toHexString(v));
     }
 
-    public void OutPort(short dx, byte al) {
+    public void outPort(short dx, byte al) {
         if (dx == 0x02) {
 
         } else if (dx == 0x188) {

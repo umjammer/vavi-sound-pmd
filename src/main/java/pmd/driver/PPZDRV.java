@@ -640,7 +640,7 @@ pmpz_ret: // ↑
         //IDE向け
         ChipDatum cd = new ChipDatum(-1, -1, -1);
         cd.additionalData = new MmlDatum(-1, MMLType.Pan, pw.cmd.linePos, r.al & 0xff);
-        pmd.WriteDummy(cd);
+        pmd.writeDummy(cd);
 
         pw.partWk[r.di].fmpan = r.al;
         r.setDx((short) 0);
@@ -714,7 +714,7 @@ pmpz_ret: // ↑
         //IDE向け
         cd = new ChipDatum(-1, -1, -1);
         cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos, 0xff, pw.partWk[r.di].voicenum & 0xff);
-        pmd.WriteDummy(cd);
+        pmd.writeDummy(cd);
 
 //ppz_neiro_reset:
         //    push es

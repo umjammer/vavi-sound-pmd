@@ -174,7 +174,7 @@ public class MmlSeg {
 
 		public int pcm_vol_ext = 0; // b
 
-		//ＰＳＧ音色のパターン
+		//PSG音色のパターン
 		public int[][] psgenvdat = {
 			{  0, 0,0,0 } // @0 ヒョウジュン
 			,{ 2,255,0,1 } // @1 Synth 1

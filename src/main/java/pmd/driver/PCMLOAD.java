@@ -945,7 +945,7 @@ middle_store:
             r.al = pc98.InPort(r.getDx());
         } while ((r.al & 0x80) == 0); // break o4600x;
         r.al = 8; // PCMDAT reg.
-        pc98.OutPort(r.getDx(), r.al);
+        pc98.outPort(r.getDx(), r.al);
         r.stack.push(r.getCx());
         r.setCx(pw.pcmload_wait_clock);
         //do {
@@ -959,7 +959,7 @@ middle_store:
 //fast_store_loop:
         do {
             r.al = pw.pcmDt[r.incSi()];
-            pc98.OutPort(r.getDx(), r.al); // OUT data
+            pc98.outPort(r.getDx(), r.al); // OUT data
             b = r.getBx();
             r.setBx(r.getDx());
             r.setDx(b);
@@ -1000,7 +1000,7 @@ middle_store:
         r.al = pc98.InPort(r.getDx());
         pw.mmask_push = r.al;
         r.al |= (byte) 0b1110_1111; // RSのみ変化させない
-        pc98.OutPort(r.getDx(), r.al);
+        pc98.outPort(r.getDx(), r.al);
         //sti
         r.setDx(r.stack.pop());
         r.setAx(r.stack.pop());
@@ -1015,7 +1015,7 @@ middle_store:
         //cli
         r.setDx(pw.mmask_port);
         r.al = pw.mmask_push;
-        pc98.OutPort(r.getDx(), r.al);
+        pc98.outPort(r.getDx(), r.al);
         //sti
         r.setDx(r.stack.pop());
         r.setAx(r.stack.pop());
@@ -1039,7 +1039,7 @@ middle_store:
         } while ((r.al & 0x80) == 0); // break o4600;
         r.al = r.bh;
         //cli
-        pc98.OutPort(r.getDx(), r.al);
+        pc98.outPort(r.getDx(), r.al);
         r.stack.push(r.getCx());
         //r.cx = (short)pw.pcmload_wait_clock;
         //do {
@@ -1048,7 +1048,7 @@ middle_store:
         r.setCx(r.stack.pop());
         r.setDx(pw.port47);
         r.al = r.bl;
-        pc98.OutPort(r.getDx(), r.al);
+        pc98.outPort(r.getDx(), r.al);
         //sti
         r.setBx(r.stack.pop());
         r.setDx(r.stack.pop());

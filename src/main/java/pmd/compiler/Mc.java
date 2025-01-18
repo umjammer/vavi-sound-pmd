@@ -8746,7 +8746,7 @@ hscom3_chk: // ↑
         // Error番号の表示
         //  
         mes.append(ErrSeg.errmes_1);
-        mes.append(String.valueOf(dl));
+        mes.append(dl);
 
         //  
         // Partの表示
@@ -8758,10 +8758,10 @@ hscom3_chk: // ↑
         //  
         if (dh != 0) {
             mes.append(ErrSeg.errmes_3);
-            mes.append(String.valueOf((char) dh));
+            mes.append((char) dh);
         }
 
-        if (mes != null && (mes.length() > 0)) print_mes(mes.toString());
+        if (mes != null && (!mes.isEmpty())) print_mes(mes.toString());
 
         //  
         // Error Messageの表示

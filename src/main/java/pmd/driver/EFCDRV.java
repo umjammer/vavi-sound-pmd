@@ -104,7 +104,7 @@ public class EFCDRV {
                     pmd.WriteOPNARegister.accept(cd);
                     if (pw.cmd != null && pw.cmd.args != null && pw.cmd.args.size() > 2 && pw.cmd.args.get(2) instanceof MmlDatum[]) {
                         for (MmlDatum md : (MmlDatum[]) pw.cmd.args.get(2)) {
-                            pmd.ExecIDESpecialCommand(md);
+                            pmd.execIDESpecialCommand(md);
                         }
                     }
 
@@ -140,7 +140,7 @@ public class EFCDRV {
         pmd.WriteOPNARegister.accept(cd);
         if (pw.cmd != null && pw.cmd.args != null && pw.cmd.args.size() > 2 && pw.cmd.args.get(2) instanceof MmlDatum[]) {
             for (MmlDatum md : (MmlDatum[]) pw.cmd.args.get(2)) {
-                pmd.ExecIDESpecialCommand(md);
+                pmd.execIDESpecialCommand(md);
             }
         }
 

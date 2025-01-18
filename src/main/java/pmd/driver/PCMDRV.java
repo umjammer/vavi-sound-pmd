@@ -538,7 +538,7 @@ public class PCMDRV {
         ChipDatum cd = new ChipDatum(-1, -1, -1);
         MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
         cd.additionalData = md;
-        pmd.WriteDummy(cd);
+        pmd.writeDummy(cd);
 
         return null;
     }
@@ -623,7 +623,7 @@ public class PCMDRV {
                 , 0xff
                 , (int) pw.partWk[r.di].voicenum
         );
-        pmd.WriteDummy(cd);
+        pmd.writeDummy(cd);
 
         r.ah = 0;
         r.addAx(r.getAx());

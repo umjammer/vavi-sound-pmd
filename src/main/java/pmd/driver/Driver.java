@@ -135,7 +135,7 @@ public class Driver implements IDriver {
             if (adr[0] != 0) str += "\r\n" + getNRDString(/* ref */ adr);
             al++;
         } while (adr[0] != 0);
-        str = !str.equals("") ? str.substring(2) : "";
+        str = !str.isEmpty() ? str.substring(2) : "";
         if (str != null && !str.isEmpty()) {
             tags.add(new Tuple< >("memo", str));
         }
