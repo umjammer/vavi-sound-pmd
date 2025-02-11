@@ -99,7 +99,7 @@ public class Driver implements IDriver {
     }
 
     /**
-     * ドライバ固有のタグを取得
+     * Get driver specific tag
      */
     @Override
     public List<Tuple<String, String>> getTags() {
@@ -179,29 +179,29 @@ getmemo_errret:
                 r.al = (byte) al;
                 r.setSi((short) pw.mmlbuf);
                 if (pw.md[r.getSi()].dat != 0x1a)
-                    break getmemo_errret; // 音色がないfile=メモのアドレス取得不能
+                    break getmemo_errret; // File with no tone = Unable to obtain memo address
                 r.setSi((short) (r.getSi() + 0x18));
                 r.setSi((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
                 r.setSi((short) (r.getSi() + pw.mmlbuf));
                 r.setSi((short) (r.getSi() - 4));
                 r.setBx((short) (pw.md[r.getSi() + 2].dat + pw.md[r.getSi() + 3].dat * 0x100)); // bh=0feh,bl=ver
-                if (r.bl != 0x40) { //Ver4.0 & 00Hの場合
+                if (r.bl != 0x40) { //Ver4.0 & In the case of 00H
 //                    break getmemo_exec;
                     if (r.bh != (byte) 0xfe)
-                        break getmemo_errret; // Ver.4.1以降は 0feh
+                        break getmemo_errret; // 0feh for version 4.1 and later
                     if (r.bl < 0x41)
-                        break getmemo_errret; // MC version 4.1以前だったらError
+                        break getmemo_errret; // If MC version is 4.1 or earlier, Error
                 }
 //getmemo_exec:
 
-                if (r.bl >= 0x42) // Ver.4.2以降か？
+                if (r.bl >= 0x42) // Is it version 4.2 or later?
 //                    break getmemo_oldver41;
-                    r.al++; // ならalを +1 (0FFHで#PPSFile)
+                    r.al++; // Then add +1 to al (0FFH #PPSFile)
 //getmemo_oldver41:
 
-                if (r.bl >= 0x48) // Ver.4.8以降か？
+                if (r.bl >= 0x48) // Is it version 4.8 or later?
 //                    break getmemo_oldver47;
-                    r.al++; // ならalを +1 (0FEHで#PPZFile)
+                    r.al++; // Then add +1 to al (0FEH for #PPZFile)
 //getmemo_oldver47:
                 r.setSi((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
                 r.setSi((short) (r.getSi() + pw.mmlbuf));
@@ -217,7 +217,7 @@ getmemo_errret:
 //                    break getmemo_loop;
 //getmemo_exit:
                 r.setDx((short) (r.getDx() + pw.mmlbuf));
-                pw.ds_push = 0; // r.cs; セグメントなし
+                pw.ds_push = 0; // r.cs; No Segments
                 pw.dx_push = r.getDx();
                 return r.getDx();
             }
@@ -225,7 +225,7 @@ getmemo_errret:
             pw.dx_push = 0;
             return 0;
         } catch (Exception e) {
-            logger.log(Level.WARNING, "メモのアドレスが範囲外を指していることを検出しました。無視します。");
+            logger.log(Level.WARNING, "Detected that the memo address is out of range. Ignored.");
             pw.ds_push = 0;
             pw.dx_push = 0;
             return 0;
@@ -252,7 +252,7 @@ getmemo_errret:
     }
 
     /**
-     * GD3タグを取得(一般的な曲情報)
+     * Get GD3 tag (general song information)
      */
     @Override
     public GD3Tag getGD3TagInfo(byte[] srcBuf) {
@@ -474,14 +474,14 @@ getmemo_errret:
 
     @Override
     public void startMusic(int musicNumber) {
-        logger.log(Level.DEBUG, "演奏開始");
+        logger.log(Level.DEBUG, "Start playing");
         pmd.int60_main((short) 0);
         work.setStatus(1);
     }
 
     @Override
     public void stopMusic() {
-        logger.log(Level.DEBUG, "演奏停止");
+        logger.log(Level.DEBUG, "Stop playing");
         pmd.int60_main((short) 0x0100);
         work.setStatus(0);
     }
@@ -490,7 +490,7 @@ getmemo_errret:
         pmd.int60_main((short) 5);
         int syosetu = (pmd.pw.al_push & 0xffff) + (pmd.pw.ah_push & 0xffff) * 0x100;
 
-        logger.log(Level.TRACE, String.format("小節:%d", syosetu));
+        logger.log(Level.TRACE, String.format("Measure: %d", syosetu));
     }
 
     @Override

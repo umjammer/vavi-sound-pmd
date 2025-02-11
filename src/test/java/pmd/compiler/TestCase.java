@@ -11,6 +11,7 @@ import dotnet4j.io.FileShare;
 import dotnet4j.io.FileStream;
 import dotnet4j.io.MemoryStream;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import pmd.compilerTestService.PMDCompileTestService;
 import vavi.util.Debug;
@@ -48,12 +49,14 @@ Debug.println(compiler.getMemo_writeAddress());
     }
 
     @Test
-    void 複数のMMLコンパイルテスト_Vあり() throws Exception {
+    @DisplayName("Multiple MML compile tests_V available")
+    void test2() throws Exception {
         testMain(new String[] {"/v"});
     }
 
     @Test
-    void 複数のMMLコンパイルテスト_Vなし() throws Exception {
+    @DisplayName("Multiple MML compile test_V None")
+    void test3() throws Exception {
         testMain(null);
     }
 

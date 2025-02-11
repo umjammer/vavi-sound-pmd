@@ -11,7 +11,7 @@ import static java.lang.System.getLogger;
 
 
 //
-// ppz8l.cpp / ppz8l.h(by C60さん) を参考に作成
+// ppz8l.cpp / ppz8l.h Created with reference to (by C60)
 //
 public class _PPZ8em {
 
@@ -42,7 +42,7 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x00 初期化
+     * 0x00 Initialization
      */
     public void Initialize() {
         bank = 0;
@@ -79,10 +79,10 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x01 PCM発音
+     * 0x01 PCM Pronunciation
      *
-     * @param al PCMチャンネル(0-7)
-     * @param dx PCMの音色番号
+     * @param al PCM Channel (0-7)
+     * @param dx PCM tone number
      */
     public void PlayPCM(byte al, short dx) {
 //#if DEBUG
@@ -137,7 +137,7 @@ public class _PPZ8em {
                 chWk[al].loopEndOffset = -1;
             }
 
-            //不要っぽい?
+            // Seems unnecessary?
             //chWk[al].srcFrequency = (short)(chWk[al].ptr
             //    + pcmData[bank][num * 0x12 + 16 + 32]
             //    + pcmData[bank][num * 0x12 + 17 + 32] * 0x100
@@ -152,9 +152,9 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x02 PCM停止
+     * 0x02 PCM stopped
      *
-     * @param al PCMチャンネル(0-7)
+     * @param al PCM Channel (0-7)
      */
     public void StopPCM(byte al) {
         logger.log(Level.TRACE, String.format("ppz8em: StopPCM: ch:%d", al));
@@ -163,11 +163,11 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x03 PVIファイルの読み込み＆PCMへの変換
+     * 0x03 Load PVI file and convert to PCM
      *
-     * @param bank 0:PCMバッファ0  1:PCMバッファ1
+     * @param bank 0: PCM buffer 0 1: PCM buffer 1
      * @param mode 0:.PVI (ADPCM)  1:.PZI(PCM)
-     * @param pcmData ファイル内容
+     * @param pcmData File Contents
      * <returns></returns>
      */
     public int LoadPcm(byte bank, byte mode, byte[] pcmData) {
@@ -178,9 +178,9 @@ public class _PPZ8em {
         int ret;
         this.pcmData[bank] = null;
 
-        if (mode == 0) //PVI形式
+        if (mode == 0) // PVI Format
             ret = CheckPVI(pcmData);
-        else //PZI形式
+        else // PZI format
             ret = CheckPZI(pcmData);
 
         if (ret == 0) {
@@ -196,20 +196,20 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x04 ステータスの読み込み
+     * 0x04 Loading status
      *
      * @param al 
      */
     public void ReadStatus(byte al) {
         switch (al) {
             case 0xd:
-                logger.log(Level.TRACE, "ppz8em: ReadStatus: PCM0のテーブルアドレス");
+                logger.log(Level.TRACE, "ppz8em: ReadStatus: PCM0 table address");
 
                 bank = 0;
                 ptr = 0;
                 break;
             case 0xe:
-                logger.log(Level.TRACE, "ppz8em: ReadStatus: PCM1のテーブルアドレス");
+                logger.log(Level.TRACE, "ppz8em: ReadStatus: PCM1 table address");
 
                 bank = 1;
                 ptr = 0;
@@ -218,10 +218,10 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x07 ボリュームの変更
+     * 0x07 Volume Changes
      *
-     * @param al PCMチャネル(0~7)
-     * @param dx ボリューム(0-15 / 0-255)
+     * @param al PCM Channel (0-7)
+     * @param dx Volume (0-15 / 0-255)
      */
     public void SetVolume(byte al, short dx) {
         logger.log(Level.TRACE, "ppz8em: SetVolume: Ch:%d vol:%d".formatted(al, dx));
@@ -230,11 +230,11 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x0B PCMの音程周波数の指定
+     * 0x0B Specifying the PCM pitch frequency
      *
-     * @param al PCMチャネル(0~7)
-     * @param dx PCMの音程周波数DX
-     * @param cx PCMの音程周波数CX
+     * @param al PCM Channel (0-7)
+     * @param dx PCM Pitch Frequency DX
+     * @param cx PCM pitch frequency CX
      */
     public void SetFrequency(byte al, short dx, short cx) {
         logger.log(Level.TRACE, "ppz8em: SetFrequency: 0x%08x".formatted(dx * 0x1_0000 + cx));
@@ -243,13 +243,13 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x0e ループポインタの設定
+     * 0x0e Setting the Loop Pointer
      *
-     * @param al PCMチャネル(0~7)
-     * @param lpStOfsDX ループ開始オフセットDX
-     * @param lpStOfsCX ループ開始オフセットCX
-     * @param lpEdOfsDI ループ終了オフセットDI
-     * @param lpEdOfsSI ループ終了オフセットSI
+     * @param al PCM Channel (0-7)
+     * @param lpStOfsDX Loop Start Offset DX
+     * @param lpStOfsCX Loop Start Offset CX
+     * @param lpEdOfsDI Loop End Offset DI
+     * @param lpEdOfsSI Loop End Offset SI
      */
     public void SetLoopPoint(byte al, short lpStOfsDX, short lpStOfsCX, short lpEdOfsDI, short lpEdOfsSI) {
         logger.log(Level.TRACE, "ppz8em: SetLoopPoint: St:0x%08x Ed:0x%08x".formatted(
@@ -266,7 +266,7 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x12 PCMの割り込みを停止
+     * 0x12 Stop PCM interrupts
      */
     public void StopInterrupt() {
         logger.log(Level.TRACE, "ppz8em: StopInterrupt");
@@ -275,9 +275,9 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x13 PAN指定
+     * 0x13 PAN designation
      *
-     * @param al PCMチャネル(0~7)
+     * @param al PCM Channel (0-7)
      * @param dx PAN(0~9)
      */
     public void SetPan(byte al, short dx) {
@@ -289,10 +289,10 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x15 元データ周波数設定
+     * 0x15 Original data frequency setting
      *
-     * @param al PCMチャネル(0~7)
-     * @param dx 元周波数
+     * @param al PCM Channel (0-7)
+     * @param dx Original Frequency
      */
     public void SetSrcFrequency(byte al, short dx) {
         logger.log(Level.TRACE, "ppz8em: SetSrcFrequency: %d".formatted(dx));
@@ -301,7 +301,7 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x16 全体ボリューム
+     * 0x16 Overall Volume
      */
     public void SetAllVolume(int vol) {
         logger.log(Level.TRACE, "ppz8em: SetAllVolume: %d".formatted(vol));
@@ -312,9 +312,9 @@ public class _PPZ8em {
         }
     }
 
-    //-----------------------------------------------------------------------------
-    //	音量調整用
-    //-----------------------------------------------------------------------------
+    //
+    // For volume adjustment
+    //
     public void SetVolume(int vol) {
         if (vol != volume) {
             MakeVolumeTable(vol);
@@ -322,9 +322,9 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x18  チャネル7のADPCMのエミュレート設定
+     * 0x18 Channel 7 ADPCM emulation setting
      *
-     * @param al 0:チャネル7でADPCMのエミュレートしない  1:する
+     * @param al 0: Do not emulate ADPCM on channel 7. 1: Emulate.
      */
     public void SetAdpcmEmu(byte al) {
         logger.log(Level.TRACE, "ppz8em: SetAdpcmEmu: %d".formatted(al));
@@ -333,12 +333,12 @@ public class _PPZ8em {
     }
 
     /**
-     * 0x19 常駐解除許可、禁止設定
+     * 0x19 Resident disable permission/prohibition setting
      *
-     * @param v 0:常駐解除許可 1:常駐解除禁止
+     * @param v 0: Permitted to cancel resident mode 1: Prohibited to cancel resident mode
      */
     public void SetReleaseFlag(int v) {
-        // なにもしない
+        // Do nothing
     }
 
     private int CheckPZI(byte[] pcmData) {
@@ -405,7 +405,7 @@ public class _PPZ8em {
 
         List<Byte> o = new ArrayList<>();
 
-        //ヘッダの生成
+        // Generating the Header
         o.add((byte) 'P');
         o.add((byte) 'Z');
         o.add((byte) 'I');
@@ -415,7 +415,7 @@ public class _PPZ8em {
         o.add(instCount);
         for (int i = 0xc; i < 0x20; i++) o.add((byte) 0);
 
-        //音色テーブルのコンバート
+        // Tone table conversion
         long size2 = 0;
         for (int i = 0; i < instCount; i++) {
             int startaddress = ((pcmData[bank][i * 4 + 0x10] & 0xff) + (pcmData[bank][i * 4 + 0x11] & 0xff) * 0x100) << (5 + 1);
@@ -467,11 +467,11 @@ public class _PPZ8em {
             o.add((byte) (rate >> 8)); // rate
         }
 
-        // ADPCM > PCM に変換
+        // Convert ADPCM to PCM
         int psrcPtr = 0x10 + 4 * 128;
         for (int i = 0; i < instCount; i++) {
-            int X_N = 0x80; // Xn (ADPCM>PCM 変換用)
-            int DELTA_N = 127; // DELTA_N(ADPCM>PCM 変換用)
+            int X_N = 0x80; // Xn (For ADPCM>PCM conversion)
+            int DELTA_N = 127; // DELTA_N(For ADPCM>PCM conversion)
 
             int size = (((pcmData[bank][i * 4 + 0x12] & 0xff) + (pcmData[bank][i * 4 + 0x13] & 0xff) * 0x100)
                     - ((pcmData[bank][i * 4 + 0x10] & 0xff) + (pcmData[bank][i * 4 + 0x11] & 0xff) * 0x100) + 1)

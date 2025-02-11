@@ -106,7 +106,7 @@ public class JavaCompiler extends DosCompiler {
                 var tags = compiler.getTags(srcText, fnAppendFileReaderCallback);
                 if (tags != null) {
                     for (var item : tags) {
-                        // mcは3文字まで判定している為
+                        // Because mc is judged up to three characters
                         if (item.getItem1().toUpperCase().indexOf("#FI") == 0) {
                             if (item.getItem2().charAt(0) == '.') {
                                 return mmlFilePath.substring(0, mmlFilePath.indexOf('.')) + item.getItem2();

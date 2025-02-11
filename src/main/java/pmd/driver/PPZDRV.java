@@ -40,10 +40,10 @@ public class PPZDRV {
     }
 
     /**
-    //	PCM音源 演奏 メイン[PPZ8]
+     * PCM sound source performance main [PPZ8]
      */
     public void ppz8_call() {
-        //出来るだけppz8emを直接コールしてください
+        // Please call ppz8em directly if possible.
         throw new UnsupportedOperationException();
     }
 
@@ -70,15 +70,15 @@ public class PPZDRV {
     }
 
     private Supplier<Object> ppzmain_c_1() {
-        // 音長 - 1
+        // Duration - 1
         pw.partWk[r.di].leng--;
         r.al = pw.partWk[r.di].leng;
 
         // KEYOFF CHECK
-        if ((pw.partWk[r.di].keyoff_flag & 3) == 0) { // break mp0z; // 既にkeyoffしたか？
-            if (r.al <= pw.partWk[r.di].qdat) { // break mp0z; // Q値 => 残りLength値時 keyoff
+        if ((pw.partWk[r.di].keyoff_flag & 3) == 0) { // break mp0z; // Have you already keyed off?
+            if (r.al <= pw.partWk[r.di].qdat) { // break mp0z; // Q value => keyoff when remaining Length value
                 pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
-                keyoffz(); // ALは壊さない
+                keyoffz(); // AL will not break
             }
         }
 //mp0z:
@@ -120,7 +120,7 @@ mp2z: // ↑
                 }
             } while (true);
 
-            // END OF MUSIC['L' ガ アッタトキハ ソコヘ モドル]
+            // END OF MUSIC[If there is an 'L', go back to it]
 //mp15z:
             pmd.FlashMacroList();
 
@@ -131,7 +131,7 @@ mp2z: // ↑
             r.setBx(pw.partWk[r.di].partloop);
             if (r.getBx() == 0) return this::mpexitz;
 
-            // 'L' ガ アッタトキ
+            // When there was an 'L'
             r.setSi(r.getBx());
             pw.partWk[r.di].loopcheck = 1;
             pw.partWk[r.di].loopCounter++;
@@ -177,7 +177,7 @@ mp2z: // ↑
         pw.tieflag = r.al;
         pw.volpush_flag = r.al;
         pw.partWk[r.di].keyoff_flag = r.al;
-        if (pw.md[r.getSi()].dat != 0xfb) // '&'が直後にあったらkeyoffしない
+        if (pw.md[r.getSi()].dat != 0xfb) // If there is an '&' immediately after, keyoff will not occur.
             return pmd::mnp_ret;
         pw.partWk[r.di].keyoff_flag = 2;
         return pmd::mnp_ret;
@@ -240,7 +240,7 @@ mp2z: // ↑
     }
 
     /**
-    //	PCM音源演奏メイン：パートマスクされている時
+     * PCM sound source playback: When parts are masked
      */
     private Supplier<Object> ppzmain_nonplay() {
         pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
@@ -271,8 +271,8 @@ mp2z: // ↑
 
             pmd.FlashMacroList();
 
-            //pcmmnp_2:
-            // END OF MUSIC["L"があった時はそこに戻る]
+//pcmmnp_2:
+            // END OF MUSIC[When there was an "L" I went back there]
             r.decSi();
             pw.partWk[r.di].address = r.getSi();
             pw.partWk[r.di].loopcheck = 3;
@@ -281,7 +281,7 @@ mp2z: // ↑
 
             if ((r.getBx() & r.getBx()) == 0) return pmd::fmmnp_4;
 
-            // "L"があった時
+            // When there was an "L"
             r.setSi(r.getBx());
             pw.partWk[r.di].loopcheck = 1;
             pw.partWk[r.di].loopCounter++;
@@ -294,7 +294,7 @@ mp2z: // ↑
     }
 
     /**
-    //	PCM音源特殊コマンド処理
+     * PCM sound source special command processing
      */
     private Supplier<Object> commandsz() {
         pw.currentCommandTable = cmdtblz;
@@ -405,7 +405,7 @@ mp2z: // ↑
     }
 
     /**
-     * ppz 拡張パートセット
+     * ppz Extended Part Set
      */
     public Supplier<Object> ppz_extpartset() {
         r.stack.push(r.di);
@@ -413,16 +413,16 @@ mp2z: // ↑
         r.setCx((short) 8);
 //ppz_ex_loop:
         do {
-            r.setAx((short) ((pw.md[r.getSi()].dat & 0xff) + (pw.md[r.getSi() + 1].dat & 0xff) * 0x100));
+            r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
             r.addSi((short) 2);
             if (r.getAx() != 0) { // break no_init_ppz;
                 r.andAx((short) pw.mmlbuf);
                 pw.partWk[r.di].address = r.getAx();
 
-                pw.partWk[r.di].leng = 1; // アト 1カウント デ エンソウ カイシ
+                pw.partWk[r.di].leng = 1; // Play begins in 1 count
                 r.al = (byte) 0xff; // -1
-                pw.partWk[r.di].keyoff_flag = r.al; // 現在keyoff中
-                pw.partWk[r.di].mdc = r.al; // MDepth Counter(無限)
+                pw.partWk[r.di].keyoff_flag = r.al; // Currently being keyed off
+                pw.partWk[r.di].mdc = r.al; // MDepth Counter(Infinite)
                 pw.partWk[r.di].mdc2 = r.al;
                 pw.partWk[r.di]._mdc = r.al;
                 pw.partWk[r.di]._mdc2 = r.al;
@@ -478,11 +478,11 @@ pmpz_ret: // ↑
             return this::ppzmnp_1;
         }
         //r.ax = r.stack.pop(); // commandsm
-        return this::mp1z; // パート復活
+        return this::mp1z; // restore the part
     }
 
     /**
-     * リピート設定
+     * Repeat Settings
      */
     private Supplier<Object> ppzrepeat_set() {
         ppz_voicetable_calc();
@@ -492,7 +492,7 @@ pmpz_ret: // ↑
                         : ((pcmData[bank][ptr + 6] & 0xff) + (pcmData[bank][ptr + 7] & 0xff) * 0x100)));
         r.setCx((short) (
                 pcmData[bank] == null ? 0
-                        : ((pcmData[bank][ptr + 4] & 0xff) + (pcmData[bank][ptr + 5] & 0xff) * 0x100))); // dx: cx = データ量
+                        : ((pcmData[bank][ptr + 4] & 0xff) + (pcmData[bank][ptr + 5] & 0xff) * 0x100))); // dx: cx = Data volume
 
         r.stack.push(r.getSi());
         r.stack.push(r.di);
@@ -518,7 +518,7 @@ pmpz_ret: // ↑
 
     private void get_loop_ppz8() {
         r.setBx((short) 0);
-        r.setAx((short) ((pw.md[r.getSi()].dat & 0xff) + (pw.md[r.getSi() + 1].dat & 0xff) * 0x100));
+        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
         r.addSi((short) 2);
         if ((r.getAx() & 0x8000) != 0) { // break glp_ret;
             r.decBx();
@@ -555,12 +555,12 @@ pmpz_ret: // ↑
     }
 
     /**
-     * ポルタメント(PCM)
+     * Portamento (PCM)
      */
     private Supplier<Object> portaz() {
         if (pw.partWk[r.di].partmask != 0) {
             //return pmd::porta_notset;
-            r.al = (byte) pw.md[r.incSi()].dat; // 最初の音程を読み飛ばす(Mask時)
+            r.al = (byte) pw.md[r.incSi()].dat; // Skip the first note (when masked)
             return null;
         }
 
@@ -585,18 +585,18 @@ pmpz_ret: // ↑
         pmd.oshift();
         fnumsetz();
         r.setDx(pw.partWk[r.di].fnum2);
-        r.setAx(pw.partWk[r.di].fnum); // ax = ポルタメント先のdelta_n値
+        r.setAx(pw.partWk[r.di].fnum); // ax = delta_n value of portamento destination
 
         r.setBx(r.stack.pop());
         pw.partWk[r.di].onkai = r.bl;
         r.setCx(r.stack.pop());
         pw.partWk[r.di].fnum2 = r.getCx();
-        r.setBx(r.stack.pop()); // bx = ポルタメント元のdelta_n値
+        r.setBx(r.stack.pop()); // bx = delta_n value of the portamento source
         pw.partWk[r.di].fnum = r.getBx();
 
         r.carry = r.getAx() < r.getBx();
         r.subAx(r.getBx());
-        r.subDx((short) (r.getCx() + (r.carry ? 1 : 0))); // dx:ax = delta_n差
+        r.subDx((short) (r.getCx() + (r.carry ? 1 : 0))); // dx:ax = delta_n difference
 
         for (int i = 0; i < 4; i++) {
             r.carry = (r.getDx() & 1) != 0;
@@ -612,20 +612,20 @@ pmpz_ret: // ↑
 
         r.bh = 0;
         int src = r.getAx();
-        r.setDx((short) (src % r.getBx())); // ax = delta_n差 / 音長
+        r.setDx((short) (src % r.getBx())); // ax = delta_n difference / note length
         r.setAx((short) (src / r.getBx()));
-        pw.partWk[r.di].porta_num2 = r.getAx(); // 商
-        pw.partWk[r.di].porta_num3 = r.getDx(); // 余り
+        pw.partWk[r.di].porta_num2 = r.getAx(); // quotient
+        pw.partWk[r.di].porta_num3 = r.getDx(); // remainder
         pw.partWk[r.di].lfoswi |= 8; // Porta ON
         return this::porta_returnz;
     }
 
     /**
      * COMMAND 'p' [Panning Set]
-     * 	0=0	無音
-     * 	1=9	右
-     * 	2=1	左
-     * 	3=5	中央
+     *  0=0 Silence
+     *  1=9 right
+     *  2=1 left
+     *  3=5 Center
      */
     private Supplier<Object> pansetz() {
         r.al = (byte) pw.md[r.incSi()].dat;
@@ -637,7 +637,7 @@ pmpz_ret: // ↑
     }
 
     private Supplier<Object> pansetz_main() {
-        //IDE向け
+        // For IDEs
         ChipDatum cd = new ChipDatum(-1, -1, -1);
         cd.additionalData = new MmlDatum(-1, MMLType.Pan, pw.cmd.linePos, r.al & 0xff);
         pmd.writeDummy(cd);
@@ -654,11 +654,11 @@ pmpz_ret: // ↑
 
     /**
      * Pan setting Extend
-     * 	px -4～+4
+     *  px -4～+4
      */
     private Supplier<Object> pansetz_ex() {
         r.al = (byte) pw.md[r.incSi()].dat;
-        r.incSi(); // 逆相flagは読み飛ばす
+        r.incSi(); // The reverse phase flag is skipped.
         if ((r.al & 0x80) == 0) { // break pzex_minus;
             if (r.al >= 5) { // break pzex_set;
                 r.al = 4;
@@ -686,7 +686,7 @@ pmpz_ret: // ↑
         if (pw.ademu != 0) {
             if (pw.adpcm_emulate == 1) { // break cAtz_adchk_exit;
                 if ((r.al & 0x80) != 0) { // break cAtz_partchk;
-                    r.al = 127; // ADPCMEmulate中は @128～なら @127に強制変更
+                    r.al = 127; // During ADPCMEmulate, @128~ is forcibly changed to @127
                 }
 //cAtz_partchk:
                 if (pw.partb == 7) { // break cAtz_adchk_exit;
@@ -695,7 +695,7 @@ pmpz_ret: // ↑
                     pw.partWk[r.getBx()].partmask &= (byte) 0xef; // Mask off
                     if (pw.partWk[r.getBx()].partmask == 0) { // break cAtz_emuoff;
                         //r.bx = r.stack.pop();
-                        ret = this::mp1z; // Part復活準備
+                        ret = this::mp1z; // Part revival preparation
                         //r.stack.push(r.bx);
                     }
 //cAtz_emuoff:
@@ -711,7 +711,7 @@ pmpz_ret: // ↑
         }
         pw.partWk[r.di].voicenum = r.al;
 
-        //IDE向け
+        //For IDEs
         cd = new ChipDatum(-1, -1, -1);
         cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos, 0xff, pw.partWk[r.di].voicenum & 0xff);
         pmd.writeDummy(cd);
@@ -758,7 +758,7 @@ pmpz_ret: // ↑
 //vsz_01:
         r.dl = r.al;
         //
-        //	音量down計算
+        // Volume down calculation
         //
         r.al = pw.ppz_voldown;
         if (r.al != 0) { // break ppz_fade_calc;
@@ -767,7 +767,7 @@ pmpz_ret: // ↑
             r.dl = r.ah;
         }
         //
-        //	Fadeout計算
+        // Fadeout calculation
         //
 //ppz_fade_calc:
         r.al = pw.fadeout_volume;
@@ -777,15 +777,15 @@ pmpz_ret: // ↑
             r.dl = r.ah;
         }
         //
-        // ENVELOPE 計算
+        // ENVELOPE Calculation
         //
 //ppz_env_calc:
 zv_out: // ↑
         {
             r.al = r.dl;
-            if (r.al != 0) { // 音量0? // break zv_out;
+            if (r.al != 0) { // Volume 0? // break zv_out;
                 if (pw.partWk[r.di].envf == (byte) 0xff) { // -1 // break normal_zvset;
-                    // 拡張版 音量 = al * (eenv_vol + 1) / 16
+                    // Extended volume = al * (eenv_vol + 1) / 16
                     r.dl = pw.partWk[r.di].eenv_volume;
                     if (r.dl == 0) {
 //                    break zv_min;
@@ -832,9 +832,9 @@ zv_out: // ↑
                         }
                     }
                 }
-                //------------------------------------------------------------------------------
-                //	音量LFO計算
-                //------------------------------------------------------------------------------
+                //
+                // Volume LFO Calculation
+                //
 //zvset:
                 if ((pw.partWk[r.di].lfoswi & 0x22) != 0) { // break zv_out;
                     r.setDx((short) 0);
@@ -864,9 +864,9 @@ zv_out: // ↑
                 }
             }
         }
-        //------------------------------------------------------------------------------
-        //	出力
-        //------------------------------------------------------------------------------
+        //
+        // output
+        //
 //zv_out:
         if (r.al != 0) { // break zv_cut;
             r.dh = 0;
@@ -895,11 +895,11 @@ zv_out: // ↑
     private void keyonz() {
         if (pw.partWk[r.di].onkai != (byte) 0xff) { //-1 // break keyonz_ret;
 
-            //;	xor dx, dx
-            //;	mov dl, fmpan[di]
-            //;	mov ah,13h
-            //;	mov al,[partb]
-            //;	call ppz8_call
+            //; xor dx, dx
+            //; mov dl, fmpan[di]
+            //; mov ah,13h
+            //; mov al,[partb]
+            //; call ppz8_call
 
             r.ah = 1;
             r.al = pw.partb;
@@ -1015,7 +1015,7 @@ zv_out: // ↑
         r.ah = r.al;
         r.ah &= 0xf;
         if (r.ah == 0xf) {
-            fnrestz(); // 休符の場合
+            fnrestz(); // Rests
             return;
         }
         pw.partWk[r.di].onkai = r.al;
@@ -1028,7 +1028,7 @@ zv_out: // ↑
         r.al &= 0xf;
         r.cl = r.al; // cl=octarb
         //r.bx += r.bx;
-        r.setAx((short) pw.ppz_tune_data[r.getBx()]); // o5標準
+        r.setAx((short) pw.ppz_tune_data[r.getBx()]); // o5 standard
         r.setDx((short) 0);
         r.cl -= 4;
         if ((r.cl & 0x80) != 0) { // break ppz_over_o5;

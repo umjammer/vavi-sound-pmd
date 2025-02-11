@@ -34,13 +34,13 @@ public class Compiler implements ICompiler {
 
     ResourceBundle rb = ResourceBundle.getBundle("lang/message");
 
-    //入力データ
+    // Input data
 
     public iEncoding enc = null;
     public String[] mcArgs = null;
     public String[] env = null;
 
-    //出力データ
+    // Output Data
 
     private int memo_writeAddress = -1;
 
@@ -67,9 +67,9 @@ public class Compiler implements ICompiler {
         return outFFFileName;
     }
 
-    public int skipIndex = -1; // スキップ位置
+    public int skipIndex = -1; // Skip Position
 
-    //内部
+    // internal
     private String srcBuf = null;
     private boolean isIDE = false;
     private Point skipPoint = new Point(0, 0);
@@ -102,12 +102,12 @@ public class Compiler implements ICompiler {
 
             if (!(prm instanceof String)) continue;
 
-            //IDEフラグオン
+            // IDE Flag On
             if (prm.equals("IDE")) {
                 this.isIDE = true;
             }
 
-            //スキップ再生指定
+            // Skip playback specification
             if (((String) prm).indexOf("SkipPoint=") == 0) {
                 try {
                     String[] p = ((String) prm).split("=")[1].split(":");
@@ -119,7 +119,7 @@ public class Compiler implements ICompiler {
                 }
             }
 
-            //PMD option 指定
+            // PMD option specification
             if (((String) prm).indexOf("PmdOption=") == 0) {
                 try {
                     String[] p = ((String) prm).split("=")[1].split(" ");
@@ -170,7 +170,7 @@ public class Compiler implements ICompiler {
             voice_seg = mc.voice_seg;
             work.compilerInfo.jumpClock = -1;
             if (mc.skipSW == 3) {
-                skipIndex = mc.skipIndex + 1; // ひとつずらす
+                skipIndex = mc.skipIndex + 1; // Shift one
                 work.compilerInfo.jumpClock = skipIndex;
             }
 
@@ -312,7 +312,7 @@ public class Compiler implements ICompiler {
     }
 
     /**
-     * ストリームから一括でバイナリを読み込む
+     * Read binary from a stream in bulk
      */
     private byte[] readAllBytes(Stream stream) {
         try (var ms = readAllBytesToMemoryStream(stream)) {

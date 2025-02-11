@@ -1,21 +1,21 @@
 package pmd.driver;
 
 //
-//  OPNA timer エミュレーション
+// OPNA timer emulation
 //
 //
 public class OPNATimer {
 
-    private int TimerA;        // タイマーAのオーバーフロー設定値
-    private double TimerAcounter;  // タイマーAのカウンター値
-    private int TimerB;            // タイマーBのオーバーフロー設定値
-    private double TimerBcounter;  // タイマーBのカウンター値
-    private int TimerReg;       // タイマー制御レジスタ (下位4ビット+7ビット)
+    private int TimerA;        // Timer A overflow setting
+    private double TimerAcounter;  // Timer A counter value
+    private int TimerB;            // Timer B overflow setting value
+    private double TimerBcounter;  // Timer B counter value
+    private int TimerReg;       // Timer control register (lower 4 bits + 7 bits)
     private double step;
 
     private int StatReg;
 
-    // ステータスレジスタ (下位2ビット)
+    // Status register (lowest 2 bits)
     public int getStatReg() {
         return StatReg;
     }
@@ -31,7 +31,7 @@ public class OPNATimer {
     }
 
     public void timer() {
-        if ((TimerReg & 0x01) != 0) {   // TimerA 動作中
+        if ((TimerReg & 0x01) != 0) {   // TimerA is running
             TimerAcounter += step;
             if (TimerAcounter >= (1024 - TimerA)) {
                 StatReg |= ((TimerReg >> 2) & 0x01);
@@ -40,7 +40,7 @@ public class OPNATimer {
             }
         }
 
-        if ((TimerReg & 0x02) != 0) {   // TimerB 動作中
+        if ((TimerReg & 0x02) != 0) {   // TimerB is running
             TimerBcounter += step;
             if (TimerBcounter >= TimerB) {
                 StatReg |= ((TimerReg >> 2) & 0x02);
@@ -67,7 +67,7 @@ public class OPNATimer {
                 break;
 
             case 0x27:
-                // タイマー制御レジスタ
+                // Timer Control Register
                 TimerReg = data & 0x8F;
                 StatReg &= 0xFF - ((data >> 4) & 3);
                 break;

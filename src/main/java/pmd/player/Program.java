@@ -144,14 +144,14 @@ class Program {
         }
 
         if (mIndex < 0) {
-            logger.log(Level.INFO, "引数(.Mファイル)１個欲しいよぉ...");
+            logger.log(Level.INFO, "ot least one argument is needed (.M file)...");
             return;
         }
 
         srcFile = args[mIndex];
 
         if (!File.exists(args[mIndex])) {
-            logger.log(Level.ERROR, String.format("ファイル[%d]が見つかりません", args[mIndex]));
+            logger.log(Level.ERROR, String.format("File [%d] not found", args[mIndex]));
             return;
         }
 
@@ -281,14 +281,14 @@ class Program {
                     , Program::writeP86
             );
 
-            // AUTO指定の場合に構成が変わるので、構成情報を受け取ってから音量設定を行う
+            // When AUTO is specified, the configuration will change, so the volume will be set after receiving the configuration information.
             isNRM = dop.isNRM;
             isSPB = dop.isSPB;
             isVA = dop.isVA;
             usePPS = dop.usePPS;
             usePPZ = dop.usePPZ;
             String[] pmdOptionVol = setVolume();
-            // ユーザーがコマンドラインでDオプションを指定していない場合はpmdVolを適用させる
+            // Apply pmdVol if user does not specify D option on command line
             if (!pmdvolFound && pmdOptionVol != null && pmdOptionVol.length > 0) {
                 ((Driver) drv).resetOption(pmdOptionVol);//
             }
@@ -507,7 +507,7 @@ class Program {
             i++;
         }
 
-        if (device == 3 && loop == 0) loop = 1; // wave出力の場合、無限ループは1に変更
+        if (device == 3 && loop == 0) loop = 1; // For wave output, change infinite loop to 1
         return i;
     }
 

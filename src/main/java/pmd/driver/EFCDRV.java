@@ -52,7 +52,7 @@ public class EFCDRV {
         //r.ds = r.cs;
 
         if (pw.effflag != 0) { // break eg_00;
-            return; // 効果音を使用しないモード
+            return; // No sound effects mode
         }
 //eg_00:
         if (pw.ppsdrv_flag != 0) { // break eg_nonppsdrv;
@@ -60,19 +60,19 @@ public class EFCDRV {
             if ((r.al & 0x80) != 0) { // break eg_nonppsdrv;
 
                 // ppsdrv
-                if (pw.effon >= 2) return; // break effret; // ; 通常効果音発音時は発声させない
+                if (pw.effon >= 2) return; // break effret; // ; Do not vocalize during normal sound effect playback
 
                 r.setBx((short) pw.part9); // PSG 3ch
                 pw.partWk[r.getBx()].partmask |= 2; // Part Mask
-                pw.effon = 1; // 優先度１(ppsdrv)
-                pw.psgefcnum = r.al; // 音色番号設定(80H～)
+                pw.effon = 1; // Priority 1 (ppsdrv)
+                pw.psgefcnum = r.al; // Tone number setting (80H~)
 
                 r.setBx((short) 15);
                 r.ah = pw.hosei_flag;
                 r.ah = r.ror(r.ah, 1);
                 if (r.carry) { // break not_tone_hosei;
                     r.setBx(pw.partWk[r.di].detune);
-                    r.bh = r.bl; // BH = Detuneの下位 8bit
+                    r.bh = r.bl; // BH = Lower 8 bits of Detune
                     r.bl = 15;
                 }
 //not_tone_hosei:
@@ -80,7 +80,7 @@ public class EFCDRV {
                 if (r.carry) { // break not_volume_hosei;
                     r.ah = pw.partWk[r.di].volume;
                     if (r.ah < 15) { // break fade_hosei;
-                        r.bl = r.ah; // BL = volume値(0～15)
+                        r.bl = r.ah; // BL = volume value(0 to 15)
                     }
 //fade_hosei:
                     r.ah = pw.fadeout_volume;
@@ -125,13 +125,13 @@ public class EFCDRV {
         //r.bx += 0; // offset efftbl
 
         r.al = pw.effon;
-        if (r.al > pw.efftbl.get(r.getBx()).getItem1()) // cmp al,[bx]; 優先順位
+        if (r.al > pw.efftbl.get(r.getBx()).getItem1()) // cmp al,[bx]; Priority
             return; // break eg_ret;
 
         if (pw.ppsdrv_flag != 0) { // break eok_nonppsdrv;
             r.ah = 0;
             ChipDatum cd = new ChipDatum(0x02, 0, 0);
-            ppsdrv.apply(cd); // .Stop(); // ppsdrv 強制keyoff
+            ppsdrv.apply(cd); // .Stop(); // ppsdrv Forced keyoff
         }
 //eok_nonppsdrv:
 
@@ -147,13 +147,13 @@ public class EFCDRV {
         r.setSi((short) 0); // pw.efftbl[r.bx].getItem2();
         r.setSi((short) (r.getSi() + 0)); // offset efftbl
         pw.crtEfcDat = pw.efftbl.get(r.getBx()).getItem2();
-        r.al = (byte) (int) pw.efftbl.get(r.getBx()).getItem1(); // AL = 優先順位
+        r.al = (byte) (int) pw.efftbl.get(r.getBx()).getItem1(); // AL = Priority
         r.stack.push(r.getAx());
         r.setBx((short) pw.part9); // PSG 3ch
         pw.partWk[r.getBx()].partmask |= 2; // Part Mask
-        efffor(); // １発目を発音
+        efffor(); // Pronounce the first sound
         r.setAx(r.stack.pop());
-        pw.effon = r.al; // 優先順位を設定(発音開始)
+        pw.effon = r.al; // Set Priority (start of pronunciation)
 //eg_ret:
     }
 
@@ -181,24 +181,24 @@ public class EFCDRV {
             return;
         }
 
-        pw.effcnt = r.al; // カウント数
+        pw.effcnt = r.al; // Count Number
 
-        r.dh = 4; // 周波数レジスタ
+        r.dh = 4; // Frequency Register
         //pushf
         //cli
-        efsnd(); // 周波数セット
+        efsnd(); // Frequency Set
         r.cl = r.dl;
-        efsnd(); // 周波数セット
+        efsnd(); // Frequency Set
         //popf
         r.ch = r.dl;
         pw.eswthz = r.getCx();
         r.dl = (byte) (pw.crtEfcDat[r.getSi()].dat & 0xff);
         pw.eswnhz = r.dl;
         r.dh = 6;
-        efsnd(); // ノイズ
+        efsnd(); // noise
         pw.psnoi_last = r.dl;
 
-        r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff); // データ
+        r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff); // data
         r.dl = r.al;
         r.dl = r.rol(r.dl, 1);
         r.dl = r.rol(r.dl, 1);
@@ -213,19 +213,19 @@ public class EFCDRV {
         //popf
 
         r.dh = 10;
-        efsnd(); // ボリューム
-        efsnd(); // エンベロープ周波数
+        efsnd(); // volume
+        efsnd(); // Envelope Frequency
         efsnd();
-        efsnd(); // エンベロープPATTARN
+        efsnd(); // Envelope Pattern
 
         r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff);
 
         r.setAx(r.al); //    cbw
-        pw.eswtst = r.getAx(); // スイープ増分(TONE)
+        pw.eswtst = r.getAx(); // Sweep increment (TONE)
         r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff);
-        pw.eswnst = r.al; // スイープ増分(NOISE)
+        pw.eswnst = r.al; // Sweep Increment (NOISE)
         r.al &= 15;
-        pw.eswnct = r.al; // スイープカウント(NOISE)
+        pw.eswnct = r.al; // Sweep Count (NOISE)
         pw.effadr = r.getSi();
         //effret:;
     }
@@ -265,11 +265,11 @@ public class EFCDRV {
         pw.psgefcnum = (byte) 0xff; // -1
     }
 
-    // 普段の処理
+    // Normal processing
     private void effsweep() {
-        r.setAx(pw.eswthz); // スイープ周波
+        r.setAx(pw.eswthz); // Sweep Frequency
         r.setAx((short) (r.getAx() + pw.eswtst));
-        pw.eswthz = r.getAx(); // スイープ周波
+        pw.eswthz = r.getAx(); // Sweep Frequency
         r.dh = 4; // REG
         r.dl = r.al; // DATA
         //pushf
@@ -284,7 +284,7 @@ public class EFCDRV {
         pmd.opnset44();
         //popf
         r.dl = pw.eswnst;
-        if (r.dl == 0) return; // break effret; // ノイズスイープ無し
+        if (r.dl == 0) return; // break effret; // No noise sweep
         pw.eswnct--;
         if (pw.eswnct != 0) return; // break effret;
         r.al = r.dl;

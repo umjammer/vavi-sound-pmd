@@ -32,7 +32,7 @@ public class PCMDRV {
     }
 
     // 
-    // PCM音源 演奏 メイン
+    // PCM sound source performance main
     // 
     //pcmmain_ret:
     // ret
@@ -57,15 +57,15 @@ public class PCMDRV {
     }
 
     private Supplier<Object> pcmmain_c_1() {
-        // 音長 - 1
+        // Sound duration - 1
         pw.partWk[r.di].leng--;
         r.al = pw.partWk[r.di].leng;
 
         // KEYOFF CHECK
-        if ((pw.partWk[r.di].keyoff_flag & 3) == 0) { // break mp0m; // 既にkeyoffしたか？
-            if (r.al <= pw.partWk[r.di].qdat) { // break mp0m; // Q値 => 残りLength値時 keyoff
+        if ((pw.partWk[r.di].keyoff_flag & 3) == 0) { // break mp0m; // Have you already keyed off?
+            if (r.al <= pw.partWk[r.di].qdat) { // break mp0m; // Q value => keyoff when remaining Length value
                 pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
-                keyoffm(); // ALは壊さない
+                keyoffm(); // AL will not break
             }
         }
 //mp0m:
@@ -117,7 +117,7 @@ public class PCMDRV {
             r.setBx(pw.partWk[r.di].partloop);
             if (r.getBx() == 0) return this::mpexitm;
 
-            // 'L' ガ アッタトキ
+            // When there was an 'L'
             r.setSi(r.getBx());
             pw.partWk[r.di].loopcheck = 1;
             pw.partWk[r.di].loopCounter++;
@@ -159,7 +159,7 @@ public class PCMDRV {
         pw.tieflag = r.al;
         pw.volpush_flag = r.al;
         pw.partWk[r.di].keyoff_flag = r.al;
-        if (pw.md[r.getSi()].dat != 0xfb) // '&'が直後にあったらkeyoffしない
+        if (pw.md[r.getSi()].dat != 0xfb) // If there is an '&' immediately after, keyoff will not occur.
             return pmd::mnp_ret;
         pw.partWk[r.di].keyoff_flag = 2;
         return pmd::mnp_ret;
@@ -221,26 +221,25 @@ public class PCMDRV {
         return pmd::mnp_ret;
     }
 
-    //139-181
     // 
-    // PCM音源演奏メイン：パートマスクされている時
+    // PCM sound source playback: When parts are masked
     // 
     private Supplier<Object> pcmmain_nonplay() {
         pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
         pw.partWk[r.di].leng--;
         if (pw.partWk[r.di].leng != 0) return pmd::mnp_ret;
 
-        if ((pw.partWk[r.di].partmask & 2) == 0) // bit1(pcm効果音中？)をcheck
+        if ((pw.partWk[r.di].partmask & 2) == 0) // Check bit1 (pcm sound effect?)
             return this::pcmmnp_1;
         r.setDx((short) pw.fm2_port1);
         r.al = pc98.InPort(r.getDx());
         if ((r.al & 0b0000_0100) == 0) // EOS check
-            return this::pcmmnp_1; // まだ割り込みPCMが鳴っている
-        pw.pcmflag = 0; // PCM効果音終了
+            return this::pcmmnp_1; // The interrupt PCM is still ringing
+        pw.pcmflag = 0; // PCM sound effect end
         pw.pcm_effec_num = (byte) 255;
-        pw.partWk[r.di].partmask &= (byte) 0xfd; // bit1をclear
+        pw.partWk[r.di].partmask &= (byte) 0xfd; // clear bit1
         if (pw.partWk[r.di].partmask == 0)
-            return this::mp1m0; // partmaskが0なら復活させる
+            return this::mp1m0; // If partmask is 0, restore it.
         return this::pcmmnp_1;
     }
 
@@ -265,7 +264,7 @@ public class PCMDRV {
             pmd.FlashMacroList();
 
             //pcmmnp_2:
-            // END OF MUSIC["L"があった時はそこに戻る]
+            // END OF MUSIC[When there was an "L" I went back there]
             r.decSi();
             pw.partWk[r.di].address = r.getSi();
             pw.partWk[r.di].loopcheck = 3;
@@ -274,7 +273,7 @@ public class PCMDRV {
 
             if ((r.getBx() & r.getBx()) == 0) return pmd::fmmnp_4;
 
-            // "L"があった時
+            // When there was an "L"
             r.setSi(r.getBx());
             pw.partWk[r.di].loopcheck = 1;
             pw.partWk[r.di].loopCounter++;
@@ -282,7 +281,7 @@ public class PCMDRV {
     }
 
     // 
-    // PCM音源特殊コマンド処理
+    // PCM sound source special command processing
     // 
 
     private Supplier<Object> commandsm() {
@@ -326,7 +325,7 @@ public class PCMDRV {
                 , pmd::rhyvs_sft             //0xe5(26)
                 //
                 , pmd::jump1                 //0xe4(27)
-                //Ｖ２．３　ＥＸＴＥＮＤ
+                // v2.3 extend
                 , this::comvolupm2                //0xe3(28)
                 , this::comvoldownm2              //0xe2(29)
                 //
@@ -395,7 +394,7 @@ public class PCMDRV {
     }
 
     // 
-    // 演奏中パートのマスクon/off
+    // Mask on/off for playing part
     // 
     private Supplier<Object> pcm_mml_part_mask() {
         logger.log(Level.TRACE, "pcm_mml_part_mask");
@@ -425,11 +424,11 @@ public class PCMDRV {
             return this::pcmmnp_1; // <<
         }
         //r.ax = r.stack.pop(); // commandsm
-        return this::mp1m; // パート復活
+        return this::mp1m; // Part-time revival
     }
 
     // 
-    // リピート設定
+    // Repeat Settings
     // 
     private Supplier<Object> pcmrepeat_set() {
         r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
@@ -476,12 +475,12 @@ public class PCMDRV {
     }
 
     // 
-    // ポルタメント(PCM)
+    // Portamento (PCM)
     // 
     private Supplier<Object> portam() {
         if (pw.partWk[r.di].partmask != 0) {
             //return pmd.porta_notset;
-            r.al = (byte) pw.md[r.incSi()].dat; // 最初の音程を読み飛ばす(Mask時)
+            r.al = (byte) pw.md[r.incSi()].dat; // Skip the first note (when masked)
             return null;
         }
 
@@ -497,18 +496,18 @@ public class PCMDRV {
         r.al = (byte) pw.md[r.incSi()].dat;
         pmd.oshift();
         fnumsetm();
-        r.setAx(pw.partWk[r.di].fnum); // ax = ポルタメント先のdelta_n値
+        r.setAx(pw.partWk[r.di].fnum); // ax = delta_n value of destination portamento
         r.setBx(r.stack.pop());
         pw.partWk[r.di].onkai = r.bl;
-        r.setBx(r.stack.pop()); // bx = ポルタメント元のdelta_n値
+        r.setBx(r.stack.pop()); // bx = delta_n value of the original portamento
         pw.partWk[r.di].fnum = r.getBx();
-        r.subAx(r.getBx()); // ax = delta_n差
+        r.subAx(r.getBx()); // ax = delta_n difference
         r.bl = (byte) pw.md[r.incSi()].dat;
         pw.partWk[r.di].leng = r.bl;
         pmd.calc_q();
         r.bh = 0;
         int src = r.getAx();
-        r.setDx((short) (src % r.getBx())); // ax = delta_n差 / 音長
+        r.setDx((short) (src % r.getBx())); // ax = delta_n difference / note length
         r.setAx((short) (src / r.getBx()));
         pw.partWk[r.di].porta_num2 = r.getAx(); // quotient
         pw.partWk[r.di].porta_num3 = r.getDx(); // remainder
@@ -534,7 +533,7 @@ public class PCMDRV {
     private Supplier<Object> vsetm() {
         pw.partWk[r.di].volume = r.al;
 
-        //IDE向け
+        // For IDEs
         ChipDatum cd = new ChipDatum(-1, -1, -1);
         MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
         cd.additionalData = md;
@@ -594,7 +593,7 @@ public class PCMDRV {
     // 
     private Supplier<Object> pansetm_ex() {
         r.al = (byte) pw.md[r.incSi()].dat;
-        r.incSi(); // 逆走flagは読み飛ばす
+        r.incSi(); // Skip the reverse flag
         if (r.al != 0) { // break pmex_mid;
             if ((r.al & 0x80) != 0) {
 //                break pmex_left;
@@ -617,7 +616,7 @@ public class PCMDRV {
         r.al = (byte) pw.md[r.incSi()].dat;
         pw.partWk[r.di].voicenum = r.al;
 
-        //IDE向け
+        // For IDEs
         ChipDatum cd = new ChipDatum(-1, -1, -1);
         cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos
                 , 0xff
@@ -654,18 +653,18 @@ public class PCMDRV {
         }
 //vsm_01:
         r.dl = r.al;
-        //------------------------------------------------------------------------------
-        // 音量down計算
-        //------------------------------------------------------------------------------
+        //
+        // Volume down calculation
+        //
         r.al = pw.pcm_voldown;
         if (r.al != 0) { // break pcm_fade_calc;
             r.al = (byte) -r.al;
             r.setAx((short) (r.al * r.dl));
             r.dl = r.ah;
         }
-        //------------------------------------------------------------------------------
-        // Fadeout計算
-        //------------------------------------------------------------------------------
+        //
+        // Fadeout calculation
+        //
 //pcm_fade_calc:
         r.al = pw.fadeout_volume;
         if (r.al != 0) { // break pcm_env_calc;
@@ -675,14 +674,14 @@ public class PCMDRV {
             r.setAx((short) (r.al * r.dl));
             r.dl = r.ah;
         }
-        //------------------------------------------------------------------------------
-        // ENVELOPE 計算
-        //------------------------------------------------------------------------------
+        //
+        // ENVELOPE Calculation
+        //
 //pcm_env_calc:
         r.al = r.dl;
-        if (r.al != 0) { // 音量0? // break mv_out;
+        if (r.al != 0) { // Volume 0? // break mv_out;
             if (pw.partWk[r.di].envf == (byte) 0xff) { // -1 // break normal_mvset;
-                // 拡張版 音量 = al * (eenv_vol + 1) / 16
+                // Extended version Volume = al * (eenv_vol + 1) / 16
                 r.dl = pw.partWk[r.di].eenv_volume;
                 if (r.dl == 0) {
 //                    break mv_min;
@@ -739,9 +738,9 @@ mv_min:
                     }
                 }
             }
-            //------------------------------------------------------------------------------
-            // 音量LFO計算
-            //------------------------------------------------------------------------------
+            //
+            // Volume LFO Calculation
+            //
 //mvset:
             if ((pw.partWk[r.di].lfoswi & 0x22) != 0) { // break mv_out;
                 r.setDx((short) 0);
@@ -770,9 +769,9 @@ mv_min:
                 }
             }
         }
-        //------------------------------------------------------------------------------
-        // 出力
-        //------------------------------------------------------------------------------
+        //
+        // output
+        //
 //mv_out:
         r.dl = r.al;
         r.dh = 0x0b;
@@ -963,7 +962,7 @@ mv_min:
         r.ah = r.al;
         r.ah &= 0xf;
         if (r.ah == 0xf) {
-            fnrest(); // 休符の場合
+            fnrest(); // Rests
             return;
         }
         pw.partWk[r.di].onkai = r.al;
@@ -986,15 +985,15 @@ mv_min:
         r.cl = r.al; // cl=5-octarb
         //r.bx += r.bx;
         r.setAx((short) pw.pcm_tune_data[r.getBx()]);
-        if (r.ch >= 6) { // o7以上? // break pts01m;
+        if (r.ch >= 6) { // o7 or higher? // break pts01m;
             r.ch = 0x50;
             if ((r.getAx() & 0x8000) == 0) { // break pts00m;
-                r.addAx(r.getAx()); // o7以上で2倍できる場合は2倍
+                r.addAx(r.getAx()); // If you can double it with o7 or above, double it.
                 r.ch = 0x60;
             }
 //pts00m:
             pw.partWk[r.di].onkai &= 0x0f;
-            pw.partWk[r.di].onkai |= r.ch; // onkai値修正
+            pw.partWk[r.di].onkai |= r.ch; // Scale value correction
 //            break fnm01;
         } else {
 //pts01m:
@@ -1007,7 +1006,7 @@ mv_min:
     private void fnrest() {
         pw.partWk[r.di].onkai = (byte) 0xff;
         if ((pw.partWk[r.di].lfoswi & 0x11) == 0) { // break fnr_ret;
-            pw.partWk[r.di].fnum = 0; // 音程LFO未使用
+            pw.partWk[r.di].fnum = 0; // Pitch LFO not used
         }
 //fnr_ret:
     }

@@ -47,7 +47,7 @@ public class DosCompiler {
             if (Files.exists(outputFile)) {
                 outputFileName2 = outputFileName;
             } else {
-                // 拡張子のみファイルが生成されるパターンがある?
+                // Is there a pattern where only the extension is generated?
                 var ext = outputFileName.substring(outputFileName.lastIndexOf('.') + 1);
                 if (Files.exists(Path.of(ext))) {
                     outputFileName2 = ext;
