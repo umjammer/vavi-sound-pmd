@@ -30,7 +30,7 @@ import dotnet4j.util.compat.Tuple;
 import mdsound.Instrument;
 import mdsound.MDSound;
 import mdsound.instrument.P86Inst;
-import mdsound.instrument.PpsDrvInst;
+import mdsound.instrument.PpsInst;
 import mdsound.instrument.Ppz8Inst;
 import mdsound.instrument.Ym2608Inst;
 import musicDriverInterface.ChipDatum;
@@ -121,7 +121,7 @@ class Program {
     private static int[] VolumeR = null;
     private static boolean isGimicOPNA = false;
     private static Ppz8Inst ppz8em = null;
-    private static PpsDrvInst ppsdrv = null;
+    private static PpsInst ppsdrv = null;
     private static P86Inst p86em = null;
     private static String[] envPmd = null;
     private static String[] envPmdOpt = null;
@@ -205,7 +205,7 @@ class Program {
             MDSound.Chip chipps = new MDSound.Chip();
 //                type = MDSound.MDSound.enmInstrumentType.PPSDRV,
             chipps.id = 0;
-            ppsdrv = Instrument.getInstrument(PpsDrvInst.class);
+            ppsdrv = Instrument.getInstrument(PpsInst.class);
             chipps.instrument = ppsdrv;
             chipps.samplingRate = device == 0
                     ? SamplingRate
@@ -228,7 +228,7 @@ class Program {
             chip86.volume = 0;
             chip86.option = null;
 
-            mds = new MDSound(SamplingRate, samplingBuffer, new MDSound.Chip[] {chip, chipp, chipps, chip86});
+            mds = new MDSound(SamplingRate, samplingBuffer, List.of(chip, chipp, chipps, chip86));
 //            ppz8em = new PPZ8em(SamplingRate);
 //            ppsdrv = new PPSDRV(SamplingRate);
 
@@ -988,7 +988,8 @@ class Program {
         if (arg == null) return 0;
 
         if (arg.port == 0x03) {
-            return ppz8em.loadPcm(0, (byte) arg.address, (byte) arg.data, (byte[][]) arg.additionalData);
+            ppz8em.writePcm(0, -1, -1, (byte[][]) arg.additionalData);
+            return 0;
         } else {
             return ppz8em.write(0, arg.port, arg.address, arg.data);
         }
@@ -998,7 +999,8 @@ class Program {
         if (arg == null) return 0;
 
         if (arg.port == 0x05) {
-            return ppsdrv.load(0, (byte[]) arg.additionalData);
+            ppsdrv.writePcm(0, (byte[]) arg.additionalData, -1, -1);
+            return 0;
         } else {
             return ppsdrv.write(0, arg.port, arg.address, arg.data);
         }
@@ -1030,7 +1032,8 @@ class Program {
         if (arg == null) return 0;
 
         if (arg.port == 0x00) {
-            return p86em.loadPcm(0, (byte) arg.address, (byte) arg.data, (byte[]) arg.additionalData);
+            p86em.writePcm(0, (byte[]) arg.additionalData, (byte) arg.data, (byte) arg.address);
+            return 0;
         } else {
             return p86em.write(0, arg.port, arg.address, arg.data);
         }
