@@ -115,7 +115,7 @@ public class CompileResult {
 
     public static Integer getMemoOffset(byte[] array) {
 
-            //  正攻法 (/v あり時のみ)
+            // The straightforward approach (only with /v)
 //        if (array.length >= 0x1a && array[1] == 0x1a) {
 //            var offset = array[0x19] + array[0x1a] * 256 - 4 + 1;
 //            offset = array[offset] + array[offset + 1] * 256 + 1;

@@ -30,7 +30,7 @@ import dotnet4j.util.compat.Tuple;
 import mdsound.Instrument;
 import mdsound.MDSound;
 import mdsound.instrument.P86Inst;
-import mdsound.instrument.PpsDrvInst;
+import mdsound.instrument.PpsInst;
 import mdsound.instrument.Ppz8Inst;
 import mdsound.instrument.Ym2608Inst;
 import musicDriverInterface.ChipDatum;
@@ -121,7 +121,7 @@ class Program {
     private static int[] VolumeR = null;
     private static boolean isGimicOPNA = false;
     private static Ppz8Inst ppz8em = null;
-    private static PpsDrvInst ppsdrv = null;
+    private static PpsInst ppsdrv = null;
     private static P86Inst p86em = null;
     private static String[] envPmd = null;
     private static String[] envPmdOpt = null;
@@ -144,14 +144,14 @@ class Program {
         }
 
         if (mIndex < 0) {
-            logger.log(Level.INFO, "引数(.Mファイル)１個欲しいよぉ...");
+            logger.log(Level.INFO, "ot least one argument is needed (.M file)...");
             return;
         }
 
         srcFile = args[mIndex];
 
         if (!File.exists(args[mIndex])) {
-            logger.log(Level.ERROR, String.format("ファイル[%d]が見つかりません", args[mIndex]));
+            logger.log(Level.ERROR, String.format("File [%d] not found", args[mIndex]));
             return;
         }
 
@@ -205,7 +205,7 @@ class Program {
             MDSound.Chip chipps = new MDSound.Chip();
 //                type = MDSound.MDSound.enmInstrumentType.PPSDRV,
             chipps.id = 0;
-            ppsdrv = Instrument.getInstrument(PpsDrvInst.class);
+            ppsdrv = Instrument.getInstrument(PpsInst.class);
             chipps.instrument = ppsdrv;
             chipps.samplingRate = device == 0
                     ? SamplingRate
@@ -228,7 +228,7 @@ class Program {
             chip86.volume = 0;
             chip86.option = null;
 
-            mds = new MDSound(SamplingRate, samplingBuffer, new MDSound.Chip[] {chip, chipp, chipps, chip86});
+            mds = new MDSound(SamplingRate, samplingBuffer, List.of(chip, chipp, chipps, chip86));
 //            ppz8em = new PPZ8em(SamplingRate);
 //            ppsdrv = new PPSDRV(SamplingRate);
 
@@ -281,14 +281,14 @@ class Program {
                     , Program::writeP86
             );
 
-            // AUTO指定の場合に構成が変わるので、構成情報を受け取ってから音量設定を行う
+            // When AUTO is specified, the configuration will change, so the volume will be set after receiving the configuration information.
             isNRM = dop.isNRM;
             isSPB = dop.isSPB;
             isVA = dop.isVA;
             usePPS = dop.usePPS;
             usePPZ = dop.usePPZ;
             String[] pmdOptionVol = setVolume();
-            // ユーザーがコマンドラインでDオプションを指定していない場合はpmdVolを適用させる
+            // Apply pmdVol if user does not specify D option on command line
             if (!pmdvolFound && pmdOptionVol != null && pmdOptionVol.length > 0) {
                 ((Driver) drv).resetOption(pmdOptionVol);//
             }
@@ -507,7 +507,7 @@ class Program {
             i++;
         }
 
-        if (device == 3 && loop == 0) loop = 1; // wave出力の場合、無限ループは1に変更
+        if (device == 3 && loop == 0) loop = 1; // For wave output, change infinite loop to 1
         return i;
     }
 
@@ -769,8 +769,8 @@ class Program {
 
                 break;
             case 2: // SCCI
-//                nScci.NSoundInterfaceManager_.sendData();
-//                while (!nScci.NSoundInterfaceManager_.isBufferEmpty()) {
+//                NScci.NSoundInterfaceManager().sendData();
+//                while (!NScci.NSoundInterfaceManager().isBufferEmpty()) {
 //                    Thread.sleep(0);
 //                }
                 break;
@@ -840,7 +840,7 @@ class Program {
 //            return rsc;
 //            case 2: // SCCI Presence Check
 //                nScci = new NScci.NScci();
-//                iCount = nScci.NSoundInterfaceManager_.getInterfaceCount();
+//                iCount = NScci.NSoundInterfaceManager().getInterfaceCount();
 //                if (iCount == 0) {
 //                    nScci.Dispose();
 //                    nScci = null;
@@ -849,8 +849,8 @@ class Program {
 //                    break;
 //                }
 //                for (int i = 0; i < iCount; i++) {
-//                    NSoundInterface iIntfc = nScci.NSoundInterfaceManager_.getInterface(i);
-//                    NSCCI_INTERFACE_INFO iInfo = nScci.NSoundInterfaceManager_.getInterfaceInfo(i);
+//                    NSoundInterface iIntfc = NScci.NSoundInterfaceManager().getInterface(i);
+//                    NSCCI_INTERFACE_INFO iInfo = NScci.NSoundInterfaceManager().getInterfaceInfo(i);
 //                    int sCount = iIntfc.getSoundChipCount();
 //                    for (int s = 0; s < sCount; s++) {
 //                        NSoundChip sc = iIntfc.getSoundChip(s);
@@ -988,7 +988,8 @@ class Program {
         if (arg == null) return 0;
 
         if (arg.port == 0x03) {
-            return ppz8em.loadPcm(0, (byte) arg.address, (byte) arg.data, (byte[][]) arg.additionalData);
+            ppz8em.writePcm(0, -1, -1, (byte[][]) arg.additionalData);
+            return 0;
         } else {
             return ppz8em.write(0, arg.port, arg.address, arg.data);
         }
@@ -998,7 +999,8 @@ class Program {
         if (arg == null) return 0;
 
         if (arg.port == 0x05) {
-            return ppsdrv.load(0, (byte[]) arg.additionalData);
+            ppsdrv.writePcm(0, (byte[]) arg.additionalData, -1, -1);
+            return 0;
         } else {
             return ppsdrv.write(0, arg.port, arg.address, arg.data);
         }
@@ -1030,7 +1032,8 @@ class Program {
         if (arg == null) return 0;
 
         if (arg.port == 0x00) {
-            return p86em.loadPcm(0, (byte) arg.address, (byte) arg.data, (byte[]) arg.additionalData);
+            p86em.writePcm(0, (byte[]) arg.additionalData, (byte) arg.data, (byte) arg.address);
+            return 0;
         } else {
             return p86em.write(0, arg.port, arg.address, arg.data);
         }

@@ -13,11 +13,11 @@ public class MmlSeg {
     //	Work Area
      */
     public String warning_mes = "Warning ";
-    public String not_ff_mes = ": 音色ファイル名が指定されていません．";
-    public String ff_readerr_mes = ": 音色ファイルが読み込めません．";
-    public String not_pmd_mes = ": ＰＭＤが常駐していません．";
-    public String loop_err_mes = " : ループ終了記号 ] が足りません。";
-    public String mcopt_err_mes = ": 環境変数 MCOPT の記述に誤りがあります。";
+    public String not_ff_mes = ": The tone file name is not specified.";
+    public String ff_readerr_mes = ": Cannot load tone file.";
+    public String not_pmd_mes = ": PMD is not resident.";
+    public String loop_err_mes = " : The loop termination symbol ] is missing.";
+    public String mcopt_err_mes = ": The environment variable MCOPT is incorrectly written.";
 
 //#if efc
 //		public String usames = "Usage:  EFC [/option] filename[.EML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
@@ -66,7 +66,7 @@ public class MmlSeg {
 //            + "        /O  Not Put Title Messages after Play" + Mc.cr + Mc.lf
 //            + "        /C  Calculate & Put Total Length of Parts" + Mc.cr + Mc.lf
 //            + Mc.eof;
-//    public String titmes = " .MML file Compiler & Player (MC.EXE評価版)"
+//    public String titmes = " .MML file Compiler & Player (MC.EXE evaluation version)"
 //            + " ver " + Mc.ver + Mc.cr + Mc.lf
 //            + "		Programmed by M.Kajihara(KAJA) " + Mc.date
 //            + Mc.cr + Mc.lf
@@ -78,7 +78,7 @@ public class MmlSeg {
     public String finmes = "Compile Completed.";
     public String mes_crlf = "" + Mc.cr + Mc.lf + Mc.eof;
 
-    public String mes_title = Mc.cr + Mc.lf + "演奏を開始します。" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
+    public String mes_title = Mc.cr + Mc.lf + " Start playing." + Mc.cr + Mc.lf + Mc.cr + Mc.lf
             + "Title    : " + Mc.eof;
     public String mes_composer = "Composer : " + Mc.eof;
     public String mes_arranger = "Arranger : " + Mc.eof;
@@ -174,9 +174,9 @@ public class MmlSeg {
 
 		public int pcm_vol_ext = 0; // b
 
-		//ＰＳＧ音色のパターン
+		// PSG tone patterns
 		public int[][] psgenvdat = {
-			{  0, 0,0,0 } // @0 ヒョウジュン
+			{  0, 0,0,0 } // @0 Standard
 			,{ 2,255,0,1 } // @1 Synth 1
 			,{ 2,254,0,1 } // @2 Synth 2
 			,{ 2,254,0,8 } // @3 Synth 3
@@ -213,12 +213,12 @@ public class MmlSeg {
     public int kpart_maxprg = 0; // b
     public int lastprg = 0; // w
 
-    public int prsok = 0; // b 直前のbyte
-    // bit 1 ・・・ 音長
-    // bit 2 ・・・ 加工
-    // bit 3 ・・・ +タイ
-    // bit 4 ・・・ ポルタ
-    // bit 7 ・・・ リズム
+    public int prsok = 0; // b Previous byte
+    // bit 1 ・・・ Duration
+    // bit 2 ・・・ processing
+    // bit 3 ・・・ +tie
+    // bit 4 ・・・ Portamento
+    // bit 7 ・・・ rhythm
 
     public int prg_flg = 0; // b
     public int ff_flg = 0; // b
@@ -309,18 +309,18 @@ public class MmlSeg {
     public byte[] loptbl = new byte[32 * 2]; // loopnest * 2];
     public byte[] lextbl = new byte[32 * 2]; // loopnest * 2];
 
-    //分散和音ワーク
-    public int bunsan_start; // w 開始オフセット
-    public byte bunsan_count; // b 音符数
-    public byte[] bunsan_work = new byte[16]; // 音階x16
-    public byte bunsan_length; // b 全体の長さ
-    public byte bunsan_1cnt; // b 一音符の長さ
-    public byte bunsan_tieflag; // b タイフラグ
-    public byte bunsan_1loop; // b 一ループの長さ
+    // Broken Chord Work
+    public int bunsan_start; // w Start Offset
+    public byte bunsan_count; // b Number of notes
+    public byte[] bunsan_work = new byte[16]; // Scale x16
+    public byte bunsan_length; // b Overall length
+    public byte bunsan_1cnt; // b The duration of one note
+    public byte bunsan_tieflag; // b Tie Flag
+    public byte bunsan_1loop; // b Length of one loop
     public byte bunsan_gate; // b Gate
-    public byte bunsan_vol; // b 音量±
+    public byte bunsan_vol; // b Volume ±
 
-    //prgbuf_start label   byte //構造体かな?
+    //prgbuf_start label   byte // A structure maybe?
 
     public int prgbuf_length = 26;
     public byte newprg_num; // b
@@ -332,7 +332,7 @@ public class MmlSeg {
     public byte[] prg_num = new byte[256]; // b
 
     public String mml_filename; // b
-    public String mml_filename2 = ""; // include用
+    public String mml_filename2 = ""; // For include
     public int ppzfile_adr; // w
     public int ppsfile_adr; // w
     public int pcmfile_adr; // w

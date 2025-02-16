@@ -25,27 +25,27 @@ public class Pc98 {
             return 0;
         } else if (v == 0xa468) {
             return 0;
-        } else if (v == 0x088) { // FM音源?
+        } else if (v == 0x088) { // FM sound source?
             return 0;
-        } else if (v == 0x08a) { // FM音源?
+        } else if (v == 0x08a) { // FM sound source?
             return 0;
-        } else if (v == 0x188) { // FM音源のステータスフラグ読み込み
+        } else if (v == 0x188) { // Read FM sound source status flag
             return 0;
-        } else if (v == 0x18a) { // FM音源のデータ読み込み
+        } else if (v == 0x18a) { // FM sound data loading
             if (fm1_reg < 0x10) {
                 return psgDat[fm1_reg];
             }
             return 0;
-        } else if (v == 0x18c) { // FM音源のステータスフラグ読み込み(拡張)
+        } else if (v == 0x18c) { // Read FM sound source status flag(extension)
             return 0;
-        } else if (v == 0x18e) { // FM音源のデータ読み込み(拡張)
+        } else if (v == 0x18e) { // FM sound data loading(extension)
             return 0;
         }
 
         throw new UnsupportedOperationException(Integer.toHexString(v));
     }
 
-    public void OutPort(short dx, byte al) {
+    public void outPort(short dx, byte al) {
         if (dx == 0x02) {
 
         } else if (dx == 0x188) {
@@ -72,7 +72,7 @@ public class Pc98 {
     }
 
     public boolean GetGraphKey() {
-        //TODO: 未実装
+        // TODO Not implemented
         return false;
     }
 }

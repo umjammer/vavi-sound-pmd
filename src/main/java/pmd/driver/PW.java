@@ -40,7 +40,7 @@ public class PW {
         return nowLoopCounter;
     }
 
-    // DotNET独自
+    // DotNET-specific
     MmlDatum[] md;
 
     public MmlDatum[] getMd() {
@@ -86,34 +86,35 @@ public class PW {
 
     public static final String _myname = "PMD     COM";
 
-    public int va = 0; // １の時ＶＡMSDOS用
-    public int board2 = 0; // １の時ボード２/音美ちゃん有り
-    public int adpcm = 0; // １の時ADPCM使用
-    public int ademu = 0; // １の時ADPCM Emulate
-    public int pcm = 0; // １の時PCM使用
-    public int ppz = 0; // １の時PPZ8使用
-    public int sync = 0; // １の時MIDISYNC使用
-    public int vsync = 0; // １の時VSyncを止める
+    public int va = 0; // when 1 for VA-MSDOS
+    public int board2 = 0; // when 1 for board2, 2: with Otomi-chan
+    public int adpcm = 0; // when 1 use adpcm
+    public int ademu = 0; // when 1 emulate ADPCM
+    public int pcm = 0; // when 1 use PCM
+    public int ppz = 0; // when 1 use PPZ8
+    public int sync = 0; // when 1 use MIDISYNC
+    public int vsync = 0; // when 1 stop VSync
     public static final String resmes = "PMD ver." + ver;
-    public int fmvd_init = 16; // ９８は８８よりもFM音源を小さく
+    public int fmvd_init = 16; // The 98 has a smaller FM sound source than the 88.
 
-    public static final int pmdvector = 0x60; // PMD用の割り込みベクトル
-    public static final int ppsdrv = 0x64; // ppsdrvの割り込みベクトル
-    public static final int ppz_vec = 0x7f; // ppz8の割り込みベクトル
+    public static final int pmdvector = 0x60; // Interrupt Vector for PMD
+    public static final int ppsdrv = 0x64; // ppsdrv interrupt vector
+    public static final int ppz_vec = 0x7f; // Interrupt vectors for ppz8
 
     //
-    // 定数
+    // constant
     //
-    public int ms_cmd = 0x000; // 8259 マスタポート
-    public int ms_msk = 0x002; // 8259 マスタ／マスク
-    public int sl_cmd = 0x008; // 8259 スレーブポート
-    public int sl_msk = 0x00a; // 8259 スレーブ／マスク
+    public int ms_cmd = 0x000; // 8259 Master Port
+    public int ms_msk = 0x002; // 8259 Master/Mask
+    public int sl_cmd = 0x008; // 8259 Slave Port
+    public int sl_msk = 0x00a; // 8259 Slave/Mask
 
-    /**
-     * Program Start
-     */
+    //
+    // Program Start
+    //
+
     //int60_head: jmp short int60_main
-    //db 'PMD' ;+2  常駐チェック用
+    //db 'PMD' ;+2  For resident check
     //db  vers ;+5
     //db verc;+6
     public int int60ofs;// ? ;+7
@@ -147,211 +148,211 @@ public class PW {
     // WORK AREA
     //
 
-    public short fm_port1; // w FM音源 I/O port Work(1)
-    public short fm_port2; // w FM音源 I/O port Work(2)
-    public short ds_push; // w INT60用 ds push
-    public short dx_push; // w INT60用 dx push
-    public byte ah_push; // b INT60用 ah push
-    public byte al_push; // b INT60用 al push
-    public byte partb; // b 処理中パート番号
-    public byte tieflag; // b &のフラグ
-    public byte volpush_flag; // b 次の１音音量down用のflag
-    public byte rhydmy; // b R part ダミー演奏データ
-    public byte fmsel; // b FM 表か裏か flag
-    public byte[] fmKeyOnDataTbl = new byte[6]; // KUMA: 以下６つのパラメータの実体
+    public short fm_port1; // w FM Sound Source I/O port Work(1)
+    public short fm_port2; // w FM Sound Source I/O port Work(2)
+    public short ds_push; // w For INT60 ds push
+    public short dx_push; // w For INT60 dx push
+    public byte ah_push; // b For INT60 ah push
+    public byte al_push; // b For INT60 al push
+    public byte partb; // b Processing Part Number
+    public byte tieflag; // b & flag
+    public byte volpush_flag; // b Flag for down the volume of the next sound
+    public byte rhydmy; // b R part dummy performance data
+    public byte fmsel; // b FM Heads or tails flag
+    public byte[] fmKeyOnDataTbl = new byte[6]; // KUMA: The following six parameters
     //public int[] omote_key = { 0, 0, 0 };
-    public byte omote_key1Ptr = 0; // b FM keyondata表1
-    public byte omote_key2Ptr = 1; // b  FM keyondata表2
-    public byte omote_key3Ptr = 2; // b FM keyondata表3
+    public byte omote_key1Ptr = 0; // b FM keyondata Table 1
+    public byte omote_key2Ptr = 1; // b  FM keyondata Table 2
+    public byte omote_key3Ptr = 2; // b FM keyondata Table 3
     //public int[] ura_key = { 0, 0, 0 };
-    public byte ura_key1Ptr = 3; // b FM keyondata裏1
-    public byte ura_key2Ptr = 4; // b FM keyondata裏2
-    public byte ura_key3Ptr = 5; // b FM keyondata裏3
+    public byte ura_key1Ptr = 3; // b FM keyondata tails 1
+    public byte ura_key2Ptr = 4; // b FM keyondata tails 2
+    public byte ura_key3Ptr = 5; // b FM keyondata tails 3
     public byte loop_work; // b Loop Work
     public byte ppsdrv_flag; // b ppsdrv flag
-    public short prgdat_adr2; // w 曲データ中音色データ先頭番地(効果音用)
-    public short pcmrepeat1; // w PCMのリピートアドレス1
-    public short pcmrepeat2; // w PCMのリピートアドレス2
-    public short pcmrelease; // w PCMのRelease開始アドレス
-    public byte lastTimerAtime; // b 一個前の割り込み時のTimerATime値
-    public byte music_flag; // b B0:次でMSTART 1:次でMSTOP のFlag
-    public byte slotdetune_flag; // b FM3 Slot Detuneを使っているか
-    public byte slot3_flag; // b FM3 Slot毎 要効果音モードフラグ
-    public short eoi_adr; // w EOIをsendするI/Oアドレス
-    public byte eoi_data; // b EOI用のデータ
-    public short mask_adr; // w MaskをするI/Oアドレス
-    public byte mask_data; // b Mask用のデータ(OrでMask)
-    public byte mask_data2; // b Mask用のデータ(AndでMask解除)
-    public short ss_push; // w FMint中 SSのpush
-    public short sp_push; // w FMint中 SPのpush
-    public byte fm3_alg_fb; // b FM3chの最後に定義した音色のalg/fb
-    public byte af_check; // b FM3chのalg/fbを設定するかしないかflag
-    public byte ongen; // b 音源 0=無し/2203 1=2608
-    public byte lfo_switch; // b 局所LFOスイッチ
+    public short prgdat_adr2; // w First address of tone data in song data (for sound effects)
+    public short pcmrepeat1; // w PCM repeat address 1
+    public short pcmrepeat2; // w PCM repeat address 2
+    public short pcmrelease; // w PCM Release start address
+    public byte lastTimerAtime; // b TimerATime value at the time of the previous interrupt
+    public byte music_flag; // b B0: Next MSTART 1: Next MSTOP Flag
+    public byte slotdetune_flag; // b Are you using FM3 Slot Detune?
+    public byte slot3_flag; // b FM3 Slot Sound Effect Mode Flag
+    public short eoi_adr; // w I/O address to send EOI to
+    public byte eoi_data; // b Data for EOI
+    public short mask_adr; // w I/O address to be masked
+    public byte mask_data; // b Data for Masking (Mask with Or)
+    public byte mask_data2; // b Data for Mask (remove Mask with And)
+    public short ss_push; // w Push SS during FMint
+    public short sp_push; // w Push SP during FMint
+    public byte fm3_alg_fb; // b Alg/fb of the last defined tone of FM3ch
+    public byte af_check; // b Flag to set alg/fb for FM3ch
+    public byte ongen; // b Sound source 0=none/2203 1=2608
+    public byte lfo_switch; // b Local LFO Switch
 
-    public static final byte[] rhydat = { // ドラムス用リズムデータ
+    public static final byte[] rhydat = { // Drum rhythm data
             //PT PAN/VOLUME  KEYON
-            0x18, (byte) 0b1101_1111, 0b0000_0001, // バス
-            0x19, (byte) 0b1101_1111, 0b0000_0010, // スネア
-            0x1c, 0b0101_1111, 0b0001_0000, // タム[LOW]
-            0x1c, (byte) 0b1101_1111, 0b0001_0000, // タム[MID]
-            0x1c, (byte) 0b1001_1111, 0b0001_0000, // タム[HIGH]
-            0x1d, (byte) 0b1101_0011, 0b0010_0000, // リム
-            0x19, (byte) 0b1101_1111, 0b0000_0010, // クラップ
-            0x1b, (byte) 0b1001_1100, (byte) 0b1000_1000, // Cハイハット
-            0x1a, (byte) 0b1001_1101, 0b0000_0100, // Oハイハット
-            0x1a, (byte) 0b1101_1111, 0b0000_0100, // シンバル
-            0x1a, 0b0101_1110, 0b0000_0100, // RIDEシンバル
+            0x18, (byte) 0b1101_1111, 0b0000_0001, // bass
+            0x19, (byte) 0b1101_1111, 0b0000_0010, // Snare
+            0x1c, 0b0101_1111, 0b0001_0000, // Tom [LOW]
+            0x1c, (byte) 0b1101_1111, 0b0001_0000, // Tom [MID]
+            0x1c, (byte) 0b1001_1111, 0b0001_0000, // Tom [HIGH]
+            0x1d, (byte) 0b1101_0011, 0b0010_0000, // rim
+            0x19, (byte) 0b1101_1111, 0b0000_0010, // Clap
+            0x1b, (byte) 0b1001_1100, (byte) 0b1000_1000, // C Hi-Hat
+            0x1a, (byte) 0b1001_1101, 0b0000_0100, // O Hi-Hat
+            0x1a, (byte) 0b1101_1111, 0b0000_0100, // cymbal
+            0x1a, 0b0101_1110, 0b0000_0100, // RIDE Cymbals
     };
 
-    //PMD.ASM 8030-
+    // PMD.ASM 8030-
     public byte open_work = 0; // label byte
-    public int mmlbuf = 0; // Musicdataのaddress+1
-    public int tondat = 0; // Voicedataのaddress
-    public int efcdat = -1; // FM Effecdataのaddress
-    public int fm1_port1 = 0; // FM音源 I/O port(表1)
-    public int fm1_port2 = 0; // FM音源 I/O port(表2)
-    public int fm2_port1 = 0; // FM音源 I/O port(裏1)
-    public int fm2_port2 = 0; // FM音源 I/O port(裏2)
-    public int fmint_ofs = 0; // FM割り込みフックアドレス offset
-    public int fmint_seg = 0; // FM割り込みフックアドレス address
-    public int efcint_ofs = 0; // 効果音割り込みフックアドレス offset
-    public int efcint_seg = 0; // 効果音割り込みフックアドレス address
-    public int prgdat_adr = 0; // 曲データ中音色データ先頭番地
-    public int radtbl = 0; // R part offset table 先頭番地
-    public int rhyadr = 0; // R part 演奏中番地
-    public byte rhythmmask = 0; // Rhythm音源のマスク x8c/10hのbitに対応
-    public byte board = 0; // FM音源ボードあり／なしflag
+    public int mmlbuf = 0; // Musicdata's address+1
+    public int tondat = 0; // Voicedata's address
+    public int efcdat = -1; // FM Effect data address
+    public int fm1_port1 = 0; // FM sound source I/O port (Table 1)
+    public int fm1_port2 = 0; // FM sound source I/O port (Table 2)
+    public int fm2_port1 = 0; // FM sound source I/O port (Trail 1)
+    public int fm2_port2 = 0; // FM sound source I/O port (Trail 2)
+    public int fmint_ofs = 0; // FM interrupt hook address offset
+    public int fmint_seg = 0; // FM interrupt hook address
+    public int efcint_ofs = 0; // Sound effect interrupt hook address offset
+    public int efcint_seg = 0; // Sound effect interrupt hook address
+    public int prgdat_adr = 0; // First address of tone data in song data
+    public int radtbl = 0; // R part offset table start address
+    public int rhyadr = 0; // R Part playing address
+    public byte rhythmmask = 0; // Rhythm sound source mask x8c/10h bit support
+    public byte board = 0; // FM sound board available/not available flag
     public byte key_check = 0; // ESC/GRPH key Check flag
-    public byte fm_voldown = 0; // FM voldown 数値
-    public byte ssg_voldown = 0; // PSG voldown 数値
-    public byte pcm_voldown = 0; // PCM voldown 数値
-    public byte rhythm_voldown = 0; // RHYTHM voldown 数値
-    public byte prg_flg = 0; // 曲データに音色が含まれているかflag
+    public byte fm_voldown = 0; // FM voldown number
+    public byte ssg_voldown = 0; // PSG voldown number
+    public byte pcm_voldown = 0; // PCM voldown number
+    public byte rhythm_voldown = 0; // RHYTHM voldown number
+    public byte prg_flg = 0; // Does the song data contain a tone?
     public byte x68_flg = 0; // OPM flag
     public byte status = 0; // status1
     public byte status2 = 0; // status2
     public byte tempo_d = 0; // tempo(TIMER-B)
-    public byte fadeout_speed = 0; // Fadeout速度
-    public byte fadeout_volume = 0; // Fadeout音量
-    public byte tempo_d_push = 0; // tempo(TIMER-B) / 保存用
-    public byte syousetu_lng = 0; // 小節の長さ
-    public byte opncount = 0; // 最短音符カウンタ
-    public byte TimerAtime = 0; // TimerAカウンタ
-    public byte effflag = 0; // PSG効果音発声on/off flag
-    public byte psnoi = 0; // PSG noise周波数
-    public byte psnoi_last = 0; // PSG noise周波数(最後に定義した数値)
-    public byte fm_effec_num = 0; // 発声中のFM効果音番号
-    public byte fm_effec_flag = 0; // FM効果音発声中flag(1)
-    public byte disint = 0; // FM割り込み中に割り込みを禁止するかflag
-    public byte pcmflag = 0; // PCM効果音発声中flag
-    public int pcmstart = 0; // PCM音色のstart値
-    public int pcmstop = 0; // PCM音色のstop値
-    public byte pcm_effec_num = 0; // 発声中のPCM効果音番号
-    public int _pcmstart = 0; // PCM効果音のstart値
-    public int _pcmstop = 0; // PCM効果音のstop値
-    public int _voice_delta_n = 0; // PCM効果音のdelta_n値
-    public byte _pcmpan = 0; // PCM効果音のpan
-    public byte _pcm_volume = 0; // PCM効果音のvolume
-    public byte rshot_dat = 0; // リズム音源 shot flag
-    public byte[] rdat = new byte[6]; // リズム音源 音量/パンデータ
-    public byte rhyvol = 0b0011_1100; // リズムトータルレベル
-    public int kshot_dat = 0; // ＳＳＧリズム shot flag
-    public int ssgefcdat = 0; // efftbl  PSG Effecdataのaddress
-    public int ssgefclen = 0; // efftblend-efftbl PSG Effecdataの長さ
+    public byte fadeout_speed = 0; // Fadeout Speed
+    public byte fadeout_volume = 0; // Fadeout Volume
+    public byte tempo_d_push = 0; // tempo(TIMER-B) / For storage
+    public byte syousetu_lng = 0; // Measure length
+    public byte opncount = 0; // Shortest note counter
+    public byte TimerAtime = 0; // TimerA Counter
+    public byte effflag = 0; // PSG sound effect on/off flag
+    public byte psnoi = 0; // PSG noise frequency
+    public byte psnoi_last = 0; // PSG noise frequency (last defined value)
+    public byte fm_effec_num = 0; // FM sound effect number being played
+    public byte fm_effec_flag = 0; // FM sound effect being played flag(1)
+    public byte disint = 0; // Whether to disable interrupts during FM interrupt
+    public byte pcmflag = 0; // PCM sound effect being played flag
+    public int pcmstart = 0; // PCM tone start value
+    public int pcmstop = 0; // PCM tone stop value
+    public byte pcm_effec_num = 0; // PCM sound effect number being played
+    public int _pcmstart = 0; // PCM sound effect start value
+    public int _pcmstop = 0; // PCM sound effect stop value
+    public int _voice_delta_n = 0; // PCM sound effect delta_n value
+    public byte _pcmpan = 0; // PCM sound effect pan
+    public byte _pcm_volume = 0; // PCM sound effect volume
+    public byte rshot_dat = 0; // Rhythm sound source shot flag
+    public byte[] rdat = new byte[6]; // Rhythm sound source Volume/pan data
+    public byte rhyvol = 0b0011_1100; // Rhythm Total Level
+    public int kshot_dat = 0; // SSG Rhythm Shot Flag
+    public int ssgefcdat = 0; // efftbl  PSG Effect data address
+    public int ssgefclen = 0; // efftblend - Length of efftbl PSG Effecdata
     public byte play_flag = 0; // play flag
     public byte pause_flag = 0; // pause flag
-    public byte fade_stop_flag = 0; // Fadeout後 MSTOPするかどうかのフラグ
-    public byte kp_rhythm_flag = 0; // K/RpartでRhythm音源を鳴らすかflag
-    public byte TimerBflag = 0; // TimerB割り込み中？フラグ
-    public byte TimerAflag = 0; // TimerA割り込み中？フラグ
-    public byte int60flag = 0; // INT60H割り込み中？フラグ
-    public byte int60_result = 0; // INT60Hの実行ErrorFlag
-    public byte pcm_gs_flag = 0; // ADPCM使用 許可フラグ(0で許可)
+    public byte fade_stop_flag = 0; // Flag for whether to MSTOP after Fadeout
+    public byte kp_rhythm_flag = 0; // Flag to play Rhythm sound source in K/Rpart
+    public byte TimerBflag = 0; // TimerB interrupt in progress? Flag
+    public byte TimerAflag = 0; // TimerA interrupt in progress? Flag
+    public byte int60flag = 0; // INT60H interrupt in progress? Flag
+    public byte int60_result = 0; // INT60H execution ErrorFlag
+    public byte pcm_gs_flag = 0; // ADPCM use enable flag (0 for enable)
     public byte esc_sp_key = 0; // ESC +?? Key Code
     public byte grph_sp_key = 0; // GRPH+?? Key Code
-    public byte rescut_cant = 0; // 常駐解除禁止フラグ
-    public short slot_detune1 = 0; // FM3 Slot Detune値 slot1
-    public short slot_detune2 = 0; // FM3 Slot Detune値 slot2
-    public short slot_detune3 = 0; // FM3 Slot Detune値 slot3
-    public short slot_detune4 = 0; // FM3 Slot Detune値 slot4
-    public int wait_clock = 0; // FM ADDRESS-DATA間 Loop $の回数
-    public int wait1_clock = 0; // loop $ １個の速度
-    public byte ff_tempo = 0; // 早送り時のTimerB値
-    public byte pcm_access = 0; // PCMセット中は 1
-    public byte TimerB_speed = 0; // TimerBの現在値(=ff_tempoならff中)
-    public byte fadeout_flag = 0; // 内部からfoutを呼び出した時1
-    public byte adpcm_wait = 0; // ADPCM定義の速度
-    public byte revpan = 0; // PCM86逆走flag
-    public byte pcm86_vol = 0; // PCM86の音量をSPBに合わせるか?
-    public short syousetu = 0; // 小節カウンタ
-    public byte int5_flag = 0; // FM音源割り込み中？フラグ
-    public byte port22h = 0; // OPN-PORT 22H に最後に出力した値(hlfo)
-    public byte tempo_48 = 0; // 現在のテンポ(clock= 48 tの値)
-    public byte tempo_48_push = 0; // 現在のテンポ(同上/保存用)
+    public byte rescut_cant = 0; // Resident release prohibition flag
+    public short slot_detune1 = 0; // FM3 Slot Detune value slot1
+    public short slot_detune2 = 0; // FM3 Slot Detune value slot2
+    public short slot_detune3 = 0; // FM3 Slot Detune value slot3
+    public short slot_detune4 = 0; // FM3 Slot Detune value slot4
+    public int wait_clock = 0; // FM ADDRESS-DATA Loop $ count
+    public int wait1_clock = 0; // loop $ 1 speed
+    public byte ff_tempo = 0; // TimerB value during fast forward
+    public byte pcm_access = 0; // 1 during PCM set
+    public byte TimerB_speed = 0; // Current value of TimerB (= ff_tempo if in ff)
+    public byte fadeout_flag = 0; // When fout is called from inside 1
+    public byte adpcm_wait = 0; // ADPCM defined speed
+    public byte revpan = 0; // PCM86 reverse flag
+    public byte pcm86_vol = 0; // Should I adjust the volume of the PCM86 to match the SPB?
+    public short syousetu = 0; // Bar Counter
+    public byte int5_flag = 0; // FM sound source interrupt? Flag
+    public byte port22h = 0; // Last output value (hlfo) to OPN-PORT 22H
+    public byte tempo_48 = 0; // Current tempo (clock= 48 t value)
+    public byte tempo_48_push = 0; // Current tempo (same as above/for saving)
     public byte rew_sp_key = 0; // GRPH+?? (rew) Key Code
-    public byte intfook_flag = 0; // int_fookのflag B0:TB B1:TA
-    public byte skip_flag = 0; // normal:0 前方SKIP中:1 後方SKIP中:2
-    public byte _fm_voldown = 0; // FM voldown 数値(保存用)
-    public byte _ssg_voldown = 0; // PSG voldown 数値(保存用)
-    public byte _pcm_voldown = 0; // PCM voldown 数値(保存用)
-    public byte _rhythm_voldown = 0; // RHYTHM voldown 数値(保存用)
-    public byte _pcm86_vol = 0; // PCM86の音量をSPBに合わせるか? (保存用)
-    public byte mstart_flag = 0; // mstartする時に１にするだけのflag
-    public byte[] mus_filename = new byte[13]; // 曲のFILE名バッファ
-    public byte mmldat_lng = 0; // 曲データバッファサイズ(KB)
-    public byte voicedat_lng = 0; // 音色データバッファサイズ(KB)
-    public byte effecdat_lng = 0; // 効果音データバッファサイズ(KB)
-    public int[] rshot = {0, 0, 0, 0, 0, 0}; // リズム音源 shot inc flags
-    //public byte rshot_bd = 0; // リズム音源 shot inc flag(BD)
-    //public byte rshot_sd = 0; // リズム音源 shot inc flag(SD)
-    //public byte rshot_sym = 0; // リズム音源 shot inc flag(CYM)
-    //public byte rshot_hh = 0; // リズム音源 shot inc flag(HH)
-    //public byte rshot_tom = 0; // リズム音源 shot inc flag(TOM)
-    //public byte rshot_rim = 0; // リズム音源 shot inc flag(RIM)
-    public int[] rdump = {0, 0, 0, 0, 0, 0}; // リズム音源 dump inc flags
-    //public byte rdump_bd = 0; // リズム音源 dump inc flag(BD)
-    //public byte rdump_sd = 0; // リズム音源 dump inc flag(SD)
-    //public byte rdump_sym = 0; // リズム音源 dump inc flag(CYM)
-    //public byte rdump_hh = 0; // リズム音源 dump inc flag(HH)
-    //public byte rdump_tom = 0; // リズム音源 dump inc flag(TOM)
-    //public byte rdump_rim = 0; // リズム音源 dump inc flag(RIM)
+    public byte intfook_flag = 0; // int_fook flag B0:TB B1:TA
+    public byte skip_flag = 0; // normal:0 During forward SKIP:1 During backward SKIP:2
+    public byte _fm_voldown = 0; // FM voldown Number (for storage)
+    public byte _ssg_voldown = 0; // PSG voldown Number (for storage)
+    public byte _pcm_voldown = 0; // PCM voldown Number (for storage)
+    public byte _rhythm_voldown = 0; // RHYTHM voldown Number (for storage)
+    public byte _pcm86_vol = 0; // Should I adjust the volume of the PCM86 to match the SPB? (For storage)
+    public byte mstart_flag = 0; // A flag that is set to 1 when starting mstart
+    public byte[] mus_filename = new byte[13]; // Song FILE name buffer
+    public byte mmldat_lng = 0; // Song data buffer size (KB)
+    public byte voicedat_lng = 0; // Tone data buffer size (KB)
+    public byte effecdat_lng = 0; // Sound effect data buffer size (KB)
+    public int[] rshot = {0, 0, 0, 0, 0, 0}; // Rhythm Sound Source shot inc flags
+    //public byte rshot_bd = 0; // Rhythm Sound Source shot inc flag(BD)
+    //public byte rshot_sd = 0; // Rhythm Sound Source shot inc flag(SD)
+    //public byte rshot_sym = 0; // Rhythm Sound Source shot inc flag(CYM)
+    //public byte rshot_hh = 0; // Rhythm Sound Source shot inc flag(HH)
+    //public byte rshot_tom = 0; // Rhythm Sound Source shot inc flag(TOM)
+    //public byte rshot_rim = 0; // Rhythm Sound Source shot inc flag(RIM)
+    public int[] rdump = {0, 0, 0, 0, 0, 0}; // Rhythm Sound Source dump inc flags
+    //public byte rdump_bd = 0; // Rhythm Sound Source dump inc flag(BD)
+    //public byte rdump_sd = 0; // Rhythm Sound Source dump inc flag(SD)
+    //public byte rdump_sym = 0; // Rhythm Sound Source dump inc flag(CYM)
+    //public byte rdump_hh = 0; // Rhythm Sound Source dump inc flag(HH)
+    //public byte rdump_tom = 0; // Rhythm Sound Source dump inc flag(TOM)
+    //public byte rdump_rim = 0; // Rhythm Sound Source dump inc flag(RIM)
     public byte ch3mode = 0; // ch3 Mode
-    public byte ch3mode_push = 0; // ch3 Mode(効果音発音時用push領域)
-    public byte ppz_voldown = 0; // PPZ8 voldown 数値
-    public byte _ppz_voldown = 0; // PPZ8 voldown 数値(保存用)
-    public int ppz_call_ofs = 0; // PPZ8call用 far call address
-    public int ppz_call_seg = 0; // seg値はPPZ8常駐checkを兼ねる,0で非常駐
-    public byte p86_freq = 8; // PMD86のPCM再生周波数
+    public byte ch3mode_push = 0; // ch3 Mode(Push area for sound effects)
+    public byte ppz_voldown = 0; // PPZ8 voldown value
+    public byte _ppz_voldown = 0; // PPZ8 voldown Number (for storage)
+    public int ppz_call_ofs = 0; // For PPZ8call far call address
+    public int ppz_call_seg = 0; // The seg value also serves as a PPZ8 resident check, 0 for non-resident
+    public byte p86_freq = 8; // PMD86 PCM playback frequency
     //if pcm* board2
     public int p86_freqtable = 0; // offset pcm_tune_data
     //else
-    //public int p86_freqtable = 0; // PMD86のPCM再生周波数table位置
+    //public int p86_freqtable = 0; // PMD86 PCM playback frequency table
     //endif
-    public byte adpcm_emulate = 0; // PMDPPZEでADPCMエミュレート中か
+    public byte adpcm_emulate = 0; // Are you emulating ADPCM with PMDPPZE?
 
 
     public MmlDatum[] rd = null;
     public MmlDatum[] rdDmy = new MmlDatum[] {new MmlDatum(0xff)};
 
     //8153-8247
-    // 演奏中のデータエリア
+    // Playing Data Area
 
     public static class partWork { //qq  struc
 
-        public short address; // w? ; 2 エンソウチュウ ノ アドレス
-        public short partloop; // w? ; 2 エンソウ ガ オワッタトキ ノ モドリサキ
-        public byte leng; // b? ; 1 ノコリ LENGTH
-        public byte qdat; // b? ; 1 gatetime(q/Q値を計算した値)
-        public short fnum; // w? ; 2 エンソウチュウ ノ BLOCK/FNUM
-        public short detune; // w? ; 2 デチューン
+        public short address; // w? ; 2 Address currently playing
+        public short partloop; // w? ; 2 Destination to return to when playback ends
+        public byte leng; // b? ; 1 Remaining LENGTH
+        public byte qdat; // b? ; 1 gatetime(Calculated q/Q value)
+        public short fnum; // w? ; 2 BLOCK / FNUM when playing
+        public short detune; // w? ; 2 Detune
         //+10
         public short lfodat; // w? ; 2 LFO DATA
-        public short porta_num; // w? ; 2 ポルタメントの加減値（全体）
-        public short porta_num2; // w? ; 2 ポルタメントの加減値（一回）
-        public short porta_num3; // w? ; 2 ポルタメントの加減値（余り）
+        public short porta_num; // w? ; 2 Portamento Adjustment Value (Overall)
+        public short porta_num2; // w? ; 2 Portamento Adjustment (Single)
+        public short porta_num3; // w? ; 2 Portamento adjustment value (remainder)
         public byte volume; // b? ; 1 VOLUME
-        public byte shift; // b? ; 1 オンカイ シフト ノ アタイ
+        public byte shift; // b? ; 1 Scale shift t value
         //+20
         public byte delay; // b? ; 1 LFO[DELAY]
         public byte speed; // b? ; 1 [SPEED]
@@ -361,48 +362,48 @@ public class PW {
         public byte speed2; // b? ; 1 [SPEED_2]
         public byte step2; // b? ; 1 [STEP_2]
         public byte time2; // b? ; 1 [TIME_2]
-        public byte lfoswi; // b? ; 1 LFOSW.B0/tone B1/vol B2/同期 B3/porta
-        //    ;          B4/tone B5/vol B6/同期
+        public byte lfoswi; // b? ; 1 LFOSW.B0/tone B1/vol B2/Synchronization B3/porta
+        //    ;          B4/tone B5/vol B6/Synchronization
         public byte volpush; // b? ; 1 Volume PUSHarea
         //+30
         public byte mdepth; // b? ; 1 M depth
         public byte mdspd; // b? ; 1 M speed
         public byte mdspd2; // b? ; 1 M speed_2
-        public byte envf; // b? ; 1 PSG ENV. [START_FLAG] / -1でextend
+        public byte envf; // b? ; 1 PSG ENV. [START_FLAG] / -1: extend
         public byte eenv_count; // b? ; 1 ExtendPSGenv/No=0 AR=1 DR=2 SR=3 RR=4
-        public byte eenv_ar; // b? ; 1 /AR /旧pat
-        public byte eenv_dr; // b? ; 1 /DR /旧pv2
-        public byte eenv_sr; // b? ; 1 /SR /旧pr1
-        public byte eenv_rr; // b? ; 1 /RR /旧pr2
+        public byte eenv_ar; // b? ; 1 /AR /old pat
+        public byte eenv_dr; // b? ; 1 /DR /old pv2
+        public byte eenv_sr; // b? ; 1 /SR /old pr1
+        public byte eenv_rr; // b? ; 1 /RR /old pr2
         public byte eenv_sl; // b? ; 1 /SL
         //+40
         public byte eenv_al; // b? ; 1 /AL
-        public byte eenv_arc; // b? ; 1 /ARのカウンタ /旧patb
-        public byte eenv_drc; // b? ; 1 /DRのカウンタ
-        public byte eenv_src; // b? ; 1 /SRのカウンタ /旧pr1b
-        public byte eenv_rrc; // b? ; 1 /RRのカウンタ /旧pr2b
-        public byte eenv_volume; // b? ; 1 /Volume値(0～15)/旧penv
+        public byte eenv_arc; // b? ; 1 /AR counter /Former patb
+        public byte eenv_drc; // b? ; 1 /DR counter
+        public byte eenv_src; // b? ; 1 /SR counter /Former pr1b
+        public byte eenv_rrc; // b? ; 1 /RR counter /Former pr2b
+        public byte eenv_volume; // b? ; 1 /Volume value(0-15)/Former penv
         public byte extendmode; // b? ; 1 B1/Detune B2/LFO B3/Env Normal/Extend
         public byte fmpan; // b? ; 1 FM Panning + AMD + PMD
         public byte psgpat; // b? ; 1 PSG PATTERN[TONE / NOISE / MIX]
-        public byte voicenum; // b? ; 1 音色番号
+        public byte voicenum; // b? ; 1 Tone Number
         //+50
-        public byte loopcheck; // b? ; 1 ループしたら１ 終了したら３
+        public byte loopcheck; // b? ; 1 1 if looped, 3 if finished
         public byte carrier; // b? ; 1 FM Carrier
-        public byte slot1; // b? ; 1 SLOT 1 ノ TL
-        public byte slot3; // b? ; 1 SLOT 3 ノ TL
-        public byte slot2; // b? ; 1 SLOT 2 ノ TL
-        public byte slot4; // b? ; 1 SLOT 4 ノ TL
+        public byte slot1; // b? ; 1 SLOT 1 TL
+        public byte slot3; // b? ; 1 SLOT 3 TL
+        public byte slot2; // b? ; 1 SLOT 2 TL
+        public byte slot4; // b? ; 1 SLOT 4 TL
         public byte slotmask; // b? ; 1 FM slotmask
-        public byte neiromask; // b? ; 1 FM 音色定義用maskdata
-        public byte lfo_wave; // b? ; 1 LFOの波形
-        public byte partmask; // b 1 PartMask b0:通常 b1:効果音 b2:NECPCM用
-        //          ;   b3:none b4:PPZ/ADE用 b5:s0時 b6:m b7:一時
+        public byte neiromask; // b? ; 1 FM Mask data for tone definition
+        public byte lfo_wave; // b? ; 1 LFO Waveform
+        public byte partmask; // b 1 PartMask b0:Normal b1:Sound effect b2:For NECPCM
+        //          ;   b3:none b4:For PPZ/ADE b5:at s0 b6:m b7:temporary
         //+60
-        public byte keyoff_flag; // b? ; 1 KeyoffしたかどうかのFlag
-        public byte volmask; // b? ; 1 音量LFOのマスク
-        public byte qdata; // b? ; 1 qの値
-        public byte qdatb; // b? ; 1 Qの値
+        public byte keyoff_flag; // b? ; 1 Flag indicating whether keyoff has occurred
+        public byte volmask; // b? ;1 Volume LFO Mask
+        public byte qdata; // b? ; 1 q value
+        public byte qdatb; // b? ; 1 Q value
         public byte hldelay; // b? ; 1 HardLFO delay
         public byte hldelay_c; // b? ; 1 HardLFO delay Counter
         public short _lfodat; // w? ; 2 LFO DATA
@@ -417,39 +418,39 @@ public class PW {
         public byte _mdepth; // b? ; 1 M depth
         public byte _mdspd; // b? ; 1 M speed
         public byte _mdspd2; // b? ; 1 M speed_2
-        public byte _lfo_wave; // b? ; 1 LFOの波形
-        public byte _volmask; // b? ; 1 音量LFOのマスク
-        public byte mdc; // b? ; 1 M depth Counter(変動値)
+        public byte _lfo_wave; // b? ; 1 LFO Waveform
+        public byte _volmask; // b? ; 1 Volume LFO Mask
+        public byte mdc; // b? ; 1 M depth Counter(Variation)
         public byte mdc2; // b? ; 1 M depth Counter
-        public byte _mdc; // b? ; 1 M depth Counter(変動値)
+        public byte _mdc; // b? ; 1 M depth Counter(Variation)
         public byte _mdc2; // b? ; 1 M depth Counter
-        public byte onkai; // b 1 演奏中の音階データ(0ffh:rest)
+        public byte onkai; // b 1 Scale data being played(0ffh:rest)
         public byte sdelay; // b?; 1 Slot delay
         public byte sdelay_c; // b? ; 1 Slot delay counter
         public byte sdelay_m; // b? ; 1 Slot delay Mask
-        public byte alg_fb; // b? ; 1 音色のalg/fb
-        public byte keyon_flag; // b 1 新音階/休符データを処理したらinc
-        public byte qdat2; // b? ; 1 q 最低保証値
-        public short fnum2; // w? ; 2 ppz8/pmd86用fnum値上位
-        public byte onkai_def; // b 1 演奏中の音階データ(転調処理前 / ?fh:rest)
-        public byte shift_def; // b? ; 1 マスター転調値
+        public byte alg_fb; // b? ; 1 Tone alg/fb
+        public byte keyon_flag; // b 1 After processing the new scale/rest data, inc
+        public byte qdat2; // b? ; 1 q Minimum guaranteed value
+        public short fnum2; // w? ; 2 Upper fnum value for ppz8/pmd86
+        public byte onkai_def; // b 1 Scale data being played(Before Transposition / ?fh:rest)
+        public byte shift_def; // b? ; 1 Master Transposition Value
         public byte qdat3; // b? ; 1 q Random
 
         public int loopCounter;
 
         public void Clear() {
-            address = 0; // w? ; 2 エンソウチュウ ノ アドレス
-            partloop = 0; // w? ; 2 エンソウ ガ オワッタトキ ノ モドリサキ
-            leng = 0; // b? ; 1 ノコリ LENGTH
-            qdat = 0; // b? ; 1 gatetime(q/Q値を計算した値)
-            fnum = 0; // w? ; 2 エンソウチュウ ノ BLOCK/FNUM
-            detune = 0; // w? ; 2 デチューン
+            address = 0; // w? ; 2 Address currently playing
+            partloop = 0; // w? ; 2 Destination to return to when playback ends
+            leng = 0; // b? ; 1 Remaining LENGTH
+            qdat = 0; // b? ; 1 gatetime(Calculated q/Q value)
+            fnum = 0; // w? ; 2 BLOCK/FNUM when playing
+            detune = 0; // w? ; 2 Detune
             lfodat = 0; // w? ; 2 LFO DATA
-            porta_num = 0; // w? ; 2 ポルタメントの加減値（全体）
-            porta_num2 = 0; // w? ; 2 ポルタメントの加減値（一回）
-            porta_num3 = 0; // w? ; 2 ポルタメントの加減値（余り）
+            porta_num = 0; // w? ; 2 Portamento Adjustment Value (Overall)
+            porta_num2 = 0; // w? ; 2 Portamento Adjustment (single)
+            porta_num3 = 0; // w? ; 2 Portamento adjustment value (remainder)
             volume = 0; // b? ; 1 VOLUME
-            shift = 0; // b? ; 1 オンカイ シフト ノ アタイ
+            shift = 0; // b? ; 1 Scale shift value
             delay = 0; // b? ; 1 LFO[DELAY]
             speed = 0; // b? ; 1 [SPEED]
             step = 0; // b? ; 1 [STEP]
@@ -458,42 +459,42 @@ public class PW {
             speed2 = 0; // b? ; 1 [SPEED_2]
             step2 = 0; // b? ; 1 [STEP_2]
             time2 = 0; // b? ; 1 [TIME_2]
-            lfoswi = 0; // b? ; 1 LFOSW.B0/tone B1/vol B2/同期 B3/porta
+            lfoswi = 0; // b? ; 1 LFOSW.B0/tone B1/vol B2/Synchronization B3/porta
             volpush = 0; // b? ; 1 Volume PUSHarea
             mdepth = 0; // b? ; 1 M depth
             mdspd = 0; // b? ; 1 M speed
             mdspd2 = 0; // b? ; 1 M speed_2
-            envf = 0; // b? ; 1 PSG ENV. [START_FLAG] / -1でextend
+            envf = 0; // b? ; 1 PSG ENV. [START_FLAG] / Extend with -1
             eenv_count = 0; // b? ; 1 ExtendPSGenv/No=0 AR=1 DR=2 SR=3 RR=4
-            eenv_ar = 0; // b? ; 1 /AR /旧pat
-            eenv_dr = 0; // b? ; 1 /DR /旧pv2
-            eenv_sr = 0; // b? ; 1 /SR /旧pr1
-            eenv_rr = 0; // b? ; 1 /RR /旧pr2
+            eenv_ar = 0; // b? ; 1 /AR /Former pat
+            eenv_dr = 0; // b? ; 1 /DR /Former pv2
+            eenv_sr = 0; // b? ; 1 /SR /Former pr1
+            eenv_rr = 0; // b? ; 1 /RR /Former pr2
             eenv_sl = 0; // b? ; 1 /SL
             eenv_al = 0; // b? ; 1 /AL
-            eenv_arc = 0; // b? ; 1 /ARのカウンタ /旧patb
-            eenv_drc = 0; // b? ; 1 /DRのカウンタ
-            eenv_src = 0; // b? ; 1 /SRのカウンタ /旧pr1b
-            eenv_rrc = 0; // b? ; 1 /RRのカウンタ /旧pr2b
-            eenv_volume = 0; // b? ; 1 /Volume値(0～15)/旧penv
+            eenv_arc = 0; // b? ; 1 /AR counter /Former Patb
+            eenv_drc = 0; // b? ; 1 /DR counter
+            eenv_src = 0; // b? ; 1 /SR counter /Former pr1b
+            eenv_rrc = 0; // b? ; 1 /RR counter /Former pr2b
+            eenv_volume = 0; // b? ; 1 /Volume value(0 to 15)/Former penv
             extendmode = 0; // b? ; 1 B1/Detune B2/LFO B3/Env Normal/Extend
             fmpan = 0; // b? ; 1 FM Panning + AMD + PMD
             psgpat = 0; // b? ; 1 PSG PATTERN[TONE / NOISE / MIX]
-            voicenum = 0; // b? ; 1 音色番号
-            loopcheck = 0; // b? ; 1 ループしたら１ 終了したら３
+            voicenum = 0; // b? ; 1 Tone Number
+            loopcheck = 0; // b? ; 1 1 if looped, 3 if finished
             carrier = 0; // b? ; 1 FM Carrier
-            slot1 = 0; // b? ; 1 SLOT 1 ノ TL
-            slot3 = 0; // b? ; 1 SLOT 3 ノ TL
-            slot2 = 0; // b? ; 1 SLOT 2 ノ TL
-            slot4 = 0; // b? ; 1 SLOT 4 ノ TL
+            slot1 = 0; // b? ; 1 SLOT 1 TL
+            slot3 = 0; // b? ; 1 SLOT 3 TL
+            slot2 = 0; // b? ; 1 SLOT 2 TL
+            slot4 = 0; // b? ; 1 SLOT 4 TL
             slotmask = 0; // b? ; 1 FM slotmask
-            neiromask = 0; // b? ; 1 FM 音色定義用maskdata
-            lfo_wave = 0; // b? ; 1 LFOの波形
-            partmask = 0; // b 1 PartMask b0:通常 b1:効果音 b2:NECPCM用
-            keyoff_flag = 0; // b? ; 1 KeyoffしたかどうかのFlag
-            volmask = 0; // b? ; 1 音量LFOのマスク
-            qdata = 0; // b? ; 1 qの値
-            qdatb = 0; // b? ; 1 Qの値
+            neiromask = 0; // b? ; 1 FM tone definition maskdata
+            lfo_wave = 0; // b? ; 1 LFO Waveform
+            partmask = 0; // b 1 PartMask b0: Normal b1: Sound effect b2: For NECPCM
+            keyoff_flag = 0; // b? ; 1 Flag indicating whether keyoff has occurred
+            volmask = 0; // b? ; 1 Volume LFO Mask
+            qdata = 0; // b? ; 1 q value
+            qdatb = 0; // b? ; 1 Q value
             hldelay = 0; // b? ; 1 HardLFO delay
             hldelay_c = 0; // b? ; 1 HardLFO delay Counter
             _lfodat = 0; // w? ; 2 LFO DATA
@@ -508,22 +509,22 @@ public class PW {
             _mdepth = 0; // b? ; 1 M depth
             _mdspd = 0; // b? ; 1 M speed
             _mdspd2 = 0; // b? ; 1 M speed_2
-            _lfo_wave = 0; // b? ; 1 LFOの波形
-            _volmask = 0; // b? ; 1 音量LFOのマスク
-            mdc = 0; // b? ; 1 M depth Counter(変動値)
+            _lfo_wave = 0; // b? ; 1 LFO Waveform
+            _volmask = 0; // b? ; 1 Volume LFO Mask
+            mdc = 0; // b? ; 1 M depth Counter(Variation)
             mdc2 = 0; // b? ; 1 M depth Counter
-            _mdc = 0; // b? ; 1 M depth Counter(変動値)
+            _mdc = 0; // b? ; 1 M depth Counter(Variation)
             _mdc2 = 0; // b? ; 1 M depth Counter
-            onkai = 0; // b 1 演奏中の音階データ(0ffh:rest)
+            onkai = 0; // b 1 Scale data being played(0ffh:rest)
             sdelay = 0; // b?; 1 Slot delay
             sdelay_c = 0; // b? ; 1 Slot delay counter
             sdelay_m = 0; // b? ; 1 Slot delay Mask
-            alg_fb = 0; // b? ; 1 音色のalg/fb
-            keyon_flag = 0; // b 1 新音階/休符データを処理したらinc
-            qdat2 = 0; // b? ; 1 q 最低保証値
-            fnum2 = 0; // w? ; 2 ppz8/pmd86用fnum値上位
-            onkai_def = 0; // b 1 演奏中の音階データ(転調処理前 / ?fh:rest)
-            shift_def = 0; // b? ; 1 マスター転調値
+            alg_fb = 0; // b? ; 1 Timbre alg/fb
+            keyon_flag = 0; // b 1 After processing the new scale/rest data, inc
+            qdat2 = 0; // b? ; 1 q Minimum guaranteed value
+            fnum2 = 0; // w? ; 2 Upper fnum value for ppz8/pmd86
+            onkai_def = 0; // b 1 Scale data being played(Before Transposition / ?fh:rest)
+            shift_def = 0; // b? ; 1 Master Transposition Value
             qdat3 = 0; // b? ; 1 q Random
 
             loopCounter = 0;
@@ -532,7 +533,7 @@ public class PW {
 
     //qqq struc
     //     db  offset eenv_ar dup(?)
-    //pat  db ? ; 1 旧SSGENV /Normal pat
+    //pat  db ? ; 1 Former SSGENV /Normal pat
     //pv2  db ? ; 1  /Normal pv2
     //pr1  db ? ; 1  /Normal pr1
     //pr2  db ? ; 1  /Normal pr2
@@ -545,8 +546,8 @@ public class PW {
     //penv db ? ; 1  /Normal penv
     //qqq ends
 
-    public int max_part1; // ０クリアすべきパート数
-    public int max_part2; // 初期化すべきパート数
+    public int max_part1; // 0 Number of parts to be cleared
+    public int max_part2; // Number of parts to be initialized
 
     //fm     equ 0
     //fm2    equ 1
@@ -557,29 +558,29 @@ public class PW {
 
     public int[] part_data_table;
 
-    //FM1-3
+    // FM1-3
     public int part1;
     public int part2;
     public int part3;
 
-    //FM4-6
+    // FM4-6
     public int part4;
     public int part5;
     public int part6;
 
-    //効果音モード
+    // Sound Effects Mode
     public int part3b;
     public int part3c;
     public int part3d;
 
-    //pps?
+    // pps?
     public int part7;
     public int part8;
     public int part9;
     public int part10;
     public int part11;
 
-    //ppz
+    // ppz
     public int part10a;
     public int part10b;
     public int part10c;
@@ -589,15 +590,15 @@ public class PW {
     public int part10g;
     public int part10h;
 
-    //効果音
+    // Sound effects
     public int part_e;
 
     public partWork[] partWk;
-    // ノーマル
+    // normal
     // 1,2,3, 3b,3c,3d, 7,8,9,10,11, e
     // board2
     // 1,2,3,4,5,6, 7,8,9,10,11, 3b,3c,3d, e
-    // ppz(ppzはboard2を兼ねる)
+    // ppz(ppz also serves as board2)
     // 1,2,3,4,5,6, 7,8,9,10,11, 3b,3c,3d, 10a,10b,10c,10d,10e,10f,10g,10h ,e
 
     //    even
@@ -605,7 +606,7 @@ public class PW {
 //if board2
 // if adpcm
 //  ife   ademu
-    public static final short pcmends = 0x26; // 最初のstartは26Hから
+    public static final short pcmends = 0x26; // The first start is from 26H
     public static final short[] pcmadrs = new short[2 * 256];
     public static final byte[] pcmfilename = new byte[128];
 //  endif
@@ -617,19 +618,17 @@ public class PW {
 // endif
 //endif
 
-    //      db "ここはＳＴＡＣＫエリアです。いつ"
-    //  db "もＰＭＤをご愛用して下さっている"
-    //  db "方々、どうもありがとうございます"
-    //  db "(^^)。何かバグらしき物が見つかり"
-    //  db "ましたら、些細な事でも構いません"
-    //  db "ので、是非私までご一報、お願いし"
-    //  db "ますね(^^)。→PMDBBS [xx(xxxx)xx"
-    //  db "xx] @PMD ボードまで     by KAJA."
+    //  db "This is the STACK area.  "
+    //  db " Thank you to everyone who always uses PMD (^^)."
+    //  db "If you find anything that seems like a bug,"
+    //  db "even if it's a small thing, please let me know (^^)."
+    //  db "→PMDBBS [xx(xxxx)xx"
+    //  db "xx] to @PMD board     by KAJA."
 
     //_stack:
     //dataarea label   word
     //   db 0  ;
-    //   dw 12 dup(18h); 初期データ
+    //   dw 12 dup(18h); Initial Data
     //   db 80h  ;
 
     public static final byte[] fmoff_nef = {0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, (byte) 0xff};
@@ -639,10 +638,10 @@ public class PW {
             + "\r\n"
             + "Copyright (C)1989," + date + " by M.Kajihara(KAJA).\r\n\r\n";
 
-    public static final String mes_ppsdrv = "PPSDRV(INT64H)に対応します．\r\n";
-    public static final String mes_ppz8 = "PPZ8(INT7FH)に対応します．\r\n";
+    public static final String mes_ppsdrv = "Corresponds to PPSDRV(INT64H).\r\n";
+    public static final String mes_ppz8 = "Compatible with PPZ8(INT7FH).\r\n";
 
-    public byte port_sel; // b? ; 選択ポート
+    public byte port_sel; // b? ; Selected Port
     public byte opn_0eh; // b?
     public byte message_flag;    // b?
     public short opt_sp_push; // w?
@@ -650,61 +649,61 @@ public class PW {
 
     //EFCDRV.ASM
     public short effadr; // w effect address
-    public short eswthz; // w トーンスゥイープ周波数
-    public short eswtst; // w トーンスゥイープ増分
+    public short eswthz; // w Tone Sweep Frequency
+    public short eswtst; // w Tone Sweep Increment
     public byte effcnt; // b effect count
-    public byte eswnhz; // b ノイズスゥイープ周波数
-    public byte eswnst; // b ノイズスゥイープ増分
-    public byte eswnct; // b ノイズスゥイープカウント
-    public byte effon; // b 効果音 発音中
-    public byte psgefcnum; // b 効果音番号
-    public byte hosei_flag; // b ppsdrv 音量/音程補正をするかどうか
-    public byte last_shot_data; // b 最後に発音させたPPSDRV音色
+    public byte eswnhz; // b Noise Sweep Frequency
+    public byte eswnst; // b Noise Sweep Increment
+    public byte eswnct; // b Noise Sweep Count
+    public byte effon; // b Sound effect being played
+    public byte psgefcnum; // b Sound effect number
+    public byte hosei_flag; // b ppsdrv Whether to correct volume/pitch
+    public byte last_shot_data; // b The last PPSDRV tone
 
     //PCMDRV86.ASM
     /**
      * Datas
      */
-    public int trans_size = 256;// ;1回の転送byte数
-    public byte play86_flag; // db 0 ;発音中? flag
-    public byte trans_flag; // db 0 ; 転送するdataが残っているか? flag
-    public short start_ofs; // dw 0 ; 発音中PCMデータ番地(offset下位)
-    public short start_ofs2; // dw 0 ; 発音中PCMデータ番地(offset上位)
-    public short size1; // dw 0 ; 残りサイズ(下位word)
-    public short size2; // dw 0 ; 残りサイズ(上位word)
-    public short _start_ofs; // dw 0 ; 発音開始PCMデータ番地(offset下位)
-    public short _start_ofs2; // dw 0 ; 発音開始PCMデータ番地(offset上位)
-    public short _size1; // dw 0 ; PCMデータサイズ(下位word)
-    public short _size2; // dw 0 ; PCMデータサイズ(上位word)
-    public byte addsize1; // db 0 ; PCMアドレス加算値(整数部)
-    public short addsize2; // dw 0 ; PCMアドレス加算値(小数点部)
-    public short addsizew; // dw 0 ; PCMアドレス加算値(小数点部, 転送中work)
-    public short repeat_ofs; // dw 0 ; リピート開始位置(offset下位)
-    public short repeat_ofs2; // dw 0 ; リピート開始位置(offset上位)
-    public short repeat_size1; // dw 0 ; リピート後のサイズ(下位word)
-    public short repeat_size2; // dw 0 ; リピート後のサイズ(上位word)
-    public short release_ofs; // dw 0 ; リリース開始位置(offset下位)
-    public short release_ofs2; // dw 0 ; リリース開始位置(offset上位)
-    public short release_size1; // dw 0 ; リリース後のサイズ(下位word)
-    public short release_size2; // dw 0 ; リリース後のサイズ(上位word)
-    public byte repeat_flag; // db 0 ; リピートするかどうかのflag
-    public byte release_flag1; //   db 0 ;リリースするかどうかのflag
-    public byte release_flag2; //   db 0 ;リリースしたかどうかのflag
-    public byte pcm86_pan_flag = 0; // b 0 ;パンデータ１(bit0= 左 / bit1 = 右 / bit2 = 逆)
+    public int trans_size = 256;// Number of bytes transferred at one time
+    public byte play86_flag; // Pronounced? flag
+    public byte trans_flag; // db 0 ; Is there any data left to transfer? Flag
+    public short start_ofs; // dw 0 ; PCM data address during sounding (lower offset)
+    public short start_ofs2; // dw 0 ; PCM data address during sounding (offset upper)
+    public short size1; // dw 0 ; Remaining size (lower word)
+    public short size2; // dw 0 ; Remaining size (upper word)
+    public short _start_ofs; // dw 0 ; Sound start PCM data address (offset lower)
+    public short _start_ofs2; // dw 0 ; Sound start PCM data address (offset upper)
+    public short _size1; // dw 0 ; PCM data size (lower word)
+    public short _size2; // dw 0 ; PCM data size (upper word)
+    public byte addsize1; // db 0 ; PCM address addition value (integer part)
+    public short addsize2; // dw 0 ; PCM address addition value (decimal part)
+    public short addsizew; // dw 0 ; PCM address addition value (decimal part, work being transferred)
+    public short repeat_ofs; // dw 0 ; Repeat start position (offset lower)
+    public short repeat_ofs2; // dw 0 ; Repeat start position (upper offset)
+    public short repeat_size1; // dw 0 ; Size after repeat (lower word)
+    public short repeat_size2; // dw 0 ; Size after repeat (upper word)
+    public short release_ofs; // dw 0 ; Release start position (offset lower)
+    public short release_ofs2; // dw 0 ; Release start position (upper offset)
+    public short release_size1; // dw 0 ; Size after release (lower word)
+    public short release_size2; // dw 0 ; Size after release (upper word)
+    public byte repeat_flag; // db 0 ; Repeat flag
+    public byte release_flag1; //   db 0 ; Flag to release or not
+    public byte release_flag2; //   db 0 ; Flag of whether it has been released
+    public byte pcm86_pan_flag = 0; // b 0 ; Pan data 1 (bit0 = left / bit1 = right / bit2 = reverse)
     public byte com_end = (byte) 0xb1;
-    public byte pcm86_pan_dat; // db 0 ; パンデータ２(音量を下げるサイドの音量値)
+    public byte pcm86_pan_dat; // db 0 ; Pan data 2 (volume value of the side that lowers the volume)
 
-    // pan_flagによる転送table
+    // Forwarding table by pan_flag
     //trans_table dw double_trans, left_trans
     //        dw right_trans, double_trans
     //        dw double_trans_g, left_trans_g
     //        dw right_trans_g, double_trans_g
 
-    // 周波数table Include
+    // Frequency table Include
 
     //    include tunedata.inc
     /**
-     * 周波数table 16.54kHz = o5g
+     * Frequency table 16.54kHz = o5g
      */
     //fq macro   data1,data2
     //   db  data1
@@ -712,7 +711,7 @@ public class PW {
     //   endm
 
     public static final Tuple<Integer, Integer>[] pcm_tune_data86 = new Tuple[] {
-            // 周波数*32+ 加算値(整数部) , 加算値(小数部)
+            // Frequency*32 + additional value (integer part), additional value (decimal part)
             new Tuple<>(0 * 32 + 0, 0x02AB7) // o1  4.13438 C
             , new Tuple<>(0 * 32 + 0, 0x02D41) // o1  4.13438 C#
             , new Tuple<>(0 * 32 + 0, 0x02FF2) // o1  4.13438 D
@@ -819,7 +818,7 @@ public class PW {
     };
 
     /**
-     * オンカイ DATA
+     * Scale DATA
      */
     public static final int[] fnum_data = {
             0x026a // C
@@ -851,11 +850,10 @@ public class PW {
             , 0x07e6 // B
     };
 
-    //7177-7242
     public int[] part_table = null;
     //if board2
     // if ppz
-    //   Part番号,Partb,音源番号
+    //   Part number, Partb, sound source number
     private static final int[] part_table_ppz = {
             00, 1, 0 // A
             , 01, 2, 0    // B
@@ -883,7 +881,7 @@ public class PW {
             , 21, 7, 5 // PPZ8
     };
     // else
-    //   Part番号,Partb,音源番号
+    //   Part number, Partb, sound source number
     private static final int[] part_table_brd2 = {
             0, 1, 0    //A
             , 1, 2, 0    //B
@@ -903,7 +901,7 @@ public class PW {
             , 14, 3, 1 //Effect
     };
     //else
-    // Part番号,Partb,音源番号
+    // Part number, Partb, sound source number
     private static final int[] part_table_nbrd2 = {
             0, 1, 0    //A
             , 1, 2, 0    //B
@@ -924,7 +922,7 @@ public class PW {
     };
 
     /**
-     * FM音色のキャリアのテーブル
+     * FM tone carrier table
      */
     public static final int[] carrier_table = {
             0b1000_0000, 0b1000_0000, 0b1000_0000, 0b1000_0000
@@ -935,7 +933,7 @@ public class PW {
 
     //
     /**
-     * 効果音データ ＩＮＣＬＵＤＥ
+     * Sound effect data INCLUDE
      */
     //public byte[] efftbl; // label   word
     //include effect.inc
@@ -943,30 +941,30 @@ public class PW {
 
     //PCMLOAD.INC
     //15
-    public int message = 1; // equ ;エラーメッセージを表示するか否か
+    public int message = 1; // equ ;Whether to display error messages
 
     /**
      * DataArea
      */
     //if message
-    public static final String allload_mes = "PCMを定義中です。しばらくお待ち下さい。";
-    public static final String exit1_mes = "PCMが定義出来る環境ではありません。";
-    public static final String exit1p_mes = "PPSDRVが常駐していません。";
-    public static final String exit2_mes = "PCMFileが見つかりません。";
-    public static final String exit2p_mes = "PPSFileが見つかりません。";
-    public static final String exit3_mes = "PCMFileのFORMATが違います。";
-    public static final String exit3p_mes = "PPSDRVの確保容量が足りません。";
-    public static final String exit4_mes = "PCMDataが一致したので読み込みません。";
-    public static final String exit4pp_mes = "P86DRVの確保容量が足りません。";
-    public static final String exit5_mes = "PCMFileが読み込めません。";
-    public static final String exit5p_mes = "PPSFileが読み込めません。";
-    public static final String exit6_mes = "PCMメモリを他のアプリケーションがアクセス中です。";
-    public static final String exit1z_mes = "PCMFileが見つかりません。";
-    public static final String exit2z_mes = "PCMFileのデータ形式が違います。";
-    public static final String exit3z_mes = "メモリ確保容量が足りません。";
-    public static final String exit4z_mes = "EMSハンドルのマッピングができません。";
-    public static final String exit5z_mes = "PPZ8が常駐していません。";
-    public static final String exit6z_mes = "PVI/PZIFileが見つかりません。"; //KUMA: Added
+    public static final String allload_mes = "PCM is being defined. Please wait.";
+    public static final String exit1_mes = "PCM cannot be defined in this environment.";
+    public static final String exit1p_mes = "PPSDRV is not resident.";
+    public static final String exit2_mes = "PCMFile not found.";
+    public static final String exit2p_mes = "PPSFile not found.";
+    public static final String exit3_mes = "PCMFile FORMAT is different.";
+    public static final String exit3p_mes = "PPSDRV has insufficient capacity.";
+    public static final String exit4_mes = "PCMData matches, so will not load.";
+    public static final String exit4pp_mes = "P86DRV has insufficient capacity.";
+    public static final String exit5_mes = "PCMFile cannot be loaded.";
+    public static final String exit5p_mes = "Cannot read PPSFile.";
+    public static final String exit6_mes = "PCM memory is being accessed by another application.";
+    public static final String exit1z_mes = "PCMFile not found.";
+    public static final String exit2z_mes = "PCMFile data format is different.";
+    public static final String exit3z_mes = "Insufficient memory allocation.";
+    public static final String exit4z_mes = "EMS handle cannot be mapped.";
+    public static final String exit5z_mes = "PPZ8 is not resident.";
+    public static final String exit6z_mes = "PVI/PZIFile not found."; //KUMA: Added
     public static final String ppzbank_mes = "PPZ8(%d):";
     //endif
     public static final String adpcm_header = "ADPCM DATA for  PMD ver.4.4-  "; // ;30 bytes
@@ -1020,8 +1018,6 @@ public class PW {
             , 0x5ce8 * 2 // B
     };
 
-
-    //848-865 PPZDRV.ASM
     /**
      * Datas
      */
@@ -1042,7 +1038,7 @@ public class PW {
             , 0x0f1a5 // 11 b
     };
 
-    //pmdDotNET 独自
+    // pmdDotNET original
     public int jumpIndex = -1;
     public boolean checkJumpIndexSI = false;
     public boolean checkJumpIndexBX = false;
@@ -1051,7 +1047,7 @@ public class PW {
         efftbl = new ArrayList<>();
         MmlDatum[] ef;
 
-//#region 効果音データ定義
+//#region Sound effect data definition
         ef = makeMmlDatum(D_000);
         efftbl.add(new Tuple<>(1, ef)); //BDRM      ;0
         ef = makeMmlDatum(D_001);
@@ -1393,14 +1389,14 @@ public class PW {
         fmvd_init = (va + board2 != 0) ? 0 : 16;
 
         if (va != 0) {
-            ms_cmd = 0x188; // 8259マスタポート
-            ms_msk = 0x18a; // 8259マスタ／マスク
-            sl_cmd = 0x184; // 8259スレーブポート
-            sl_msk = 0x186; // 8259スレーブ／マスク
+            ms_cmd = 0x188; // 8259 Master Port
+            ms_msk = 0x18a; // 8259 Master/Mask
+            sl_cmd = 0x184; // 8259 slave port
+            sl_msk = 0x186; // 8259 Slave/Mask
         }
 
         if (board2 == 0) {
-            //ノーマル
+            // normal
             partWk = new partWork[3 + 3 + 5 + 1];
             part3b = 3;
             partWk[part3b] = new partWork();
@@ -1421,8 +1417,8 @@ public class PW {
             part_e = 11;
             partWk[part_e] = new partWork();
 
-            max_part1 = 11; // ０クリアすべきパート数
-            max_part2 = 11; // 初期化すべきパート数
+            max_part1 = 11; // 0 Number of parts to be cleared
+            max_part2 = 11; // Number of parts to be initialized
         } else {
             //board2
             if (ppz == 0) {
@@ -1430,8 +1426,8 @@ public class PW {
                 part_e = 14;
                 partWk[part_e] = new partWork();
 
-                max_part1 = 14; // ０クリアすべきパート数
-                max_part2 = 11; // 初期化すべきパート数
+                max_part1 = 14; // 0 Number of parts to be cleared
+                max_part2 = 11; // Number of parts to be initialized
             } else {
                 partWk = new partWork[3 + 3 + 5 + 3 + 8 + 1];
                 part10a = 14;
@@ -1453,8 +1449,8 @@ public class PW {
                 part_e = 22;
                 partWk[part_e] = new partWork();
 
-                max_part1 = 14 + 8; // ０クリアすべきパート数
-                max_part2 = 11; // 初期化すべきパート数
+                max_part1 = 14 + 8; // 0 Number of parts to be cleared
+                max_part2 = 11; // Number of parts to be initialized
             }
             part4 = 3;
             partWk[part4] = new partWork();
@@ -1504,7 +1500,8 @@ public class PW {
     //EFFECT.INC
     public final List<Tuple<Integer, MmlDatum[]>> efftbl;
 
-    //#region 効果音データ
+//#region Sound effect data
+
     private static final int[] D_000 = { // Bass Drum                1990-06-22 05:47:11
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
             1, 220, 5, 31, 54, 15, 0, 0, 0, 127, 0
@@ -1565,7 +1562,7 @@ public class PW {
             , 0xff // -1
     };
     //
-    // Effect for 電撃MIX
+    // Effect for "電撃MIX"
     //
 
     private static final int[] DM_001 = { // syuta                    1994-05-25 23:13:02
@@ -1863,7 +1860,7 @@ public class PW {
     };
 
     //
-    // Effect for ポゼッショナー
+    // Effect for "ポゼッショナー"
     //
 
     private static final int[] PO_011 = { // Rain fall                1990-06-22 05:55:43

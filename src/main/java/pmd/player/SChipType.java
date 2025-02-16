@@ -1,6 +1,6 @@
 package pmd.player;
 
-class SChipType {
+class SChipType implements Cloneable {
 
     private boolean _UseEmu = true;
 
@@ -254,7 +254,8 @@ class SChipType {
         _LatencyForScci = value;
     }
 
-    public SChipType Copy() {
+    @Override
+    public SChipType clone() {
         SChipType ct = new SChipType();
         ct._UseEmu = this._UseEmu;
         ct._UseEmu2 = this._UseEmu2;

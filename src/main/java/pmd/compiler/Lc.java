@@ -25,8 +25,8 @@ public class Lc {
     }
 
     /**
-    //	音長計算用 include file
-    //		in.al print_flag(0で非表示)
+     * For calculating sound length include file
+     * 	in.al print_flag(0 for hidden)
      */
     //_print_mes macro   ofs
     //local   exit
@@ -84,7 +84,7 @@ public class Lc {
     }
 
     /**
-    //	計算開始
+     * Start calculation
      */
     private enmPart_ends calc_start(byte al) {
         print_flag = al;
@@ -95,7 +95,7 @@ public class Lc {
     }
 
     /**
-    //	パート毎のループ
+     * Looping by Part
      */
     private enmPart_ends part_loop() {
         work.si = (m_seg.m_buf.get(work.bp).dat & 0xff) + (m_seg.m_buf.get(work.bp + 1).dat & 0xff) * 0x100;
@@ -110,9 +110,9 @@ public class Lc {
         loop_length = -1;
         loop_flag = 0;
 
-        /**
-        //	(Part Aの場合) 拡張のFM3ch目があるか調べる
-         */
+        //
+        // (For Part A) Check if there is an extended FM3 channel
+        //
         if (part_chr != 'A') return enmPart_ends.check_j;
         if (m_seg.m_buf.get(work.si).dat != 0xc6) return enmPart_ends.check_j;
 
@@ -128,7 +128,7 @@ public class Lc {
     }
 
     /**
-    //	(Part Jの場合) 拡張のPCMパートがあるか調べる
+     * (For Part J) Check if there is an extended PCM part
      */
     private enmPart_ends check_j() {
         if (part_chr != 'J') return enmPart_ends.com_loop; //jnz com_loop
@@ -146,7 +146,7 @@ public class Lc {
     }
 
     /**
-    //	コマンド毎のループ
+     * Loop through each command
      */
     private enmPart_ends com_loop() {
 
@@ -177,7 +177,7 @@ public class Lc {
     }
 
     /**
-    //	パート終了
+     * Part-time job finished
      */
     private enmPart_ends part_ends() {
         print_length();
@@ -219,7 +219,7 @@ public class Lc {
     }
 
     /**
-    //	Part K
+     * Part K
      */
     private enmPart_ends partk_start() {
         part_chr = 'K';
@@ -232,13 +232,13 @@ public class Lc {
         work.si += 0; // offset m_buf
         work.bp += 2;
         work.bx = m_seg.m_buf.get(work.bp).dat + (m_seg.m_buf.get(work.bp + 1).dat * 0x100);
-        work.bx += 0; // offset m_buf	; bx= R table 先頭番地
+        work.bx += 0; // offset m_buf	; bx= R table First Address
 
         return enmPart_ends.kcom_loop;
     }
 
     /**
-    //	Kpart/コマンド毎のループ
+     * Kpart/Loop per command
      */
     private enmPart_ends kcom_loop() {
         do {
@@ -270,7 +270,7 @@ public class Lc {
     }
 
     /**
-    //	Kpart/各種特殊コマンド
+     * Kpart/Various special commands
      */
     private enmPart_ends kl_00() {
         int bx = work.bx;
@@ -282,7 +282,7 @@ public class Lc {
     }
 
     /**
-    //	Kpart/計算終了
+     * Kpart/Calculation complete
      */
     private enmPart_ends kpart_end() {
         print_length();
@@ -304,7 +304,7 @@ public class Lc {
     }
 
     /**
-    //	Rpart/コマンド毎のループ
+     * Loop for each Rpart/command
      */
     private void rcom_loop() {
 rpart_end:
@@ -323,20 +323,20 @@ rpart_end:
                 all_length += al.dat;
 
             } while (true);
-            /**
-            // Rpart / 各種特殊コマンド処理
-             */
-            // rl_00:
+            //
+            // Rpart / Various special command processing
+            //
+//rl_00:
             command_exec((byte) (al.dat & 0xff));
             if (loop_flag != 0) break rpart_end;
         } while (true);
-        /**
-        // Rpart / 計算終了
-         */
+        //
+        // Rpart / Calculation complete
+        //
     }
 
     /**
-    //	各種コマンド
+     * Various commands
      */
     private void command_exec(byte al) {
         al = (byte) ~al;
@@ -378,18 +378,18 @@ rpart_end:
     }
 
     /**
-    //	tempo
+     * tempo
      */
     private void _tempo() {
         byte al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
         if (al >= (byte) 251) {
-            work.si++; // 相対
+            work.si++; // relative
         }
-        //tempo_ret:;
+//tempo_ret:
     }
 
     /**
-    //	ポルタメント
+     * Portamento
      */
     private void porta() {
         work.si += 2;
@@ -399,14 +399,14 @@ rpart_end:
     }
 
     /**
-    //	L command
+     * L command
      */
     private void loop_set() {
         loop_length = all_length;
     }
 
     /**
-    //	[command
+     * '[' command
      */
     private void loop_start() {
         int ax = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
@@ -418,11 +418,11 @@ rpart_end:
     }
 
     /**
-    //	] command
+     * ']' command
      */
     private void loop_end() {
         byte al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
-        if (al != 0) { // break loop_fset; // 無条件loopがあった
+        if (al != 0) { // break loop_fset; // There was an unconditional loop
             byte ah = al;
             m_seg.m_buf.set(work.si, new musicDriverInterface.MmlDatum(m_seg.m_buf.get(work.si).dat + 1));
             al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
@@ -444,7 +444,7 @@ rpart_end:
     }
 
     /**
-    //	: command
+     * ':' command
      */
     private void loop_exit() {
         int ax = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
@@ -463,7 +463,7 @@ rpart_end:
     }
 
     /**
-    //	0c0h + ?? special control
+     * 0c0h + ?? special control
      */
     private void special_0c0h() {
         byte al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
@@ -476,13 +476,13 @@ rpart_end:
     }
 
     /**
-    //	長さを表示
+     * Show Length
      */
     private void print_length() {
         int tc = 0;
         int lc = 0;
 
-        if (all_length == 0) return; // データ無し
+        if (all_length == 0) return; // No data
         String msg = part_mes + part_chr + part_chr_n;
 
         int ax = all_length & 0xffff;
@@ -492,7 +492,7 @@ rpart_end:
         if (max_all - all_length < 0) {
             max_all = all_length; // ax | dx * 0x10000;
         }
-        //not_over_all:;
+//not_over_all:
         msg += String.format("%d", ax);
         tc = ax;
 
@@ -523,7 +523,7 @@ rpart_end:
             if (max_loop < n) {
                 max_loop = n;
             }
-            //not_over_loop:;
+//not_over_loop:
             msg += String.format("%d", n);
             lc = n;
         }
@@ -547,7 +547,7 @@ rpart_end:
             work.compilerInfo.loopCount.add(lc);
         }
         //Mc.print_mes(_crlf_mes);
-        //pe_01:;
+//pe_01:
     }
 
     private Runnable[] jumptable;

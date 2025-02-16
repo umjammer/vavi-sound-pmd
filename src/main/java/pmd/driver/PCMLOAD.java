@@ -55,7 +55,7 @@ public class PCMLOAD {
     }
 
     /**
-     * ストリームから一括でバイナリを読み込む
+     * Read binary from a stream in bulk
      */
     private byte[] ReadAllBytes(Stream stream) {
         if (stream == null) return null;
@@ -73,20 +73,19 @@ public class PCMLOAD {
         }
     }
 
-    //20-202
     //
     //
-    // PPZ(PVI/PZI)ファイルの読み込み
+    // Importing PPZ (PVI/PZI) files
     //
     //  input DS:AX filename(128byte)
-    // CL 読ませるバンク(1=１つ目 2=２つ目 3=両方)
+    // CL Bank to read (1=first, 2=second, 3=both)
     // output cy = 1    Not Loaded
-    // AX=1 ファイルの読み込み失敗
-    //    AX=2 データ形式が違う
-    //    AX=3 メモリが確保できない
-    //    AX=4 EMSハンドルのマッピングができない
-    //    AX=5 PPZ8が常駐していない
-    //    CL エラーの出たPCM番号(0 or 1)
+    // AX=1 File read failure
+    //    AX=2 The data format is different
+    //    AX=3 Cannot allocate memory
+    //    AX=4 EMS handle mapping not possible
+    //    AX=5 PPZ8 is not resident
+    //    CL PCM number where the error occurred (0 or 1)
     //  break ax,cx
     //
     public void ppz_load(String ppz1File, String ppz2File) {
@@ -113,7 +112,7 @@ public class PCMLOAD {
     }
 
     //
-    // PPZ8 読み込み main
+    // PPZ8 loading main
     //
     private void ppz_load_main(String ppz1File, String ppz2File) {
         ppz8_check();
@@ -124,11 +123,11 @@ public class PCMLOAD {
             ppz_load_error();
             return;
         }
-        // PCM２つ読み用追加判別処理
+        // Additional discrimination process for reading two PCMs
         read_ppz8();
         if (!r.carry) { // break plm_exit;
             if (ppz2File == null || ppz2File.isEmpty()) {
-//                break plm_exit2; // ; PCMは１つだけ
+//                break plm_exit2; // Only one PCM
 //plm_exit2:
                 r.setAx((short) 0);
                 return;
@@ -141,7 +140,7 @@ public class PCMLOAD {
     }
 
     private void read_ppz8() {
-        // 拡張子判別(PVI / PZI)
+        // File extension identification (PVI/PZI)
         String ext = Path.getExtension(pw.filename_ofs).toUpperCase().trim();
         if (ext.isEmpty()) pw.filename_ofs = Path.changeExtension(pw.filename_ofs, ".PZI");
         if (ext.equals(".PZI")) r.ch = 1;
@@ -151,19 +150,19 @@ public class PCMLOAD {
         pw.ppz_bank >>= 1;
         if (r.carry) { // break p8_load_skip; // load skip
 
-            // PVI / PZI 読み込み
+            // PVI/PZI Import
 //p8_load_main:
             byte[] pcmData = GetPCMDataFromFile(pw.filename_ofs);
             ppzPcmData[r.cl] = pcmData;
             ChipDatum cd = new ChipDatum(0x03, r.cl, r.ch, 0, ppzPcmData); // pcmData); // LoadPCM
             int ret = ppz8em.apply(cd);
 
-            if (ret != 0) { // break p8_load_exit; // KUMA:読み込めた
-                if (ret == 2) { // break p8_load_exit; // file not found or 形式が違うなら
+            if (ret != 0) { // break p8_load_exit; // KUMA: Loaded
+                if (ret == 2) { // break p8_load_exit; // file not found or If the format is different
 
-                    r.ch ^= 1; // もう片方の形式も
+                    r.ch ^= 1; // The other form
                     cd = new ChipDatum(0x03, r.cl, r.ch, 0, ppzPcmData); // pcmData); // LoadPCM
-                    ret = ppz8em.apply(cd); // pcm loadを試してみる
+                    ret = ppz8em.apply(cd); // Try pcm load
                 }
             }
 //p8_load_exit:
@@ -178,7 +177,7 @@ public class PCMLOAD {
         r.setAx((short) 0);
     }
 
-    // Error処理
+    // Error Handling
     private void ppz_load_error() {
         r.incAx();
         if (pw.message != 0) {
@@ -235,56 +234,53 @@ public class PCMLOAD {
         logger.log(Level.ERROR, msg);
     }
 
-    // PPZ8常駐check
+    // PPZ8 resident check
     private void ppz8_check() {
         r.carry = pw.ppz == 0;
     }
 
-    //203-288
     //
-    // PCM(PPC/P86)ファイルの読み込み
-    //  P86DRV.COMが常駐していれば.P86を、
-    //  そうでない場合は.PPCを読む。
-    //  PMDPPZEが常駐している場合は無条件にPVIをPPZ8に読み込む。
+    // Importing PCM (PPC/P86) files
+    //  If P86DRV.COM is resident, then read .P86; otherwise, read .PPC.
+    //  If PMDPPZE is resident, PVI will be unconditionally loaded into PPZ8.
     //
     //  input DS:AX filename(128byte)
-    // ES:DI pcm_work(32KB, P86の場合は必要無し)
+    // ES:DI pcm_work(32KB, Not necessary for P86)
     // output cy = 1    Not Loaded
-    // PMDB2/PMD86の場合
-    //    AX=1 SPB/ADPCM-RAMかPMDB2がない
-    //     86B/P86DRV かPMD86がない
-    // AX=2 ファイルがない
-    //    AX=3 ファイルがPMDのPCMデータではない
-    //    AX=4 SPB/既に読み込んであるのと同じだった
-    //     86B/容量OVER
-    //    AX=5 ファイルが読めない
-    //    AX=6 PCMメモリがアクセス中だった
-    //   PMDPPZEの場合
-    //    AX=1 ファイルの読み込み失敗
-    //    AX=2 データ形式が違う
-    //    AX=3 メモリが確保できない
-    //    AX=4 EMSハンドルのマッピングができない
-    //    AX=5 PPZ8が常駐していない
+    // For PMDB2/PMD86
+    //    AX=1 SPB/ADPCM-RAM or PMDB2 is missing
+    //     No 86B/P86DRV or PMD86
+    // AX=2 File Missing
+    //    AX=3 The file is not PMD PCM data.
+    //    AX=4 SPB/It was the same as what was already loaded
+    //     86B/Capacity OVER
+    //    AX=5 Unable to read file
+    //    AX=6 PCM memory was being accessed
+    //   For PMDPPZE
+    //    AX=1 File read failure
+    //    AX=2 The data format is different
+    //    AX=3 Cannot allocate memory
+    //    AX=4 EMS handle mapping not possible
+    //    AX=5 PPZ8 is not resident
     //
     // .PPC format:
-    // WORK=PMD内PCMWORK , DATA=PCMRAM先頭のWORK , FILE=PCMFILE
+    // WORK=PCMWORK in PMD, DATA=WORK at the beginning of PCMRAM, FILE=PCMFILE
     //      123456789012345678901234567890
-    //  DATA/FILEのみ  "ADPCM DATA for  PMD ver.4.4-  "30bytes
+    //  DATA/FILE only "ADPCM DATA for PMD ver.4.4- "30bytes
     //  WORK/DATA/FILE  1Word Next START Address
     //     2Word*256 START/STOP
-    //  WORK/DATAのみ  128bytes FILENAME
-    // DATAのみ  32bytes 予備
+    //  WORK/DATA only 128bytes FILENAME
+    // DATA only  32 bytes reserved
     //
     //  PCMRAM_Work  =00000H～00025H
     //  PCMRAM_Main_data =00026H～01FFFH
     //
     // .P86 format:
     //  "PCM86 DATA",0ah,0 12 byte
-    //  P86DRVのversion  1  byte
-    //  全体のサイズ  3  byte
-    //  音色table start(3),size(3) * 256 (1536) bytes
-    //  音色データ 可変
-    //
+    //  P86DRV version 1  byte
+    //  Overall size 3  byte
+    //  Tone table start(3),size(3) * 256 (1536) bytes
+    //  Tone data variable
     //
     public void pcm_all_load(String ppcFile) {
         //cld
@@ -302,7 +298,7 @@ public class PCMLOAD {
         pw.pcmdata_ofs = r.di;
         pw.pcmdata_seg = 0; // r.es;
         r.ah = 0xe; // GET_PCM_ADR
-        pmd.int60_main(r.getAx());// int 60h  ;DS:DX=PCMワーク
+        pmd.int60_main(r.getAx());// int 60h  ;DS:DX=PCM Work
         pw.pcmwork_ofs = r.getDx();
         pw.pcmwork_seg = 0; // r.ds;
 
@@ -318,7 +314,6 @@ public class PCMLOAD {
         //r.ds = r.stack.pop();
     }
 
-    //289-
     public void pps_load(String ppsFile) {
         //cld
         //r.stack.push(r.ds);
@@ -355,26 +350,25 @@ public class PCMLOAD {
         //r.ds = r.stack.pop();
     }
 
-    //345-388
     //
     // pps load
     //  in cs:[filename_ofs/seg] Filename
-    //   cs:[pcmdata_ofs/seg] PPSData位置
-    //   cs:[pcmdata_size] PPSData容量
+    //   cs:[pcmdata_ofs/seg] PPSData location
+    //   cs:[pcmdata_size] PPSData Capacity
     //
     private void pps_load_main() {
         String fn;
         byte[] pcmData;
 
-        fn = Path.changeExtension(pw.filename_ofs, ".PPS"); // 拡張子 "PPS"に変更
+        fn = Path.changeExtension(pw.filename_ofs, ".PPS"); // Change the extension to "PPS"
         pcmData = GetPCMDataFromFile(fn);
 
         if (pcmData == null || pcmData.length < 1) {
-            fn = pw.filename_ofs; // 指定
-            pcmData = GetPCMDataFromFile(fn); //MMLの指定で読み込んでみる
+            fn = pw.filename_ofs; // specification
+            pcmData = GetPCMDataFromFile(fn); // Try reading by specifying MML
 
             if (pcmData == null || pcmData.length < 1) {
-                logger.log(Level.ERROR, "PPSファイル[%s]の読み込みに失敗しました。".formatted(pw.filename_ofs));
+                logger.log(Level.ERROR, "Failed to load PPS file [%s].".formatted(pw.filename_ofs));
                 pw.usePPSDRV = false;
                 pw.ppsdrv_flag = 0;
             }
@@ -385,16 +379,16 @@ public class PCMLOAD {
     }
 
     //
-    // .PPC/.P86 一括load
+    // .PPC/.P86 Bulk load
     //  in cs:[filename_ofs/seg] Filename
     //   cs:[pcmdata_ofs/seg]
     //  PCMData loadarea
-    // cs:[pcmwork_ofs/seg] PMD内PCMwork
+    // cs:[pcmwork_ofs/seg] PCMwork in PMD
     //
     private void all_load() {
-        //-----------------------------------------------------------------------------
-        // 読み込むのは.P86か.PPCかどうかを判別
-        //-----------------------------------------------------------------------------
+        //
+        // Determine whether .P86 or .PPC is being read
+        //
         check_p86drv();
         if (!r.carry) {
             p86_load();
@@ -412,9 +406,9 @@ public class PCMLOAD {
                 return;
             }
         }
-        //-----------------------------------------------------------------------------
+        //
         // .PPC read Main
-        //-----------------------------------------------------------------------------
+        //
 //allload_main1:
         check_pmdb2();
         if (r.carry) {
@@ -424,24 +418,24 @@ public class PCMLOAD {
 
         filename_set();
 
-        //-----------------------------------------------------------------------------
-        // FileをPMDのワークにヘッダだけ読みこむ //KUMA:全部読み込む！
-        //-----------------------------------------------------------------------------
+        //
+        // Read only the header of the file into the PMD work // KUMA: Read the whole thing!
+        //
         String fn;
         byte[] pcmData;
 
-        fn = Path.changeExtension(pw.filename_ofs, ".PPC"); // 拡張子 "PPC"に変更
+        fn = Path.changeExtension(pw.filename_ofs, ".PPC"); // Change the extension to "PPC"
         pcmData = GetPCMDataFromFile(fn);
 
         if (pcmData == null || pcmData.length < 1) {
-            fn = pw.filename_ofs; // 指定
-            pcmData = GetPCMDataFromFile(fn); //MMLの指定で読み込んでみる
+            fn = pw.filename_ofs; // specification
+            pcmData = GetPCMDataFromFile(fn); // Try reading by specifying MML
 
             if (pcmData == null || pcmData.length < 1) {
-                fn = Path.changeExtension(pw.filename_ofs, ".PVI"); // 拡張子 "PVI"に変更
+                fn = Path.changeExtension(pw.filename_ofs, ".PVI"); // Change the extension to "PVI"
                 pcmData = GetPCMDataFromFile(fn);
                 if (pcmData == null || pcmData.length < 1) {
-                    fn = Path.changeExtension(pw.filename_ofs, ".P86"); // 拡張子 "P86"に変更
+                    fn = Path.changeExtension(pw.filename_ofs, ".P86"); // Change the extension to "P86"
                     pcmData = GetPCMDataFromFile(fn);
                     if (pcmData == null || pcmData.length < 1) {
                         allload_exit2();
@@ -469,11 +463,11 @@ public class PCMLOAD {
                 && pcmData[2] == 'P' && pcmData[3] == 'C'
                 && pcmData[4] == 'M' && pcmData[5] == ' '
         )) {
-            allload_exit3_close(); // PMDのPCMデータではない
+            allload_exit3_close(); // Not PMD PCM data
             return;
         }
 
-        if (pcmData.length < 4 * 256 + 2 + 30) // KUMA:0x420未満
+        if (pcmData.length < 4 * 256 + 2 + 30) // KUMA: Less than 0x420
         {
             allload_exit3_close();
             return;
@@ -482,33 +476,33 @@ public class PCMLOAD {
         ppc_load_main(pcmData);
     }
 
-    //-----------------------------------------------------------------------------
-    // PMDのワークにFilenameを書く
-    //-----------------------------------------------------------------------------
+    //
+    // Write Filename to PMD work
+    //
     private void ppc_load_main(byte[] pcmData) {
         write_filename_to_pmdwork();
 
-        //-----------------------------------------------------------------------------
-        // PCMRAMのヘッダを読む
-        //-----------------------------------------------------------------------------
-        if (pw.retry_flag == 0) { // break write_pcm_main; // 無条件
+        //
+        // Read the PCMRAM header
+        //
+        if (pw.retry_flag == 0) { // break write_pcm_main; // unconditional
 
             //TBD
 
-            //-----------------------------------------------------------------------------
-            // PMDのワークとPCMRAMのヘッダを比較
-            //-----------------------------------------------------------------------------
+            //
+            // Comparing PMD work and PCMRAM headers
+            //
             //TBD
 
         }
-        //-----------------------------------------------------------------------------
-        // PMDのワークをPCMRAM頭に書き込む
-        //-----------------------------------------------------------------------------
+        //
+        // Write the PMD work to the PCMRAM head
+        //
 //write_pcm_main:
         //r.ds = r.cs;
         r.setSi((short) 0); // offset adpcm_header
         r.di = 0; // pcmdata_ofs
-        r.setCx((short) (30 / 2)); // "ADPCM～"ヘッダを書き込み
+        r.setCx((short) (30 / 2)); // Write "ADPCM..." header
 
         pw.pcmDt = new byte[4 * 256 + 128 + 2 + 30];
         for (int i = 0; i < (4 * 256 + 128 + 2 + 30); i++) {
@@ -522,21 +516,21 @@ public class PCMLOAD {
         pw.pcmload_pcmstop = 0x25;
         pcmstore();
 
-        //-----------------------------------------------------------------------------
-        // PCMDATAをPCMRAMに書き込む
-        // 8000hずつ読み込みながら定義
-        //-----------------------------------------------------------------------------
+        //
+        // Write PCMDATA to PCMRAM
+        // Define while reading 8000h each time
+        //
         if (pw.message != 0) {
             //r.ds = r.cs;
-            logger.log(Level.INFO, pw.allload_mes); // "PCM定義中"の表示
+            logger.log(Level.INFO, pw.allload_mes); // "PCM definition in progress" display
         }
 
         r.setBx((short) 30); // pw.pcmwork_ofs; // cs:[pcmwork_ofs]
         r.setAx((short) ((pcmData[r.getBx()] & 0xff) + (pcmData[r.getBx() + 1] & 0xff) * 0x100)); // ds:[bx] ;AX=PCM Next Start Address
-        r.subAx((short) 0x26); // 実際にこれから転送するデータ量に変換
+        r.subAx((short) 0x26); // Converted into the amount of data to be actually transferred
 
         pw.pcmload_pcmstart = 0x26;
-        pw.pcmload_pcmstop = 0x426; // 400h*32=8000h 一括
+        pw.pcmload_pcmstop = 0x426; // 400h*32=8000h Bulk
 
         int pcmdata_ofs = 4 * 256 + 2 + 30;
 //allload_loop:
@@ -589,9 +583,9 @@ public class PCMLOAD {
 //allload_justend:
         // FILE Close
 
-        //-----------------------------------------------------------------------------
-        // 終了
-        //-----------------------------------------------------------------------------
+        //
+        // end
+        //
         r.setAx((short) 0);
     }
 
@@ -599,16 +593,16 @@ public class PCMLOAD {
     // .PVI loading
     //
     private void pvi_load(byte[] pcmData) {
-        // -----------------------------------------------------------------------------
-        // ヘッダ / 音色tableの残りを読み込み
-        // -----------------------------------------------------------------------------
-        //KUMA:pcmDataに一括で入っているため不要
+        // 
+        // Read the rest of the header/tone table
+        // 
+        // KUMA: Not necessary as it is all included in pcmData
 
         List<Byte> o = new ArrayList<>();
         for (int i = 0; i < 30; i++) o.add((byte) 0);
 
         o.add((byte) 0);
-        o.add((byte) 0); //Endpoint?
+        o.add((byte) 0); // Endpoint?
 
         short max = 0;
         for (int i = 0; i < 128; i++) {
@@ -632,38 +626,37 @@ public class PCMLOAD {
         ppc_load_main(ByteUtil.toByteArray(o));
     }
 
-    //670-737
     //
-    // P86 data 一括load
+    // P86 data bulk load
     //  in cs:[filename_ofs/seg] Filename
     //
     private void p86_load() {
-        //-----------------------------------------------------------------------------
-        // P86drvのcheck
-        //-----------------------------------------------------------------------------
+        //
+        // P86drv check
+        //
         if (false) {
-            //常駐チェックと
-            //バージョンチェック
+            // Persistent check and
+            // version check
         }
 
         filename_set();
 
-        //-----------------------------------------------------------------------------
-        // P86Data,Size確認
-        //-----------------------------------------------------------------------------
+        //
+        // Check P86Data,Size
+        //
         String fn;
         byte[] pcmData;
 
-        fn = Path.changeExtension(pw.filename_ofs, ".P86"); // 拡張子 "P86"に変更
+        fn = Path.changeExtension(pw.filename_ofs, ".P86"); // Change the extension to "P86"
         pcmData = GetPCMDataFromFile(fn);
 
         if (pcmData == null || pcmData.length < 1) {
 
-            fn = pw.filename_ofs; // 指定
-            pcmData = GetPCMDataFromFile(fn); //MMLの指定で読み込んでみる
+            fn = pw.filename_ofs; // specification
+            pcmData = GetPCMDataFromFile(fn); // Try reading by specifying MML
 
             if (pcmData == null || pcmData.length < 1) {
-                fn = Path.changeExtension(pw.filename_ofs, ".PPC"); // 拡張子 "PPC"に変更
+                fn = Path.changeExtension(pw.filename_ofs, ".PPC"); // Change the extension to "PPC"
                 pcmData = GetPCMDataFromFile(fn);
                 if (pcmData == null || pcmData.length < 1) {
 //                    break p86load_error;
@@ -674,22 +667,20 @@ public class PCMLOAD {
             }
         }
 //p86load_complete:
-        r.setAx((short) 0); // 正常終了
-        p86PcmData[0] = pcmData; // bank 0固定
+        r.setAx((short) 0); // normal termination
+        p86PcmData[0] = pcmData; // Fixed to bank 0
         ChipDatum cd = new ChipDatum(0x00, 0, 0, 0, pcmData); // LoadPCM
         p86em.apply(cd);
     }
 
-
-    //739-748
-    //-----------------------------------------------------------------------------
-    // エラーリターン
-    //-----------------------------------------------------------------------------
+    //
+    // Error Return
+    //
     private void allload_exit1() {
         if (pw.message != 0) {
             r.setDx((short) 0); //    mov dx,offset exit1_mes
         }
-        r.setAx((short) 1); // PCMが定義出来ません。
+        r.setAx((short) 1); // PCM cannot be defined.
         error_exec(pw.exit1_mes);
     }
 
@@ -697,7 +688,7 @@ public class PCMLOAD {
         if (pw.message != 0) {
             r.setDx((short) 0); //    mov dx,offset exit2_mes
         }
-        r.setAx((short) 2); // PCMファイルがない
+        r.setAx((short) 2); // No PCM file
         error_exec(pw.exit2_mes);
     }
 
@@ -709,7 +700,7 @@ public class PCMLOAD {
         if (pw.message != 0) {
             r.setDx((short) 0); //    mov dx,offset exit3_mes
         }
-        r.setAx((short) 3); // ファイルがPMDのPCMではない
+        r.setAx((short) 3); // File is not a PMD PCM
         error_exec(pw.exit3_mes);
     }
 
@@ -721,11 +712,10 @@ public class PCMLOAD {
         if (pw.message != 0) {
             r.setDx((short) 0); //    mov dx,offset exit6_mes
         }
-        r.setAx((short) 6); // PCMメモリアクセス中
+        r.setAx((short) 6); // PCM memory access
         error_exec(pw.exit6_mes);
     }
 
-    //828-839
     private void error_exec(String msg) {
         if (pw.message != 0) {
             r.stack.push(r.getAx());
@@ -740,15 +730,14 @@ public class PCMLOAD {
         r.carry = true;
     }
 
-    //840-864
     //
-    // PMDB2＆ADPCMのCheck
-    //  output cy  PMDB2又はADPCMがない
+    // PMDB2 & ADPCM Check
+    //  output cy PMDB2 or ADPCM not available
     //
     private void check_pmdb2() {
-        //-----------------------------------------------------------------------------
-        // PMDB2＆ADPCMの搭載CHECK
-        //-----------------------------------------------------------------------------
+        //
+        // PMDB2 & ADPCM installation check
+        //
         r.ah = 0x10;
         pmd.int60_main(r.getAx()); // get_workadr in DS:DX
         r.setBx(r.getDx());
@@ -766,43 +755,43 @@ public class PCMLOAD {
     }
 
     //
-    // P86DRVの常駐Check
-    //  output cy  P86DRVがない
+    // P86DRV resident check
+    //  output cy  P86DRV is missing
     //
     private void check_p86drv() {
         r.carry = !pw.useP86DRV;
     }
 
     //
-    // Filenameの大文字化＆パス名回避処理
+    // Filename capitalization and pathname avoidance processing
     //
     private void filename_set() {
-        //-----------------------------------------------------------------------------
-        // Filenameを小文字から大文字に変換(SHIFTJIS回避付き)
-        //-----------------------------------------------------------------------------
+        //
+        // Convert filename from lowercase to uppercase (with SHIFTJIS avoidance)
+        //
         pw.filename_ofs = pw.filename_ofs.toUpperCase().trim();
 
-        //-----------------------------------------------------------------------------
-        // Filename中のパス名を抜いたfilename_ofs2を設定(File名比較用)
-        //-----------------------------------------------------------------------------
+        //
+        // Set filename_ofs2 to the filename without the pathname (for file name comparison)
+        //
         pw.filename_ofs2 = Path.getFileName(pw.filename_ofs);
     }
 
     //
-    // PMDのワークにFilenameを書く
+    // Write Filename to PMD work
     //
     private void write_filename_to_pmdwork() {
         r.setSi((short) 0);
         byte[] fnba = pw.filename_ofs2.getBytes(Charset.forName("shift_jis"));
-        r.di = 4 * 256 + 2; // ES:DI = PMD内PCM_WORKのFilename格納位置
-        r.setCx((short) 128); // byte数
+        r.di = 4 * 256 + 2; // ES:DI = Filename storage location of PCM_WORK in PMD
+        r.setCx((short) 128); // Number of bytes
 
         while (r.getCx() != 0) {
             if (r.getSi() < fnba.length) {
                 pw.pcmWk[r.di] = fnba[r.getSi()];
                 r.incSi();
             } else {
-                pw.pcmWk[r.di] = 0; // 残りを０で埋める
+                pw.pcmWk[r.di] = 0; // Fill the rest with 0
             }
             r.di++;
             r.decCx();
@@ -810,7 +799,7 @@ public class PCMLOAD {
     }
 
     //
-    // PCMメモリへメインメモリからデータを送る(x8, 高速/低速選択版)
+    // Send data from main memory to PCM memory (x8, high/low speed selectable version)
     //
     // INPUTS..cs:[pcmstart] to Start Address
     //  .. cs:[pcmstop] to Stop  Address
@@ -822,7 +811,7 @@ public class PCMLOAD {
 
         r.setDx((short) 0x0001);
         out46();
-        r.setDx((short) 0x1017); // brdy以外はマスク(=timer割り込みは掛からない)
+        r.setDx((short) 0x1017); // Mask all except brdy (=no timer interrupt)
         out46();
         r.setDx((short) 0x1080);
         out46();
@@ -861,9 +850,9 @@ public class PCMLOAD {
 
         if (pw.adpcm_wait != 0) { // break fast_store;
             if (pw.adpcm_wait != 1) { // break middle_store;
-                //------------------------------------------------------------------------------
-                // 低速定義
-                //------------------------------------------------------------------------------
+                //
+                // Low Speed Definition
+                //
 //slow_store:
                 // cli
                 //o4600z: in al,dx
@@ -905,11 +894,10 @@ public class PCMLOAD {
                 //    loop    slow_store
                 //    jmp pcmst_exit
             }
-            //------------------------------------------------------------------------------
-            // 中速定義
-            //------------------------------------------------------------------------------
-middle_store:
-            ;
+            //
+            // Medium Speed Definition
+            //
+//middle_store:
             // call cli_sub
             //o4600y: in al,dx
             //    or  al,al
@@ -934,9 +922,9 @@ middle_store:
             //    jmp pcmst_exit
         }
 
-        //------------------------------------------------------------------------------
-        // 高速定義
-        //------------------------------------------------------------------------------
+        //
+        // Fast definition
+        //
 //fast_store:
         cli_sub();
 
@@ -945,7 +933,7 @@ middle_store:
             r.al = pc98.InPort(r.getDx());
         } while ((r.al & 0x80) == 0); // break o4600x;
         r.al = 8; // PCMDAT reg.
-        pc98.OutPort(r.getDx(), r.al);
+        pc98.outPort(r.getDx(), r.al);
         r.stack.push(r.getCx());
         r.setCx(pw.pcmload_wait_clock);
         //do {
@@ -959,7 +947,7 @@ middle_store:
 //fast_store_loop:
         do {
             r.al = pw.pcmDt[r.incSi()];
-            pc98.OutPort(r.getDx(), r.al); // OUT data
+            pc98.outPort(r.getDx(), r.al); // OUT data
             b = r.getBx();
             r.setBx(r.getDx());
             r.setDx(b);
@@ -988,10 +976,10 @@ middle_store:
         key_check_set();
     }
 
-    //------------------------------------------------------------------------------
-    // RS-232C以外は割り込みを禁止する
-    // (FM音源LSI の ADDRESSの変更をさせない為)
-    //------------------------------------------------------------------------------
+    //
+    // Disable interrupts for anything other than RS-232C
+    // ((To prevent the address of the FM sound source LSI from being changed)
+    //
     private void cli_sub() {
         r.stack.push(r.getAx());
         r.stack.push(r.getDx());
@@ -999,30 +987,30 @@ middle_store:
         r.setDx(pw.mmask_port);
         r.al = pc98.InPort(r.getDx());
         pw.mmask_push = r.al;
-        r.al |= (byte) 0b1110_1111; // RSのみ変化させない
-        pc98.OutPort(r.getDx(), r.al);
-        //sti
-        r.setDx(r.stack.pop());
-        r.setAx(r.stack.pop());
-    }
-
-    //------------------------------------------------------------------------------
-    // 上のsubroutineで禁止した割り込みを元に戻す
-    //------------------------------------------------------------------------------
-    private void sti_sub() {
-        r.stack.push(r.getAx());
-        r.stack.push(r.getDx());
-        //cli
-        r.setDx(pw.mmask_port);
-        r.al = pw.mmask_push;
-        pc98.OutPort(r.getDx(), r.al);
+        r.al |= (byte) 0b1110_1111; // Only RS remains unchanged
+        pc98.outPort(r.getDx(), r.al);
         //sti
         r.setDx(r.stack.pop());
         r.setAx(r.stack.pop());
     }
 
     //
-    // ＯＰＮＡ裏ポートへのデータの書き込み
+    // Revert the interrupts disabled in the subroutine above
+    //
+    private void sti_sub() {
+        r.stack.push(r.getAx());
+        r.stack.push(r.getDx());
+        //cli
+        r.setDx(pw.mmask_port);
+        r.al = pw.mmask_push;
+        pc98.outPort(r.getDx(), r.al);
+        //sti
+        r.setDx(r.stack.pop());
+        r.setAx(r.stack.pop());
+    }
+
+    //
+    // Write data to OPNA back port
     //
     // Inputs..dh to Register
     //  .. dl to Data
@@ -1039,7 +1027,7 @@ middle_store:
         } while ((r.al & 0x80) == 0); // break o4600;
         r.al = r.bh;
         //cli
-        pc98.OutPort(r.getDx(), r.al);
+        pc98.outPort(r.getDx(), r.al);
         r.stack.push(r.getCx());
         //r.cx = (short)pw.pcmload_wait_clock;
         //do {
@@ -1048,15 +1036,15 @@ middle_store:
         r.setCx(r.stack.pop());
         r.setDx(pw.port47);
         r.al = r.bl;
-        pc98.OutPort(r.getDx(), r.al);
+        pc98.outPort(r.getDx(), r.al);
         //sti
         r.setBx(r.stack.pop());
         r.setDx(r.stack.pop());
     }
 
     //
-    // PMDの ESC/GRPH入力を効かなくする
-    // その他必要なデータをpmdのsegmentから読み取る
+    // Disable PMD ESC/GRPH input
+    // Read other necessary data from pmd segment
     //  out cy acccess flag on
     //
     private void key_check_reset() {
@@ -1087,9 +1075,9 @@ middle_store:
             pw.key_check_push = r.al;
             pw.key_check = 0;
             pw.pcm_access = 1;
-            pw.pcmflag = 0; // 追加(効果音対策)
+            pw.pcmflag = 0; // Addition (sound effect measures)
             pw.pcm_effec_num = (byte) 255;
-            pw.partWk[r.di].partmask &= (byte) 0xfd; // bit1をclear
+            pw.partWk[r.di].partmask &= (byte) 0xfd; // clear bit1
             r.carry = true; // cf=1
         }
 //kcr_exit:
@@ -1102,10 +1090,9 @@ middle_store:
         //r.ds = r.stack.pop();
     }
 
-    //1375-1396
     //
-    // PMDの ESC/GRPH入力を元に戻す
-    // PCMメモリアクセスフラグをoff
+    // Resetting the PMD ESC/GRPH input
+    // PCM memory access flag off
     //
     private void key_check_set() {
         //r.stack.push(r.ds);
@@ -1116,7 +1103,7 @@ middle_store:
         r.ah = 0x10;
         pmd.int60_main(r.getAx());
         //    mov bx,dx
-        //mov bx,-2[bx] // KUMA:open_work
+        //mov bx,-2[bx] // KUMA: open_work
         r.al = pw.key_check_push;
         pw.key_check = r.al;
         pw.pcm_access = 0;
