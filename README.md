@@ -5,6 +5,8 @@
 
 # vavi-sound-pmd
 
+<img alt="duke sings pmd" src="https://github.com/user-attachments/assets/c72c44f7-ae8b-4501-be07-fcf247ca9dd3" width="100"/>
+
 Java version of PMD.
 
 this is a fork of [PMDDotNET](https://github.com/kuma4649/PMDDotNET)
