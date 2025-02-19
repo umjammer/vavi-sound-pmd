@@ -19,6 +19,8 @@ import dotnet4j.io.StreamReader;
 import dotnet4j.util.compat.Tuple;
 import pmd.compiler.Compiler;
 
+import static pmd.common.Common.charset;
+
 
 public class JavaCompiler extends DosCompiler {
 
@@ -101,7 +103,7 @@ public class JavaCompiler extends DosCompiler {
 
     private static String getOutputFileName(Compiler compiler, String mmlFilePath, Function<String, Stream> fnAppendFileReaderCallback) {
         try (var sourceMML = new FileStream(mmlFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)) {
-            try (var sr = new StreamReader(sourceMML, Charset.forName("cp932"))) {
+            try (var sr = new StreamReader(sourceMML, charset)) {
                 var srcText = sr.readToEnd();
                 var tags = compiler.getTags(srcText, fnAppendFileReaderCallback);
                 if (tags != null) {

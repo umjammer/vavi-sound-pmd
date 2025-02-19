@@ -3,6 +3,7 @@ package pmd.compiler;
 import java.awt.Point;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -20,6 +21,7 @@ import pmd.common.PmdException;
 import vavi.util.ByteUtil;
 
 import static java.lang.System.getLogger;
+import static pmd.common.Common.charset;
 import static pmd.compiler.FNumDatSeg.fnumTbl;
 
 
@@ -1575,7 +1577,7 @@ fm3_check:
             } else {
 //memow_trans0:
                 ret = set_Strings2(); // Includes lowercase to uppercase conversion
-                bret = compiler.enc.getSjisArrayFromString(ret);
+                bret = ret.getBytes(charset);
                 for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
                 m_seg.m_buf.set(work.di++, new MmlDatum(0));
             }
@@ -1596,7 +1598,7 @@ fm3_check:
         } else {
 //memow_trans:
             ret = set_Strings();
-            bret = compiler.enc.getSjisArrayFromString(ret);
+            bret = ret.getBytes(charset);
             for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
             m_seg.m_buf.set(work.di++, new MmlDatum(0));
         }
@@ -1613,13 +1615,13 @@ fm3_check:
                 work.al = 0;
                 m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             } else {
-                bret = compiler.enc.getSjisArrayFromString(mml_seg.composer_seg);
+                bret = mml_seg.composer_seg.getBytes(charset);
                 for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
                 m_seg.m_buf.set(work.di++, new MmlDatum(0));
             }
         } else {
             ret = set_Strings();
-            bret = compiler.enc.getSjisArrayFromString(ret);
+            bret = ret.getBytes(charset);
             for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
             m_seg.m_buf.set(work.di++, new MmlDatum(0));
         }
@@ -1636,13 +1638,13 @@ fm3_check:
                 work.al = 0;
                 m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             } else {
-                bret = compiler.enc.getSjisArrayFromString(mml_seg.arranger_seg);
+                bret = mml_seg.arranger_seg.getBytes(charset);
                 for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
                 m_seg.m_buf.set(work.di++, new MmlDatum(0));
             }
         } else {
             ret = set_Strings();
-            bret = compiler.enc.getSjisArrayFromString(ret);
+            bret = ret.getBytes(charset);
             for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
             m_seg.m_buf.set(work.di++, new MmlDatum(0));
         }
@@ -1659,7 +1661,7 @@ fm3_check:
             mml_seg.memo_adr[memoInd] = ax; // Enter the forwarding address (ofs) instead of [bx]
 
             ret = set_Strings();
-            bret = compiler.enc.getSjisArrayFromString(ret);
+            bret = ret.getBytes(charset);
             for (byte b : bret) m_seg.m_buf.set(work.di++, new MmlDatum(b & 0xff));
             m_seg.m_buf.set(work.di++, new MmlDatum(0));
 
@@ -3048,7 +3050,7 @@ hsset_loop:
 
         //nns_loop:
         for (int i = 0; i < 7; i++) voice_seg.voice_buf[work.bx + i] = 0;
-        byte[] bret = compiler.enc.getSjisArrayFromString(mml_seg.prg_name);
+        byte[] bret = mml_seg.prg_name.getBytes(charset);
 
         while (work.bp < bret.length && cx > 0) {
             voice_seg.voice_buf[work.bx] = bret[work.bp++];

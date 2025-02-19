@@ -28,6 +28,7 @@ import pmd.compiler.Compiler;
 import vavi.util.serdes.Serdes;
 
 import static java.lang.System.getLogger;
+import static pmd.common.Common.charset;
 
 
 class Program {
@@ -116,7 +117,7 @@ class Program {
                 // Get Filename from Tag
                 String srcText;
                 try (FileStream sourceMML = new FileStream(srcFile, FileMode.Open, FileAccess.Read, FileShare.Read)) {
-                    try (StreamReader sr = new StreamReader(sourceMML, Charset.forName("Shift_JIS"))) {
+                    try (StreamReader sr = new StreamReader(sourceMML, charset)) {
                         srcText = sr.readToEnd();
                     }
                 }
