@@ -14,6 +14,7 @@ import musicDriverInterface.ChipDatum;
 import vavi.util.ByteUtil;
 
 import static java.lang.System.getLogger;
+import static pmd.common.Common.charset;
 
 
 public class PCMLOAD {
@@ -782,7 +783,7 @@ public class PCMLOAD {
     //
     private void write_filename_to_pmdwork() {
         r.setSi((short) 0);
-        byte[] fnba = pw.filename_ofs2.getBytes(Charset.forName("shift_jis"));
+        byte[] fnba = pw.filename_ofs2.getBytes(charset);
         r.di = 4 * 256 + 2; // ES:DI = Filename storage location of PCM_WORK in PMD
         r.setCx((short) 128); // Number of bytes
 

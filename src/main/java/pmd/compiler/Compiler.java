@@ -22,10 +22,9 @@ import musicDriverInterface.GD3Tag;
 import musicDriverInterface.ICompiler;
 import musicDriverInterface.MmlDatum;
 import musicDriverInterface.Tag;
-import pmd.common.iEncoding;
-import pmd.common.MyEncoding;
 
 import static java.lang.System.getLogger;
+import static pmd.common.Common.charset;
 
 
 public class Compiler implements ICompiler {
@@ -36,7 +35,6 @@ public class Compiler implements ICompiler {
 
     // Input data
 
-    public iEncoding enc = null;
     public String[] mcArgs = null;
     public String[] env = null;
 
@@ -77,10 +75,7 @@ public class Compiler implements ICompiler {
     private Work work = null;
     private byte[] ffBuf = null;
 
-    public Compiler() { this(null); }
-
-    public Compiler(iEncoding enc /* = null */) {
-        this.enc = enc == null ? MyEncoding.Default() : enc;
+    public Compiler() {
     }
 
     @Override
@@ -146,7 +141,7 @@ public class Compiler implements ICompiler {
             }
             ms.seek(0, SeekOrigin.Begin);
 
-            try (StreamReader sr = new StreamReader(ms, Charset.forName("Shift_JIS"))) {
+            try (StreamReader sr = new StreamReader(ms, charset)) {
                 srcBuf = sr.readToEnd();
             } catch (IOException e) {
                 throw new dotnet4j.io.IOException(e);
@@ -284,7 +279,7 @@ public class Compiler implements ICompiler {
             //return "";
         }
         String text;
-        try (StreamReader sr = new StreamReader(strm, Charset.forName("Shift_JIS"))) {
+        try (StreamReader sr = new StreamReader(strm, charset)) {
             text = sr.readToEnd();
         } catch (IOException e) {
             throw new dotnet4j.io.IOException(e);
@@ -337,7 +332,7 @@ public class Compiler implements ICompiler {
 
     @Override
     public GD3Tag getGD3TagInfo(byte[] srcBuf) {
-        String text = new String(srcBuf, Charset.forName("shift_jis"));
+        String text = new String(srcBuf, charset);
         Tuple<String, String>[] tags = getTags(text, appendFileReaderCallback);
         GD3Tag gd3tag = new GD3Tag();
         gd3tag.items.clear();

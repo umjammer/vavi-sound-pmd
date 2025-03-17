@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +26,6 @@ import musicDriverInterface.IDriver;
 import musicDriverInterface.MmlDatum;
 import musicDriverInterface.Tag;
 import pmd.common.Common;
-import pmd.common.iEncoding;
-import pmd.common.MyEncoding;
 import vavi.util.ByteUtil;
 import vavi.util.serdes.Serdes;
 
@@ -39,7 +36,6 @@ public class Driver implements IDriver {
 
     private static final Logger logger = getLogger(Driver.class.getName());
 
-    private iEncoding enc;
     private PMD pmd = null;
     private PW work = null;
     private int renderingFreq = 44100;
@@ -54,11 +50,6 @@ public class Driver implements IDriver {
     public Exception renderingException = null;
 
     public Driver() {
-        this(null);
-    }
-
-    public Driver(iEncoding enc /* = null */) {
-        this.enc = enc != null ? enc : MyEncoding.Default();
     }
 
     @Override
@@ -241,7 +232,7 @@ getmemo_errret:
                 lst.add((byte) srcBuf[index[0]].dat);
             }
 
-            String n = new String(ByteUtil.toByteArray(lst), Charset.forName("cp932"));
+            String n = new String(ByteUtil.toByteArray(lst), Common.charset);
             index[0]++;
 
             return n;

@@ -1,6 +1,7 @@
 
 package pmd.common;
 
+import java.nio.charset.Charset;
 import java.util.function.Function;
 
 import dotnet4j.io.MemoryStream;
@@ -9,6 +10,8 @@ import musicDriverInterface.MmlDatum;
 
 
 public class Common {
+
+    public static Charset charset = Charset.forName("cp932");
 
     public static short GetLe16(MmlDatum[] md, int adr) {
         return (short) (md[adr].dat + md[adr + 1].dat * 0x100);
