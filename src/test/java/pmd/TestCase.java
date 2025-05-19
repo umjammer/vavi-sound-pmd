@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class TestCase {
 
-     @Test
+    @Test
     void test1() throws Exception {
          X86Register r = new X86Register();
          short x;

@@ -7,7 +7,7 @@ import musicDriverInterface.ChipDatum;
 
 public class Pc98 {
 
-    private Consumer<ChipDatum> WriteOPNARegister;
+    private final Consumer<ChipDatum> writeOPNARegister;
     private ChipDatum cd = new ChipDatum(0, 0, 0);
     private byte fm1_reg = 0;
     private byte fm2_reg = 0;
@@ -15,12 +15,12 @@ public class Pc98 {
 
     private byte[] psgDat = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    public Pc98(Consumer<ChipDatum> WriteOPNARegister, PW pw) {
-        this.WriteOPNARegister = WriteOPNARegister;
+    public Pc98(Consumer<ChipDatum> writeOPNARegister, PW pw) {
+        this.writeOPNARegister = writeOPNARegister;
         this.pw = pw;
     }
 
-    public byte InPort(int v) {
+    public byte inPort(int v) {
         if (v == 0x2) {
             return 0;
         } else if (v == 0xa468) {
@@ -59,7 +59,7 @@ public class Pc98 {
             if ((fm1_reg & 0xff) < 0x10) {
                 psgDat[fm1_reg & 0xff] = al;
             }
-            WriteOPNARegister.accept(cd);
+            writeOPNARegister.accept(cd);
         } else if (dx == 0x18c) {
             fm2_reg = al;
         } else if (dx == 0x18e) {
@@ -67,11 +67,11 @@ public class Pc98 {
             cd.address = fm2_reg;
             cd.data = al;
             //cd.additionalData = pw.cmd;
-            WriteOPNARegister.accept(cd);
+            writeOPNARegister.accept(cd);
         }
     }
 
-    public boolean GetGraphKey() {
+    public boolean getGraphKey() {
         // TODO Not implemented
         return false;
     }

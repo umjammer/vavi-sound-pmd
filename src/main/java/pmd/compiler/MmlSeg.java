@@ -10,7 +10,7 @@ import musicDriverInterface.LinePos;
 public class MmlSeg {
 
     /**
-    //	Work Area
+     * //	Work Area
      */
     public String warning_mes = "Warning ";
     public String not_ff_mes = ": The tone file name is not specified.";
@@ -19,7 +19,7 @@ public class MmlSeg {
     public String loop_err_mes = " : The loop termination symbol ] is missing.";
     public String mcopt_err_mes = ": The environment variable MCOPT is incorrectly written.";
 
-//#if efc
+    //#if efc
 //		public String usames = "Usage:  EFC [/option] filename[.EML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
 //		+ "Option: /V  Compile with Tonedatas" + Mc.cr + Mc.lf
 //		+ "        /VW Write Voicefile after Compile" + Mc.cr + Mc.lf
@@ -33,29 +33,29 @@ public class MmlSeg {
 //				+ Mc.cr + Mc.lf + Mc.cr + Mc.lf + Mc.eof;
 //#else
 //#if !hyouka
-		public String usames = "Usage:  MC"
-		+ " [/option] filename[.MML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
-		+ "Option: "
-		+ "/V  Compile with Tonedatas & Messages & Filenames" + Mc.cr + Mc.lf
-		+ "        /VW Write Tonedata after Compile" + Mc.cr + Mc.lf
-		+ "        /N  Compile on OPN   Mode(Default)" + Mc.cr + Mc.lf
-		+ "        /L  (unsupported) Compile on OPL   Mode" + Mc.cr + Mc.lf
-		+ "        /M  (unsupported) Compile on OPM   Mode" + Mc.cr + Mc.lf
-		+ "        /T  (unsupported) Compile on TOWNS Mode" + Mc.cr + Mc.lf
-		+ "        /P  (unsupported) Play after Compile Complete" + Mc.cr + Mc.lf
-		+ "        /S  (unsupported) Not Write Compiled File & Play" + Mc.cr + Mc.lf
-		+ "        /A  (unsupported) Not Set ADPCM_File before Play" + Mc.cr + Mc.lf
-		+ "        /O  (unsupported) Not Put Title Messages after Play" + Mc.cr + Mc.lf
-		+ "        /C  Calculate & Put Total Length of Parts" + Mc.cr + Mc.lf
-		//+ Mc.eof
-		;
-		public String titmes = " .MML file --> .M file Compiler"
-		+ " ver " + Mc.ver + Mc.cr + Mc.lf
-		+ "		Programmed by M.Kajihara(KAJA) " + Mc.date
-		+ Mc.cr + Mc.lf
-		//+ Mc.cr + Mc.lf
-		//+ Mc.eof
-		;
+    public String usames = "Usage:  MC" +
+            " [/option] filename[.MML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf +
+            "Option: " +
+            "/V  Compile with Tonedatas & Messages & Filenames" + Mc.cr + Mc.lf +
+            "        /VW Write Tonedata after Compile" + Mc.cr + Mc.lf +
+            "        /N  Compile on OPN   Mode(Default)" + Mc.cr + Mc.lf +
+            "        /L  (unsupported) Compile on OPL   Mode" + Mc.cr + Mc.lf +
+            "        /M  (unsupported) Compile on OPM   Mode" + Mc.cr + Mc.lf +
+            "        /T  (unsupported) Compile on TOWNS Mode" + Mc.cr + Mc.lf +
+            "        /P  (unsupported) Play after Compile Complete" + Mc.cr + Mc.lf +
+            "        /S  (unsupported) Not Write Compiled File & Play" + Mc.cr + Mc.lf +
+            "        /A  (unsupported) Not Set ADPCM_File before Play" + Mc.cr + Mc.lf +
+            "        /O  (unsupported) Not Put Title Messages after Play" + Mc.cr + Mc.lf +
+            "        /C  Calculate & Put Total Length of Parts" + Mc.cr + Mc.lf
+            //+ Mc.eof
+            ;
+    public String titmes = " .MML file --> .M file Compiler" +
+            " ver " + Mc.ver + Mc.cr + Mc.lf +
+            "		Programmed by M.Kajihara(KAJA) " + Mc.date +
+            Mc.cr + Mc.lf
+            //Mc.cr + Mc.lf +
+            //Mc.eof
+            ;
 //#else
 //    public String usames = "Usage:  MCH"
 //            + " [/option] filename[.MML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
@@ -78,8 +78,8 @@ public class MmlSeg {
     public String finmes = "Compile Completed.";
     public String mes_crlf = "" + Mc.cr + Mc.lf + Mc.eof;
 
-    public String mes_title = Mc.cr + Mc.lf + " Start playing." + Mc.cr + Mc.lf + Mc.cr + Mc.lf
-            + "Title    : " + Mc.eof;
+    public String mes_title = Mc.cr + Mc.lf + " Start playing." + Mc.cr + Mc.lf + Mc.cr + Mc.lf +
+            "Title    : " + Mc.eof;
     public String mes_composer = "Composer : " + Mc.eof;
     public String mes_arranger = "Arranger : " + Mc.eof;
     public String mes_memo = "         : " + Mc.eof;
@@ -94,7 +94,7 @@ public class MmlSeg {
     public String mcopt_txt = "MCOPT=";
 
 //#if !tempo_old_flag
-		public int tempo = 0;
+    public int tempo = 0;
 //#endif
     public int timerb = 0; // b
     public int octave = 4; // b
@@ -150,50 +150,50 @@ public class MmlSeg {
     public int rhythm_voldown_flag = 0; // b
     public int ppz_voldown_flag = 0; // b
 
-    public byte[] fmvol =             {
-                    127 - 0x2a //VOLUME	00
-                    , 127 - 0x28 //VOLUME	01
-                    , 127 - 0x25 //VOLUME	02
-                    , 127 - 0x22 //VOLUME	03
-                    , 127 - 0x20 //VOLUME	04
-                    , 127 - 0x1d //VOLUME	05
-                    , 127 - 0x1a //VOLUME	06
-                    , 127 - 0x18 //VOLUME	07
-                    , 127 - 0x15 //VOLUME	08
-                    , 127 - 0x12 //VOLUME	09
-                    , 127 - 0x10 //VOLUME	10
-                    , 127 - 0x0d //VOLUME	11
-                    , 127 - 0x0a //VOLUME	12
-                    , 127 - 0x08 //VOLUME	13
-                    , 127 - 0x05 //VOLUME	14
-                    , 127 - 0x02 //VOLUME	15
-                    , 127 - 0x00 //VOLUME	16
-            };
+    public static final byte[] fmvol = {
+            127 - 0x2a,  // VOLUME	00
+            127 - 0x28,  // VOLUME	01
+            127 - 0x25,  // VOLUME	02
+            127 - 0x22,  // VOLUME	03
+            127 - 0x20,  // VOLUME	04
+            127 - 0x1d,  // VOLUME	05
+            127 - 0x1a,  // VOLUME	06
+            127 - 0x18,  // VOLUME	07
+            127 - 0x15,  // VOLUME	08
+            127 - 0x12,  // VOLUME	09
+            127 - 0x10,  // VOLUME	10
+            127 - 0x0d,  // VOLUME	11
+            127 - 0x0a,  // VOLUME	12
+            127 - 0x08,  // VOLUME	13
+            127 - 0x05,  // VOLUME	14
+            127 - 0x02,  // VOLUME	15
+            127 - 0x00   // VOLUME	16
+    };
 
 //#if !efc
 
-		public int pcm_vol_ext = 0; // b
+    public int pcm_vol_ext = 0; // b
 
-		// PSG tone patterns
-		public int[][] psgenvdat = {
-			{  0, 0,0,0 } // @0 Standard
-			,{ 2,255,0,1 } // @1 Synth 1
-			,{ 2,254,0,1 } // @2 Synth 2
-			,{ 2,254,0,8 } // @3 Synth 3
-			,{ 2,255,24,1 } // @4 E.Piano 1
-			,{ 2,254,24,1 } // @5 E.Piano 2
-			,{ 2,254,4,1 } // @6 Glocken/Malimba
-			,{ 2,1,0,1 } // @7 Strings
-			,{ 1,2,0,1 } // @8 Brass 1
-			,{ 1,2,24,1 } // @9 Brass 2
-		};
-		public int psgenvdat_max = 9;
-        public int max_part = 11;
-		public int fm = 0;
-		public int fm2 = 1;
-		public int psg = 2;
-		public int pcm = 3;
-		public int pcm_ex = 4;
+    // PSG tone patterns
+    public int[][] psgenvdat = {
+            {0, 0, 0, 0},     // @0 Standard
+            {2, 255, 0, 1},   // @1 Synth 1
+            {2, 254, 0, 1},   // @2 Synth 2
+            {2, 254, 0, 8},   // @3 Synth 3
+            {2, 255, 24, 1},  // @4 E.Piano 1
+            {2, 254, 24, 1},  // @5 E.Piano 2
+            {2, 254, 4, 1},   // @6 Glocken/Malimba
+            {2, 1, 0, 1},     // @7 Strings
+            {1, 2, 0, 1},     // @8 Brass 1
+            {1, 2, 24, 1}     // @9 Brass 2
+    };
+    public int psgenvdat_max = 9;
+    public int max_part = 11;
+    public int fm = 0;
+    public int fm2 = 1;
+    public int psg = 2;
+    public int pcm = 3;
+    public int pcm_ex = 4;
 
 //#else
 
@@ -262,7 +262,7 @@ public class MmlSeg {
     public int fm3_partchr2 = 0; // b	0
     public int fm3_partchr3 = 0; // b	0
     public int fm3_ofsadr = 0; // w	0
-    public char[] pcm_partchr =  {
+    public char[] pcm_partchr = {
             (char) 0,
             (char) 0,
             (char) 0,
@@ -270,37 +270,38 @@ public class MmlSeg {
             (char) 0,
             (char) 0,
             (char) 0,
-            (char) 0}; // b	0
+            (char) 0
+    }; // b	0
     public int pcm_ofsadr = 0; // w	0
 
     // offset,max,rot
-    public byte[] oplprg_table =  {
-            8, 001, 0  // alg
-            , 8, 007, 1 // fbl
+    public static final byte[] oplprg_table = {
+            8, 1, 0,   // alg
+            8, 7, 1,   // fbl
 
-            , 04, 015, 4 // ar
-            , 04, 015, 0 // dr
-            , 06, 015, 0 // rr
-            , 06, 015, 4 // sl
-            , 02, 063, 0 // tl
-            , 02, 003, 6 // ksl
-            , 00, 015, 0 // ml
-            , 00, 001, 4 // ksr
-            , 00, 001, 5 // egt
-            , 00, 001, 6 // vib
-            , 00, 001, 7 // am
+            4, 15, 4,  // ar
+            4, 15, 0,  // dr
+            6, 15, 0,  // rr
+            6, 15, 4,  // sl
+            2, 63, 0,  // tl
+            2, 3, 6,   // ksl
+            0, 15, 0,  // ml
+            0, 1, 4,   // ksr
+            0, 1, 5,   // egt
+            0, 1, 6,   // vib
+            0, 1, 7,   // am
 
-            , 05, 015, 4 // ar
-            , 05, 015, 0 // dr
-            , 07, 015, 0 // rr
-            , 07, 015, 4 // sl
-            , 03, 063, 0 // tl
-            , 03, 003, 6 // ksl
-            , 01, 015, 0 // ml
-            , 01, 001, 4 // ksr
-            , 01, 001, 5 // egt
-            , 01, 001, 6 // vib
-            , 01, 001, 7 // am
+            5, 15, 4,  // ar
+            5, 15, 0,  // dr
+            7, 15, 0,  // rr
+            7, 15, 4,  // sl
+            3, 63, 0,  // tl
+            3, 3, 6,   // ksl
+            1, 15, 0,  // ml
+            1, 1, 4,   // ksr
+            1, 1, 5,   // egt
+            1, 1, 6,   // vib
+            1, 1, 7    // am
     };
 
     public int mml_endadr; // w

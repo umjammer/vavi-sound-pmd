@@ -1726,8 +1726,7 @@ fm3_check:
 
         if (mml_seg.ff_flg == 0) {
 //not_ff:     // Move here
-            print_mes(mml_seg.warning_mes
-                    + mml_seg.not_ff_mes);
+            print_mes(mml_seg.warning_mes + mml_seg.not_ff_mes);
             return null;
         }
 
@@ -2051,9 +2050,9 @@ fm3_check:
 
 //macro_normal_ret:
         bx = mml_seg.linehead;
-        mml_seg.mml_buf = (bx != 0 ? mml_seg.mml_buf.substring(0, bx) : "")
-                + ";"
-                + (bx + 1 < mml_seg.mml_buf.length() ? mml_seg.mml_buf.substring(bx + 1) : ""); // Convert "#" to ";"
+        mml_seg.mml_buf = (bx != 0 ? mml_seg.mml_buf.substring(0, bx) : "") +
+                ";" +
+                (bx + 1 < mml_seg.mml_buf.length() ? mml_seg.mml_buf.substring(bx + 1) : ""); // Convert "#" to ";"
 
         return enmPass2JumpTable.p1c_fin;
     }
@@ -3275,10 +3274,10 @@ hsset_loop:
         int n = mml_seg.mml_buf.indexOf("\r\n", work.si);
         int r = work.si;
         calc_line(/* ref */ r);
-        logger.log(Level.DEBUG, String.format("%d(%d) \t%d"
-                , mml_seg.mml_filename
-                , mml_seg.line
-                , mml_seg.mml_buf.substring(work.si, n - work.si)));
+        logger.log(Level.DEBUG, String.format("%d(%d) \t%d",
+                mml_seg.mml_filename,
+                mml_seg.line,
+                mml_seg.mml_buf.substring(work.si, n - work.si)));
 
         if ((skipPoint.x == 0 && skipPoint.y == 0) && skipSW == 0 && mml_seg.line == skipPoint.y + 1) {
             // KUMA: Skip process: Check if the specified row is correct.
@@ -3555,81 +3554,81 @@ notend: // ↑
 
     private void setupComTbl() {
         comtbl = new Tuple[] {
-                new Tuple<String, Supplier<enmPass2JumpTable>>("c", this::otoc)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("d", this::otod)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("e", this::otoe)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("f", this::otof)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("g", this::otog)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("a", this::otoa)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("b", this::otob)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("r", this::otor)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("x", this::otox)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("l", this::lengthset)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("o", this::octset)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>(">", this::octup)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("<", this::octdown)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("C", this::zenlenset)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("t", this::tempoa)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("T", this::tempob)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("q", this::qset)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("Q", this::qset2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("v", this::vseta)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("V", this::vsetb)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("R", this::neirochg)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("@", this::neirochg)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("&", this::tieset)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("D", this::detset)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("[", this::stloop)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("]", this::edloop)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>(":", this::extloop)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("L", this::lopset)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("_", this::oshift)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>(")", this::volup)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("(", this::voldown)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("M", this::lfoset)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("*", this::lfoswitch)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("E", this::psgenvset)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("y", this::ycommand)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("w", this::psgnoise)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("P", this::psgpat)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("!", this::hscom)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("B", this::bendset)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("I", this::pitchset)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("p", this::panset)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("\\", this::rhycom)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("X", this::octrev)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("^", this::lngmul)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("=", this::lngrew)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("H", this::hardlfo_set)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("#", this::hardlfo_onoff)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("Z", this::syousetu_lng_set)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("S", this::sousyoku_onp_set)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("W", this::giji_echo_set)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("~", this::status_write)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("{", this::porta_start)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("}", this::porta_end)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("n", this::ssg_efct_set)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("N", this::fm_efct_set)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("F", this::fade_set)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("s", this::slotmask_set)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("m", this::partmask_set)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("O", this::tl_set)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("A", this::adp_set)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("0", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("1", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("2", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("3", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("4", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("5", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("6", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("7", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("8", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("9", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("%", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("$", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>(".", this::lngrew_2)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("-", this::lng_dec)
-                , new Tuple<String, Supplier<enmPass2JumpTable>>("+", this::tieset_2)
+                new Tuple<String, Supplier<enmPass2JumpTable>>("c", this::otoc),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("d", this::otod),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("e", this::otoe),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("f", this::otof),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("g", this::otog),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("a", this::otoa),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("b", this::otob),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("r", this::otor),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("x", this::otox),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("l", this::lengthset),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("o", this::octset),
+                new Tuple<String, Supplier<enmPass2JumpTable>>(">", this::octup),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("<", this::octdown),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("C", this::zenlenset),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("t", this::tempoa),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("T", this::tempob),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("q", this::qset),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("Q", this::qset2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("v", this::vseta),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("V", this::vsetb),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("R", this::neirochg),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("@", this::neirochg),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("&", this::tieset),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("D", this::detset),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("[", this::stloop),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("]", this::edloop),
+                new Tuple<String, Supplier<enmPass2JumpTable>>(":", this::extloop),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("L", this::lopset),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("_", this::oshift),
+                new Tuple<String, Supplier<enmPass2JumpTable>>(")", this::volup),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("(", this::voldown),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("M", this::lfoset),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("*", this::lfoswitch),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("E", this::psgenvset),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("y", this::ycommand),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("w", this::psgnoise),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("P", this::psgpat),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("!", this::hscom),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("B", this::bendset),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("I", this::pitchset),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("p", this::panset),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("\\", this::rhycom),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("X", this::octrev),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("^", this::lngmul),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("=", this::lngrew),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("H", this::hardlfo_set),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("#", this::hardlfo_onoff),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("Z", this::syousetu_lng_set),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("S", this::sousyoku_onp_set),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("W", this::giji_echo_set),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("~", this::status_write),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("{", this::porta_start),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("}", this::porta_end),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("n", this::ssg_efct_set),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("N", this::fm_efct_set),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("F", this::fade_set),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("s", this::slotmask_set),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("m", this::partmask_set),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("O", this::tl_set),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("A", this::adp_set),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("0", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("1", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("2", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("3", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("4", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("5", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("6", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("7", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("8", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("9", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("%", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("$", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>(".", this::lngrew_2),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("-", this::lng_dec),
+                new Tuple<String, Supplier<enmPass2JumpTable>>("+", this::tieset_2)
         };
     }
 
@@ -5475,11 +5474,11 @@ sss_notfm2:
 
         return new LinePos(
                 mml_seg.currentDocument,
-                mml_seg.currentMMLFile // .mml_filename
-                , Math.max(mml_seg.line, 1)
-                , Math.max(mml_seg.stPos - mml_seg.linehead + 1, 1)
-                , p - mml_seg.stPos
-                , mml_seg.ongen == mml_seg.pcm_ex
+                mml_seg.currentMMLFile, // .mml_filename
+                Math.max(mml_seg.line, 1),
+                Math.max(mml_seg.stPos - mml_seg.linehead + 1, 1),
+                p - mml_seg.stPos,
+                mml_seg.ongen == mml_seg.pcm_ex
                 ? "PPZ8"
                 : (mml_seg.chipCh < 6
                 ? "FMOPN"
@@ -5490,14 +5489,11 @@ sss_notfm2:
                 : (mml_seg.chipCh == 18
                 ? "ADPCM"
                 : "Rhythm"
-        )
-        )
-        )
-        )
-                , mml_seg.ongen != mml_seg.pcm_ex ? "YM2608" : "PPZ8"
-                , 0
-                , 0
-                , mml_seg.chipCh - (mml_seg.chipCh < 20 ? 0 : 20)
+            )))),
+                mml_seg.ongen != mml_seg.pcm_ex ? "YM2608" : "PPZ8",
+                0,
+                0,
+                mml_seg.chipCh - (mml_seg.chipCh < 20 ? 0 : 20)
         );
     }
 
@@ -8237,18 +8233,18 @@ voldown4: // ↑
 
     private void setupRcomtbl() {
         rcomtbl = new Tuple[] {
-                new Tuple<Character, Supplier<enmPass2JumpTable>>('V', this::mstvol)
-                , new Tuple<Character, Supplier<enmPass2JumpTable>>('v', this::rthvol)
-                , new Tuple<Character, Supplier<enmPass2JumpTable>>('l', this::panlef)
-                , new Tuple<Character, Supplier<enmPass2JumpTable>>('m', this::panmid)
-                , new Tuple<Character, Supplier<enmPass2JumpTable>>('r', this::panrig)
-                , new Tuple<Character, Supplier<enmPass2JumpTable>>('b', this::bdset)
-                , new Tuple<Character, Supplier<enmPass2JumpTable>>('s', this::snrset)
-                , new Tuple<Character, Supplier<enmPass2JumpTable>>('c', this::cymset)
-                , new Tuple<Character, Supplier<enmPass2JumpTable>>('h', this::hihset)
-                , new Tuple<Character, Supplier<enmPass2JumpTable>>('t', this::tamset)
-                , new Tuple<Character, Supplier<enmPass2JumpTable>>('i', this::rimset)
-                , new Tuple<Character, Supplier<enmPass2JumpTable>>((char) 0, null)
+                new Tuple<Character, Supplier<enmPass2JumpTable>>('V', this::mstvol),
+                new Tuple<Character, Supplier<enmPass2JumpTable>>('v', this::rthvol),
+                new Tuple<Character, Supplier<enmPass2JumpTable>>('l', this::panlef),
+                new Tuple<Character, Supplier<enmPass2JumpTable>>('m', this::panmid),
+                new Tuple<Character, Supplier<enmPass2JumpTable>>('r', this::panrig),
+                new Tuple<Character, Supplier<enmPass2JumpTable>>('b', this::bdset),
+                new Tuple<Character, Supplier<enmPass2JumpTable>>('s', this::snrset),
+                new Tuple<Character, Supplier<enmPass2JumpTable>>('c', this::cymset),
+                new Tuple<Character, Supplier<enmPass2JumpTable>>('h', this::hihset),
+                new Tuple<Character, Supplier<enmPass2JumpTable>>('t', this::tamset),
+                new Tuple<Character, Supplier<enmPass2JumpTable>>('i', this::rimset),
+                new Tuple<Character, Supplier<enmPass2JumpTable>>((char) 0, null)
         };
     }
 

@@ -257,10 +257,9 @@ public class X86Register {
 
     public byte rcl(byte r, int n) {
         n &= 7;
-        byte ans = (byte) (
-                ((r & 0xff) << n)
-                        | ((carry ? 1 : 0) << n)
-                        | (n < 2 ? 0 : ((r & 0xff) >> (9 - n)))
+        byte ans = (byte) (((r & 0xff) << n) |
+                        ((carry ? 1 : 0) << n) |
+                        (n < 2 ? 0 : ((r & 0xff) >> (9 - n)))
         ); // & bitMask[n]));
         carry = ((r & (0x100 >> n)) != 0);
         return ans;
@@ -268,10 +267,9 @@ public class X86Register {
 
     public byte rcr(byte r, int n) {
         n &= 7;
-        byte ans = (byte) (
-                (n < 2 ? 0 : ((r & 0xff) << (9 - n)))
-                        | ((carry ? 0x100 : 0) >> n)
-                        | ((r & 0xff) >> n)
+        byte ans = (byte) ((n < 2 ? 0 : ((r & 0xff) << (9 - n))) |
+                ((carry ? 0x100 : 0) >> n) |
+                ((r & 0xff) >> n)
         ); // & bitMask[n]));
         carry = ((r & (0x100 >> n)) != 0);
         return ans;

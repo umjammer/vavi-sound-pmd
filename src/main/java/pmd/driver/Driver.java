@@ -284,11 +284,10 @@ getmemo_errret:
 
     @Override
     public void init(List<ChipAction> chipsAction, MmlDatum[] srcBuf, Function<String, Stream> appendFileReaderCallback_, Object... addtionalOption) {
-        //    throw new UnsupportedOperationException();
-        //}
+//      throw new UnsupportedOperationException();
+//    }
 
-        //public void Init(Action<ChipDatum> opnaWrite, Action<long, int> opnaWaitSend, MmlDatum[] srcBuf, Object addtionalOption)
-        //{
+//    public void Init(Action<ChipDatum> opnaWrite, Action<long, int> opnaWaitSend, MmlDatum[] srcBuf, Object addtionalOption) {
         Consumer<ChipDatum> opnaWrite = chipsAction.get(0)::writeRegister;
         BiConsumer<Long, Integer> opnaWaitSend = chipsAction.get(0)::waitSend;
 
@@ -326,11 +325,11 @@ getmemo_errret:
         Function<ChipDatum, Integer> p86Write = (Function<ChipDatum, Integer>) option[4];
         init(srcBuf,
                 opnaWrite, opnaWaitSend,
-                pdno, po
-                , appendFileReaderCallback
-                , ppz8Write
-                , ppsdrvWrite
-                , p86Write);
+                pdno, po,
+                appendFileReaderCallback,
+                ppz8Write,
+                ppsdrvWrite,
+                p86Write);
 
         pdnos[2] = pdno.isAUTO;
         pdnos[3] = pdno.isVA;
@@ -343,7 +342,7 @@ getmemo_errret:
     public void init(
             String fileName,
             Consumer<ChipDatum> opnaWrite, BiConsumer<Long, Integer> opnaWaitSend,
-            PMDOption addtionalPMDDotNETOption, String[] addtionalPMDOption,
+            PMDOption additionalPMDDotNETOption, String[] additionalPMDOption,
             Function<String, Stream> appendFileReaderCallback,
             Function<ChipDatum, Integer> ppz8Write,
             Function<ChipDatum, Integer> ppsdrvWrite,
@@ -351,20 +350,19 @@ getmemo_errret:
         if (!Path.getExtension(fileName).equalsIgnoreCase(".xml")) {
             byte[] srcBuf = File.readAllBytes(fileName);
             if (srcBuf.length < 1) return;
-            init(srcBuf, opnaWrite, opnaWaitSend, addtionalPMDDotNETOption, addtionalPMDOption
-                    , appendFileReaderCallback != null ? CreateAppendFileReaderCallback(Path.getDirectoryName(fileName)) : null
-                    , ppz8Write
-                    , ppsdrvWrite
-                    , p86Write);
+            init(srcBuf, opnaWrite, opnaWaitSend, additionalPMDDotNETOption, additionalPMDOption,
+                    appendFileReaderCallback != null ? CreateAppendFileReaderCallback(Path.getDirectoryName(fileName)) : null,
+                    ppz8Write,
+                    ppsdrvWrite,
+                    p86Write);
         } else {
             try (InputStream sr = Files.newInputStream(java.nio.file.Path.of(fileName))) {
                 MmlDatum[] s = Serdes.Util.deserialize(sr, new MmlDatum[0]); // TODO
-                init(s, opnaWrite, opnaWaitSend, addtionalPMDDotNETOption, addtionalPMDOption
-                        , appendFileReaderCallback != null ? CreateAppendFileReaderCallback(Path.getDirectoryName(fileName)) : null
-                        , ppz8Write
-                        , ppsdrvWrite
-                        , p86Write
-                );
+                init(s, opnaWrite, opnaWaitSend, additionalPMDDotNETOption, additionalPMDOption,
+                        appendFileReaderCallback != null ? CreateAppendFileReaderCallback(Path.getDirectoryName(fileName)) : null,
+                        ppz8Write,
+                        ppsdrvWrite,
+                        p86Write);
             } catch (IOException e) {
                 throw new dotnet4j.io.IOException(e);
             }
@@ -378,7 +376,7 @@ getmemo_errret:
     public void init(
             byte[] srcBuf,
             Consumer<ChipDatum> opnaWrite, BiConsumer<Long, Integer> opnaWaitSend,
-            PMDOption addtionalPMDDotNETOption, String[] addtionalPMDOption,
+            PMDOption additionalPMDDotNETOption, String[] additionalPMDOption,
             Function<String, Stream> appendFileReaderCallback,
             Function<ChipDatum, Integer> ppz8Write,
             Function<ChipDatum, Integer> ppsdrvWrite,
@@ -386,18 +384,18 @@ getmemo_errret:
         if (srcBuf == null || srcBuf.length < 1) return;
         List<MmlDatum> bl = new ArrayList<>();
         for (byte b : srcBuf) bl.add(new MmlDatum(b & 0xff));
-        init(bl.toArray(MmlDatum[]::new), opnaWrite, opnaWaitSend, addtionalPMDDotNETOption, addtionalPMDOption
-                , appendFileReaderCallback
-                , ppz8Write
-                , ppsdrvWrite
-                , p86Write
+        init(bl.toArray(MmlDatum[]::new), opnaWrite, opnaWaitSend, additionalPMDDotNETOption, additionalPMDOption,
+                appendFileReaderCallback,
+                ppz8Write,
+                ppsdrvWrite,
+                p86Write
         );
     }
 
     public void init(
             MmlDatum[] srcBuf,
             Consumer<ChipDatum> opnaWrite, BiConsumer<Long, Integer> opnaWaitSend,
-            PMDOption addtionalPMDDotNETOption, String[] addtionalPMDOption,
+            PMDOption additionalPMDDotNETOption, String[] additionalPMDOption,
             Function<String, Stream> appendFileReaderCallback,
             Function<ChipDatum, Integer> ppz8Write,
             Function<ChipDatum, Integer> ppsdrvWrite,
@@ -414,13 +412,13 @@ getmemo_errret:
 
         work = new PW();
         getTags();
-        addtionalPMDDotNETOption.PPCHeader = CheckPPC(appendFileReaderCallback);
+        additionalPMDDotNETOption.PPCHeader = CheckPPC(appendFileReaderCallback);
 
-        work.setOption(addtionalPMDDotNETOption, addtionalPMDOption);
+        work.setOption(additionalPMDDotNETOption, additionalPMDOption);
         work.timer = new OPNATimer(44100, 7987200);
 
-        //PPZ8em ppz8em = addtionalPMDDotNETOption.ppz8em;
-        //PPSDRV ppsdrv = addtionalPMDDotNETOption.ppsdrv;
+        //PPZ8em ppz8em = additionalPMDDotNETOption.ppz8em;
+        //PPSDRV ppsdrv = additionalPMDDotNETOption.ppsdrv;
 
         pmd = new PMD(
                 srcBuf,

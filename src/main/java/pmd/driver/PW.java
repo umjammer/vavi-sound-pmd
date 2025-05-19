@@ -73,7 +73,6 @@ public class PW {
     public String ppz1File = "";
     public String ppz2File = "";
 
-    //PMD.ASM 7-53
     public static final String ver = "4.8s";
     public int vers = 0x48;
     public char verc = 's';
@@ -117,13 +116,13 @@ public class PW {
     //db 'PMD' ;+2  For resident check
     //db  vers ;+5
     //db verc;+6
-    public int int60ofs;// ? ;+7
-    public int int60seg;// ? ;+9
-    public int int5ofs;// ? ;+11
-    public int int5seg;// ? ;+13
-    public int maskpush;// ? ;+15
-    public int vector;// ? ;+16
-    public int int_level;// ? ;+18
+    public int int60ofs; // ? ;+7
+    public int int60seg; // ? ;+9
+    public int int5ofs; // ? ;+11
+    public int int5seg; // ? ;+13
+    public int maskpush; // ? ;+15
+    public int vector; // ? ;+16
+    public int int_level; // ? ;+18
 
     public int _p = 2;
     public int _m = 3;
@@ -324,21 +323,20 @@ public class PW {
     public int ppz_call_ofs = 0; // For PPZ8call far call address
     public int ppz_call_seg = 0; // The seg value also serves as a PPZ8 resident check, 0 for non-resident
     public byte p86_freq = 8; // PMD86 PCM playback frequency
-    //if pcm* board2
+//#if pcm* board2
     public int p86_freqtable = 0; // offset pcm_tune_data
-    //else
-    //public int p86_freqtable = 0; // PMD86 PCM playback frequency table
-    //endif
+//#else
+//    public int p86_freqtable = 0; // PMD86 PCM playback frequency table
+//#endif
     public byte adpcm_emulate = 0; // Are you emulating ADPCM with PMDPPZE?
 
 
     public MmlDatum[] rd = null;
     public MmlDatum[] rdDmy = new MmlDatum[] {new MmlDatum(0xff)};
 
-    //8153-8247
     // Playing Data Area
 
-    public static class partWork { //qq  struc
+    public static class partWork { // qq  struc
 
         public short address; // w? ; 2 Address currently playing
         public short partloop; // w? ; 2 Destination to return to when playback ends
@@ -346,14 +344,14 @@ public class PW {
         public byte qdat; // b? ; 1 gatetime(Calculated q/Q value)
         public short fnum; // w? ; 2 BLOCK / FNUM when playing
         public short detune; // w? ; 2 Detune
-        //+10
+        // +10
         public short lfodat; // w? ; 2 LFO DATA
         public short porta_num; // w? ; 2 Portamento Adjustment Value (Overall)
         public short porta_num2; // w? ; 2 Portamento Adjustment (Single)
         public short porta_num3; // w? ; 2 Portamento adjustment value (remainder)
         public byte volume; // b? ; 1 VOLUME
         public byte shift; // b? ; 1 Scale shift t value
-        //+20
+        // +20
         public byte delay; // b? ; 1 LFO[DELAY]
         public byte speed; // b? ; 1 [SPEED]
         public byte step; // b? ; 1 [STEP]
@@ -365,7 +363,7 @@ public class PW {
         public byte lfoswi; // b? ; 1 LFOSW.B0/tone B1/vol B2/Synchronization B3/porta
         //    ;          B4/tone B5/vol B6/Synchronization
         public byte volpush; // b? ; 1 Volume PUSHarea
-        //+30
+        // +30
         public byte mdepth; // b? ; 1 M depth
         public byte mdspd; // b? ; 1 M speed
         public byte mdspd2; // b? ; 1 M speed_2
@@ -376,7 +374,7 @@ public class PW {
         public byte eenv_sr; // b? ; 1 /SR /old pr1
         public byte eenv_rr; // b? ; 1 /RR /old pr2
         public byte eenv_sl; // b? ; 1 /SL
-        //+40
+        // +40
         public byte eenv_al; // b? ; 1 /AL
         public byte eenv_arc; // b? ; 1 /AR counter /Former patb
         public byte eenv_drc; // b? ; 1 /DR counter
@@ -387,7 +385,7 @@ public class PW {
         public byte fmpan; // b? ; 1 FM Panning + AMD + PMD
         public byte psgpat; // b? ; 1 PSG PATTERN[TONE / NOISE / MIX]
         public byte voicenum; // b? ; 1 Tone Number
-        //+50
+        // +50
         public byte loopcheck; // b? ; 1 1 if looped, 3 if finished
         public byte carrier; // b? ; 1 FM Carrier
         public byte slot1; // b? ; 1 SLOT 1 TL
@@ -399,7 +397,7 @@ public class PW {
         public byte lfo_wave; // b? ; 1 LFO Waveform
         public byte partmask; // b 1 PartMask b0:Normal b1:Sound effect b2:For NECPCM
         //          ;   b3:none b4:For PPZ/ADE b5:at s0 b6:m b7:temporary
-        //+60
+        // +60
         public byte keyoff_flag; // b? ; 1 Flag indicating whether keyoff has occurred
         public byte volmask; // b? ;1 Volume LFO Mask
         public byte qdata; // b? ; 1 q value
@@ -438,7 +436,7 @@ public class PW {
 
         public int loopCounter;
 
-        public void Clear() {
+        public void clear() {
             address = 0; // w? ; 2 Address currently playing
             partloop = 0; // w? ; 2 Destination to return to when playback ends
             leng = 0; // b? ; 1 Remaining LENGTH
@@ -603,20 +601,20 @@ public class PW {
 
     //    even
     //pcm_table   label word
-//if board2
-// if adpcm
-//  ife   ademu
+//#if board2
+//# if adpcm
+//#  ife   ademu
     public static final short pcmends = 0x26; // The first start is from 26H
     public static final short[] pcmadrs = new short[2 * 256];
     public static final byte[] pcmfilename = new byte[128];
-//  endif
-// endif
-// if pcm
+//#  endif
+//# endif
+//# if pcm
     public short pcmst_ofs = 0;
     public short pcmst_seg = 0;
     public static final byte[] pcmadrs_86 = new byte[6 * 256];
-// endif
-//endif
+//# endif
+//#endif
 
     //  db "This is the STACK area.  "
     //  db " Thank you to everyone who always uses PMD (^^)."
@@ -634,9 +632,8 @@ public class PW {
     public static final byte[] fmoff_nef = {0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, (byte) 0xff};
     public static final byte[] fmoff_ef = {0, 1, 4, 5, 8, 9, 12, 13, (byte) 0xff};
 
-    public static final String mes_title = "Music Driver P.M.D. for PC9801/88VA Version " + ver
-            + "\r\n"
-            + "Copyright (C)1989," + date + " by M.Kajihara(KAJA).\r\n\r\n";
+    public static final String mes_title = "Music Driver P.M.D. for PC9801/88VA Version " + ver + "\r\n" +
+            "Copyright (C)1989," + date + " by M.Kajihara(KAJA).\r\n\r\n";
 
     public static final String mes_ppsdrv = "Corresponds to PPSDRV(INT64H).\r\n";
     public static final String mes_ppz8 = "Compatible with PPZ8(INT7FH).\r\n";
@@ -647,7 +644,7 @@ public class PW {
     public short opt_sp_push; // w?
     public short resident_size;  // w?
 
-    //EFCDRV.ASM
+    // EFCDRV.ASM
     public short effadr; // w effect address
     public short eswthz; // w Tone Sweep Frequency
     public short eswtst; // w Tone Sweep Increment
@@ -660,7 +657,8 @@ public class PW {
     public byte hosei_flag; // b ppsdrv Whether to correct volume/pitch
     public byte last_shot_data; // b The last PPSDRV tone
 
-    //PCMDRV86.ASM
+    // PCMDRV86.ASM
+
     /**
      * Datas
      */
@@ -712,142 +710,142 @@ public class PW {
 
     public static final Tuple<Integer, Integer>[] pcm_tune_data86 = new Tuple[] {
             // Frequency*32 + additional value (integer part), additional value (decimal part)
-            new Tuple<>(0 * 32 + 0, 0x02AB7) // o1  4.13438 C
-            , new Tuple<>(0 * 32 + 0, 0x02D41) // o1  4.13438 C#
-            , new Tuple<>(0 * 32 + 0, 0x02FF2) // o1  4.13438 D
-            , new Tuple<>(0 * 32 + 0, 0x032CB) // o1  4.13438 D#
-            , new Tuple<>(0 * 32 + 0, 0x035D1) // o1  4.13438 E
-            , new Tuple<>(0 * 32 + 0, 0x03904) // o1  4.13438 F
-            , new Tuple<>(0 * 32 + 0, 0x03C68) // o1  4.13438 F#
-            , new Tuple<>(0 * 32 + 0, 0x03FFF) // o1  4.13438 G
-            , new Tuple<>(0 * 32 + 0, 0x043CE) // o1  4.13438 G#
-            , new Tuple<>(0 * 32 + 0, 0x047D6) // o1  4.13438 A
-            , new Tuple<>(0 * 32 + 0, 0x04C1B) // o1  4.13438 A#
-            , new Tuple<>(0 * 32 + 0, 0x050A2) // o1  4.13438 B
+            new Tuple<>(0 * 32 + 0, 0x02AB7),  // o1  4.13438 C
+            new Tuple<>(0 * 32 + 0, 0x02D41),  // o1  4.13438 C#
+            new Tuple<>(0 * 32 + 0, 0x02FF2),  // o1  4.13438 D
+            new Tuple<>(0 * 32 + 0, 0x032CB),  // o1  4.13438 D#
+            new Tuple<>(0 * 32 + 0, 0x035D1),  // o1  4.13438 E
+            new Tuple<>(0 * 32 + 0, 0x03904),  // o1  4.13438 F
+            new Tuple<>(0 * 32 + 0, 0x03C68),  // o1  4.13438 F#
+            new Tuple<>(0 * 32 + 0, 0x03FFF),  // o1  4.13438 G
+            new Tuple<>(0 * 32 + 0, 0x043CE),  // o1  4.13438 G#
+            new Tuple<>(0 * 32 + 0, 0x047D6),  // o1  4.13438 A
+            new Tuple<>(0 * 32 + 0, 0x04C1B),  // o1  4.13438 A#
+            new Tuple<>(0 * 32 + 0, 0x050A2),  // o1  4.13438 B
 
-            , new Tuple<>(0 * 32 + 0, 0x0556E) // o2  4.13438 C
-            , new Tuple<>(0 * 32 + 0, 0x05A82) // o2  4.13438 C#
-            , new Tuple<>(0 * 32 + 0, 0x05FE4) // o2  4.13438 D
-            , new Tuple<>(0 * 32 + 0, 0x06597) // o2  4.13438 D#
-            , new Tuple<>(0 * 32 + 0, 0x06BA2) // o2  4.13438 E
-            , new Tuple<>(0 * 32 + 0, 0x07209) // o2  4.13438 F
-            , new Tuple<>(0 * 32 + 0, 0x078D0) // o2  4.13438 F#
-            , new Tuple<>(0 * 32 + 0, 0x07FFF) // o2  4.13438 G
-            , new Tuple<>(0 * 32 + 0, 0x0879C) // o2  4.13438 G#
-            , new Tuple<>(0 * 32 + 0, 0x08FAC) // o2  4.13438 A
-            , new Tuple<>(0 * 32 + 0, 0x09837) // o2  4.13438 A#
-            , new Tuple<>(0 * 32 + 0, 0x0A145) // o2  4.13438 B
+            new Tuple<>(0 * 32 + 0, 0x0556E),  // o2  4.13438 C
+            new Tuple<>(0 * 32 + 0, 0x05A82),  // o2  4.13438 C#
+            new Tuple<>(0 * 32 + 0, 0x05FE4),  // o2  4.13438 D
+            new Tuple<>(0 * 32 + 0, 0x06597),  // o2  4.13438 D#
+            new Tuple<>(0 * 32 + 0, 0x06BA2),  // o2  4.13438 E
+            new Tuple<>(0 * 32 + 0, 0x07209),  // o2  4.13438 F
+            new Tuple<>(0 * 32 + 0, 0x078D0),  // o2  4.13438 F#
+            new Tuple<>(0 * 32 + 0, 0x07FFF),  // o2  4.13438 G
+            new Tuple<>(0 * 32 + 0, 0x0879C),  // o2  4.13438 G#
+            new Tuple<>(0 * 32 + 0, 0x08FAC),  // o2  4.13438 A
+            new Tuple<>(0 * 32 + 0, 0x09837),  // o2  4.13438 A#
+            new Tuple<>(0 * 32 + 0, 0x0A145),  // o2  4.13438 B
 
-            , new Tuple<>(0 * 32 + 0, 0x0AADC) // o3  4.13438 C
-            , new Tuple<>(0 * 32 + 0, 0x0B504) // o3  4.13438 C#
-            , new Tuple<>(0 * 32 + 0, 0x0BFC8) // o3  4.13438 D
-            , new Tuple<>(0 * 32 + 0, 0x0CB2F) // o3  4.13438 D#
-            , new Tuple<>(0 * 32 + 0, 0x0D744) // o3  4.13438 E
-            , new Tuple<>(0 * 32 + 0, 0x0E412) // o3  4.13438 F
-            , new Tuple<>(0 * 32 + 0, 0x0F1A1) // o3  4.13438 F#
-            , new Tuple<>(0 * 32 + 1, 0x00000) // o3  4.13438 G
-            , new Tuple<>(1 * 32 + 0, 0x0CB6B) // o3  5.51250 G#
-            , new Tuple<>(1 * 32 + 0, 0x0D783) // o3  5.51250 A
-            , new Tuple<>(1 * 32 + 0, 0x0E454) // o3  5.51250 A#
-            , new Tuple<>(1 * 32 + 0, 0x0F1E7) // o3  5.51250 B
+            new Tuple<>(0 * 32 + 0, 0x0AADC),  // o3  4.13438 C
+            new Tuple<>(0 * 32 + 0, 0x0B504),  // o3  4.13438 C#
+            new Tuple<>(0 * 32 + 0, 0x0BFC8),  // o3  4.13438 D
+            new Tuple<>(0 * 32 + 0, 0x0CB2F),  // o3  4.13438 D#
+            new Tuple<>(0 * 32 + 0, 0x0D744),  // o3  4.13438 E
+            new Tuple<>(0 * 32 + 0, 0x0E412),  // o3  4.13438 F
+            new Tuple<>(0 * 32 + 0, 0x0F1A1),  // o3  4.13438 F#
+            new Tuple<>(0 * 32 + 1, 0x00000),  // o3  4.13438 G
+            new Tuple<>(1 * 32 + 0, 0x0CB6B),  // o3  5.51250 G#
+            new Tuple<>(1 * 32 + 0, 0x0D783),  // o3  5.51250 A
+            new Tuple<>(1 * 32 + 0, 0x0E454),  // o3  5.51250 A#
+            new Tuple<>(1 * 32 + 0, 0x0F1E7),  // o3  5.51250 B
 
-            , new Tuple<>(2 * 32 + 0, 0x0AADC) // o4  8.26875 C
-            , new Tuple<>(2 * 32 + 0, 0x0B504) // o4  8.26875 C#
-            , new Tuple<>(2 * 32 + 0, 0x0BFC8) // o4  8.26875 D
-            , new Tuple<>(2 * 32 + 0, 0x0CB2F) // o4  8.26875 D#
-            , new Tuple<>(2 * 32 + 0, 0x0D744) // o4  8.26875 E
-            , new Tuple<>(2 * 32 + 0, 0x0E412) // o4  8.26875 F
-            , new Tuple<>(2 * 32 + 0, 0x0F1A1) // o4  8.26875 F#
-            , new Tuple<>(2 * 32 + 1, 0x00000) // o4  8.26875 G
-            , new Tuple<>(3 * 32 + 0, 0x0CB6B) // o4 11.02500 G#
-            , new Tuple<>(3 * 32 + 0, 0x0D783) // o4 11.02500 A
-            , new Tuple<>(3 * 32 + 0, 0x0E454) // o4 11.02500 A#
-            , new Tuple<>(3 * 32 + 0, 0x0F1E7) // o4 11.02500 B
+            new Tuple<>(2 * 32 + 0, 0x0AADC),  // o4  8.26875 C
+            new Tuple<>(2 * 32 + 0, 0x0B504),  // o4  8.26875 C#
+            new Tuple<>(2 * 32 + 0, 0x0BFC8),  // o4  8.26875 D
+            new Tuple<>(2 * 32 + 0, 0x0CB2F),  // o4  8.26875 D#
+            new Tuple<>(2 * 32 + 0, 0x0D744),  // o4  8.26875 E
+            new Tuple<>(2 * 32 + 0, 0x0E412),  // o4  8.26875 F
+            new Tuple<>(2 * 32 + 0, 0x0F1A1),  // o4  8.26875 F#
+            new Tuple<>(2 * 32 + 1, 0x00000),  // o4  8.26875 G
+            new Tuple<>(3 * 32 + 0, 0x0CB6B),  // o4 11.02500 G#
+            new Tuple<>(3 * 32 + 0, 0x0D783),  // o4 11.02500 A
+            new Tuple<>(3 * 32 + 0, 0x0E454),  // o4 11.02500 A#
+            new Tuple<>(3 * 32 + 0, 0x0F1E7),  // o4 11.02500 B
 
-            , new Tuple<>(4 * 32 + 0, 0x0AADC) // o5 16.53750 C
-            , new Tuple<>(4 * 32 + 0, 0x0B504) // o5 16.53750 C#
-            , new Tuple<>(4 * 32 + 0, 0x0BFC8) // o5 16.53750 D
-            , new Tuple<>(4 * 32 + 0, 0x0CB2F) // o5 16.53750 D#
-            , new Tuple<>(4 * 32 + 0, 0x0D744) // o5 16.53750 E
-            , new Tuple<>(4 * 32 + 0, 0x0E412) // o5 16.53750 F
-            , new Tuple<>(4 * 32 + 0, 0x0F1A1) // o5 16.53750 F#
-            , new Tuple<>(4 * 32 + 1, 0x00000) // o5 16.53750 G
-            , new Tuple<>(5 * 32 + 0, 0x0CB6B) // o5 22.05000 G#
-            , new Tuple<>(5 * 32 + 0, 0x0D783) // o5 22.05000 A
-            , new Tuple<>(5 * 32 + 0, 0x0E454) // o5 22.05000 A#
-            , new Tuple<>(5 * 32 + 0, 0x0F1E7) // o5 22.05000 B
+            new Tuple<>(4 * 32 + 0, 0x0AADC),  // o5 16.53750 C
+            new Tuple<>(4 * 32 + 0, 0x0B504),  // o5 16.53750 C#
+            new Tuple<>(4 * 32 + 0, 0x0BFC8),  // o5 16.53750 D
+            new Tuple<>(4 * 32 + 0, 0x0CB2F),  // o5 16.53750 D#
+            new Tuple<>(4 * 32 + 0, 0x0D744),  // o5 16.53750 E
+            new Tuple<>(4 * 32 + 0, 0x0E412),  // o5 16.53750 F
+            new Tuple<>(4 * 32 + 0, 0x0F1A1),  // o5 16.53750 F#
+            new Tuple<>(4 * 32 + 1, 0x00000),  // o5 16.53750 G
+            new Tuple<>(5 * 32 + 0, 0x0CB6B),  // o5 22.05000 G#
+            new Tuple<>(5 * 32 + 0, 0x0D783),  // o5 22.05000 A
+            new Tuple<>(5 * 32 + 0, 0x0E454),  // o5 22.05000 A#
+            new Tuple<>(5 * 32 + 0, 0x0F1E7),  // o5 22.05000 B
 
-            , new Tuple<>(6 * 32 + 0, 0x0AADC) // o6 33.07500 C
-            , new Tuple<>(6 * 32 + 0, 0x0B504) // o6 33.07500 C#
-            , new Tuple<>(6 * 32 + 0, 0x0BFC8) // o6 33.07500 D
-            , new Tuple<>(6 * 32 + 0, 0x0CB2F) // o6 33.07500 D#
-            , new Tuple<>(6 * 32 + 0, 0x0D744) // o6 33.07500 E
-            , new Tuple<>(6 * 32 + 0, 0x0E412) // o6 33.07500 F
-            , new Tuple<>(6 * 32 + 0, 0x0F1A1) // o6 33.07500 F#
-            , new Tuple<>(6 * 32 + 1, 0x00000) // o6 33.07500 G
-            , new Tuple<>(7 * 32 + 0, 0x0CB6B) // o6 44.10000 G#
-            , new Tuple<>(7 * 32 + 0, 0x0D783) // o6 44.10000 A
-            , new Tuple<>(7 * 32 + 0, 0x0E454) // o6 44.10000 A#
-            , new Tuple<>(7 * 32 + 0, 0x0F1E7) // o6 44.10000 B
+            new Tuple<>(6 * 32 + 0, 0x0AADC),  // o6 33.07500 C
+            new Tuple<>(6 * 32 + 0, 0x0B504),  // o6 33.07500 C#
+            new Tuple<>(6 * 32 + 0, 0x0BFC8),  // o6 33.07500 D
+            new Tuple<>(6 * 32 + 0, 0x0CB2F),  // o6 33.07500 D#
+            new Tuple<>(6 * 32 + 0, 0x0D744),  // o6 33.07500 E
+            new Tuple<>(6 * 32 + 0, 0x0E412),  // o6 33.07500 F
+            new Tuple<>(6 * 32 + 0, 0x0F1A1),  // o6 33.07500 F#
+            new Tuple<>(6 * 32 + 1, 0x00000),  // o6 33.07500 G
+            new Tuple<>(7 * 32 + 0, 0x0CB6B),  // o6 44.10000 G#
+            new Tuple<>(7 * 32 + 0, 0x0D783),  // o6 44.10000 A
+            new Tuple<>(7 * 32 + 0, 0x0E454),  // o6 44.10000 A#
+            new Tuple<>(7 * 32 + 0, 0x0F1E7),  // o6 44.10000 B
 
-            , new Tuple<>(7 * 32 + 1, 0x0004A) // o7 44.10000 C
-            , new Tuple<>(7 * 32 + 1, 0x00F87) // o7 44.10000 C#
-            , new Tuple<>(7 * 32 + 1, 0x01FAC) // o7 44.10000 D
-            , new Tuple<>(7 * 32 + 1, 0x030C7) // o7 44.10000 D#
-            , new Tuple<>(7 * 32 + 1, 0x042E7) // o7 44.10000 E
-            , new Tuple<>(7 * 32 + 1, 0x0561C) // o7 44.10000 F
-            , new Tuple<>(7 * 32 + 1, 0x06A72) // o7 44.10000 F#
-            , new Tuple<>(7 * 32 + 1, 0x08000) // o7 44.10000 G
-            , new Tuple<>(7 * 32 + 1, 0x096D6) // o7 44.10000 G#
-            , new Tuple<>(7 * 32 + 1, 0x0AF06) // o7 44.10000 A
-            , new Tuple<>(7 * 32 + 1, 0x0C8A8) // o7 44.10000 A#
-            , new Tuple<>(7 * 32 + 1, 0x0E3CF) // o7 44.10000 B
+            new Tuple<>(7 * 32 + 1, 0x0004A),  // o7 44.10000 C
+            new Tuple<>(7 * 32 + 1, 0x00F87),  // o7 44.10000 C#
+            new Tuple<>(7 * 32 + 1, 0x01FAC),  // o7 44.10000 D
+            new Tuple<>(7 * 32 + 1, 0x030C7),  // o7 44.10000 D#
+            new Tuple<>(7 * 32 + 1, 0x042E7),  // o7 44.10000 E
+            new Tuple<>(7 * 32 + 1, 0x0561C),  // o7 44.10000 F
+            new Tuple<>(7 * 32 + 1, 0x06A72),  // o7 44.10000 F#
+            new Tuple<>(7 * 32 + 1, 0x08000),  // o7 44.10000 G
+            new Tuple<>(7 * 32 + 1, 0x096D6),  // o7 44.10000 G#
+            new Tuple<>(7 * 32 + 1, 0x0AF06),  // o7 44.10000 A
+            new Tuple<>(7 * 32 + 1, 0x0C8A8),  // o7 44.10000 A#
+            new Tuple<>(7 * 32 + 1, 0x0E3CF),  // o7 44.10000 B
 
-            , new Tuple<>(7 * 32 + 2, 0x00094) // o8 44.10000 C
-            , new Tuple<>(7 * 32 + 2, 0x01F0E) // o8 44.10000 C#
-            , new Tuple<>(7 * 32 + 2, 0x03F59) // o8 44.10000 D
-            , new Tuple<>(7 * 32 + 2, 0x0618F) // o8 44.10000 D#
-            , new Tuple<>(7 * 32 + 2, 0x085CE) // o8 44.10000 E
-            , new Tuple<>(7 * 32 + 2, 0x0AC38) // o8 44.10000 F
-            , new Tuple<>(7 * 32 + 2, 0x0D4E5) // o8 44.10000 F#
-            , new Tuple<>(7 * 32 + 3, 0x00000) // o8 44.10000 G
-            , new Tuple<>(7 * 32 + 3, 0x02DAC) // o8 44.10000 G#
-            , new Tuple<>(7 * 32 + 3, 0x05E0D) // o8 44.10000 A
-            , new Tuple<>(7 * 32 + 3, 0x09150) // o8 44.10000 A#
-            , new Tuple<>(7 * 32 + 3, 0x0C79E) // o8 44.10000 B
+            new Tuple<>(7 * 32 + 2, 0x00094),  // o8 44.10000 C
+            new Tuple<>(7 * 32 + 2, 0x01F0E),  // o8 44.10000 C#
+            new Tuple<>(7 * 32 + 2, 0x03F59),  // o8 44.10000 D
+            new Tuple<>(7 * 32 + 2, 0x0618F),  // o8 44.10000 D#
+            new Tuple<>(7 * 32 + 2, 0x085CE),  // o8 44.10000 E
+            new Tuple<>(7 * 32 + 2, 0x0AC38),  // o8 44.10000 F
+            new Tuple<>(7 * 32 + 2, 0x0D4E5),  // o8 44.10000 F#
+            new Tuple<>(7 * 32 + 3, 0x00000),  // o8 44.10000 G
+            new Tuple<>(7 * 32 + 3, 0x02DAC),  // o8 44.10000 G#
+            new Tuple<>(7 * 32 + 3, 0x05E0D),  // o8 44.10000 A
+            new Tuple<>(7 * 32 + 3, 0x09150),  // o8 44.10000 A#
+            new Tuple<>(7 * 32 + 3, 0x0C79E)   // o8 44.10000 B
     };
 
     /**
      * Scale DATA
      */
     public static final int[] fnum_data = {
-            0x026a // C
-            , 0x028f // D-
-            , 0x02b6 // D
-            , 0x02df // E-
-            , 0x030b // E
-            , 0x0339 // F
-            , 0x036a // G-
-            , 0x039e // G
-            , 0x03d5 // A-
-            , 0x0410 // A
-            , 0x044e // B-
-            , 0x048f // B
+            0x026a,  // C
+            0x028f,  // D-
+            0x02b6,  // D
+            0x02df,  // E-
+            0x030b,  // E
+            0x0339,  // F
+            0x036a,  // G-
+            0x039e,  // G
+            0x03d5,  // A-
+            0x0410,  // A
+            0x044e,  // B-
+            0x048f   // B
     };
 
     public static final int[] psg_tune_data = {
-            0x0ee8 // C
-            , 0x0e12 // D-
-            , 0x0d48 // D
-            , 0x0c89 // E-
-            , 0x0bd5 // E
-            , 0x0b2b // F
-            , 0x0a8a // G-
-            , 0x09f3 // G
-            , 0x0964 // A-
-            , 0x08dd // A
-            , 0x085e // B-
-            , 0x07e6 // B
+            0x0ee8,  // C
+            0x0e12,  // D-
+            0x0d48,  // D
+            0x0c89,  // E-
+            0x0bd5,  // E
+            0x0b2b,  // F
+            0x0a8a,  // G-
+            0x09f3,  // G
+            0x0964,  // A-
+            0x08dd,  // A
+            0x085e,  // B-
+            0x07e6   // B
     };
 
     public int[] part_table = null;
@@ -855,80 +853,80 @@ public class PW {
     // if ppz
     //   Part number, Partb, sound source number
     private static final int[] part_table_ppz = {
-            00, 1, 0 // A
-            , 01, 2, 0    // B
-            , 02, 3, 0    // C
-            , 03, 1, 1    // D
-            , 04, 2, 1    // E
-            , 05, 3, 1    // F
-            , 06, 1, 2    // G
-            , 07, 2, 2    // H
-            , 8, 3, 2    // I
-            , 9, 1, 3    // J
-            , 10, 3, 4    // K
-            , 11, 3, 0    // c2
-            , 12, 3, 0    // c3
-            , 13, 3, 0    // c4
-            , 0xff, 0, 0xff // Rhythm
-            , 22, 3, 1    // Effect
-            , 14, 0, 5    // PPZ1
-            , 15, 1, 5    // PPZ2
-            , 16, 2, 5    // PPZ3
-            , 17, 3, 5    // PPZ4
-            , 18, 4, 5    // PPZ5
-            , 19, 5, 5    // PPZ6
-            , 20, 6, 5    // PPZ7
-            , 21, 7, 5 // PPZ8
+            0, 1, 0,  // A
+            1, 2, 0,  // B
+            2, 3, 0,  // C
+            3, 1, 1,  // D
+            4, 2, 1,  // E
+            5, 3, 1,  // F
+            6, 1, 2,  // G
+            7, 2, 2,  // H
+            8, 3, 2,  // I
+            9, 1, 3,  // J
+            10, 3, 4,  // K
+            11, 3, 0,  // c2
+            12, 3, 0,  // c3
+            13, 3, 0,  // c4
+            0xff, 0, 0xff,  // Rhythm
+            22, 3, 1,  // Effect
+            14, 0, 5,  // PPZ1
+            15, 1, 5,  // PPZ2
+            16, 2, 5,  // PPZ3
+            17, 3, 5,  // PPZ4
+            18, 4, 5,  // PPZ5
+            19, 5, 5,  // PPZ6
+            20, 6, 5,  // PPZ7
+            21, 7, 5  // PPZ8
     };
     // else
     //   Part number, Partb, sound source number
     private static final int[] part_table_brd2 = {
-            0, 1, 0    //A
-            , 1, 2, 0    //B
-            , 2, 3, 0    //C
-            , 3, 1, 1    //D
-            , 4, 2, 1    //E
-            , 5, 3, 1    //F
-            , 6, 1, 2    //G
-            , 7, 2, 2    //H
-            , 8, 3, 2    //I
-            , 9, 1, 3    //J
-            , 10, 3, 4    //K
-            , 11, 3, 0    //c2
-            , 12, 3, 0    //c3
-            , 13, 3, 0    //c4
-            , 0xff, 0, 0xff    //Rhythm
-            , 14, 3, 1 //Effect
+            0, 1, 0,  // A
+            1, 2, 0,  // B
+            2, 3, 0,  // C
+            3, 1, 1,  // D
+            4, 2, 1,  // E
+            5, 3, 1,  // F
+            6, 1, 2,  // G
+            7, 2, 2,  // H
+            8, 3, 2,  // I
+            9, 1, 3,  // J
+            10, 3, 4,  // K
+            11, 3, 0,  // c2
+            12, 3, 0,  // c3
+            13, 3, 0,  // c4
+            0xff, 0, 0xff,  // Rhythm
+            14, 3, 1  // Effect
     };
     //else
     // Part number, Partb, sound source number
     private static final int[] part_table_nbrd2 = {
-            0, 1, 0    //A
-            , 1, 2, 0    //B
-            , 2, 3, 0    //C
-            , 3, 3, 0    //c2
-            , 4, 3, 0    //c3
-            , 5, 3, 0    //c4
-            , 6, 1, 2    //G
-            , 7, 2, 2    //H
-            , 8, 3, 2    //I
-            , 9, 1, 3    //J
-            , 10, 3, 4    //K
-            , 3, 3, 0    //c2
-            , 4, 3, 0    //c3
-            , 5, 3, 0    //c4
-            , 0xff, 0, 0xff //Rhythm
-            , 11, 3, 0 //Effect
+            0, 1, 0,  // A
+            1, 2, 0,  // B
+            2, 3, 0,  // C
+            3, 3, 0,  // c2
+            4, 3, 0,  // c3
+            5, 3, 0,  // c4
+            6, 1, 2,  // G
+            7, 2, 2,  // H
+            8, 3, 2,  // I
+            9, 1, 3,  // J
+            10, 3, 4,  // K
+            3, 3, 0,  // c2
+            4, 3, 0,  // c3
+            5, 3, 0,  // c4
+            0xff, 0, 0xff,  // Rhythm
+            11, 3, 0  // Effect
     };
 
     /**
      * FM tone carrier table
      */
     public static final int[] carrier_table = {
-            0b1000_0000, 0b1000_0000, 0b1000_0000, 0b1000_0000
-            , 0b1010_0000, 0b1110_0000, 0b1110_0000, 0b1111_0000
-            , 0b1110_1110, 0b1110_1110, 0b1110_1110, 0b1110_1110
-            , 0b1100_1100, 0b1000_1000, 0b1000_1000, 0b0000_0000
+            0b1000_0000, 0b1000_0000, 0b1000_0000, 0b1000_0000,
+            0b1010_0000, 0b1110_0000, 0b1110_0000, 0b1111_0000,
+            0b1110_1110, 0b1110_1110, 0b1110_1110, 0b1110_1110,
+            0b1100_1100, 0b1000_1000, 0b1000_1000, 0b0000_0000
     };
 
     //
@@ -946,7 +944,7 @@ public class PW {
     /**
      * DataArea
      */
-    //if message
+//#if message
     public static final String allload_mes = "PCM is being defined. Please wait.";
     public static final String exit1_mes = "PCM cannot be defined in this environment.";
     public static final String exit1p_mes = "PPSDRV is not resident.";
@@ -964,9 +962,9 @@ public class PW {
     public static final String exit3z_mes = "Insufficient memory allocation.";
     public static final String exit4z_mes = "EMS handle cannot be mapped.";
     public static final String exit5z_mes = "PPZ8 is not resident.";
-    public static final String exit6z_mes = "PVI/PZIFile not found."; //KUMA: Added
+    public static final String exit6z_mes = "PVI/PZIFile not found."; // KUMA: Added
     public static final String ppzbank_mes = "PPZ8(%d):";
-    //endif
+//#endif
     public static final String adpcm_header = "ADPCM DATA for  PMD ver.4.4-  "; // ;30 bytes
     public static final String pps_ext = "PPS";
     public static final String ppc_ext = "PPC";
@@ -1004,18 +1002,18 @@ public class PW {
      * Datas
      */
     public static final int[] pcm_tune_data = {
-            0x3132 * 2 // C
-            , 0x3420 * 2 // C+
-            , 0x373a * 2 // D
-            , 0x3a83 * 2 // D+
-            , 0x3dfe * 2 // E
-            , 0x41af * 2 // F
-            , 0x4597 * 2 // F+
-            , 0x49bb * 2 // G
-            , 0x4e1e * 2 // G+
-            , 0x52c4 * 2 // A
-            , 0x57b1 * 2 // A+
-            , 0x5ce8 * 2 // B
+            0x3132 * 2,  // C
+            0x3420 * 2,  // C+
+            0x373a * 2,  // D
+            0x3a83 * 2,  // D+
+            0x3dfe * 2,  // E
+            0x41af * 2,  // F
+            0x4597 * 2,  // F+
+            0x49bb * 2,  // G
+            0x4e1e * 2,  // G+
+            0x52c4 * 2,  // A
+            0x57b1 * 2,  // A+
+            0x5ce8 * 2   // B
     };
 
     /**
@@ -1024,18 +1022,18 @@ public class PW {
     public static final int[] ppzpandata = {0, 9, 1, 5};
 
     public static final int[] ppz_tune_data = { // label   word
-            0x08000 // 00 c
-            , 0x087a6 // 01 d-
-            , 0x08fb3 // 02 d
-            , 0x09838 // 03 e-
-            , 0x0a146 // 04 e
-            , 0x0aade // 05 f
-            , 0x0b4ff // 06 g-
-            , 0x0bfcc // 07 g
-            , 0x0cb34 // 08 a-
-            , 0x0d747 // 09 a
-            , 0x0e418 // 10 b-
-            , 0x0f1a5 // 11 b
+            0x08000,  // 00 c
+            0x087a6,  // 01 d-
+            0x08fb3,  // 02 d
+            0x09838,  // 03 e-
+            0x0a146,  // 04 e
+            0x0aade,  // 05 f
+            0x0b4ff,  // 06 g-
+            0x0bfcc,  // 07 g
+            0x0cb34,  // 08 a-
+            0x0d747,  // 09 a
+            0x0e418,  // 10 b-
+            0x0f1a5   // 11 b
     };
 
     // pmdDotNET original
@@ -1504,809 +1502,810 @@ public class PW {
 
     private static final int[] D_000 = { // Bass Drum                1990-06-22 05:47:11
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            1, 220, 5, 31, 54, 15, 0, 0, 0, 127, 0
-            , 8, 164, 6, 0, 62, 16, 176, 4, 0, 127, 0
-            , 0xff // -1
+            1, 220, 5, 31, 54, 15, 0, 0, 0, 127, 0,
+            8, 164, 6, 0, 62, 16, 176, 4, 0, 127, 0,
+            0xff // -1
     };
     private static final int[] D_001 = { // Snare Drum               1990-06-22 05:48:06
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            14, 144, 1, 7, 54, 16, 184, 11, 0, 93, 242
-            , 0xff // -1
+            14, 144, 1, 7, 54, 16, 184, 11, 0, 93, 242,
+            0xff // -1
     };
     private static final int[] D_002 = { // Low Tom                  1990-06-22 05:49:19
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            2, 188, 2, 0, 54, 15, 0, 0, 0, 100, 0
-            , 14, 132, 3, 0, 54, 16, 196, 9, 0, 100, 0
-            , 0xff // -1
+            2, 188, 2, 0, 54, 15, 0, 0, 0, 100, 0,
+            14, 132, 3, 0, 54, 16, 196, 9, 0, 100, 0,
+            0xff // -1
     };
     private static final int[] D_003 = { // Middle Tom               1990-06-22 05:50:23
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            2, 244, 1, 5, 54, 15, 0, 0, 0, 60, 0
-            , 14, 108, 2, 0, 54, 16, 196, 9, 0, 60, 0
-            , 0xff // -1
+            2, 244, 1, 5, 54, 15, 0, 0, 0, 60, 0,
+            14, 108, 2, 0, 54, 16, 196, 9, 0, 60, 0,
+            0xff // -1
     };
     private static final int[] D_004 = { // High Tom                 1990-06-22 05:51:13
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            2, 44, 1, 0, 54, 15, 0, 0, 0, 50, 0
-            , 14, 144, 1, 0, 54, 16, 196, 9, 0, 50, 0
-            , 0xff // -1
+            2, 44, 1, 0, 54, 15, 0, 0, 0, 50, 0,
+            14, 144, 1, 0, 54, 16, 196, 9, 0, 50, 0,
+            0xff // -1
     };
     private static final int[] D_005 = { // Rim Shot                 1990-06-22 05:51:57
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            2, 55, 0, 0, 62, 16, 44, 1, 0, 100, 0
-            , 0xff // -1
+            2, 55, 0, 0, 62, 16, 44, 1, 0, 100, 0,
+            0xff // -1
     };
     private static final int[] D_006 = { // Snare Drum 2             1990-06-22 05:52:36
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            16, 0, 0, 15, 55, 16, 184, 11, 0, 0, 241
-            , 0xff // -1
+            16, 0, 0, 15, 55, 16, 184, 11, 0, 0, 241,
+            0xff // -1
     };
     private static final int[] D_007 = { // Hi-Hat Close             1990-06-22 05:53:10
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            6, 39, 0, 0, 54, 16, 244, 1, 0, 0, 0
-            , 0xff // -1
+            6, 39, 0, 0, 54, 16, 244, 1, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] D_008 = { // Hi-Hat Open              1990-06-22 05:53:40
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            32, 39, 0, 0, 54, 16, 136, 19, 0, 0, 0
-            , 0xff // -1
+            32, 39, 0, 0, 54, 16, 136, 19, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] D_009 = { // Crush Cymbal             1990-06-22 05:54:11
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            31, 40, 0, 31, 54, 16, 136, 19, 0, 0, 241
-            , 0xff // -1
+            31, 40, 0, 31, 54, 16, 136, 19, 0, 0, 241,
+            0xff // -1
     };
     private static final int[] D_010 = { // Ride Cymbal              1990-06-22 05:54:38
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            31, 30, 0, 0, 54, 16, 136, 19, 0, 0, 0
-            , 0xff // -1
+            31, 30, 0, 0, 54, 16, 136, 19, 0, 0, 0,
+            0xff // -1
     };
+
     //
-    // Effect for "電撃MIX"
+    // Effect for "Dengeki MIX"
     //
 
     private static final int[] DM_001 = { // syuta                    1994-05-25 23:13:02
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            3, 221, 1, 15, 55, 16, 232, 3, 0, 0, 113
-            , 2, 221, 1, 0, 55, 16, 232, 3, 0, 0, 0
-            , 0xff // -1
+            3, 221, 1, 15, 55, 16, 232, 3, 0, 0, 113,
+            2, 221, 1, 0, 55, 16, 232, 3, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_002 = { // Au                       1994-05-25 23:13:07
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            1, 44, 1, 0, 62, 16, 44, 1, 13, 0, 0
-            , 6, 44, 1, 0, 62, 16, 16, 39, 0, 80, 0
-            , 0xff // -1
+            1, 44, 1, 0, 62, 16, 44, 1, 13, 0, 0,
+            6, 44, 1, 0, 62, 16, 16, 39, 0, 80, 0,
+            0xff // -1
     };
     private static final int[] DM_003 = { // syuba                    1994-05-25 23:13:25
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 221, 1, 0, 55, 14, 16, 39, 0, 0, 81
-            , 4, 221, 1, 10, 55, 16, 208, 7, 0, 0, 241
-            , 0xff // -1
+            4, 221, 1, 0, 55, 14, 16, 39, 0, 0, 81,
+            4, 221, 1, 10, 55, 16, 208, 7, 0, 0, 241,
+            0xff // -1
     };
     private static final int[] DM_004 = { // syu                      1994-05-25 23:17:51
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            3, 221, 1, 0, 55, 16, 244, 1, 13, 0, 0
-            , 8, 221, 1, 15, 55, 16, 208, 7, 0, 0, 0
-            , 0xff // -1
+            3, 221, 1, 0, 55, 16, 244, 1, 13, 0, 0,
+            8, 221, 1, 15, 55, 16, 208, 7, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_005 = { // sya-                     1994-05-25 23:19:01
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            3, 221, 1, 10, 55, 16, 100, 0, 13, 0, 0
-            , 16, 221, 1, 5, 55, 16, 16, 39, 0, 0, 0
-            , 0xff // -1
+            3, 221, 1, 10, 55, 16, 100, 0, 13, 0, 0,
+            16, 221, 1, 5, 55, 16, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_006 = { // po                       1994-05-25 23:13:32
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            2, 144, 1, 0, 62, 16, 244, 1, 0, 0, 0
-            , 0xff // -1
+            2, 144, 1, 0, 62, 16, 244, 1, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_007 = { // tattu                    1994-05-25 23:13:37
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 221, 1, 15, 55, 16, 232, 3, 0, 0, 0
-            , 0xff // -1
+            4, 221, 1, 15, 55, 16, 232, 3, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_008 = { // zusyau                   1994-05-25 23:13:42
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            2, 221, 1, 31, 55, 15, 16, 39, 0, 0, 0
-            , 12, 221, 1, 0, 55, 16, 136, 19, 0, 0, 17
-            , 0xff // -1
+            2, 221, 1, 31, 55, 15, 16, 39, 0, 0, 0,
+            12, 221, 1, 0, 55, 16, 136, 19, 0, 0, 17,
+            0xff // -1
     };
     private static final int[] DM_009 = { // piro                     1994-05-25 23:20:41
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            2, 144, 1, 0, 62, 16, 232, 3, 0, 0, 0
-            , 2, 200, 0, 0, 62, 16, 232, 3, 0, 0, 0
-            , 0xff // -1
+            2, 144, 1, 0, 62, 16, 232, 3, 0, 0, 0,
+            2, 200, 0, 0, 62, 16, 232, 3, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_010 = { // piron                    1994-05-25 23:20:26
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 144, 1, 0, 62, 16, 208, 7, 0, 0, 0
-            , 8, 200, 0, 0, 62, 16, 184, 11, 0, 0, 0
-            , 0xff // -1
+            4, 144, 1, 0, 62, 16, 208, 7, 0, 0, 0,
+            8, 200, 0, 0, 62, 16, 184, 11, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_011 = { // pirorironn               1994-05-25 23:21:50
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            3, 144, 1, 0, 62, 16, 208, 7, 0, 0, 0
-            , 3, 100, 0, 0, 62, 16, 208, 7, 0, 0, 0
-            , 3, 200, 0, 0, 62, 16, 208, 7, 0, 0, 0
-            , 3, 144, 1, 0, 62, 16, 208, 7, 0, 0, 0
-            , 8, 100, 0, 0, 62, 16, 184, 11, 0, 0, 0
-            , 0xff // -1
+            3, 144, 1, 0, 62, 16, 208, 7, 0, 0, 0,
+            3, 100, 0, 0, 62, 16, 208, 7, 0, 0, 0,
+            3, 200, 0, 0, 62, 16, 208, 7, 0, 0, 0,
+            3, 144, 1, 0, 62, 16, 208, 7, 0, 0, 0,
+            8, 100, 0, 0, 62, 16, 184, 11, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_012 = { // buu                      1994-05-25 23:23:10
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            16, 208, 7, 0, 62, 15, 16, 39, 0, 0, 0
-            , 0xff // -1
+            16, 208, 7, 0, 62, 15, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_013 = { // babon                    1994-05-25 23:15:40
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 221, 1, 31, 55, 16, 136, 19, 0, 0, 0
-            , 8, 221, 1, 31, 54, 16, 184, 11, 0, 127, 241
-            , 0xff // -1
+            4, 221, 1, 31, 55, 16, 136, 19, 0, 0, 0,
+            8, 221, 1, 31, 54, 16, 184, 11, 0, 127, 241,
+            0xff // -1
     };
     private static final int[] DM_014 = { // basyu-                   1994-05-25 23:15:44
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 221, 1, 25, 55, 16, 208, 7, 0, 0, 0
-            , 32, 221, 1, 20, 55, 16, 112, 23, 0, 0, 19
-            , 0xff // -1
+            4, 221, 1, 25, 55, 16, 208, 7, 0, 0, 0,
+            32, 221, 1, 20, 55, 16, 112, 23, 0, 0, 19,
+            0xff // -1
     };
     private static final int[] DM_015 = { // poun                     1994-05-25 23:15:27
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            6, 200, 0, 0, 54, 16, 136, 19, 0, 20, 0
-            , 0xff // -1
+            6, 200, 0, 0, 54, 16, 136, 19, 0, 20, 0,
+            0xff // -1
     };
     private static final int[] DM_016 = { // pasyu                    1994-05-25 23:22:59
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 40, 0, 20, 54, 16, 16, 39, 0, 20, 0
-            , 16, 20, 0, 5, 54, 16, 136, 19, 0, 0, 0
-            , 0xff // -1
+            4, 40, 0, 20, 54, 16, 16, 39, 0, 20, 0,
+            16, 20, 0, 5, 54, 16, 136, 19, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_017 = { // KON                      1994-05-25 23:16:07
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            6, 88, 2, 0, 62, 16, 232, 3, 0, 0, 0
-            , 0xff // -1
+            6, 88, 2, 0, 62, 16, 232, 3, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_018 = { // dosun                    1994-05-25 23:23:57
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 232, 3, 0, 62, 16, 16, 39, 0, 127, 0
-            , 16, 221, 1, 0, 54, 16, 16, 39, 0, 64, 0
-            , 0xff // -1
+            4, 232, 3, 0, 62, 16, 16, 39, 0, 127, 0,
+            16, 221, 1, 0, 54, 16, 16, 39, 0, 64, 0,
+            0xff // -1
     };
     private static final int[] DM_019 = { // zu                       1994-05-25 23:24:59
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 232, 3, 31, 54, 15, 16, 39, 0, 0, 0
-            , 0xff // -1
+            4, 232, 3, 31, 54, 15, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_020 = { // go                       1994-05-25 23:24:43
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 255, 15, 31, 54, 15, 16, 39, 0, 0, 0
-            , 0xff // -1
+            4, 255, 15, 31, 54, 15, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_021 = { // poyon                    1994-05-25 23:26:17
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 221, 1, 0, 62, 16, 232, 3, 0, 206, 0
-            , 16, 242, 0, 0, 62, 16, 112, 23, 0, 248, 0
-            , 0xff // -1
+            4, 221, 1, 0, 62, 16, 232, 3, 0, 206, 0,
+            16, 242, 0, 0, 62, 16, 112, 23, 0, 248, 0,
+            0xff // -1
     };
     private static final int[] DM_022 = { // katun                    1994-05-25 23:27:10
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 100, 0, 0, 62, 16, 244, 1, 0, 0, 0
-            , 4, 10, 0, 0, 54, 16, 232, 3, 0, 0, 0
-            , 0xff // -1
+            4, 100, 0, 0, 62, 16, 244, 1, 0, 0, 0,
+            4, 10, 0, 0, 54, 16, 232, 3, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_023 = { // syupin                   1994-05-25 23:28:18
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            8, 221, 1, 5, 55, 16, 244, 1, 13, 0, 0
-            , 24, 30, 0, 0, 54, 16, 16, 39, 0, 0, 0
-            , 0xff // -1
+            8, 221, 1, 5, 55, 16, 244, 1, 13, 0, 0,
+            24, 30, 0, 0, 54, 16, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_024 = { // 1UP                      1994-05-25 23:16:52
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 44, 1, 0, 62, 16, 136, 19, 0, 0, 0
-            , 4, 180, 0, 0, 62, 16, 136, 19, 0, 0, 0
-            , 4, 200, 0, 0, 62, 16, 136, 19, 0, 0, 0
-            , 24, 150, 0, 0, 62, 16, 136, 19, 0, 0, 0
-            , 0xff // -1
+            4, 44, 1, 0, 62, 16, 136, 19, 0, 0, 0,
+            4, 180, 0, 0, 62, 16, 136, 19, 0, 0, 0,
+            4, 200, 0, 0, 62, 16, 136, 19, 0, 0, 0,
+            24, 150, 0, 0, 62, 16, 136, 19, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_025 = { // PI                       1994-05-25 23:16:35
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            3, 238, 0, 0, 62, 14, 208, 7, 0, 0, 0
-            , 0xff // -1
+            3, 238, 0, 0, 62, 14, 208, 7, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_026 = { // pikon                    1994-05-25 23:29:19
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            4, 200, 0, 0, 62, 16, 136, 19, 0, 0, 0
-            , 16, 100, 0, 0, 62, 16, 136, 19, 0, 0, 0
-            , 0xff // -1
+            4, 200, 0, 0, 62, 16, 136, 19, 0, 0, 0,
+            16, 100, 0, 0, 62, 16, 136, 19, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_027 = { // pyuu                     1994-05-25 23:30:33
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            16, 0, 0, 0, 54, 16, 244, 1, 13, 1, 17
-            , 16, 16, 0, 16, 54, 16, 124, 21, 0, 1, 17
-            , 0xff // -1
+            16, 0, 0, 0, 54, 16, 244, 1, 13, 1, 17,
+            16, 16, 0, 16, 54, 16, 124, 21, 0, 1, 17,
+            0xff // -1
     };
     private static final int[] DM_028 = { // PI                       1994-05-25 23:16:24
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            1, 200, 0, 0, 62, 14, 232, 3, 0, 0, 0
-            , 0xff // -1
+            1, 200, 0, 0, 62, 14, 232, 3, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] DM_029 = { // click                    1994-05-25 23:14:24
             //len freqL freqH noise  mix  Evol envL envH envPtn sweepT sweepN
-            2, 200, 0, 0, 62, 16, 32, 3, 0, 0, 0
-            , 2, 100, 0, 0, 62, 16, 32, 3, 0, 0, 0
-            , 2, 50, 0, 0, 62, 16, 32, 3, 0, 0, 0
-            , 2, 25, 0, 0, 62, 16, 32, 3, 0, 0, 0
-            , 0xff // -1
+            2, 200, 0, 0, 62, 16, 32, 3, 0, 0, 0,
+            2, 100, 0, 0, 62, 16, 32, 3, 0, 0, 0,
+            2, 50, 0, 0, 62, 16, 32, 3, 0, 0, 0,
+            2, 25, 0, 0, 62, 16, 32, 3, 0, 0, 0,
+            0xff // -1
     };
 
     //
-// Effect for Ｒｕｓｔｙ
-//
+    // Effect for Rusty
+    //
     private static final int[] RS_006 = { // batan                    1993-01-08 01:44:30
-            2, 221, 1, 31, 55, 16, 232, 3, 0, 0, 0
-            , 6, 221, 1, 10, 55, 16, 208, 7, 0, 0, 17
-            , 0xff // -1
+            2, 221, 1, 31, 55, 16, 232, 3, 0, 0, 0,
+            6, 221, 1, 10, 55, 16, 208, 7, 0, 0, 17,
+            0xff // -1
     };
     private static final int[] RS_007 = { // dodonn                   1993-01-08 01:39:10
-            4, 232, 3, 15, 54, 16, 16, 39, 0, 127, 0
-            , 16, 244, 1, 5, 54, 16, 136, 19, 0, 127, 243
-            , 0xff // -1
+            4, 232, 3, 15, 54, 16, 16, 39, 0, 127, 0,
+            16, 244, 1, 5, 54, 16, 136, 19, 0, 127, 243,
+            0xff // -1
     };
     private static final int[] RS_009 = { // kisya-                   1993-01-08 01:39:47
-            4, 40, 0, 20, 54, 16, 16, 39, 0, 20, 0
-            , 24, 20, 0, 5, 54, 16, 16, 39, 0, 1, 0
-            , 0xff // -1
+            4, 40, 0, 20, 54, 16, 16, 39, 0, 20, 0,
+            24, 20, 0, 5, 54, 16, 16, 39, 0, 1, 0,
+            0xff // -1
     };
     private static final int[] RS_010 = { // bofu                     1993-01-08 01:45:38
-            4, 232, 3, 0, 54, 15, 16, 39, 0, 127, 0
-            , 32, 10, 0, 10, 55, 16, 112, 23, 0, 0, 243
-            , 0xff // -1
+            4, 232, 3, 0, 54, 15, 16, 39, 0, 127, 0,
+            32, 10, 0, 10, 55, 16, 112, 23, 0, 0, 243,
+            0xff // -1
     };
     private static final int[] RS_011 = { // gogogogo--               1993-06-29 12:27:41
-            96, 255, 15, 31, 54, 16, 96, 234, 0, 0, 0
-            , 0xff // -1
+            96, 255, 15, 31, 54, 16, 96, 234, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] RS_012 = { // karakara                 1993-06-29 12:16:36
-            64, 10, 0, 0, 54, 16, 32, 78, 0, 0, 129
-            , 0xff // -1
+            64, 10, 0, 0, 54, 16, 32, 78, 0, 0, 129,
+            0xff // -1
     };
     private static final int[] RS_013 = { // buonn                    1993-01-08 01:47:56
-            8, 208, 7, 0, 62, 16, 144, 1, 13, 0, 0
-            , 8, 208, 7, 0, 62, 16, 208, 7, 0, 0, 0
-            , 0xff // -1
+            8, 208, 7, 0, 62, 16, 144, 1, 13, 0, 0,
+            8, 208, 7, 0, 62, 16, 208, 7, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] RS_015 = { // tyattu                   1993-01-08 01:49:27
-            4, 20, 0, 8, 54, 16, 184, 11, 0, 0, 225
-            , 0xff // -1
+            4, 20, 0, 8, 54, 16, 184, 11, 0, 0, 225,
+            0xff // -1
     };
     private static final int[] RS_018 = { // zu                       1993-01-08 01:51:05
-            4, 208, 7, 30, 54, 16, 160, 15, 0, 0, 0
-            , 0xff // -1
+            4, 208, 7, 30, 54, 16, 160, 15, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] RS_019 = { // saaaa                    1993-06-29 12:28:05
-            60, 221, 1, 4, 55, 10, 16, 39, 0, 0, 0
-            , 0xff // -1
+            60, 221, 1, 4, 55, 10, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] RS_020 = { // za                       1993-01-08 01:52:35
-            6, 221, 1, 16, 55, 16, 136, 19, 0, 0, 0
-            , 0xff // -1
+            6, 221, 1, 16, 55, 16, 136, 19, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] RS_021 = { // TYARIN                   1993-06-29 12:29:19
-            4, 40, 0, 0, 54, 15, 16, 39, 0, 0, 0
-            , 8, 30, 0, 0, 62, 16, 208, 7, 0, 0, 0
-            , 0xff // -1
+            4, 40, 0, 0, 54, 15, 16, 39, 0, 0, 0,
+            8, 30, 0, 0, 62, 16, 208, 7, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] RS_022 = { // SYUWAWA                  1993-06-29 12:35:38
-            48, 100, 0, 0, 55, 16, 136, 19, 13, 255, 33
-            , 12, 50, 0, 0, 55, 13, 136, 19, 0, 0, 33
-            , 12, 221, 1, 0, 55, 12, 16, 39, 0, 0, 33
-            , 12, 221, 1, 0, 55, 11, 16, 39, 0, 0, 33
-            , 12, 221, 1, 0, 55, 10, 16, 39, 0, 0, 33
-            , 12, 221, 1, 0, 55, 9, 16, 39, 0, 0, 33
-            , 0xff // -1
+            48, 100, 0, 0, 55, 16, 136, 19, 13, 255, 33,
+            12, 50, 0, 0, 55, 13, 136, 19, 0, 0, 33,
+            12, 221, 1, 0, 55, 12, 16, 39, 0, 0, 33,
+            12, 221, 1, 0, 55, 11, 16, 39, 0, 0, 33,
+            12, 221, 1, 0, 55, 10, 16, 39, 0, 0, 33,
+            12, 221, 1, 0, 55, 9, 16, 39, 0, 0, 33,
+            0xff // -1
     };
     private static final int[] RS_024 = { // PIN                      1993-06-29 12:36:42
-            6, 100, 0, 0, 62, 16, 232, 3, 0, 0, 0
-            , 0xff // -1
+            6, 100, 0, 0, 62, 16, 232, 3, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] RS_026 = { // KAMINARI                 1993-06-29 12:42:57
-            4, 23, 0, 31, 55, 16, 208, 7, 0, 0, 0
-            , 64, 15, 0, 31, 55, 16, 152, 58, 0, 0, 0
-            , 0xff // -1
+            4, 23, 0, 31, 55, 16, 208, 7, 0, 0, 0,
+            64, 15, 0, 31, 55, 16, 152, 58, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] RS_027 = { // PI                       1993-06-29 12:44:03
-            3, 238, 0, 0, 62, 14, 208, 7, 0, 0, 0
-            , 0xff // -1
+            3, 238, 0, 0, 62, 14, 208, 7, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] RS_028 = { // KEIKOKU                  1993-06-29 12:46:13
-            7, 44, 1, 0, 62, 16, 160, 15, 0, 0, 0
-            , 7, 44, 1, 0, 62, 16, 208, 7, 0, 0, 0
-            , 48, 44, 1, 0, 62, 16, 16, 39, 0, 0, 0
-            , 0xff // -1
+            7, 44, 1, 0, 62, 16, 160, 15, 0, 0, 0,
+            7, 44, 1, 0, 62, 16, 208, 7, 0, 0, 0,
+            48, 44, 1, 0, 62, 16, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] RS_029 = { // ETC 1                    1993-06-29 12:46:54
-            96, 208, 7, 0, 62, 16, 16, 39, 0, 236, 0
-            , 0xff // -1
+            96, 208, 7, 0, 62, 16, 16, 39, 0, 236, 0,
+            0xff // -1
     };
     private static final int[] RS_030 = { // BUFOFOFO                 1993-06-29 12:58:12
-            8, 208, 7, 0, 62, 16, 16, 39, 0, 176, 0
-            , 8, 8, 7, 0, 62, 16, 16, 39, 0, 176, 0
-            , 8, 64, 6, 0, 62, 16, 16, 39, 0, 176, 0
-            , 48, 120, 5, 0, 62, 16, 16, 39, 0, 186, 0
-            , 0xff // -1
+            8, 208, 7, 0, 62, 16, 16, 39, 0, 176, 0,
+            8, 8, 7, 0, 62, 16, 16, 39, 0, 176, 0,
+            8, 64, 6, 0, 62, 16, 16, 39, 0, 176, 0,
+            48, 120, 5, 0, 62, 16, 16, 39, 0, 186, 0,
+            0xff // -1
     };
     private static final int[] RS_031 = { // ETC 3                    1993-06-29 12:49:32
-            8, 232, 3, 0, 62, 16, 16, 39, 0, 80, 0
-            , 8, 176, 4, 0, 62, 16, 16, 39, 0, 80, 0
-            , 8, 20, 5, 0, 62, 16, 16, 39, 0, 80, 0
-            , 48, 120, 5, 0, 62, 16, 16, 39, 0, 80, 0
-            , 0xff // -1
+            8, 232, 3, 0, 62, 16, 16, 39, 0, 80, 0,
+            8, 176, 4, 0, 62, 16, 16, 39, 0, 80, 0,
+            8, 20, 5, 0, 62, 16, 16, 39, 0, 80, 0,
+            48, 120, 5, 0, 62, 16, 16, 39, 0, 80, 0,
+            0xff // -1
     };
     private static final int[] RS_032 = { // ETC 4                    1993-06-29 12:50:11
-            96, 0, 0, 0, 62, 16, 16, 39, 0, 128, 0
-            , 0xff // -1
+            96, 0, 0, 0, 62, 16, 16, 39, 0, 128, 0,
+            0xff // -1
     };
     private static final int[] RS_033 = { // HADE BOMB                1993-06-29 12:52:06
-            4, 100, 0, 31, 54, 16, 208, 7, 0, 127, 0
-            , 32, 0, 0, 31, 54, 16, 16, 39, 0, 127, 129
-            , 0xff // -1
+            4, 100, 0, 31, 54, 16, 208, 7, 0, 127, 0,
+            32, 0, 0, 31, 54, 16, 16, 39, 0, 127, 129,
+            0xff // -1
     };
     private static final int[] RS_035 = { // JARARAN                  1993-06-29 13:02:17
-            2, 244, 1, 20, 54, 16, 16, 39, 0, 252, 0
-            , 2, 144, 1, 15, 54, 16, 16, 39, 0, 252, 65
-            , 2, 44, 1, 10, 62, 16, 16, 39, 0, 252, 65
-            , 2, 200, 0, 5, 54, 16, 16, 39, 0, 252, 65
-            , 16, 150, 0, 0, 62, 16, 184, 11, 0, 0, 0
-            , 0xff // -1
+            2, 244, 1, 20, 54, 16, 16, 39, 0, 252, 0,
+            2, 144, 1, 15, 54, 16, 16, 39, 0, 252, 65,
+            2, 44, 1, 10, 62, 16, 16, 39, 0, 252, 65,
+            2, 200, 0, 5, 54, 16, 16, 39, 0, 252, 65,
+            16, 150, 0, 0, 62, 16, 184, 11, 0, 0, 0,
+            0xff // -1
     };
 
     //
-    // Effect for "ポゼッショナー"
+    // Effect for "Possessioner"
     //
 
     private static final int[] PO_011 = { // Rain fall                1990-06-22 05:55:43
-            254, 221, 1, 3, 55, 10, 16, 39, 0, 0, 0
-            , 0xff // -1
+            254, 221, 1, 3, 55, 10, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_012 = { // Spinner                  1990-06-22 05:57:18
-            24, 140, 0, 0, 62, 16, 88, 27, 0, 14, 0
-            , 0xff // -1
+            24, 140, 0, 0, 62, 16, 88, 27, 0, 14, 0,
+            0xff // -1
     };
     private static final int[] PO_013 = { // Kaminari                 1990-06-22 05:59:16
-            48, 160, 15, 31, 54, 16, 16, 39, 0, 0, 1
-            , 0xff // -1
+            48, 160, 15, 31, 54, 16, 16, 39, 0, 0, 1,
+            0xff // -1
     };
     private static final int[] PO_014 = { // Sairen                   1990-06-22 06:00:45
-            31, 100, 0, 0, 62, 16, 88, 27, 0, 255, 0
-            , 0xff // -1
+            31, 100, 0, 0, 62, 16, 88, 27, 0, 255, 0,
+            0xff // -1
     };
     private static final int[] PO_015 = { // Door Shut                1990-06-22 06:03:28
-            6, 221, 1, 8, 55, 16, 184, 11, 0, 0, 241
-            , 8, 144, 1, 0, 54, 16, 144, 1, 13, 216, 0
-            , 0xff // -1
+            6, 221, 1, 8, 55, 16, 184, 11, 0, 0, 241,
+            8, 144, 1, 0, 54, 16, 144, 1, 13, 216, 0,
+            0xff // -1
     };
     private static final int[] PO_016 = { // Kiteki                   1990-06-22 06:05:23
-            96, 160, 15, 0, 62, 16, 48, 117, 0, 0, 0
-            , 0xff // -1
+            96, 160, 15, 0, 62, 16, 48, 117, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_017 = { // Ship Bomb                1990-06-22 06:06:54
-            4, 221, 1, 31, 55, 16, 208, 7, 0, 0, 0
-            , 64, 221, 1, 20, 55, 16, 16, 39, 0, 0, 0
-            , 0xff // -1
+            4, 221, 1, 31, 55, 16, 208, 7, 0, 0, 0,
+            64, 221, 1, 20, 55, 16, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_018 = { // Spinner 2                1990-06-22 06:08:08
-            64, 120, 0, 0, 54, 16, 16, 39, 0, 2, 0
-            , 0xff // -1
+            64, 120, 0, 0, 54, 16, 16, 39, 0, 2, 0,
+            0xff // -1
     };
     private static final int[] PO_019 = { // Helli                    1990-06-22 06:09:58
-            4, 221, 1, 4, 55, 16, 208, 7, 0, 0, 0
-            , 4, 221, 1, 0, 55, 16, 208, 7, 0, 0, 0
-            , 4, 221, 1, 4, 55, 16, 232, 3, 0, 0, 0
-            , 4, 221, 1, 0, 55, 16, 232, 3, 0, 0, 0
-            , 0xff // -1
+            4, 221, 1, 4, 55, 16, 208, 7, 0, 0, 0,
+            4, 221, 1, 0, 55, 16, 208, 7, 0, 0, 0,
+            4, 221, 1, 4, 55, 16, 232, 3, 0, 0, 0,
+            4, 221, 1, 0, 55, 16, 232, 3, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_020 = { // Kinzoku Sagyou           1990-06-22 07:23:41
-            16, 30, 0, 5, 54, 16, 160, 15, 0, 0, 0
-            , 0xff // -1
+            16, 30, 0, 5, 54, 16, 160, 15, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_021 = { // Kaze (DAME)              1990-06-22 06:13:46
-            16, 220, 5, 0, 62, 15, 16, 39, 0, 0, 0
-            , 8, 220, 5, 0, 62, 15, 16, 39, 0, 246, 0
-            , 48, 140, 5, 0, 62, 16, 16, 39, 0, 10, 0
-            , 0xff // -1
+            16, 220, 5, 0, 62, 15, 16, 39, 0, 0, 0,
+            8, 220, 5, 0, 62, 15, 16, 39, 0, 246, 0,
+            48, 140, 5, 0, 62, 16, 16, 39, 0, 10, 0,
+            0xff // -1
     };
     private static final int[] PO_022 = { // Taikushitu Soto          1990-06-22 06:15:55
-            4, 160, 15, 31, 54, 16, 184, 11, 0, 0, 0
-            , 24, 184, 11, 8, 54, 16, 136, 19, 0, 40, 20
-            , 0xff // -1
+            4, 160, 15, 31, 54, 16, 184, 11, 0, 0, 0,
+            24, 184, 11, 8, 54, 16, 136, 19, 0, 40, 20,
+            0xff // -1
     };
     private static final int[] PO_023 = { // Punch                    1990-06-22 06:17:13
-            4, 160, 15, 31, 54, 16, 208, 7, 0, 10, 0
-            , 8, 221, 1, 28, 54, 16, 208, 7, 0, 127, 0
-            , 0xff // -1
+            4, 160, 15, 31, 54, 16, 208, 7, 0, 10, 0,
+            8, 221, 1, 28, 54, 16, 208, 7, 0, 127, 0,
+            0xff // -1
     };
     private static final int[] PO_024 = { // Shower                   1990-06-22 06:19:08
-            254, 0, 0, 0, 55, 10, 0, 0, 0, 0, 0
-            , 0xff // -1
+            254, 0, 0, 0, 55, 10, 0, 0, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_025 = { // Shokki                   1990-06-22 06:22:14
-            6, 31, 0, 4, 54, 16, 232, 3, 0, 0, 0
-            , 8, 30, 0, 0, 54, 16, 232, 3, 0, 0, 0
-            , 0xff // -1
+            6, 31, 0, 4, 54, 16, 232, 3, 0, 0, 0,
+            8, 30, 0, 0, 54, 16, 232, 3, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_026 = { // Tobikomi                 1990-06-22 06:24:09
-            8, 220, 5, 25, 54, 16, 184, 11, 0, 127, 0
-            , 48, 221, 1, 10, 55, 16, 64, 31, 0, 0, 18
-            , 0xff // -1
+            8, 220, 5, 25, 54, 16, 184, 11, 0, 127, 0,
+            48, 221, 1, 10, 55, 16, 64, 31, 0, 0, 18,
+            0xff // -1
     };
     private static final int[] PO_027 = { // Air Fukidasi             1990-06-22 06:25:35
-            4, 208, 7, 0, 55, 16, 208, 7, 0, 0, 0
-            , 48, 221, 1, 4, 55, 16, 16, 39, 0, 0, 20
-            , 0xff // -1
+            4, 208, 7, 0, 55, 16, 208, 7, 0, 0, 0,
+            48, 221, 1, 4, 55, 16, 16, 39, 0, 0, 20,
+            0xff // -1
     };
     private static final int[] PO_028 = { // Heavy Door Open          1990-06-22 07:23:33
-            48, 208, 7, 31, 54, 16, 152, 58, 0, 251, 0
-            , 0xff // -1
+            48, 208, 7, 31, 54, 16, 152, 58, 0, 251, 0,
+            0xff // -1
     };
     private static final int[] PO_029 = { // Car Door Shut            1990-06-22 07:23:30
-            16, 232, 3, 31, 54, 16, 184, 11, 0, 127, 0
-            , 0xff // -1
+            16, 232, 3, 31, 54, 16, 184, 11, 0, 127, 0,
+            0xff // -1
     };
     private static final int[] PO_030 = { // Car Come'in              1990-06-22 06:30:31
-            4, 160, 15, 31, 54, 15, 16, 39, 0, 0, 0
-            , 96, 160, 15, 28, 54, 16, 32, 78, 0, 0, 0
-            , 0xff // -1
+            4, 160, 15, 31, 54, 15, 16, 39, 0, 0, 0,
+            96, 160, 15, 28, 54, 16, 32, 78, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_031 = { // Ice Hikkaki              1990-06-22 06:31:26
-            2, 10, 0, 0, 54, 16, 244, 1, 0, 0, 0
-            , 2, 20, 0, 0, 54, 16, 244, 1, 0, 0, 0
-            , 0xff // -1
+            2, 10, 0, 0, 54, 16, 244, 1, 0, 0, 0,
+            2, 20, 0, 0, 54, 16, 244, 1, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_032 = { // Ship Crush Down          1990-06-22 07:23:23
-            64, 160, 15, 20, 54, 16, 48, 117, 0, 1, 22
-            , 192, 221, 1, 31, 55, 16, 48, 117, 0, 0, 0
-            , 0xff // -1
+            64, 160, 15, 20, 54, 16, 48, 117, 0, 1, 22,
+            192, 221, 1, 31, 55, 16, 48, 117, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_033 = { // Toraware                 1990-06-22 06:35:02
-            32, 232, 3, 0, 54, 16, 64, 31, 0, 0, 0
-            , 0xff // -1
+            32, 232, 3, 0, 54, 16, 64, 31, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_034 = { // Sekizou Break            1990-06-22 06:36:14
-            4, 221, 1, 31, 55, 15, 16, 39, 0, 0, 0
-            , 64, 221, 1, 10, 55, 16, 16, 39, 0, 0, 18
-            , 0xff // -1
+            4, 221, 1, 31, 55, 15, 16, 39, 0, 0, 0,
+            64, 221, 1, 10, 55, 16, 16, 39, 0, 0, 18,
+            0xff // -1
     };
     private static final int[] PO_035 = { // Blaster Shot             1990-06-22 06:37:55
-            4, 221, 1, 31, 55, 16, 184, 11, 0, 0, 0
-            , 4, 160, 15, 20, 54, 16, 184, 11, 0, 20, 0
-            , 64, 0, 0, 4, 54, 16, 16, 39, 0, 1, 20
-            , 0xff // -1
+            4, 221, 1, 31, 55, 16, 184, 11, 0, 0, 0,
+            4, 160, 15, 20, 54, 16, 184, 11, 0, 20, 0,
+            64, 0, 0, 4, 54, 16, 16, 39, 0, 1, 20,
+            0xff // -1
     };
     private static final int[] PO_036 = { // Seifuku Yabuki           1990-06-22 06:39:58
-            16, 221, 1, 4, 55, 14, 16, 39, 0, 0, 0
-            , 0xff // -1
+            16, 221, 1, 4, 55, 14, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_037 = { // Miminari                 1990-06-22 06:42:13
-            4, 8, 0, 0, 62, 16, 1, 0, 8, 0, 0
-            , 64, 0, 0, 0, 62, 16, 64, 31, 0, 1, 0
-            , 0xff // -1
+            4, 8, 0, 0, 62, 16, 1, 0, 8, 0, 0,
+            64, 0, 0, 0, 62, 16, 64, 31, 0, 1, 0,
+            0xff // -1
     };
     private static final int[] PO_038 = { // Sekizou Ayasige          1990-06-22 06:44:23
-            40, 160, 15, 0, 62, 16, 232, 253, 0, 246, 0
-            , 50, 16, 14, 0, 62, 16, 32, 78, 0, 10, 0
-            , 0xff // -1
+            40, 160, 15, 0, 62, 16, 232, 253, 0, 246, 0,
+            50, 16, 14, 0, 62, 16, 32, 78, 0, 10, 0,
+            0xff // -1
     };
     private static final int[] PO_039 = { // Voiler & Engine          1990-06-22 07:23:14
-            60, 221, 1, 30, 55, 14, 48, 117, 0, 0, 242
-            , 16, 184, 11, 2, 55, 16, 112, 23, 0, 40, 17
-            , 0xff // -1
+            60, 221, 1, 30, 55, 14, 48, 117, 0, 0, 242,
+            16, 184, 11, 2, 55, 16, 112, 23, 0, 40, 17,
+            0xff // -1
     };
     private static final int[] PO_040 = { // Suimen                   1990-06-22 06:47:58
-            4, 10, 0, 4, 54, 16, 232, 3, 0, 0, 0
-            , 6, 221, 1, 0, 55, 16, 208, 7, 0, 0, 0
-            , 0xff // -1
+            4, 10, 0, 4, 54, 16, 232, 3, 0, 0, 0,
+            6, 221, 1, 0, 55, 16, 208, 7, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_041 = { // Kika                     1990-06-22 06:48:29
-            64, 221, 1, 0, 55, 16, 16, 39, 0, 0, 20
-            , 0xff // -1
+            64, 221, 1, 0, 55, 16, 16, 39, 0, 0, 20,
+            0xff // -1
     };
     private static final int[] PO_042 = { // Change Kakyuu            1990-06-22 06:50:00
-            48, 232, 3, 0, 62, 16, 16, 39, 0, 10, 0
-            , 0xff // -1
+            48, 232, 3, 0, 62, 16, 16, 39, 0, 10, 0,
+            0xff // -1
     };
     private static final int[] PO_043 = { // Change Blue              1990-06-22 06:51:47
-            15, 100, 0, 0, 62, 16, 232, 3, 14, 252, 0
-            , 0xff // -1
+            15, 100, 0, 0, 62, 16, 232, 3, 14, 252, 0,
+            0xff // -1
     };
     private static final int[] PO_044 = { // Youma Funsyutu           1990-06-22 06:54:06
-            6, 221, 1, 4, 55, 16, 208, 7, 0, 0, 0
-            , 4, 100, 0, 4, 54, 16, 160, 15, 0, 236, 0
-            , 64, 221, 1, 8, 55, 16, 64, 31, 0, 0, 246
-            , 0xff // -1
+            6, 221, 1, 4, 55, 16, 208, 7, 0, 0, 0,
+            4, 100, 0, 4, 54, 16, 160, 15, 0, 236, 0,
+            64, 221, 1, 8, 55, 16, 64, 31, 0, 0, 246,
+            0xff // -1
     };
     private static final int[] PO_045 = { // Kekkai                   1990-06-22 07:23:06
-            128, 232, 3, 31, 54, 16, 48, 117, 0, 1, 242
-            , 0xff // -1
+            128, 232, 3, 31, 54, 16, 48, 117, 0, 1, 242,
+            0xff // -1
     };
     private static final int[] PO_046 = { // Gosintou 1               1990-06-22 06:56:47
-            4, 20, 0, 0, 54, 16, 232, 3, 0, 0, 0
-            , 0xff // -1
+            4, 20, 0, 0, 54, 16, 232, 3, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_047 = { // Gosintou 2               1990-06-22 06:58:25
-            8, 208, 7, 0, 62, 16, 232, 3, 13, 246, 0
-            , 64, 208, 7, 0, 62, 16, 16, 39, 0, 2, 0
-            , 0xff // -1
+            8, 208, 7, 0, 62, 16, 232, 3, 13, 246, 0,
+            64, 208, 7, 0, 62, 16, 16, 39, 0, 2, 0,
+            0xff // -1
     };
     private static final int[] PO_048 = { // Gosintou 3               1990-06-22 07:00:22
-            8, 221, 1, 0, 55, 16, 32, 3, 13, 0, 17
-            , 16, 221, 1, 0, 55, 16, 208, 7, 0, 0, 17
-            , 0xff // -1
+            8, 221, 1, 0, 55, 16, 32, 3, 13, 0, 17,
+            16, 221, 1, 0, 55, 16, 208, 7, 0, 0, 17,
+            0xff // -1
     };
     private static final int[] PO_049 = { // Hand Blaster             1990-06-22 07:01:53
-            4, 160, 15, 31, 54, 16, 184, 11, 0, 0, 0
-            , 4, 40, 0, 0, 54, 16, 232, 3, 0, 246, 0
-            , 64, 221, 1, 0, 55, 16, 16, 39, 0, 0, 18
-            , 0xff // -1
+            4, 160, 15, 31, 54, 16, 184, 11, 0, 0, 0,
+            4, 40, 0, 0, 54, 16, 232, 3, 0, 246, 0,
+            64, 221, 1, 0, 55, 16, 16, 39, 0, 0, 18,
+            0xff // -1
     };
     private static final int[] PO_050 = { // Magic                    1990-06-22 07:04:00
-            4, 32, 0, 0, 62, 16, 208, 7, 0, 0, 0
-            , 24, 32, 0, 0, 54, 16, 64, 31, 0, 255, 0
-            , 90, 160, 15, 31, 54, 16, 48, 117, 0, 216, 244
-            , 0xff // -1
+            4, 32, 0, 0, 62, 16, 208, 7, 0, 0, 0,
+            24, 32, 0, 0, 54, 16, 64, 31, 0, 255, 0,
+            90, 160, 15, 31, 54, 16, 48, 117, 0, 216, 244,
+            0xff // -1
     };
     private static final int[] PO_051 = { // Grabiton 1               1990-06-22 07:04:41
-            4, 221, 1, 31, 55, 16, 16, 39, 0, 0, 0
-            , 31, 221, 1, 0, 55, 16, 16, 39, 0, 0, 17
-            , 0xff // -1
+            4, 221, 1, 31, 55, 16, 16, 39, 0, 0, 0,
+            31, 221, 1, 0, 55, 16, 16, 39, 0, 0, 17,
+            0xff // -1
     };
     private static final int[] PO_052 = { // Grabiton 2               1990-06-22 07:05:10
-            128, 160, 15, 31, 54, 16, 48, 117, 0, 0, 0
-            , 0xff // -1
+            128, 160, 15, 31, 54, 16, 48, 117, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_053 = { // Attack Kakyuu            1990-06-22 07:06:38
-            4, 160, 15, 31, 54, 16, 16, 39, 0, 0, 0
-            , 16, 221, 1, 0, 55, 16, 112, 23, 0, 0, 0
-            , 0xff // -1
+            4, 160, 15, 31, 54, 16, 16, 39, 0, 0, 0,
+            16, 221, 1, 0, 55, 16, 112, 23, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] PO_054 = { // Attack Blue(TEKITOU)     1990-06-22 07:08:33
-            6, 100, 0, 0, 54, 16, 244, 1, 13, 251, 0
-            , 16, 70, 0, 0, 54, 16, 112, 23, 0, 127, 0
-            , 0xff // -1
+            6, 100, 0, 0, 54, 16, 244, 1, 13, 251, 0,
+            16, 70, 0, 0, 54, 16, 112, 23, 0, 127, 0,
+            0xff // -1
     };
     private static final int[] PO_055 = { // Attack Red               1990-06-22 07:10:10
-            20, 184, 11, 0, 54, 14, 16, 39, 0, 156, 0
-            , 16, 232, 3, 0, 54, 16, 112, 23, 0, 100, 0
-            , 0xff // -1
+            20, 184, 11, 0, 54, 14, 16, 39, 0, 156, 0,
+            16, 232, 3, 0, 54, 16, 112, 23, 0, 100, 0,
+            0xff // -1
     };
     private static final int[] PO_056 = { // Attack White             1990-06-22 07:11:16
-            4, 0, 0, 4, 54, 16, 16, 39, 0, 127, 241
-            , 16, 0, 0, 0, 54, 16, 112, 23, 0, 10, 17
-            , 0xff // -1
+            4, 0, 0, 4, 54, 16, 16, 39, 0, 127, 241,
+            16, 0, 0, 0, 54, 16, 112, 23, 0, 10, 17,
+            0xff // -1
     };
     private static final int[] PO_057 = { // Attack Black             1990-06-22 07:22:10
-            4, 200, 0, 4, 54, 16, 208, 7, 0, 127, 17
-            , 10, 0, 0, 0, 54, 16, 88, 2, 13, 1, 0
-            , 24, 10, 0, 0, 54, 16, 112, 23, 0, 5, 17
-            , 0xff // -1
+            4, 200, 0, 4, 54, 16, 208, 7, 0, 127, 17,
+            10, 0, 0, 0, 54, 16, 88, 2, 13, 1, 0,
+            24, 10, 0, 0, 54, 16, 112, 23, 0, 5, 17,
+            0xff // -1
     };
     private static final int[] PO_058 = { // Attack Last              1990-06-22 07:22:14
-            20, 60, 0, 4, 54, 14, 16, 39, 0, 255, 0
-            , 20, 40, 0, 0, 54, 14, 16, 39, 0, 1, 113
-            , 20, 60, 0, 10, 54, 16, 112, 23, 0, 1, 20
-            , 0xff // -1
+            20, 60, 0, 4, 54, 14, 16, 39, 0, 255, 0,
+            20, 40, 0, 0, 54, 14, 16, 39, 0, 1, 113,
+            20, 60, 0, 10, 54, 16, 112, 23, 0, 1, 20,
+            0xff // -1
     };
     private static final int[] PO_059 = { // Damage 1                 1990-06-22 07:17:32
-            4, 221, 1, 31, 54, 16, 184, 11, 0, 127, 0
-            , 16, 221, 1, 0, 55, 16, 112, 23, 0, 0, 33
-            , 0xff // -1
+            4, 221, 1, 31, 54, 16, 184, 11, 0, 127, 0,
+            16, 221, 1, 0, 55, 16, 112, 23, 0, 0, 33,
+            0xff // -1
     };
     private static final int[] PO_060 = { // Damage 2                 1990-06-22 07:19:18
-            8, 232, 3, 31, 54, 14, 16, 39, 0, 100, 0
-            , 8, 120, 5, 31, 54, 15, 16, 39, 0, 156, 113
-            , 16, 88, 2, 31, 54, 16, 112, 23, 0, 127, 241
-            , 0xff // -1
+            8, 232, 3, 31, 54, 14, 16, 39, 0, 100, 0,
+            8, 120, 5, 31, 54, 15, 16, 39, 0, 156, 113,
+            16, 88, 2, 31, 54, 16, 112, 23, 0, 127, 241,
+            0xff // -1
     };
     private static final int[] PO_061 = { // Attack                   1990-06-22 07:22:55
-            8, 0, 0, 31, 54, 16, 184, 11, 0, 100, 0
-            , 24, 221, 1, 0, 55, 16, 16, 39, 0, 0, 17
-            , 0xff // -1
+            8, 0, 0, 31, 54, 16, 184, 11, 0, 100, 0,
+            24, 221, 1, 0, 55, 16, 16, 39, 0, 0, 17,
+            0xff // -1
     };
 
-//
-// Effect for ＮＡＤＩＡ
-//
+    //
+    // Effect for NADIA
+    //
 
     private static final int[] ND_000 = { // MAP                      1992-01-27 17:32:40
-            48, 221, 1, 0, 62, 16, 16, 39, 0, 255, 0
-            , 0xff // -1
+            48, 221, 1, 0, 62, 16, 16, 39, 0, 255, 0,
+            0xff // -1
     };
     private static final int[] ND_001 = { // SONAR                    1992-01-27 17:33:23
-            192, 200, 0, 0, 62, 16, 64, 156, 0, 0, 0
-            , 0xff // -1
+            192, 200, 0, 0, 62, 16, 64, 156, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_002 = { // KOUKOU                   1992-01-27 17:57:44
-            254, 221, 1, 8, 55, 12, 16, 39, 0, 0, 0
-            , 0xff // -1
+            254, 221, 1, 8, 55, 12, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_003 = { // MEGIDO                   1992-01-27 17:35:47
-            192, 200, 0, 0, 54, 16, 16, 39, 13, 255, 0
-            , 6, 221, 1, 0, 54, 16, 16, 39, 0, 127, 0
-            , 192, 221, 1, 0, 55, 16, 96, 234, 0, 0, 248
-            , 0xff // -1
+            192, 200, 0, 0, 54, 16, 16, 39, 13, 255, 0,
+            6, 221, 1, 0, 54, 16, 16, 39, 0, 127, 0,
+            192, 221, 1, 0, 55, 16, 96, 234, 0, 0, 248,
+            0xff // -1
     };
     private static final int[] ND_004 = { // JINARI                   1992-01-27 17:36:37
-            254, 221, 1, 31, 54, 14, 16, 39, 0, 128, 113
-            , 0xff // -1
+            254, 221, 1, 31, 54, 14, 16, 39, 0, 128, 113,
+            0xff // -1
     };
     private static final int[] ND_005 = { // SWITCH                   1992-01-27 17:37:21
-            6, 221, 1, 15, 55, 16, 208, 7, 0, 0, 0
-            , 6, 20, 0, 0, 54, 16, 160, 15, 0, 0, 0
-            , 0xff // -1
+            6, 221, 1, 15, 55, 16, 208, 7, 0, 0, 0,
+            6, 20, 0, 0, 54, 16, 160, 15, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_006 = { // DOSYUUNN                 1992-01-27 17:38:01
-            6, 221, 1, 0, 54, 16, 16, 39, 0, 127, 0
-            , 192, 221, 1, 0, 55, 16, 96, 234, 0, 0, 24
-            , 0xff // -1
+            6, 221, 1, 0, 54, 16, 16, 39, 0, 127, 0,
+            192, 221, 1, 0, 55, 16, 96, 234, 0, 0, 24,
+            0xff // -1
     };
     private static final int[] ND_007 = { // GYUOON                   1992-01-27 17:39:09
-            192, 232, 3, 31, 54, 16, 96, 234, 0, 252, 0
-            , 0xff // -1
+            192, 232, 3, 31, 54, 16, 96, 234, 0, 252, 0,
+            0xff // -1
     };
     private static final int[] ND_008 = { // PIPIPIPI                 1992-01-27 17:40:16
-            64, 150, 0, 0, 62, 16, 176, 4, 8, 0, 0
-            , 0xff // -1
+            64, 150, 0, 0, 62, 16, 176, 4, 8, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_009 = { // SYUBATTU                 1992-01-27 17:41:16
-            12, 221, 1, 0, 55, 16, 232, 3, 13, 0, 20
-            , 24, 221, 1, 15, 55, 16, 64, 31, 0, 0, 0
-            , 0xff // -1
+            12, 221, 1, 0, 55, 16, 232, 3, 13, 0, 20,
+            24, 221, 1, 15, 55, 16, 64, 31, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_010 = { // BEAM UNARI               1992-01-27 17:42:05
-            254, 25, 0, 0, 54, 14, 16, 39, 0, 0, 145
-            , 0xff // -1
+            254, 25, 0, 0, 54, 14, 16, 39, 0, 0, 145,
+            0xff // -1
     };
     private static final int[] ND_011 = { // BEAM KAKUSAN             1992-01-27 17:43:07
-            6, 221, 1, 15, 55, 16, 160, 15, 0, 0, 0
-            , 192, 208, 7, 0, 54, 16, 96, 234, 0, 248, 0
-            , 0xff // -1
+            6, 221, 1, 15, 55, 16, 160, 15, 0, 0, 0,
+            192, 208, 7, 0, 54, 16, 96, 234, 0, 248, 0,
+            0xff // -1
     };
     private static final int[] ND_012 = { // ORGAN                    1992-01-27 18:01:45
-            48, 221, 1, 0, 62, 14, 16, 39, 0, 0, 0
-            , 0xff // -1
+            48, 221, 1, 0, 62, 14, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_013 = { // PANEL                    1992-01-27 17:57:15
-            6, 221, 1, 4, 55, 16, 160, 15, 0, 0, 0
-            , 6, 221, 1, 4, 55, 16, 160, 15, 0, 0, 0
-            , 6, 221, 1, 4, 55, 16, 160, 15, 0, 0, 0
-            , 6, 221, 1, 4, 55, 16, 160, 15, 0, 0, 0
-            , 24, 20, 0, 10, 54, 16, 16, 39, 0, 0, 0
-            , 0xff // -1
+            6, 221, 1, 4, 55, 16, 160, 15, 0, 0, 0,
+            6, 221, 1, 4, 55, 16, 160, 15, 0, 0, 0,
+            6, 221, 1, 4, 55, 16, 160, 15, 0, 0, 0,
+            6, 221, 1, 4, 55, 16, 160, 15, 0, 0, 0,
+            24, 20, 0, 10, 54, 16, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_014 = { // DRILL                    1992-01-27 17:45:25
-            254, 160, 15, 31, 54, 15, 16, 39, 0, 0, 0
-            , 0xff // -1
+            254, 160, 15, 31, 54, 15, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_015 = { // PRAZMA                   1992-01-27 17:45:59
-            6, 20, 0, 15, 55, 16, 112, 23, 0, 0, 0
-            , 6, 20, 0, 0, 54, 16, 16, 39, 0, 0, 0
-            , 0xff // -1
+            6, 20, 0, 15, 55, 16, 112, 23, 0, 0, 0,
+            6, 20, 0, 0, 54, 16, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_016 = { // BABEL                    1992-01-27 17:46:34
-            254, 160, 15, 0, 62, 16, 16, 39, 14, 0, 0
-            , 0xff // -1
+            254, 160, 15, 0, 62, 16, 16, 39, 14, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_017 = { // ELEVETOR                 1992-01-27 17:47:27
-            12, 233, 1, 0, 54, 14, 16, 39, 0, 255, 0
-            , 254, 221, 1, 0, 54, 14, 16, 39, 0, 0, 0
-            , 0xff // -1
+            12, 233, 1, 0, 54, 14, 16, 39, 0, 255, 0,
+            254, 221, 1, 0, 54, 14, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_018 = { // MEGIDO HASSYA            1992-01-27 17:48:04
-            254, 160, 15, 15, 54, 15, 16, 39, 13, 0, 0
-            , 0xff // -1
+            254, 160, 15, 15, 54, 15, 16, 39, 13, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_019 = { // DAIBAKUHATU              1992-01-27 18:28:56
-            12, 221, 1, 31, 54, 16, 16, 39, 0, 127, 0
-            , 144, 0, 0, 0, 54, 16, 96, 234, 0, 127, 24
-            , 192, 160, 15, 31, 54, 16, 80, 70, 14, 0, 0
-            , 0xff // -1
+            12, 221, 1, 31, 54, 16, 16, 39, 0, 127, 0,
+            144, 0, 0, 0, 54, 16, 96, 234, 0, 127, 24,
+            192, 160, 15, 31, 54, 16, 80, 70, 14, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_020 = { // NAMI                     1992-01-27 17:50:59
-            254, 221, 1, 0, 55, 16, 16, 39, 14, 0, 0
-            , 0xff // -1
+            254, 221, 1, 0, 55, 16, 16, 39, 14, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_021 = { // DOOOONN                  1992-01-27 17:51:39
-            96, 208, 7, 0, 54, 16, 16, 39, 0, 40, 0
-            , 0xff // -1
+            96, 208, 7, 0, 54, 16, 16, 39, 0, 40, 0,
+            0xff // -1
     };
     private static final int[] ND_022 = { // DOGA                     1992-01-27 17:52:18
-            6, 221, 1, 31, 54, 16, 16, 39, 0, 127, 0
-            , 12, 221, 1, 0, 55, 16, 160, 15, 0, 0, 0
-            , 0xff // -1
+            6, 221, 1, 31, 54, 16, 16, 39, 0, 127, 0,
+            12, 221, 1, 0, 55, 16, 160, 15, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_023 = { // PISI                     1992-01-27 17:52:53
-            6, 20, 0, 31, 54, 16, 16, 39, 0, 0, 0
-            , 24, 20, 0, 0, 54, 16, 16, 39, 0, 0, 0
-            , 0xff // -1
+            6, 20, 0, 31, 54, 16, 16, 39, 0, 0, 0,
+            24, 20, 0, 0, 54, 16, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_024 = { // BLUE WATER               1992-01-27 17:53:15
-            254, 15, 0, 0, 62, 14, 16, 39, 0, 0, 0
-            , 0xff // -1
+            254, 15, 0, 0, 62, 14, 16, 39, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_025 = { // HOWAWAN                  1992-01-27 17:56:51
-            12, 144, 1, 0, 62, 16, 100, 0, 13, 254, 0
-            , 12, 134, 1, 0, 62, 16, 100, 0, 13, 254, 0
-            , 12, 124, 1, 0, 62, 16, 100, 0, 13, 254, 0
-            , 12, 114, 1, 0, 62, 16, 100, 0, 13, 254, 0
-            , 48, 90, 1, 0, 62, 16, 16, 39, 0, 254, 0
-            , 0xff // -1
+            12, 144, 1, 0, 62, 16, 100, 0, 13, 254, 0,
+            12, 134, 1, 0, 62, 16, 100, 0, 13, 254, 0,
+            12, 124, 1, 0, 62, 16, 100, 0, 13, 254, 0,
+            12, 114, 1, 0, 62, 16, 100, 0, 13, 254, 0,
+            48, 90, 1, 0, 62, 16, 16, 39, 0, 254, 0,
+            0xff // -1
     };
     private static final int[] ND_026 = { // ZUGAN                    1992-01-27 17:19:49
-            6, 221, 1, 31, 55, 16, 160, 15, 0, 0, 0
-            , 64, 221, 1, 24, 55, 16, 32, 78, 0, 0, 0
-            , 0xff // -1
+            6, 221, 1, 31, 55, 16, 160, 15, 0, 0, 0,
+            64, 221, 1, 24, 55, 16, 32, 78, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_027 = { // DAAANN                   1992-01-27 17:20:28
-            48, 221, 1, 31, 55, 16, 152, 58, 0, 0, 0
-            , 0xff // -1
+            48, 221, 1, 31, 55, 16, 152, 58, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_028 = { // DOGOOOONN                1992-01-27 17:21:14
-            6, 221, 1, 1, 54, 16, 16, 39, 0, 127, 0
-            , 192, 221, 1, 31, 55, 16, 96, 234, 0, 0, 0
-            , 0xff // -1
+            6, 221, 1, 1, 54, 16, 16, 39, 0, 127, 0,
+            192, 221, 1, 31, 55, 16, 96, 234, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_029 = { // GASYA                    1992-01-27 17:22:08
-            3, 221, 1, 15, 55, 16, 208, 7, 0, 0, 0
-            , 12, 221, 1, 1, 55, 16, 160, 15, 0, 0, 0
-            , 0xff // -1
+            3, 221, 1, 15, 55, 16, 208, 7, 0, 0, 0,
+            12, 221, 1, 1, 55, 16, 160, 15, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_030 = { // BASYUSYUSYU              1992-01-27 17:22:52
-            3, 221, 1, 15, 55, 15, 16, 39, 0, 0, 0
-            , 192, 221, 1, 31, 55, 16, 96, 234, 0, 0, 113
-            , 0xff // -1
+            3, 221, 1, 15, 55, 15, 16, 39, 0, 0, 0,
+            192, 221, 1, 31, 55, 16, 96, 234, 0, 0, 113,
+            0xff // -1
     };
     private static final int[] ND_031 = { // DOSYUSYUSYU              1992-01-27 17:24:31
-            192, 0, 0, 0, 54, 16, 96, 234, 0, 128, 17
-            , 0xff // -1
+            192, 0, 0, 0, 54, 16, 96, 234, 0, 128, 17,
+            0xff // -1
     };
     private static final int[] ND_032 = { // SYUSYUUUUNN              1992-01-27 17:25:34
-            12, 221, 1, 0, 55, 15, 16, 39, 0, 0, 113
-            , 32, 221, 1, 0, 55, 16, 32, 78, 0, 0, 17
-            , 0xff // -1
+            12, 221, 1, 0, 55, 15, 16, 39, 0, 0, 113,
+            32, 221, 1, 0, 55, 16, 32, 78, 0, 0, 17,
+            0xff // -1
     };
     private static final int[] ND_033 = { // BASYANN - HYURURURU      1992-01-27 18:00:33
-            6, 221, 1, 31, 55, 16, 16, 39, 0, 0, 193
-            , 32, 221, 1, 4, 55, 16, 16, 39, 0, 0, 0
-            , 192, 0, 0, 0, 54, 16, 96, 234, 0, 1, 0
-            , 0xff // -1
+            6, 221, 1, 31, 55, 16, 16, 39, 0, 0, 193,
+            32, 221, 1, 4, 55, 16, 16, 39, 0, 0, 0,
+            192, 0, 0, 0, 54, 16, 96, 234, 0, 1, 0,
+            0xff // -1
     };
     private static final int[] ND_034 = { // ZYURUZYURU               1992-01-27 17:27:38
-            192, 221, 1, 0, 55, 16, 96, 234, 0, 0, 113
-            , 0xff // -1
+            192, 221, 1, 0, 55, 16, 96, 234, 0, 0, 113,
+            0xff // -1
     };
     private static final int[] ND_035 = { // ZUGOGOGOGO               1992-01-27 17:29:07
-            6, 221, 1, 15, 55, 16, 16, 39, 0, 0, 0
-            , 6, 221, 1, 31, 55, 16, 16, 39, 0, 0, 241
-            , 6, 221, 1, 31, 55, 16, 16, 39, 0, 0, 241
-            , 6, 221, 1, 31, 55, 16, 16, 39, 0, 0, 241
-            , 192, 221, 1, 31, 55, 16, 96, 234, 0, 0, 248
-            , 0xff // -1
+            6, 221, 1, 15, 55, 16, 16, 39, 0, 0, 0,
+            6, 221, 1, 31, 55, 16, 16, 39, 0, 0, 241,
+            6, 221, 1, 31, 55, 16, 16, 39, 0, 0, 241,
+            6, 221, 1, 31, 55, 16, 16, 39, 0, 0, 241,
+            192, 221, 1, 31, 55, 16, 96, 234, 0, 0, 248,
+            0xff // -1
     };
     private static final int[] ND_036 = { // ZUGOOOONN                1992-01-27 17:29:50
-            6, 221, 1, 15, 55, 16, 16, 39, 0, 0, 0
-            , 192, 221, 1, 31, 55, 16, 48, 117, 0, 0, 0
-            , 0xff // -1
+            6, 221, 1, 15, 55, 16, 16, 39, 0, 0, 0,
+            192, 221, 1, 31, 55, 16, 48, 117, 0, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_037 = { // BI--                     1992-01-27 17:59:08
-            48, 40, 0, 0, 62, 16, 100, 0, 8, 0, 0
-            , 0xff // -1
+            48, 40, 0, 0, 62, 16, 100, 0, 8, 0, 0,
+            0xff // -1
     };
     private static final int[] ND_038 = { // BASYUSYUUU               1992-01-27 17:30:38
-            48, 221, 1, 0, 55, 16, 16, 39, 0, 0, 145
-            , 0xff // -1
+            48, 221, 1, 0, 55, 16, 16, 39, 0, 0, 145,
+            0xff // -1
     };
     private static final int[] ND_039 = { // BISYU                    1992-01-27 17:31:52
-            6, 232, 3, 15, 54, 16, 16, 39, 0, 127, 0
-            , 24, 221, 1, 0, 55, 16, 16, 39, 0, 0, 0
-            , 0xff // -1
+            6, 232, 3, 15, 54, 16, 16, 39, 0, 127, 0,
+            24, 221, 1, 0, 55, 16, 16, 39, 0, 0, 0,
+            0xff // -1
     };
 
     public MmlDatum cmd;

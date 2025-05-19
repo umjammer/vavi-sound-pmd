@@ -555,99 +555,99 @@ rpart_end:
 
     private void setJumpTable() {
         jumptable = new Runnable[] {
-                this::jump1 // 0ffh
-                 , this::jump1
-                 , this::jump1
-                 , this::_tempo
-                 , this::jump0
-                 , this::jump2
-                 , this::loop_start
-                 , this::loop_end // 0f8h
-                 , this::loop_exit
-                 , this::loop_set
-                 , this::jump1
-                 , this::jump0
-                 , this::jump0
-                 , this::jump4
-                 , this::jump1
-                 , this::jump4 // 0f0h
-                 , this::jump2
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1 // 0e8h
-                 , this::jump1
-                 , this::jump1
-                 , this::jump2
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1 // 0e0h
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::porta
-                 , this::jump1
-                 , this::jump1 // 0d8h
-                 , this::jump1
-                 , this::jump2
-                 , this::jump2
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1 // 0d0h
-                 , this::jump1
-                 , this::jump6
-                 , this::jump5
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump3 // 0c8h
-                 , this::jump3
-                 , this::jump6
-                 , this::jump1
-                 , this::jump1
-                 , this::jump2
-                 , this::jump1
-                 , this::jump0
-                 , this::special_0c0h // 0c0h
-                 , this::jump4
-                 , this::jump1
-                 , this::jump2
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump2 // 0b8h
-                 , this::jump1
-                 , this::jump1
-                 , this::jump2
-                 , this::jump16 // 0b4h
-                 , this::jump1 // 0b3h
-                 , this::jump1 // 0b2h
-                 , this::jump1 // 0b1h
+                this::jump1,  // 0ffh
+                this::jump1,
+                this::jump1,
+                this::_tempo,
+                this::jump0,
+                this::jump2,
+                this::loop_start,
+                this::loop_end,  // 0f8h
+                this::loop_exit,
+                this::loop_set,
+                this::jump1,
+                this::jump0,
+                this::jump0,
+                this::jump4,
+                this::jump1,
+                this::jump4,  // 0f0h
+                this::jump2,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,  // 0e8h
+                this::jump1,
+                this::jump1,
+                this::jump2,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,  // 0e0h
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::porta,
+                this::jump1,
+                this::jump1,  // 0d8h
+                this::jump1,
+                this::jump2,
+                this::jump2,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,  // 0d0h
+                this::jump1,
+                this::jump6,
+                this::jump5,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump3,  // 0c8h
+                this::jump3,
+                this::jump6,
+                this::jump1,
+                this::jump1,
+                this::jump2,
+                this::jump1,
+                this::jump0,
+                this::special_0c0h,  // 0c0h
+                this::jump4,
+                this::jump1,
+                this::jump2,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump2,  // 0b8h
+                this::jump1,
+                this::jump1,
+                this::jump2,
+                this::jump16,  // 0b4h
+                this::jump1,  // 0b3h
+                this::jump1,  // 0b2h
+                this::jump1  // 0b1h
         };
 
         jumptable_0c0h = new Runnable[] {
-                this::jump1  // 0ffh
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1 // 0f8h
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
+                this::jump1,  // 0ffh
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,  // 0f8h
+                this::jump1,
+                this::jump1,
+                this::jump1
         };
     }
 

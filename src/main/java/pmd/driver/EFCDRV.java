@@ -8,10 +8,10 @@ import musicDriverInterface.MmlDatum;
 
 public class EFCDRV {
 
-    private PMD pmd;
-    private PW pw;
-    private X86Register r;
-    private Function<ChipDatum, Integer> ppsdrv;
+    private final PMD pmd;
+    private final PW pw;
+    private final X86Register r;
+    private final Function<ChipDatum, Integer> ppsdrv;
 
     public EFCDRV(PMD pmd, PW pw, X86Register r, Function<ChipDatum, Integer> ppsdrv) {
         this.pmd = pmd;
@@ -227,7 +227,7 @@ public class EFCDRV {
         r.al &= 15;
         pw.eswnct = r.al; // Sweep Count (NOISE)
         pw.effadr = r.getSi();
-        //effret:;
+//effret:
     }
 
     private void efsnd() {

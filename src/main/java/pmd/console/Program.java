@@ -136,16 +136,12 @@ class Program {
                 if (outFileName != null && !outFileName.isEmpty()) {
                     if (outFileName.charAt(0) != '.') {
                         // When specifying a file name
-                        destFileName = Path.combine(
-                                Path.getDirectoryName(Path.getFullPath(srcFile))
-                                , outFileName);
+                        destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), outFileName);
                     } else {
                         // When specifying the extension only
                         destFileName = Path.combine(
-                                Path.getDirectoryName(Path.getFullPath(srcFile))
-                                , "%s%s".formatted(
-                                        Path.getFileNameWithoutExtension(srcFile)
-                                        , outFileName));
+                                Path.getDirectoryName(Path.getFullPath(srcFile)), "%s%s".formatted(
+                                        Path.getFileNameWithoutExtension(srcFile), outFileName));
                     }
                 }
 

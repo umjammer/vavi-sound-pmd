@@ -15,11 +15,11 @@ public class PCMDRV {
 
     private static final Logger logger = getLogger(PCMDRV.class.getName());
 
-    private PMD pmd;
-    private PW pw;
-    private X86Register r;
-    private Pc98 pc98;
-    private PPZDRV ppzdrv;
+    private final PMD pmd;
+    private final PW pw;
+    private final X86Register r;
+    private final Pc98 pc98;
+    private final PPZDRV ppzdrv;
 
     public PCMDRV(PMD pmd, PW pw, X86Register r, Pc98 pc98, PPZDRV ppzdrv) {
         this.pmd = pmd;
@@ -232,7 +232,7 @@ public class PCMDRV {
         if ((pw.partWk[r.di].partmask & 2) == 0) // Check bit1 (pcm sound effect?)
             return this::pcmmnp_1;
         r.setDx((short) pw.fm2_port1);
-        r.al = pc98.InPort(r.getDx());
+        r.al = pc98.inPort(r.getDx());
         if ((r.al & 0b0000_0100) == 0) // EOS check
             return this::pcmmnp_1; // The interrupt PCM is still ringing
         pw.pcmflag = 0; // PCM sound effect end
@@ -294,100 +294,100 @@ public class PCMDRV {
 
     private void SetupCmdtbl() {
         cmdtblm = new Supplier[] {
-                this::comAtm                    //0xff(0)
-                , pmd::comq                  //0xfe(1)
-                , pmd::comv                  //0xfd(2)
-                , pmd::comt                  //0xfc(3)
-                , pmd::comtie                //0xfb(4)
-                , pmd::comd                  //0xfa(5)
-                , pmd::comstloop             //0xf9(6)
-                , pmd::comedloop             //0xf8(7)
-                , pmd::comexloop             //0xf7(8)
-                , pmd::comlopset             //0xf6(9)
-                , pmd::comshift              //0xf5(10)
-                , this::comvolupm                 //0xf4(11)
-                , this::comvoldownm               //0xf3(12)
-                , pmd::lfoset                //0xf2(13)
-                , pmd::lfoswitch             //0xf1(14)
-                , pmd::psgenvset             //0xf0(15)
-                , pmd::comy                  //0xef(16)
-                , pmd::jump1                 //0xee(17)
-                , pmd::jump1                 //0xed(18)
+                this::comAtm,            // 0xff(0)
+                pmd::comq,               // 0xfe(1)
+                pmd::comv,               // 0xfd(2)
+                pmd::comt,               // 0xfc(3)
+                pmd::comtie,             // 0xfb(4)
+                pmd::comd,               // 0xfa(5)
+                pmd::comstloop,          // 0xf9(6)
+                pmd::comedloop,          // 0xf8(7)
+                pmd::comexloop,          // 0xf7(8)
+                pmd::comlopset,          // 0xf6(9)
+                pmd::comshift,           // 0xf5(10)
+                this::comvolupm,         // 0xf4(11)
+                this::comvoldownm,       // 0xf3(12)
+                pmd::lfoset,             // 0xf2(13)
+                pmd::lfoswitch,          // 0xf1(14)
+                pmd::psgenvset,          // 0xf0(15)
+                pmd::comy,               // 0xef(16)
+                pmd::jump1,              // 0xee(17)
+                pmd::jump1,              // 0xed(18)
                 //
-                , this::pansetm                   //0xec(19)
-                , pmd::rhykey                //0xeb(20)
-                , pmd::rhyvs                 //0xea(21)
-                , pmd::rpnset                //0xe9(22)
-                , pmd::rmsvs                 //0xe8(23)
+                this::pansetm,           // 0xec(19)
+                pmd::rhykey,             // 0xeb(20)
+                pmd::rhyvs,              // 0xea(21)
+                pmd::rpnset,             // 0xe9(22)
+                pmd::rmsvs,              // 0xe8(23)
                 //
-                , pmd::comshift2             //0xe7(24)
-                , pmd::rmsvs_sft             //0xe6(25)
-                , pmd::rhyvs_sft             //0xe5(26)
+                pmd::comshift2,          // 0xe7(24)
+                pmd::rmsvs_sft,          // 0xe6(25)
+                pmd::rhyvs_sft,          // 0xe5(26)
                 //
-                , pmd::jump1                 //0xe4(27)
+                pmd::jump1,              // 0xe4(27)
                 // v2.3 extend
-                , this::comvolupm2                //0xe3(28)
-                , this::comvoldownm2              //0xe2(29)
+                this::comvolupm2,        // 0xe3(28)
+                this::comvoldownm2,      // 0xe2(29)
                 //
-                , pmd::jump1                 //0xe1(30)
-                , pmd::jump1                 //0xe0(31)
+                pmd::jump1,              // 0xe1(30)
+                pmd::jump1,              // 0xe0(31)
                 //
-                , pmd::syousetu_lng_set    //0DFH(32)
+                pmd::syousetu_lng_set,   // 0DFH(32)
                 //
-                , pmd::vol_one_up_pcm    //0deH(33)
-                , pmd::vol_one_down        //0DDH(34)
+                pmd::vol_one_up_pcm,     // 0deH(33)
+                pmd::vol_one_down,       // 0DDH(34)
                 //
-                , pmd::status_write        //0DCH(35)
-                , pmd::status_add        //0DBH(36)
+                pmd::status_write,       // 0DCH(35)
+                pmd::status_add,         // 0DBH(36)
                 //
-                , this::portam                    //0DAH(37)
+                this::portam,            // 0DAH(37)
                 //
-                , pmd::jump1                //0D9H(38)
-                , pmd::jump1                    //0D8H(39)
-                , pmd::jump1                    //0D7H(40)
+                pmd::jump1,              // 0D9H(38)
+                pmd::jump1,              // 0D8H(39)
+                pmd::jump1,              // 0D7H(40)
                 //
-                , pmd::mdepth_set            //0D6H(41)
+                pmd::mdepth_set,         // 0D6H(41)
                 //
-                , pmd::comdd                    //0d5h(42)
+                pmd::comdd,              // 0d5h(42)
                 //
-                , pmd::ssg_efct_set            //0d4h(43)
-                , pmd::fm_efct_set            //0d3h(44)
-                , pmd::fade_set                //0d2h(45)
+                pmd::ssg_efct_set,       // 0d4h(43)
+                pmd::fm_efct_set,        // 0d3h(44)
+                pmd::fade_set,           // 0d2h(45)
                 //
-                , pmd::jump1                 //0xd1(46)
-                , pmd::jump1                    //0d0h(47)
+                pmd::jump1,              // 0xd1(46)
+                pmd::jump1,              // 0d0h(47)
                 //
-                , pmd::jump1                //0cfh(48)
-                , this::pcmrepeat_set            //0ceh(49)
-                , pmd::extend_psgenvset        //0cdh(50)
-                , pmd::jump1                    //0cch(51)
-                , pmd::lfowave_set            //0cbh(52)
-                , pmd::lfo_extend            //0cah(53)
-                , pmd::envelope_extend        //0c9h(54)
-                , pmd::jump3                //0c8h(55)
-                , pmd::jump3                    //0c7h(56)
-                , pmd::jump6                    //0c6h(57)
-                , pmd::jump1                    //0c5h(58)
-                , pmd::comq2                    //0c4h(59)
-                , this::pansetm_ex                //0c3h(60)
-                , pmd::lfoset_delay            //0c2h(61)
-                , pmd::jump0                    //0c1h,sular(62)
-                , this::pcm_mml_part_mask        //0c0h(63)
-                , pmd::_lfoset                //0bfh(64)
-                , pmd::_lfoswitch            //0beh(65)
-                , pmd::_mdepth_set            //0bdh(66)
-                , pmd::_lfowave_set            //0bch(67)
-                , pmd::_lfo_extend            //0bbh(68)
-                , pmd::_volmask_set            //0bah(69)
-                , pmd::_lfoset_delay            //0b9h(70)
-                , pmd::jump2                 //0xb8(71)
-                , pmd::mdepth_count            //0b7h(72)
-                , pmd::jump1                    //0xb6(73)
-                , pmd::jump2                    //0xb5(74)
-                , pmd::jump16                //0b4h(75)
-                , pmd::comq3                    //0b3h(76)
-                , pmd::comshift_master        //0b2h(77)
-                , pmd::comq4                    //0b1h(78)
+                pmd::jump1,              // 0cfh(48)
+                this::pcmrepeat_set,     // 0ceh(49)
+                pmd::extend_psgenvset,   // 0cdh(50)
+                pmd::jump1,              // 0cch(51)
+                pmd::lfowave_set,        // 0cbh(52)
+                pmd::lfo_extend,         // 0cah(53)
+                pmd::envelope_extend,    // 0c9h(54)
+                pmd::jump3,              // 0c8h(55)
+                pmd::jump3,              // 0c7h(56)
+                pmd::jump6,              // 0c6h(57)
+                pmd::jump1,              // 0c5h(58)
+                pmd::comq2,              // 0c4h(59)
+                this::pansetm_ex,        // 0c3h(60)
+                pmd::lfoset_delay,       // 0c2h(61)
+                pmd::jump0,              // 0c1h, sular(62)
+                this::pcm_mml_part_mask, // 0c0h(63)
+                pmd::_lfoset,            // 0bfh(64)
+                pmd::_lfoswitch,         // 0beh(65)
+                pmd::_mdepth_set,        // 0bdh(66)
+                pmd::_lfowave_set,       // 0bch(67)
+                pmd::_lfo_extend,        // 0bbh(68)
+                pmd::_volmask_set,       // 0bah(69)
+                pmd::_lfoset_delay,      // 0b9h(70)
+                pmd::jump2,              // 0xb8(71)
+                pmd::mdepth_count,       // 0b7h(72)
+                pmd::jump1,              // 0xb6(73)
+                pmd::jump2,              // 0xb5(74)
+                pmd::jump16,             // 0b4h(75)
+                pmd::comq3,              // 0b3h(76)
+                pmd::comshift_master,    // 0b2h(77)
+                pmd::comq4               // 0b1h(78)
         };
 
         if (pw.ppz != 0) cmdtblm[75] = ppzdrv::ppz_extpartset; // 0b4h in ppzdrv.asm(75)
@@ -618,10 +618,8 @@ public class PCMDRV {
 
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos
-                , 0xff
-                , (int) pw.partWk[r.di].voicenum
-        );
+        cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos,
+                0xff, (int) pw.partWk[r.di].voicenum);
         pmd.writeDummy(cd);
 
         r.ah = 0;

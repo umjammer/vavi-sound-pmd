@@ -17,7 +17,6 @@ import pmd.common.Common;
 import pmd.common.PmdDosExitException;
 import pmd.common.PmdDosExitException.PmdErrorExitException;
 import pmd.common.PmdException;
-import vavi.util.Debug;
 
 import static java.lang.System.getLogger;
 
@@ -435,8 +434,8 @@ public class PMD {
         do {
             r.di = (short) pw.part_data_table[r.getBx()]; // di = part workarea // KUMA: Index of each part
             r.incBx();
-Debug.printf("%d, %d\n", r.getSi(), Common.GetLe16(pw.md, r.getSi()));
             r.setAx(Common.GetLe16(pw.md, r.getSi())); // ax = part start addr
+//logger.log(Level.DEBUG, "si: %d, get: %d, len: %d".formatted(r.getSi(), Common.GetLe16(pw.md, r.getSi() & 0xffff), pw.md.length));
             r.addSi((short) 2);
 
             r.addAx((short) pw.mmlbuf);
@@ -559,7 +558,7 @@ Debug.printf("%d, %d\n", r.getSi(), Common.GetLe16(pw.md, r.getSi()));
             //cli
 
             r.al = 0;
-            pw.partWk[r.getBx()].Clear();
+            pw.partWk[r.getBx()].clear();
 
             r.dh &= 0xf; // 0dh;temporary,s,m,ade other than
             pw.partWk[r.getBx()].partmask = r.dh; // Save only partmask
@@ -2231,101 +2230,101 @@ rolop:
 
     private void SetupCmdtbl() {
         cmdtbl = new Supplier[] {
-                this::comAt                      // 0xff(0)
-                , this::comq                     // 0xfe(1)
-                , this::comv                     // 0xfd(2)
-                , this::comt                     // 0xfc(3)
-                , this::comtie                   // 0xfb(4)
-                , this::comd                     // 0xfa(5)
-                , this::comstloop                // 0xf9(6)
-                , this::comedloop                // 0xf8(7)
-                , this::comexloop                // 0xf7(8)
-                , this::comlopset                // 0xf6(9)
-                , this::comshift                 // 0xf5(10)
-                , this::comvolup                 // 0xf4(11)
-                , this::comvoldown               // 0xf3(12)
-                , this::lfoset                   // 0xf2(13)
-                , this::lfoswitch_f              // 0xf1(14)
-                , this::jump4                    // 0xf0(15)
-                , this::comy                     // 0xef(16)
-                , this::jump1                    // 0xee(17)
-                , this::jump1                    // 0xed(18)
+                this::comAt,             // 0xff(0)
+                this::comq,              // 0xfe(1)
+                this::comv,              // 0xfd(2)
+                this::comt,              // 0xfc(3)
+                this::comtie,            // 0xfb(4)
+                this::comd,              // 0xfa(5)
+                this::comstloop,         // 0xf9(6)
+                this::comedloop,         // 0xf8(7)
+                this::comexloop,         // 0xf7(8)
+                this::comlopset,         // 0xf6(9)
+                this::comshift,          // 0xf5(10)
+                this::comvolup,          // 0xf4(11)
+                this::comvoldown,        // 0xf3(12)
+                this::lfoset,            // 0xf2(13)
+                this::lfoswitch_f,       // 0xf1(14)
+                this::jump4,             // 0xf0(15)
+                this::comy,              // 0xef(16)
+                this::jump1,             // 0xee(17)
+                this::jump1,             // 0xed(18)
                 //FOR SB2
-                , this::panset                   // 0xec(19)
-                , this::rhykey                   // 0xeb(20)
-                , this::rhyvs                    // 0xea(21)
-                , this::rpnset                   // 0xe9(22)
-                , this::rmsvs                    // 0xe8(23)
+                this::panset,            // 0xec(19)
+                this::rhykey,            // 0xeb(20)
+                this::rhyvs,             // 0xea(21)
+                this::rpnset,            // 0xe9(22)
+                this::rmsvs,             // 0xe8(23)
                 // added for V2.0
-                , this::comshift2                // 0xe7(24)
-                , this::rmsvs_sft                // 0xe6(25)
-                , this::rhyvs_sft                // 0xe5(26)
+                this::comshift2,         // 0xe7(24)
+                this::rmsvs_sft,         // 0xe6(25)
+                this::rhyvs_sft,         // 0xe5(26)
                 //
-                , this::hlfo_delay               // 0xe4(27)
+                this::hlfo_delay,        // 0xe4(27)
                 // added for V2.3
-                , this::comvolup2                // 0xe3(28)
-                , this::comvoldown2              // 0xe2(29)
+                this::comvolup2,         // 0xe3(28)
+                this::comvoldown2,       // 0xe2(29)
                 // added for V2.4
-                , this::hlfo_set                 // 0xe1(30)
-                , this::hlfo_onoff               // 0xe0(31)
+                this::hlfo_set,          // 0xe1(30)
+                this::hlfo_onoff,        // 0xe0(31)
                 //
-                , this::syousetu_lng_set         // 0xdf(32)
+                this::syousetu_lng_set,  // 0xdf(32)
                 //
-                , this::vol_one_up_fm            // 0xde(33)
-                , this::vol_one_down             // 0xdd(34)
+                this::vol_one_up_fm,     // 0xde(33)
+                this::vol_one_down,      // 0xdd(34)
                 //
-                , this::status_write             // 0xdc(35)
-                , this::status_add               // 0xdb(36)
+                this::status_write,      // 0xdc(35)
+                this::status_add,        // 0xdb(36)
                 //
-                , this::porta                    // 0xda(37)
+                this::porta,             // 0xda(37)
                 //
-                , this::jump1                    // 0xd9(38)
-                , this::jump1                    // 0xd8(39)
-                , this::jump1                    // 0xd7(40)
+                this::jump1,             // 0xd9(38)
+                this::jump1,             // 0xd8(39)
+                this::jump1,             // 0xd7(40)
                 //
-                , this::mdepth_set               // 0xd6(41)
+                this::mdepth_set,        // 0xd6(41)
                 //
-                , this::comdd                    // 0xd5(42)
+                this::comdd,             // 0xd5(42)
                 //
-                , this::ssg_efct_set             // 0xd4(43)
-                , this::fm_efct_set              // 0xd3(44)
-                , this::fade_set                 // 0xd2(45)
+                this::ssg_efct_set,      // 0xd4(43)
+                this::fm_efct_set,       // 0xd3(44)
+                this::fade_set,          // 0xd2(45)
                 //
-                , this::jump1                    // 0xd1(46)
+                this::jump1,             // 0xd1(46)
                 //
-                , this::jump1                    // 0xd0(47)
+                this::jump1,             // 0xd0(47)
                 //
-                , this::slotmask_set             // 0xcf(48)
-                , this::jump6                    // 0xce(49)
-                , this::jump5                    // 0xcd(50)
-                , this::jump1                    // 0xcc(51)
-                , this::lfowave_set              // 0xcb(52)
-                , this::lfo_extend               // 0xca(53)
-                , this::jump1                    // 0xc9(54)
-                , this::slotdetune_set           // 0xc8(55)
-                , this::slotdetune_set2          // 0xc7(56)
-                , this::fm3_extpartset           // 0xc6(57)
-                , this::volmask_set              // 0xc5(58)
-                , this::comq2                    // 0xc4(59)
-                , this::panset_ex                // 0xc3(60)
-                , this::lfoset_delay             // 0xc2(61)
-                , this::jump0                    // 0xc1(62) ,slurs
-                , this::fm_mml_part_mask         // 0xc0(63)
-                , this::_lfoset                  // 0xbf(64)
-                , this::_lfoswitch_f             // 0xbe(65)
-                , this::_mdepth_set              // 0xbd(66)
-                , this::_lfowave_set             // 0xbc(67)
-                , this::_lfo_extend              // 0xbb(68)
-                , this::_volmask_set             // 0xba(69)
-                , this::_lfoset_delay            // 0xb9(70)
-                , this::tl_set                   // 0xb8(71)
-                , this::mdepth_count             // 0xb7(72)
-                , this::fb_set                   // 0xb6(73)
-                , this::slot_delay               // 0xb5(74)
-                , this::jump16                   // 0xb4(75)
-                , this::comq3                    // 0xb3(76)
-                , this::comshift_master          // 0xb2(77)
-                , this::comq4                    // 0xb1(78)
+                this::slotmask_set,      // 0xcf(48)
+                this::jump6,             // 0xce(49)
+                this::jump5,             // 0xcd(50)
+                this::jump1,             // 0xcc(51)
+                this::lfowave_set,       // 0xcb(52)
+                this::lfo_extend,        // 0xca(53)
+                this::jump1,             // 0xc9(54)
+                this::slotdetune_set,    // 0xc8(55)
+                this::slotdetune_set2,   // 0xc7(56)
+                this::fm3_extpartset,    // 0xc6(57)
+                this::volmask_set,       // 0xc5(58)
+                this::comq2,             // 0xc4(59)
+                this::panset_ex,         // 0xc3(60)
+                this::lfoset_delay,      // 0xc2(61)
+                this::jump0,             // 0xc1(62) ,slurs
+                this::fm_mml_part_mask,  // 0xc0(63)
+                this::_lfoset,           // 0xbf(64)
+                this::_lfoswitch_f,      // 0xbe(65)
+                this::_mdepth_set,       // 0xbd(66)
+                this::_lfowave_set,      // 0xbc(67)
+                this::_lfo_extend,       // 0xbb(68)
+                this::_volmask_set,      // 0xba(69)
+                this::_lfoset_delay,     // 0xb9(70)
+                this::tl_set,            // 0xb8(71)
+                this::mdepth_count,      // 0xb7(72)
+                this::fb_set,            // 0xb6(73)
+                this::slot_delay,        // 0xb5(74)
+                this::jump16,            // 0xb4(75)
+                this::comq3,             // 0xb3(76)
+                this::comshift_master,   // 0xb2(77)
+                this::comq4              // 0xb1(78)
         };
     }
 
@@ -2335,100 +2334,100 @@ rolop:
 
     private void SetupCmdtblp() {
         cmdtblp = new Supplier[] {
-                this::jump1                        // (0xff) 0
-                , this::comq                       // (0xfe) 1
-                , this::comv                       // (0xfd) 2
-                , this::comt                       // (0xfc) 3
-                , this::comtie                     // (0xfb) 4
-                , this::comd                       // (0xfa) 5
-                , this::comstloop                  // (0xf9) 6
-                , this::comedloop                  // (0xf8) 7
-                , this::comexloop                  // (0xf7) 8
-                , this::comlopset                  // (0xf6) 9
-                , this::comshift                   // (0xf5) 10
-                , this::comvolupp                  // (0xf4) 11
-                , this::comvoldownp                // (0xf3) 12
-                , this::lfoset                     // (0xf2) 13
-                , this::lfoswitch                  // (0xf1) 14
-                , this::psgenvset                  // (0xf0) 15
-                , this::comy                       // (0xef) 16
-                , this::psgnoise                   // (0xee) 17
-                , this::psgsel                     // (0xed) 18
+                this::jump1,              // (0xff) 0
+                this::comq,               // (0xfe) 1
+                this::comv,               // (0xfd) 2
+                this::comt,               // (0xfc) 3
+                this::comtie,             // (0xfb) 4
+                this::comd,               // (0xfa) 5
+                this::comstloop,          // (0xf9) 6
+                this::comedloop,          // (0xf8) 7
+                this::comexloop,          // (0xf7) 8
+                this::comlopset,          // (0xf6) 9
+                this::comshift,           // (0xf5) 10
+                this::comvolupp,          // (0xf4) 11
+                this::comvoldownp,        // (0xf3) 12
+                this::lfoset,             // (0xf2) 13
+                this::lfoswitch,          // (0xf1) 14
+                this::psgenvset,          // (0xf0) 15
+                this::comy,               // (0xef) 16
+                this::psgnoise,           // (0xee) 17
+                this::psgsel,             // (0xed) 18
                 //
-                , this::jump1                      // (0xec) 19
-                , this::rhykey                     // (0xeb) 20
-                , this::rhyvs                      // (0xea) 21
-                , this::rpnset                     // (0xe9) 22
-                , this::rmsvs                      // (0xe8) 23
+                this::jump1,              // (0xec) 19
+                this::rhykey,             // (0xeb) 20
+                this::rhyvs,              // (0xea) 21
+                this::rpnset,             // (0xe9) 22
+                this::rmsvs,              // (0xe8) 23
                 //
-                , this::comshift2                  // (0xe7) 24
-                , this::rmsvs_sft                  // (0xe6) 25
-                , this::rhyvs_sft                  // (0xe5) 26
+                this::comshift2,          // (0xe7) 24
+                this::rmsvs_sft,          // (0xe6) 25
+                this::rhyvs_sft,          // (0xe5) 26
                 //
-                , this::jump1                      // (0xe4) 27
+                this::jump1,              // (0xe4) 27
                 // added for V2.3
-                , this::comvolupp2                 // 0E3H 28
-                , this::comvoldownp2               // 0E2H 29
+                this::comvolupp2,         // 0E3H 28
+                this::comvoldownp2,       // 0E2H 29
                 //
-                , this::jump1                      // 0E1H 30
-                , this::jump1                      // 0E0H 31
+                this::jump1,              // 0E1H 30
+                this::jump1,              // 0E0H 31
                 //
-                , this::syousetu_lng_set           // 0DFH 32
+                this::syousetu_lng_set,   // 0DFH 32
                 //
-                , this::vol_one_up_psg             // 0DEH 33
-                , this::vol_one_down               // 0DDH 34
+                this::vol_one_up_psg,     // 0DEH 33
+                this::vol_one_down,       // 0DDH 34
                 //
-                , this::status_write               // 0DCH 35
-                , this::status_add                 // 0DBH 36
+                this::status_write,       // 0DCH 35
+                this::status_add,         // 0DBH 36
                 //
-                , this::portap                     // 0DAH 37
+                this::portap,             // 0DAH 37
                 //
-                , this::jump1                      // 0D9H 38
-                , this::jump1                      // 0D8H 39
-                , this::jump1                      // 0D7H 40
+                this::jump1,              // 0D9H 38
+                this::jump1,              // 0D8H 39
+                this::jump1,              // 0D7H 40
                 //
-                , this::mdepth_set                 // 0D6H 41
+                this::mdepth_set,         // 0D6H 41
                 //
-                , this::comdd                      // 0d5h 42
+                this::comdd,              // 0d5h 42
                 //
-                , this::ssg_efct_set               // 0d4h 43
-                , this::fm_efct_set                // 0d3h 44
-                , this::fade_set                   // 0d2h 45
+                this::ssg_efct_set,       // 0d4h 43
+                this::fm_efct_set,        // 0d3h 44
+                this::fade_set,           // 0d2h 45
                 //
-                , this::jump1                      // (0xd1) 46
-                , this::psgnoise_move              // 0d0h 47
+                this::jump1,              // (0xd1) 46
+                this::psgnoise_move,      // 0d0h 47
                 //
-                , this::jump1                      // (0xcf) 48
-                , this::jump6                      // 0ceh 49
-                , this::extend_psgenvset           // 0cdh 50
-                , this::detune_extend              // 0cch 51
-                , this::lfowave_set                // 0cbh 52
-                , this::lfo_extend                 // 0cah 53
-                , this::envelope_extend            // 0c9h 54
-                , this::jump3                      // 0c8h 55
-                , this::jump3                      // 0c7h 56
-                , this::jump6                      // 0c6h 57
-                , this::jump1                      // 0c5h 58
-                , this::comq2                      // 0c4h 59
-                , this::jump2                      // 0c3h 60
-                , this::lfoset_delay               // 0c2h 61
-                , this::jump0                      // 0c1h, slurs 62
-                , this::ssg_mml_part_mask          // 0c0h 63
-                , this::_lfoset                    // 0bfh 64
-                , this::_lfoswitch                 // 0beh 65
-                , this::_mdepth_set                // 0bdh 66
-                , this::_lfowave_set               // 0bch 67
-                , this::_lfo_extend                // 0bbh 68
-                , this::jump1                      // 0bah 69
-                , this::_lfoset_delay              // 0b9h 70
-                , this::jump2                      // 0b8h 71
-                , this::mdepth_count               // 0b7h 72
-                , this::jump1
-                , this::jump2
-                , this::jump16                     // 0b4h
-                , this::comq3                      // 0b3h
-                , this::comshift_master            // 0b2h
-                , this::comq4                      // 0b1h
+                this::jump1,              // (0xcf) 48
+                this::jump6,              // 0ceh 49
+                this::extend_psgenvset,   // 0cdh 50
+                this::detune_extend,      // 0cch 51
+                this::lfowave_set,        // 0cbh 52
+                this::lfo_extend,         // 0cah 53
+                this::envelope_extend,    // 0c9h 54
+                this::jump3,              // 0c8h 55
+                this::jump3,              // 0c7h 56
+                this::jump6,              // 0c6h 57
+                this::jump1,              // 0c5h 58
+                this::comq2,              // 0c4h 59
+                this::jump2,              // 0c3h 60
+                this::lfoset_delay,       // 0c2h 61
+                this::jump0,              // 0c1h, slurs 62
+                this::ssg_mml_part_mask,  // 0c0h 63
+                this::_lfoset,            // 0bfh 64
+                this::_lfoswitch,         // 0beh 65
+                this::_mdepth_set,        // 0bdh 66
+                this::_lfowave_set,       // 0bch 67
+                this::_lfo_extend,        // 0bbh 68
+                this::jump1,              // 0bah 69
+                this::_lfoset_delay,      // 0b9h 70
+                this::jump2,              // 0b8h 71
+                this::mdepth_count,       // 0b7h 72
+                this::jump1,
+                this::jump2,
+                this::jump16,             // 0b4h
+                this::comq3,              // 0b3h
+                this::comshift_master,    // 0b2h
+                this::comq4               // 0b1h
         };
     }
 
@@ -2436,100 +2435,100 @@ rolop:
 
     private void SetupCmdtblr() {
         cmdtblr = new Supplier[] {
-                this::jump1                        // 0xff 0
-                , this::jump1                      // 0xfe 1
-                , this::comv                       // 0xfd 2
-                , this::comt                       // 0xfc 3
-                , this::comtie                     // 0xfb 4
-                , this::comd                       // 0xfa 5
-                , this::comstloop                  // 0xf9 6
-                , this::comedloop                  // 0xf8 7
-                , this::comexloop                  // 0xf7 8
-                , this::comlopset                  // 0xf6 9
-                , this::jump1                      // 0xf5 10
-                , this::comvolupp                  // 0xf4 11
-                , this::comvoldownp                // 0xf3 12
-                , this::jump4                      // 0xf2 13
-                , this::pdrswitch                  // 0xf1 14
-                , this::jump4                      // 0xf0 15
-                , this::comy                       // 0xef 16
-                , this::jump1                      // 0xee 17
-                , this::jump1                      // 0xed 18
+                this::jump1,                 // 0xff 0
+                this::jump1,                 // 0xfe 1
+                this::comv,                  // 0xfd 2
+                this::comt,                  // 0xfc 3
+                this::comtie,                // 0xfb 4
+                this::comd,                  // 0xfa 5
+                this::comstloop,             // 0xf9 6
+                this::comedloop,             // 0xf8 7
+                this::comexloop,             // 0xf7 8
+                this::comlopset,             // 0xf6 9
+                this::jump1,                 // 0xf5 10
+                this::comvolupp,             // 0xf4 11
+                this::comvoldownp,           // 0xf3 12
+                this::jump4,                 // 0xf2 13
+                this::pdrswitch,             // 0xf1 14
+                this::jump4,                 // 0xf0 15
+                this::comy,                  // 0xef 16
+                this::jump1,                 // 0xee 17
+                this::jump1,                 // 0xed 18
                 //
-                , this::jump1                      // 0xec 19
-                , this::rhykey                     // 0xeb 20
-                , this::rhyvs                      // 0xea 21
-                , this::rpnset                     // 0xe9 22
-                , this::rmsvs                      // 0xe8 23
+                this::jump1,                 // 0xec 19
+                this::rhykey,                // 0xeb 20
+                this::rhyvs,                 // 0xea 21
+                this::rpnset,                // 0xe9 22
+                this::rmsvs,                 // 0xe8 23
                 //
-                , this::jump1                      // 0xe7 24
-                , this::rmsvs_sft                  // 0xe6 25
-                , this::rhyvs_sft                  // 0xe5 26
+                this::jump1,                 // 0xe7 24
+                this::rmsvs_sft,             // 0xe6 25
+                this::rhyvs_sft,             // 0xe5 26
                 //
-                , this::jump1                      // 0E4H 27
+                this::jump1,                 // 0E4H 27
                 //
-                , this::comvolupp2                 // 0E3H 28
-                , this::comvoldownp2               // 0E2H 29
+                this::comvolupp2,            // 0E3H 28
+                this::comvoldownp2,          // 0E2H 29
                 //
-                , this::jump1                      // 0E1H 30
-                , this::jump1                      // 0E0H 31
+                this::jump1,                 // 0E1H 30
+                this::jump1,                 // 0E0H 31
                 //
-                , this::syousetu_lng_set           // 0DFH 32
+                this::syousetu_lng_set,      // 0DFH 32
                 //
-                , this::vol_one_up_psg             // 0DEH 33
-                , this::vol_one_down               // 0DDH 34
+                this::vol_one_up_psg,        // 0DEH 33
+                this::vol_one_down,          // 0DDH 34
                 //
-                , this::status_write               // 0DCH 35
-                , this::status_add                 // 0DBH 36
+                this::status_write,          // 0DCH 35
+                this::status_add,            // 0DBH 36
                 //
-                , this::jump1                      // Portamento = Normal pitch command 0xda 37
+                this::jump1,                 // Portamento = Normal pitch command 0xda 37
                 //
-                , this::jump1                      // 0D9H 38
-                , this::jump1                      // 0D8H 39
-                , this::jump1                      // 0D7H 40
+                this::jump1,                 // 0D9H 38
+                this::jump1,                 // 0D8H 39
+                this::jump1,                 // 0D7H 40
                 //
-                , this::jump2                      // 0D6H 41
+                this::jump2,                 // 0D6H 41
                 //
-                , this::comdd                      // 0d5h 42
+                this::comdd,                 // 0d5h 42
                 //
-                , this::ssg_efct_set               // 0d4h 43
-                , this::fm_efct_set                // 0d3h 44
-                , this::fade_set                   // 0d2h 45
+                this::ssg_efct_set,          // 0d4h 43
+                this::fm_efct_set,           // 0d3h 44
+                this::fade_set,              // 0d2h 45
                 //
-                , this::jump1                      // 0xd1 46
-                , this::jump1                      // 0d0h 47
+                this::jump1,                 // 0xd1 46
+                this::jump1,                 // 0d0h 47
                 //
-                , this::jump1                      // 0xcf 48
-                , this::jump6                      // 0ceh 49
-                , this::jump5                      // 0cdh 50
-                , this::jump1                      // 0cch 51
-                , this::jump1                      // 0xcb 52
-                , this::jump1                      // 0xca 53
-                , this::jump1                      // 0xc9 54
-                , this::jump3                      // 0xc8 55
-                , this::jump3                      // 0xc7 56
-                , this::jump6                      // 0xc6 57
-                , this::jump1                      // 0c5h 58
-                , this::jump1                      // 0xc4 59
-                , this::jump2                      // 0c3h 60
-                , this::jump1                      // 0xc2 61
-                , this::jump0                      // 0c1h, slurs 62
-                , this::rhythm_mml_part_mask       // 0c0h 63
-                , this::jump4                      // 0bfh 64
-                , this::jump1                      // 0beh 65
-                , this::jump2                      // 0bdh 66
-                , this::jump1                      // 0bch 67
-                , this::jump1                      // 0bbh 68
-                , this::jump1                      // 0bah 69
-                , this::jump1                      // 0b9h 70
-                , this::jump2                      // 0xb8 71
-                , this::jump1                      // 0xb7 72
-                , this::jump1                      // 0xb6 73
-                , this::jump2                      // 0xb5 74
-                , this::jump16                     // 0b4h 75
-                , this::jump1                      // 0xb3 76
-                , this::jump1                      // 0b2h 77
-                , this::jump1                      // 0b1h 78
+                this::jump1,                 // 0xcf 48
+                this::jump6,                 // 0ceh 49
+                this::jump5,                 // 0cdh 50
+                this::jump1,                 // 0cch 51
+                this::jump1,                 // 0xcb 52
+                this::jump1,                 // 0xca 53
+                this::jump1,                 // 0xc9 54
+                this::jump3,                 // 0xc8 55
+                this::jump3,                 // 0xc7 56
+                this::jump6,                 // 0xc6 57
+                this::jump1,                 // 0c5h 58
+                this::jump1,                 // 0xc4 59
+                this::jump2,                 // 0c3h 60
+                this::jump1,                 // 0xc2 61
+                this::jump0,                 // 0c1h, slurs 62
+                this::rhythm_mml_part_mask,  // 0c0h 63
+                this::jump4,                 // 0bfh 64
+                this::jump1,                 // 0beh 65
+                this::jump2,                 // 0bdh 66
+                this::jump1,                 // 0bch 67
+                this::jump1,                 // 0bbh 68
+                this::jump1,                 // 0bah 69
+                this::jump1,                 // 0b9h 70
+                this::jump2,                 // 0xb8 71
+                this::jump1,                 // 0xb7 72
+                this::jump1,                 // 0xb6 73
+                this::jump2,                 // 0xb5 74
+                this::jump16,                // 0b4h 75
+                this::jump1,                 // 0xb3 76
+                this::jump1,                 // 0b2h 77
+                this::jump1,                 // 0b1h 78
         };
     }
 
@@ -2608,17 +2607,17 @@ rolop:
 
     private void SetupComtbl0c0h() {
         comtbl0c0h = new Supplier[] {
-                this::vd_fm        // 0ffh
-                , this::_vd_fm
-                , this::vd_ssg
-                , this::_vd_ssg
-                , this::vd_pcm
-                , this::_vd_pcm
-                , this::vd_rhythm
-                , this::_vd_rhythm // 0f8h
-                , this::pmd86_s
-                , this::vd_ppz
-                , this::_vd_ppz    // 0f5h
+                this::vd_fm,  // 0ffh
+                this::_vd_fm,
+                this::vd_ssg,
+                this::_vd_ssg,
+                this::vd_pcm,
+                this::_vd_pcm,
+                this::vd_rhythm,
+                this::_vd_rhythm,  // 0f8h
+                this::pmd86_s,
+                this::vd_ppz,
+                this::_vd_ppz  // 0f5h
         };
     }
 
@@ -4177,10 +4176,8 @@ sm_notfm3: // ↑
 
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos
-                , 0xff
-                , (int) pw.partWk[r.di].voicenum
-        );
+        cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos,
+                0xff, (int) pw.partWk[r.di].voicenum);
         writeDummy(cd);
 
         r.dl = r.al;
@@ -4282,11 +4279,11 @@ comAt_afset:
     private void comq_dmy() {
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Gatetime, pw.cmd.linePos
-                , (int) pw.partWk[r.di].qdatb // Q%
-                , (int) pw.partWk[r.di].qdata // q [X] -x  ,  x    : Number 1
-                , (int) pw.partWk[r.di].qdat2 // q  x  -x  , [X]   : Number 3
-                , (int) pw.partWk[r.di].qdat3 // q  x [-X] ,  x    : Number 2
+        MmlDatum md = new MmlDatum(-1, MMLType.Gatetime, pw.cmd.linePos,
+                (int) pw.partWk[r.di].qdatb, // Q%
+                (int) pw.partWk[r.di].qdata, // q [X] -x  ,  x    : Number 1
+                (int) pw.partWk[r.di].qdat2, // q  x  -x  , [X]   : Number 3
+                (int) pw.partWk[r.di].qdat3  // q  x [-X] ,  x    : Number 2
         );
         cd.additionalData = md;
         writeDummy(cd);
@@ -4492,9 +4489,7 @@ comAt_afset:
 
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Detune, pw.cmd.linePos
-                , (int) pw.partWk[r.di].detune
-        );
+        cd.additionalData = new MmlDatum(-1, MMLType.Detune, pw.cmd.linePos, (int) pw.partWk[r.di].detune);
         writeDummy(cd);
 
         return null;
@@ -4512,9 +4507,7 @@ comAt_afset:
 
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Detune, pw.cmd.linePos
-                , (int) pw.partWk[r.di].detune
-        );
+        cd.additionalData = new MmlDatum(-1, MMLType.Detune, pw.cmd.linePos, (int) pw.partWk[r.di].detune);
         writeDummy(cd);
 
         return null;
@@ -4626,9 +4619,7 @@ reloop: // ↑
 
         //For IDEs
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.KeyShift, pw.cmd.linePos
-                , (int) pw.partWk[r.di].shift
-        );
+        cd.additionalData = new MmlDatum(-1, MMLType.KeyShift, pw.cmd.linePos, (int) pw.partWk[r.di].shift);
         writeDummy(cd);
 
         return null;
@@ -4646,9 +4637,7 @@ reloop: // ↑
 
         //For IDEs
         ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.KeyShift, pw.cmd.linePos
-                , (int) pw.partWk[r.di].shift
-        );
+        cd.additionalData = new MmlDatum(-1, MMLType.KeyShift, pw.cmd.linePos, (int) pw.partWk[r.di].shift);
         writeDummy(cd);
 
         return null;
@@ -7856,7 +7845,7 @@ pcm_ef: // ↑
         pc98.outPort(r.getDx(), r.al);
         _waitP(); // ; PSG Read Wait
         r.setDx((short) pw.fm1_port2);
-        r.al = pc98.InPort(r.getDx());
+        r.al = pc98.inPort(r.getDx());
         r.setDx(r.stack.pop());
     }
 
@@ -7897,7 +7886,6 @@ pcm_ef: // ↑
         r.ah = pw.ah_push;
         r.setDx(pw.dx_push);
         int60_exit();
-        return;
     }
 
     // Code for reentrancy check / bit0=TimerBint 1=TimerAint 2=INT60
@@ -8071,7 +8059,7 @@ getmemo_errret: // ↑
         r.setDx(pw.mask_adr);
         //pushf
         //cli
-        r.al = pc98.InPort(r.getDx());
+        r.al = pc98.inPort(r.getDx());
         r.al |= pw.mask_data;
         pc98.outPort(r.getDx(), r.al); // Disable FM interrupt
         //popf
@@ -8081,7 +8069,7 @@ getmemo_errret: // ↑
         r.setDx(pw.mask_adr);
         //pushf
         //cli
-        r.al = pc98.InPort(r.getDx());
+        r.al = pc98.inPort(r.getDx());
         r.al &= pw.mask_data2;
         pc98.outPort(r.getDx(), r.al); // Enable FM interrupt
         //    popf
@@ -8608,7 +8596,7 @@ pm_fm2: // ↑
         r.bl = pw.fm_effec_num; // bx = effect no.
         r.di = (short) pw.part_e; // offset part_e
         r.al = 0;
-        pw.partWk[r.di].Clear(); // PartData Initialization
+        pw.partWk[r.di].clear(); // PartData Initialization
         r.addBx(r.getBx());
         r.addBx((short) pw.efcdat);
         r.setAx((short) (pw.md[r.getBx()].dat + pw.md[r.getBx() + 1].dat * 0x100));
@@ -8820,11 +8808,11 @@ vtc000: // ↑
             if (pw.play_flag == 0)
                 break vtc000;
             if (pw.va != 0) {
-                r.al = pc98.InPort(8);
+                r.al = pc98.inPort(8);
                 r.ah = pw.esc_sp_key;
                 if ((r.ah & r.al) != 0)
                     break vtc000;
-                r.al = pc98.InPort(9);
+                r.al = pc98.inPort(9);
                 if ((r.al & 0b1000_0000) != 0)
                     break vtc000;
             } else {
@@ -8927,7 +8915,7 @@ vtc000: // ↑
         if (pw.key_check == 0) // cy=0
             return;
         //cgr_main:
-        r.carry = pc98.GetGraphKey();
+        r.carry = pc98.getGraphKey();
     }
 
     private void comstart() {
@@ -8982,7 +8970,7 @@ vtc000: // ↑
         r.di = (short) pw.part1; // offset part1
         r.setCx((short) pw.max_part1);
         do {
-            pw.partWk[r.di++].Clear();
+            pw.partWk[r.di++].clear();
             r.decCx();
         } while (r.getCx() != 0);
 
@@ -9119,7 +9107,7 @@ opninit_next: // ↑
 opninit_exec: // ↑
                         {
                             do {
-                                r.al = pc98.InPort(r.getDx());
+                                r.al = pc98.inPort(r.getDx());
                                 r.ah &= r.al;
                                 if ((r.ah & 0x80) == 0)
                                     break opninit_exec;
@@ -9139,7 +9127,7 @@ opninit_exec: // ↑
                             r.decCx();
                         } while (r.getCx() != 0);
                         r.addDx((short) 2);
-                        r.al = pc98.InPort(r.getDx());
+                        r.al = pc98.inPort(r.getDx());
 
                         //popf
 
@@ -9329,7 +9317,7 @@ ppschk_exit: // ↑
             r.setCx((short) pw.max_part1); // max_part1*type qq
             r.al = 0;
             do {
-                pw.partWk[r.di++].Clear();
+                pw.partWk[r.di++].clear();
                 r.decCx();
             } while (r.getCx() != 0); // Partwork All Reset
 
@@ -9346,7 +9334,7 @@ ppschk_exit: // ↑
             r.al = (byte) pw.int_level;
             intset();
             if (pw.va != 0) {
-                r.al = pc98.InPort(0x32);
+                r.al = pc98.inPort(0x32);
                 //jmp $+2
                 r.al &= 0x7f;
                 pc98.outPort((short) 0x32, r.al);

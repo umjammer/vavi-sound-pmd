@@ -2,7 +2,6 @@ package pmd.driver;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -21,22 +20,22 @@ public class PCMLOAD {
 
     private static final Logger logger = getLogger(PCMLOAD.class.getName());
 
-    private X86Register r;
-    private PW pw;
-    private PMD pmd;
-    private Pc98 pc98;
-    private Function<ChipDatum, Integer> ppz8em;
-    private Function<ChipDatum, Integer> ppsdrv;
-    private Function<ChipDatum, Integer> p86em;
+    private final X86Register r;
+    private final PW pw;
+    private final PMD pmd;
+    private final Pc98 pc98;
+    private final Function<ChipDatum, Integer> ppz8em;
+    private final Function<ChipDatum, Integer> ppsdrv;
+    private final Function<ChipDatum, Integer> p86em;
     private Function<String, Stream> appendFileReaderCallback = null;
     public byte[][] ppzPcmData = new byte[2][];
     public byte[][] p86PcmData = new byte[2][];
 
-    public PCMLOAD(PMD pmd, PW pw, X86Register r, Pc98 pc98
-            , Function<ChipDatum, Integer> ppz8em
-            , Function<ChipDatum, Integer> ppsdrv
-            , Function<ChipDatum, Integer> p86em
-            , Function<String, Stream> appendFileReaderCallback) {
+    public PCMLOAD(PMD pmd, PW pw, X86Register r, Pc98 pc98,
+                   Function<ChipDatum, Integer> ppz8em,
+                   Function<ChipDatum, Integer> ppsdrv,
+                   Function<ChipDatum, Integer> p86em,
+                   Function<String, Stream> appendFileReaderCallback) {
         this.pmd = pmd;
         this.pw = pw;
         this.r = r;
@@ -931,7 +930,7 @@ public class PCMLOAD {
 
 //o4600x:
         do {
-            r.al = pc98.InPort(r.getDx());
+            r.al = pc98.inPort(r.getDx());
         } while ((r.al & 0x80) == 0); // break o4600x;
         r.al = 8; // PCMDAT reg.
         pc98.outPort(r.getDx(), r.al);
@@ -954,7 +953,7 @@ public class PCMLOAD {
             r.setDx(b);
 
 //o4601x:
-            r.al = pc98.InPort(r.getDx());
+            r.al = pc98.inPort(r.getDx());
             //if ((r.al & 8) == 0) // BRDY check
             //break o4601x;
 
@@ -986,7 +985,7 @@ public class PCMLOAD {
         r.stack.push(r.getDx());
         //cli
         r.setDx(pw.mmask_port);
-        r.al = pc98.InPort(r.getDx());
+        r.al = pc98.inPort(r.getDx());
         pw.mmask_push = r.al;
         r.al |= (byte) 0b1110_1111; // Only RS remains unchanged
         pc98.outPort(r.getDx(), r.al);
@@ -1023,7 +1022,7 @@ public class PCMLOAD {
         r.setDx(pw.port46);
 //o4600:
         do {
-            r.al = pc98.InPort(r.getDx());
+            r.al = pc98.inPort(r.getDx());
             r.al |= r.al;
         } while ((r.al & 0x80) == 0); // break o4600;
         r.al = r.bh;

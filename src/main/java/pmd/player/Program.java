@@ -270,15 +270,15 @@ class Program {
             logger.log(Level.INFO, "");
 
             ((Driver) drv).init(
-                    srcFile
-                    , Program::writeOPNA
-                    , Program::waitSendOPNA
-                    , dop
-                    , pop.toArray(String[]::new)
-                    , Program::appendFileReaderCallback
-                    , Program::writePPZ8
-                    , Program::writePPSDRV
-                    , Program::writeP86
+                    srcFile,
+                    Program::writeOPNA,
+                    Program::waitSendOPNA,
+                    dop,
+                    pop.toArray(String[]::new),
+                    Program::appendFileReaderCallback,
+                    Program::writePPZ8,
+                    Program::writePPSDRV,
+                    Program::writeP86
             );
 
             // When AUTO is specified, the configuration will change, so the volume will be set after receiving the configuration information.
@@ -961,10 +961,7 @@ class Program {
         if (dat != null && dat.additionalData != null) {
             MmlDatum md = (MmlDatum) dat.additionalData;
             if (md.linePos != null) {
-                logger.log(Level.TRACE, String.format("! r%d c%d"
-                        , md.linePos.row
-                        , md.linePos.col
-                ));
+                logger.log(Level.TRACE, String.format("! r%d c%d", md.linePos.row, md.linePos.col));
             }
         }
 

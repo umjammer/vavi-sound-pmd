@@ -1,21 +1,25 @@
 package pmd.driver;
 
-//
-// OPNA timer emulation
-//
-//
+/**
+ * OPNA timer emulation
+ */
 public class OPNATimer {
 
-    private int TimerA;        // Timer A overflow setting
-    private double TimerAcounter;  // Timer A counter value
-    private int TimerB;            // Timer B overflow setting value
-    private double TimerBcounter;  // Timer B counter value
-    private int TimerReg;       // Timer control register (lower 4 bits + 7 bits)
+    /** Timer A overflow setting */
+    private int TimerA;
+    /** Timer A counter value */
+    private double TimerAcounter;
+    /** Timer B overflow setting value */
+    private int TimerB;
+    /** Timer B counter value */
+    private double TimerBcounter;
+    /** Timer control register (lower 4 bits + 7 bits) */
+    private int TimerReg;
     private double step;
 
     private int StatReg;
 
-    // Status register (lowest 2 bits)
+    /** Status register (lowest 2 bits) */
     public int getStatReg() {
         return StatReg;
     }
@@ -31,7 +35,7 @@ public class OPNATimer {
     }
 
     public void timer() {
-        if ((TimerReg & 0x01) != 0) {   // TimerA is running
+        if ((TimerReg & 0x01) != 0) { // TimerA is running
             TimerAcounter += step;
             if (TimerAcounter >= (1024 - TimerA)) {
                 StatReg |= ((TimerReg >> 2) & 0x01);
@@ -40,7 +44,7 @@ public class OPNATimer {
             }
         }
 
-        if ((TimerReg & 0x02) != 0) {   // TimerB is running
+        if ((TimerReg & 0x02) != 0) { // TimerB is running
             TimerBcounter += step;
             if (TimerBcounter >= TimerB) {
                 StatReg |= ((TimerReg >> 2) & 0x02);
