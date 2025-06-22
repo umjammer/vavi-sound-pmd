@@ -207,9 +207,9 @@ public class PMD {
 
     /** For Address out break:ax */
     public void rdychk() {
-        r.al = pc98.InPort(r.getDx() & 0xffff); // Useless reading
+        r.al = pc98.inPort(r.getDx() & 0xffff); // Useless reading
         do {
-            r.al = pc98.InPort(r.getDx() & 0xffff);
+            r.al = pc98.inPort(r.getDx() & 0xffff);
         } while ((r.al & 0x80) != 0);
     }
 
@@ -409,15 +409,15 @@ public class PMD {
     private void play_init() {
         r.setSi((short) pw.mmlbuf);
 
-        r.al = (byte) pw.md[r.getSi() - 1].dat;
+        r.al = (byte) pw.md[(r.getSi() & 0xffff) - 1].dat;
         pw.x68_flg = r.al;
 
         // 2.6 Additions
         pw.prg_flg = 0;
-        if (pw.md[r.getSi()].dat != (pw.max_part2 + 1) * 2) {
-            r.setBx(Common.GetLe16(pw.md, r.getSi() + (2 * (pw.max_part2 + 1))));
+        if (pw.md[r.getSi() & 0xffff].dat != (pw.max_part2 + 1) * 2) {
+            r.setBx(Common.GetLe16(pw.md, (r.getSi() & 0xffff) + (2 * (pw.max_part2 + 1))));
             r.addBx(r.getSi());
-            pw.prgdat_adr = r.getBx();
+            pw.prgdat_adr = r.getBx() & 0xffff;
             pw.prg_flg = 1;
         }
 
@@ -430,12 +430,13 @@ public class PMD {
         pw.part_data_table = new int[22];
         for (int i = 0; i < pw.part_data_table.length; i++) pw.part_data_table[i] = i; // KUMA: Because it's an ordered sequence.
 
-// din0:
+//din0:
         do {
-            r.di = (short) pw.part_data_table[r.getBx()]; // di = part workarea // KUMA: Index of each part
+            r.di = (short) pw.part_data_table[r.getBx() & 0xffff]; // di = part workarea // KUMA: Index of each part
             r.incBx();
-            r.setAx(Common.GetLe16(pw.md, r.getSi())); // ax = part start addr
 //logger.log(Level.DEBUG, "si: %d, get: %d, len: %d".formatted(r.getSi(), Common.GetLe16(pw.md, r.getSi() & 0xffff), pw.md.length));
+            // usually file starts 00 1a 00 ..
+            r.setAx(Common.GetLe16(pw.md, r.getSi() & 0xffff)); // ax = part start addr
             r.addSi((short) 2);
 
             r.addAx((short) pw.mmlbuf);
@@ -1230,7 +1231,7 @@ mp15: // ↑
         oshift();
         fnumset();
 
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
         cd.additionalData = pw.cmd;
         WriteOPNARegister.accept(cd);
 
@@ -1618,7 +1619,7 @@ mp15: // ↑
         oshiftp();
         fnumsetp();
 
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
         cd.additionalData = pw.cmd;
         WriteOPNARegister.accept(cd);
 
@@ -1925,7 +1926,7 @@ rfin: // ↑
 
                 MmlDatum md = new MmlDatum(MMLType.TraceLocate, null, LinePos.Copy(pw.cmd.linePos), 0xff);
                 md = new MmlDatum(MMLType.TraceLocate, List.of(0, 1, md), LinePos.Copy(pw.cmd.linePos), 0xff);
-                ChipDatum cd = new ChipDatum(-1, -1, -1);
+                ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
                 cd.additionalData = md;
                 writeDummy(cd);
 
@@ -2203,7 +2204,7 @@ rolop:
             return out_of_commands();
         }
 
-        r.setBx((byte) ~r.al);
+        r.setBx((short) ((~r.al) & 0xff));
         if (pw.ppz != 0) {
             r.stack.push(r.getAx());
             _ppz();
@@ -3882,7 +3883,7 @@ sm_notfm3: // ↑
     private Supplier<Object> porta() {
         if (pw.partWk[r.di].partmask == 0) { // break porta_notset;
 
-            ChipDatum cd = new ChipDatum(-1, -1, -1);
+            ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
             cd.additionalData = pw.cmd;
             WriteOPNARegister.accept(cd);
 
@@ -3955,7 +3956,7 @@ sm_notfm3: // ↑
             //return porta_notset;
         }
 
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
         cd.additionalData = pw.cmd;
         WriteOPNARegister.accept(cd);
 
@@ -4157,8 +4158,8 @@ sm_notfm3: // ↑
         pw.syousetu_lng = r.al;
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Tempo, null, pw.tempo_d & 0xff, pw.syousetu_lng & 0xff);
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        MmlDatum md = new MmlDatum(0, MMLType.Tempo, null, pw.tempo_d & 0xff, pw.syousetu_lng & 0xff);
         cd.additionalData = md;
         WriteOPNARegister.accept(cd);
 
@@ -4175,8 +4176,8 @@ sm_notfm3: // ↑
         pw.partWk[r.di].voicenum = r.al;
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos,
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        cd.additionalData = new MmlDatum(0, MMLType.Instrument, pw.cmd.linePos,
                 0xff, (int) pw.partWk[r.di].voicenum);
         writeDummy(cd);
 
@@ -4278,8 +4279,8 @@ comAt_afset:
 
     private void comq_dmy() {
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Gatetime, pw.cmd.linePos,
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        MmlDatum md = new MmlDatum(0, MMLType.Gatetime, pw.cmd.linePos,
                 (int) pw.partWk[r.di].qdatb, // Q%
                 (int) pw.partWk[r.di].qdata, // q [X] -x  ,  x    : Number 1
                 (int) pw.partWk[r.di].qdat2, // q  x  -x  , [X]   : Number 3
@@ -4298,9 +4299,9 @@ comAt_afset:
         r.al = (byte) pw.md[r.incSi()].dat;
         pw.partWk[r.di].volume = r.al;
 
-        //For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
+        // For IDEs
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
         cd.additionalData = md;
         writeDummy(cd);
 
@@ -4488,8 +4489,8 @@ comAt_afset:
         pw.partWk[r.di].detune = r.getAx();
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Detune, pw.cmd.linePos, (int) pw.partWk[r.di].detune);
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        cd.additionalData = new MmlDatum(0, MMLType.Detune, pw.cmd.linePos, (int) pw.partWk[r.di].detune);
         writeDummy(cd);
 
         return null;
@@ -4506,8 +4507,8 @@ comAt_afset:
         pw.partWk[r.di].detune += r.getAx();
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Detune, pw.cmd.linePos, (int) pw.partWk[r.di].detune);
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        cd.additionalData = new MmlDatum(0, MMLType.Detune, pw.cmd.linePos, (int) pw.partWk[r.di].detune);
         writeDummy(cd);
 
         return null;
@@ -4618,8 +4619,8 @@ reloop: // ↑
         pw.partWk[r.di].shift = r.al;
 
         //For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.KeyShift, pw.cmd.linePos, (int) pw.partWk[r.di].shift);
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        cd.additionalData = new MmlDatum(0, MMLType.KeyShift, pw.cmd.linePos, (int) pw.partWk[r.di].shift);
         writeDummy(cd);
 
         return null;
@@ -4636,8 +4637,8 @@ reloop: // ↑
         pw.partWk[r.di].shift = r.al;
 
         //For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.KeyShift, pw.cmd.linePos, (int) pw.partWk[r.di].shift);
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        cd.additionalData = new MmlDatum(0, MMLType.KeyShift, pw.cmd.linePos, (int) pw.partWk[r.di].shift);
         writeDummy(cd);
 
         return null;
@@ -4670,8 +4671,8 @@ reloop: // ↑
         logger.log(Level.TRACE, "volupck");
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.min(r.al & 0xff, 127));
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, Math.min(r.al & 0xff, 127));
         cd.additionalData = md;
         writeDummy(cd);
 
@@ -4708,8 +4709,8 @@ reloop: // ↑
 
     private Supplier<Object> volupckp() {
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.min(r.al & 0xff, 15));
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, Math.min(r.al & 0xff, 15));
         cd.additionalData = md;
         writeDummy(cd);
 
@@ -4738,8 +4739,8 @@ reloop: // ↑
         r.al = pw.partWk[r.di].volume;
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - 4, 0));
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - 4, 0));
         cd.additionalData = md;
         writeDummy(cd);
 
@@ -4759,8 +4760,8 @@ reloop: // ↑
         r.al = pw.partWk[r.di].volume;
 
         //For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - (r.ah & 0xff), 0));
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - (r.ah & 0xff), 0));
         cd.additionalData = md;
         writeDummy(cd);
 
@@ -4778,8 +4779,8 @@ reloop: // ↑
         r.al = pw.partWk[r.di].volume;
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - 1, 0));
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - 1, 0));
         cd.additionalData = md;
         writeDummy(cd);
 
@@ -4797,8 +4798,8 @@ reloop: // ↑
         r.al = pw.partWk[r.di].volume;
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - (r.ah & 0xff), 0));
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - (r.ah & 0xff), 0));
         cd.additionalData = md;
         writeDummy(cd);
 
@@ -5088,8 +5089,8 @@ reloop: // ↑
 
     private Supplier<Object> panset_main() {
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Pan, pw.cmd.linePos, r.al & 0xff);
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
+        cd.additionalData = new MmlDatum(0, MMLType.Pan, pw.cmd.linePos, r.al & 0xff);
         writeDummy(cd);
 
         r.al = r.ror(r.al, 1);
@@ -9026,7 +9027,7 @@ vtc000: // ↑
         //
 
         r.setAx((short) 1); // offset dataarea+1
-        pw.mmlbuf = r.getAx();
+        pw.mmlbuf = r.getAx() & 0xffff;
         r.decAx();
 
         r.bh = pw.mmldat_lng;
@@ -9553,7 +9554,7 @@ ppschk_exit: // ↑
         List<Object> obj = md.args;
         MmlDatum mmd = (MmlDatum) obj.get(0);
 
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
+        ChipDatum cd = new ChipDatum(10000, 0, 0); // TODO vavi
         cd.additionalData = mmd;
         writeDummy(cd);
     }
