@@ -8,12 +8,12 @@ import musicDriverInterface.ChipDatum;
 public class Pc98 {
 
     private final Consumer<ChipDatum> writeOPNARegister;
-    private ChipDatum cd = new ChipDatum(0, 0, 0);
+    private final ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
     private byte fm1_reg = 0;
     private byte fm2_reg = 0;
-    private PW pw;
+    private final PW pw;
 
-    private byte[] psgDat = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    private final byte[] psgDat = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     public Pc98(Consumer<ChipDatum> writeOPNARegister, PW pw) {
         this.writeOPNARegister = writeOPNARegister;
@@ -32,8 +32,8 @@ public class Pc98 {
         } else if (v == 0x188) { // Read FM sound source status flag
             return 0;
         } else if (v == 0x18a) { // FM sound data loading
-            if (fm1_reg < 0x10) {
-                return psgDat[fm1_reg];
+            if ((fm1_reg & 0xff) < 0x10) {
+                return psgDat[(fm1_reg & 0xff)];
             }
             return 0;
         } else if (v == 0x18c) { // Read FM sound source status flag(extension)
@@ -53,7 +53,7 @@ public class Pc98 {
         } else if (dx == 0x18a) {
             cd.port = 0;
             cd.address = fm1_reg;
-            cd.data = al;
+            cd.data = al & 0xff;
             //cd.additionalData = pw.cmd;
 
             if ((fm1_reg & 0xff) < 0x10) {
@@ -65,7 +65,7 @@ public class Pc98 {
         } else if (dx == 0x18e) {
             cd.port = 1;
             cd.address = fm2_reg;
-            cd.data = al;
+            cd.data = al & 0xff;
             //cd.additionalData = pw.cmd;
             writeOPNARegister.accept(cd);
         }

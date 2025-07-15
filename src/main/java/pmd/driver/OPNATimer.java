@@ -6,25 +6,25 @@ package pmd.driver;
 public class OPNATimer {
 
     /** Timer A overflow setting */
-    private int TimerA;
+    private int timerA;
     /** Timer A counter value */
-    private double TimerAcounter;
+    private double timerACounter;
     /** Timer B overflow setting value */
-    private int TimerB;
+    private int timerB;
     /** Timer B counter value */
-    private double TimerBcounter;
+    private double timerBCounter;
     /** Timer control register (lower 4 bits + 7 bits) */
-    private int TimerReg;
+    private int timerReg;
     private double step;
 
-    private int StatReg;
+    private int statReg;
 
     /** Status register (lowest 2 bits) */
     public int getStatReg() {
-        return StatReg;
+        return statReg;
     }
 
-    public Runnable CsmKeyOn;
+    public Runnable csmKeyOn;
 
     public OPNATimer(int renderingFreq, int opnaMasterClock) {
         setClock(renderingFreq, opnaMasterClock);
@@ -35,45 +35,45 @@ public class OPNATimer {
     }
 
     public void timer() {
-        if ((TimerReg & 0x01) != 0) { // TimerA is running
-            TimerAcounter += step;
-            if (TimerAcounter >= (1024 - TimerA)) {
-                StatReg |= ((TimerReg >> 2) & 0x01);
-                TimerAcounter -= (1024 - TimerA);
-                //if ((TimerReg & 0x80) != 0) CsmKeyOn?.Invoke();
+        if ((timerReg & 0x01) != 0) { // timerA is running
+            timerACounter += step;
+            if (timerACounter >= (1024 - timerA)) {
+                statReg |= ((timerReg >> 2) & 0x01);
+                timerACounter -= (1024 - timerA);
+                //if ((timerReg & 0x80) != 0) csmKeyOn?.Invoke();
             }
         }
 
-        if ((TimerReg & 0x02) != 0) { // TimerB is running
-            TimerBcounter += step;
-            if (TimerBcounter >= TimerB) {
-                StatReg |= ((TimerReg >> 2) & 0x02);
-                TimerBcounter -= TimerB;
+        if ((timerReg & 0x02) != 0) { // timerB is running
+            timerBCounter += step;
+            if (timerBCounter >= timerB) {
+                statReg |= ((timerReg >> 2) & 0x02);
+                timerBCounter -= timerB;
             }
         }
     }
 
     public void WriteReg(byte adr, byte data) {
         switch (adr) {
-            // TimerA
+            // timerA
             case 0x24:
-                TimerA &= 0x3;
-                TimerA |= (data << 2);
+                timerA &= 0x3;
+                timerA |= ((data & 0xff) << 2);
                 break;
             case 0x25:
-                TimerA &= 0x3fc;
-                TimerA |= (data & 3);
+                timerA &= 0x3fc;
+                timerA |= ((data & 0xff) & 3);
                 break;
 
             case 0x26:
-                // TimerB
-                TimerB = (256 - data) << 4;
+                // timerB
+                timerB = (256 - (data & 0xff)) << 4;
                 break;
 
             case 0x27:
                 // Timer Control Register
-                TimerReg = data & 0x8F;
-                StatReg &= 0xFF - ((data >> 4) & 3);
+                timerReg = data & 0x8f;
+                statReg &= 0xff - (((data & 0xff) >> 4) & 3);
                 break;
         }
     }

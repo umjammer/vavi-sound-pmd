@@ -60,7 +60,7 @@ public class X86Register {
 
     public void setBx(short value) {
         if (pw != null && pw.checkJumpIndexBX) {
-            if (value == pw.jumpIndex)
+            if ((value & 0xffff) == pw.jumpIndex)
                 pw.jumpIndex = -1;
         }
 
@@ -181,7 +181,7 @@ public class X86Register {
 
     public void setSi(short value) {
         if (pw != null && pw.checkJumpIndexSI) {
-            if (value == pw.jumpIndex)
+            if ((value & 0xffff) == pw.jumpIndex)
                 pw.jumpIndex = -1;
         }
         _si = value;
@@ -195,6 +195,7 @@ public class X86Register {
         setSi((short) (_si - value));
     }
 
+    /** get and inc */
     public short incSi() {
         try {
             return _si;
@@ -203,6 +204,7 @@ public class X86Register {
         }
     }
 
+    /** get and dec */
     public short decSi() {
         try {
             return _si;
@@ -237,7 +239,7 @@ public class X86Register {
 
     public final Deque<Short> stack = new LinkedList<>();
 
-    public final Object lockobj = new Object();
+    public final Object lockObj = new Object();
 
     private static final int[] bitMask = new int[] {0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff};
 

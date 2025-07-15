@@ -33,12 +33,12 @@ public class PPZ8em {
             new short[256], new short[256], new short[256], new short[256],
             new short[256], new short[256], new short[256], new short[256]
     };
-    private double SamplingRate = 44100.0;
-    private int PCM_VOLUME = 0;
+    private double samplingRate = 44100.0;
+    private int pcmVolume = 0;
     private int volume = 0;
 
-    public PPZ8em(int SamplingRate /* = 44100 */) {
-        this.SamplingRate = SamplingRate;
+    public PPZ8em(int samplingRate /* = 44100 */) {
+        this.samplingRate = samplingRate;
     }
 
     /**
@@ -58,7 +58,7 @@ public class PPZ8em {
             chWk[i]._loopStartOffset = -1;
             chWk[i]._loopEndOffset = -1;
         }
-        PCM_VOLUME = 0;
+        pcmVolume = 0;
         volume = 0;
         setAllVolume(12);
     }
@@ -68,10 +68,10 @@ public class PPZ8em {
         double temp;
 
         volume = vol;
-        int AVolume = (int) (0x1000 * Math.pow(10.0, vol / 40.0));
+        int aVolume = (int) (0x1000 * Math.pow(10.0, vol / 40.0));
 
         for (i = 0; i < 16; i++) {
-            temp = Math.pow(2.0, (i + PCM_VOLUME) / 2.0) * AVolume / 0x18000;
+            temp = Math.pow(2.0, (i + pcmVolume) / 2.0) * aVolume / 0x18000;
             for (j = 0; j < 256; j++) {
                 VolumeTable[i][j] = (short) (Math.max(Math.min((j - 128) * temp, Short.MAX_VALUE), Short.MIN_VALUE));
             }
@@ -85,7 +85,7 @@ public class PPZ8em {
      * @param dx PCM tone number
      */
     public void playPCM(byte al, short dx) {
-        logger.log(Level.TRACE, String.format("ppz8em: PlayPCM: ch:%d @:%d", al, dx));
+        logger.log(Level.TRACE, "ppz8em: PlayPCM: ch:%d @:%d".formatted(al, dx & 0xffff));
 
         int bank = (dx & 0x8000) != 0 ? 1 : 0;
         int num = dx & 0x7fff;
@@ -150,7 +150,7 @@ public class PPZ8em {
      * @param al PCM Channel (0-7)
      */
     public void stopPCM(byte al) {
-        logger.log(Level.TRACE, String.format("ppz8em: StopPCM: ch:%d", al));
+        logger.log(Level.TRACE, "ppz8em: StopPCM: ch:%d".formatted(al));
 
         chWk[al].playing = false;
     }
@@ -164,7 +164,7 @@ public class PPZ8em {
      * <returns></returns>
      */
     public int loadPcm(byte bank, byte mode, byte[] pcmData) {
-        logger.log(Level.TRACE, String.format("ppz8em: LoadPCM: bank:%d mode:%d", bank, mode));
+        logger.log(Level.TRACE, "ppz8em: LoadPCM: bank:%d mode:%d".formatted(bank & 0xff, mode & 0xff));
 
         bank &= 1;
         mode &= 1;
@@ -217,7 +217,7 @@ public class PPZ8em {
      * @param dx Volume (0-15 / 0-255)
      */
     public void setVolume(byte al, short dx) {
-        logger.log(Level.TRACE, "ppz8em: SetVolume: Ch:%d vol:%d".formatted(al, dx));
+        logger.log(Level.TRACE, "ppz8em: SetVolume: Ch:%d vol:%d".formatted(al & 0xff, dx & 0xffff));
 
         chWk[al].volume = dx;
     }
@@ -230,7 +230,7 @@ public class PPZ8em {
      * @param cx PCM pitch frequency CX
      */
     public void setFrequency(byte al, short dx, short cx) {
-        logger.log(Level.TRACE, "ppz8em: SetFrequency: 0x%08x".formatted(dx * 0x1_0000 + cx));
+        logger.log(Level.TRACE, "ppz8em: SetFrequency: 0x%08x".formatted((dx & 0xffff) * 0x1_0000 + (cx & 0xffff)));
 
         chWk[al].frequency = (dx & 0xffff) * 0x1_0000 + (cx & 0xffff);
     }
@@ -277,8 +277,8 @@ public class PPZ8em {
         logger.log(Level.TRACE, "ppz8em: SetPan: %d".formatted(dx));
 
         chWk[al].pan = dx;
-        chWk[al].panL = (chWk[al].pan < 6 ? 1.0 : (0.25 * (9 - chWk[al].pan)));
-        chWk[al].panR = (chWk[al].pan > 4 ? 1.0 : (0.25 * chWk[al].pan));
+        chWk[al].panL = ((chWk[al].pan & 0xffff) < 6 ? 1.0 : (0.25 * (9 - chWk[al].pan)));
+        chWk[al].panR = ((chWk[al].pan & 0xffff) > 4 ? 1.0 : (0.25 * chWk[al].pan));
     }
 
     /**
@@ -299,8 +299,8 @@ public class PPZ8em {
     public void setAllVolume(int vol) {
         logger.log(Level.TRACE, "ppz8em: SetAllVolume: %d".formatted(vol));
 
-        if (vol < 16 && vol != PCM_VOLUME) {
-            PCM_VOLUME = vol;
+        if (vol < 16 && vol != pcmVolume) {
+            pcmVolume = vol;
             makeVolumeTable(volume);
         }
     }
@@ -366,10 +366,10 @@ public class PPZ8em {
                 //* chWk[i].panL);
             }
 
-            int n = chWk[i].ptr >= pcmData[chWk[i].bank].length ? 0x80 : pcmData[chWk[i].bank][chWk[i].ptr];
+            int n = chWk[i].ptr >= pcmData[chWk[i].bank].length ? 0x80 : pcmData[chWk[i].bank][chWk[i].ptr] & 0xff;
             l += (int) (VolumeTable[chWk[i].volume][n] * chWk[i].panL);
             r += (int) (VolumeTable[chWk[i].volume][n] * chWk[i].panR);
-            chWk[i].delta += ((long) chWk[i].srcFrequency * (long) chWk[i].frequency / (long) 0x8000) / SamplingRate;
+            chWk[i].delta += ((long) chWk[i].srcFrequency * (long) chWk[i].frequency / (long) 0x8000) / samplingRate;
             chWk[i].ptr += (int) chWk[i].delta;
             chWk[i].delta -= (int) chWk[i].delta;
 
@@ -419,13 +419,13 @@ public class PPZ8em {
             short rate = 16000;   // 16kHz
 
             o.add((byte) startaddress);
-            o.add((byte) (startaddress >> 8));
-            o.add((byte) (startaddress >> 16));
+            o.add((byte) (startaddress >>> 8));
+            o.add((byte) (startaddress >>> 16));
             o.add((byte) (startaddress >>> 24));
             o.add((byte) size);
-            o.add((byte) (size >> 8));
-            o.add((byte) (size >> 16));
-            o.add((byte) (size >> 24));
+            o.add((byte) (size >>> 8));
+            o.add((byte) (size >>> 16));
+            o.add((byte) (size >>> 24));
             o.add((byte) 0xff);
             o.add((byte) 0xff);
             o.add((byte) 0);
@@ -471,7 +471,7 @@ public class PPZ8em {
                     (5 + 1); // endAdr - startAdr
 
             for (int j = 0; j < size / 2; j++) {
-                byte psrc = pcmData[bank][psrcPtr++];
+                int psrc = pcmData[bank][psrcPtr++] & 0xff;
 
                 int n = X_N + table1[(psrc >> 4) & 0x0f] * DELTA_N / 8;
                 //logger.log(Level.TRACE, n);

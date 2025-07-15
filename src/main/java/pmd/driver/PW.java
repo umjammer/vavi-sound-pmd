@@ -12,7 +12,7 @@ import musicDriverInterface.MmlDatum;
 public class PW {
 
     public final Object lockObj = new Object();
-    public final Object SystemInterrupt = new Object();
+    public final Object systemInterrupt = new Object();
 
     private int _status = 0;
 
@@ -237,7 +237,7 @@ public class PW {
     public byte tempo_d_push = 0; // tempo(TIMER-B) / For storage
     public byte syousetu_lng = 0; // Measure length
     public byte opncount = 0; // Shortest note counter
-    public byte TimerAtime = 0; // TimerA Counter
+    public byte timerATime = 0; // TimerA Counter
     public byte effflag = 0; // PSG sound effect on/off flag
     public byte psnoi = 0; // PSG noise frequency
     public byte psnoi_last = 0; // PSG noise frequency (last defined value)
@@ -263,8 +263,8 @@ public class PW {
     public byte pause_flag = 0; // pause flag
     public byte fade_stop_flag = 0; // Flag for whether to MSTOP after Fadeout
     public byte kp_rhythm_flag = 0; // Flag to play Rhythm sound source in K/Rpart
-    public byte TimerBflag = 0; // TimerB interrupt in progress? Flag
-    public byte TimerAflag = 0; // TimerA interrupt in progress? Flag
+    public byte timerBFlag = 0; // TimerB interrupt in progress? Flag
+    public byte timerAFlag = 0; // TimerA interrupt in progress? Flag
     public byte int60flag = 0; // INT60H interrupt in progress? Flag
     public byte int60_result = 0; // INT60H execution ErrorFlag
     public byte pcm_gs_flag = 0; // ADPCM use enable flag (0 for enable)
@@ -279,7 +279,7 @@ public class PW {
     public int wait1_clock = 0; // loop $ 1 speed
     public byte ff_tempo = 0; // TimerB value during fast forward
     public byte pcm_access = 0; // 1 during PCM set
-    public byte TimerB_speed = 0; // Current value of TimerB (= ff_tempo if in ff)
+    public byte timerB_speed = 0; // Current value of TimerB (= ff_tempo if in ff)
     public byte fadeout_flag = 0; // When fout is called from inside 1
     public byte adpcm_wait = 0; // ADPCM defined speed
     public byte revpan = 0; // PCM86 reverse flag
@@ -290,7 +290,7 @@ public class PW {
     public byte tempo_48 = 0; // Current tempo (clock= 48 t value)
     public byte tempo_48_push = 0; // Current tempo (same as above/for saving)
     public byte rew_sp_key = 0; // GRPH+?? (rew) Key Code
-    public byte intfook_flag = 0; // int_fook flag B0:TB B1:TA
+    public byte intHook_flag = 0; // int_Hook flag B0:TB B1:TA
     public byte skip_flag = 0; // normal:0 During forward SKIP:1 During backward SKIP:2
     public byte _fm_voldown = 0; // FM voldown Number (for storage)
     public byte _ssg_voldown = 0; // PSG voldown Number (for storage)

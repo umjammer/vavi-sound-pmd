@@ -109,7 +109,7 @@ public class Mc {
 
     public void error_exit(int qq) {
         // Program terminated (error code qq)
-        throw new PmdErrorExitException(String.format("error code:%d", qq));
+        throw new PmdErrorExitException("error code:%d".formatted(qq));
     }
 
     public void print_mes(String qq) {
@@ -265,7 +265,7 @@ public class Mc {
 
     private enmPass2JumpTable Jumper(enmPass2JumpTable ret) {
 //#if DEBUG
-        logger.log(Level.TRACE, String.format("jp:%s", ret));
+        logger.log(Level.TRACE, "jp:%s".formatted(ret));
 //#endif
         switch (ret) {
             //Pass1
@@ -1437,7 +1437,7 @@ fm3_check:
     private enmPass2JumpTable vdat_set() {
         if ((mml_seg.prg_flg & 1) == 0) return enmPass2JumpTable.memo_write;
 
-        logger.log(Level.DEBUG, String.format("vdat_setAddress:%d", work.di));
+        logger.log(Level.DEBUG, "vdat_setAddress:%d".formatted(work.di));
         vdat_setAddress = work.di;
 
         work.si = 0; // offset m_buf
@@ -2988,7 +2988,7 @@ hsset_loop:
         get_param();
         mml_seg.newprg_num = work.al;
 
-        logger.log(Level.TRACE, String.format("@ num:%d", work.al));
+        logger.log(Level.TRACE, "@ num:%d".formatted(work.al));
 
         get_param();
         work.al &= 7;
@@ -3541,7 +3541,7 @@ notend: // ↑
             return ret;
         }
 
-        throw new PmdErrorExitException(String.format("Found a command that has not yet been ported (%c)", (char) dh));
+        throw new PmdErrorExitException("Found a command that has not yet been ported (%c)".formatted((char) dh));
     }
 
     /**
@@ -8714,7 +8714,7 @@ hscom3_chk: // ↑
             } catch (Exception e) {
                 mes.append(mml_seg.mml_filename);
             }
-            mes.append(String.format("(%d) :", mml_seg.line));
+            mes.append("(%d) :".formatted(mml_seg.line));
         }
 
         //  

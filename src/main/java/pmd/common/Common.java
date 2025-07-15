@@ -13,14 +13,14 @@ public class Common {
 
     public static Charset charset = Charset.forName("cp932");
 
-    public static short GetLe16(MmlDatum[] md, int adr) {
+    public static short getLe16(MmlDatum[] md, int adr) {
         return (short) (md[adr].dat + md[adr + 1].dat * 0x100);
     }
 
-    public static byte[] GetPCMDataFromFile(String fnPcm, Function<String, Stream> appendFileReaderCallback) {
+    public static byte[] getPCMDataFromFile(String fnPcm, Function<String, Stream> appendFileReaderCallback) {
         try {
             try (Stream pd = appendFileReaderCallback.apply(fnPcm)) {
-                return ReadAllBytes(pd);
+                return readAllBytes(pd);
             }
         } catch (Exception e) {
             return null;
@@ -30,7 +30,7 @@ public class Common {
     /**
      * Read binary from a stream in bulk
      */
-    public static byte[] ReadAllBytes(Stream stream) {
+    public static byte[] readAllBytes(Stream stream) {
         if (stream == null) return null;
 
         var buf = new byte[8192];

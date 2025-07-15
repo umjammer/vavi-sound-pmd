@@ -155,7 +155,7 @@ public class Lc {
         do {
             MmlDatum al;
             do {
-                logger.log(Level.TRACE, String.format("si:%d", work.si));
+                logger.log(Level.TRACE, "si:%d".formatted(work.si));
 
                 al = (work.si < m_seg.m_buf.size() ? m_seg.m_buf.get(work.si++) : new MmlDatum(0x80));
                 if (al.dat == 0x80) return enmPart_ends.part_ends;
@@ -493,7 +493,7 @@ rpart_end:
             max_all = all_length; // ax | dx * 0x10000;
         }
 //not_over_all:
-        msg += String.format("%d", ax);
+        msg += "%d".formatted(ax);
         tc = ax;
 
         if (loop_flag == 1) { // break pe_loop;
@@ -524,7 +524,7 @@ rpart_end:
                 max_loop = n;
             }
 //not_over_loop:
-            msg += String.format("%d", n);
+            msg += "%d".formatted(n);
             lc = n;
         }
 //pe_00:

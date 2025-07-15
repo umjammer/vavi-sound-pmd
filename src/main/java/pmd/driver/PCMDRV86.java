@@ -26,7 +26,7 @@ public class PCMDRV86 {
         this.p86drv = p86drv;
         this.pcmData = pcmData;
 
-        SetupCmdtbl();
+        setupCmdtbl();
     }
 
     /**
@@ -35,12 +35,12 @@ public class PCMDRV86 {
     //pcmmain_ret:
     // ret
     public void pcmmain() {
-        r.setSi(pw.partWk[r.di].address); // si = PART DATA ADDRESS
+        r.setSi(pw.partWk[r.di & 0xffff].address); // si = PART DATA ADDRESS
         if (r.getSi() == 0)
             return;
 
 //        Supplier<Object> ret = null;
-//        if (pw.partWk[r.di].partmask != 0)
+//        if (pw.partWk[r.di & 0xffff].partmask != 0)
 //            ret = this::pcmmain_nonplay;
 //        else
 //            ret = this::pcmmain_c_1;
@@ -54,16 +54,16 @@ public class PCMDRV86 {
 
     private Supplier<Object> pcmmain_c_1() {
         // Duration -1
-        pw.partWk[r.di].leng--;
-        r.al = pw.partWk[r.di].leng;
+        pw.partWk[r.di & 0xffff].leng--;
+        r.al = pw.partWk[r.di & 0xffff].leng;
 
         // ; KEYOFF CHECK
-        if ((pw.partWk[r.di].keyoff_flag & 3) != 0) { // Have you already keyed off? // break mp0m;
+        if ((pw.partWk[r.di & 0xffff].keyoff_flag & 3) != 0) { // Have you already keyed off? // break mp0m;
 
-            if (r.al <= pw.partWk[r.di].qdat) { // Q value => keyoff when remaining Length value // break mp0m;
+            if ((r.al & 0xff) <= (pw.partWk[r.di & 0xffff].qdat & 0xff)) { // Q value => keyoff when remaining Length value // break mp0m;
 //mp00m:
                 keyoffm(); // AL will not break
-                pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
+                pw.partWk[r.di & 0xffff].keyoff_flag = (byte) 0xff; // -1
             }
         }
 //mp0m:
@@ -78,8 +78,8 @@ public class PCMDRV86 {
 
     private Supplier<Object> mp1m() { // DATA READ
         do {
-            pw.cmd = pw.md[r.getSi()];
-            r.al = (byte) pw.md[r.getSi()].dat;
+            pw.cmd = pw.md[r.getSi() & 0xffff];
+            r.al = (byte) pw.md[r.getSi() & 0xffff].dat;
 
             //if (r.si == pw.jumpIndex)
             //pw.jumpIndex = -1; // KUMA:Added
@@ -103,64 +103,64 @@ public class PCMDRV86 {
         // END OF MUSIC[If there is an 'L', go back to it]
 //mp15m:
         if ((r.al & 0xff) >= 0x80) { // break mp2m;
-            pmd.FlashMacroList();
+            pmd.flashMacroList();
 
             r.decSi();
-            pw.partWk[r.di].address = r.getSi(); // mov[di],si
-            pw.partWk[r.di].loopcheck = 3;
-            pw.partWk[r.di].onkai = (byte) 0xff; // -1
-            r.setBx(pw.partWk[r.di].partloop);
+            pw.partWk[r.di & 0xffff].address = r.getSi(); // mov[di],si
+            pw.partWk[r.di & 0xffff].loopcheck = 3;
+            pw.partWk[r.di & 0xffff].onkai = (byte) 0xff; // -1
+            r.setBx(pw.partWk[r.di & 0xffff].partloop);
             if (r.getBx() == 0) return this::mpexitm;
 
             // When there was an 'L'
             r.setSi(r.getBx());
 
-            pw.partWk[r.di].loopcheck = 1;
-            pw.partWk[r.di].loopCounter++;
+            pw.partWk[r.di & 0xffff].loopcheck = 1;
+            pw.partWk[r.di & 0xffff].loopCounter++;
             return this::mp1m;
         }
 //mp2m:
         // F - NUMBER SET
-        pmd.FlashMacroList();
+        pmd.flashMacroList();
         pmd.lfoinitp();
         pmd.oshift();
         fnumsetm();
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].leng = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].leng = r.al;
         pmd.calc_q();
 
 
-        if (pw.partWk[r.di].volpush != 0) { // break mp_newm;
-            if (pw.partWk[r.di].onkai != (byte) 0xff) { // break mp_newm;
+        if (pw.partWk[r.di & 0xffff].volpush != 0) { // break mp_newm;
+            if (pw.partWk[r.di & 0xffff].onkai != (byte) 0xff) { // break mp_newm;
                 pw.volpush_flag--;
                 if (pw.volpush_flag != 0) { // break mp_newm;
                     pw.volpush_flag = 0;
-                    pw.partWk[r.di].volpush = 0;
+                    pw.partWk[r.di & 0xffff].volpush = 0;
                 }
             }
         }
 //mp_newm:
         volsetm();
         otodasim();
-        if ((pw.partWk[r.di].keyoff_flag & 1) != 0) { // break mp3m;
+        if ((pw.partWk[r.di & 0xffff].keyoff_flag & 1) != 0) { // break mp3m;
             keyonm();
         }
 //mp3m:
-        pw.partWk[r.di].keyon_flag++;
-        pw.partWk[r.di].address = r.getSi();
+        pw.partWk[r.di & 0xffff].keyon_flag++;
+        pw.partWk[r.di & 0xffff].address = r.getSi();
         r.al = 0;
         pw.tieflag = r.al;
         pw.volpush_flag = r.al;
-        pw.partWk[r.di].keyoff_flag = r.al;
-        if (pw.md[r.getSi()].dat != 0xfb) // If there is an '&' immediately after, keyoff will not occur.
+        pw.partWk[r.di & 0xffff].keyoff_flag = r.al;
+        if (pw.md[r.getSi() & 0xffff].dat != 0xfb) // If there is an '&' immediately after, keyoff will not occur.
             return pmd::mnp_ret;
-        pw.partWk[r.di].keyoff_flag = 2;
+        pw.partWk[r.di & 0xffff].keyoff_flag = 2;
         return pmd::mnp_ret;
     }
 
     private Supplier<Object> mpexitm() {
-        r.cl = pw.partWk[r.di].lfoswi;
+        r.cl = pw.partWk[r.di & 0xffff].lfoswi;
         if ((r.cl & 0x22) != 0) { // break not_lfo3m;
 
             pw.lfo_switch = 0;
@@ -180,7 +180,7 @@ public class PCMDRV86 {
                 if (r.carry) { // break not_lfo1m;
                     pmd.lfo_change();
                     // popf
-                    r.al = pw.partWk[r.di].lfoswi;
+                    r.al = pw.partWk[r.di & 0xffff].lfoswi;
                     r.al &= 0x20;
                     pw.lfo_switch |= r.al;
 //                    break not_lfo2m;
@@ -219,23 +219,23 @@ public class PCMDRV86 {
      * PCM sound source playback: When parts are masked
      */
     private Supplier<Object> pcmmain_nonplay() {
-        pw.partWk[r.di].leng--;
-        if (pw.partWk[r.di].leng != 0) return pmd::mnp_ret;
+        pw.partWk[r.di & 0xffff].leng--;
+        if (pw.partWk[r.di & 0xffff].leng != 0) return pmd::mnp_ret;
 
-        if ((pw.partWk[r.di].partmask & 2) == 0) // Check bit1 (pcm sound effect?)
+        if ((pw.partWk[r.di & 0xffff].partmask & 2) == 0) // Check bit1 (pcm sound effect?)
             return this::pcmmnp_1;
 
         if (pw.play86_flag == 1)
             return this::pcmmnp_1; // The interrupt PCM is still ringing
         pw.pcmflag = 0; // PCM sound effect end
         pw.pcm_effec_num = (byte) 255;
-        pw.partWk[r.di].partmask &= 0xfd; // clear bit1
-        if (pw.partWk[r.di].partmask != 0)
+        pw.partWk[r.di & 0xffff].partmask &= 0xfd; // clear bit1
+        if (pw.partWk[r.di & 0xffff].partmask != 0)
             return this::pcmmnp_1;
 
-        r.al = pw.partWk[r.di].voicenum;
+        r.al = pw.partWk[r.di & 0xffff].voicenum;
         neiro_set();
-        r.al = pw.partWk[r.di].fmpan;
+        r.al = pw.partWk[r.di & 0xffff].fmpan;
         r.ah = pw.revpan;
         set_pcm_pan();
 
@@ -245,8 +245,8 @@ public class PCMDRV86 {
     private Supplier<Object> pcmmnp_1() {
         do {
             do {
-                pw.cmd = pw.md[r.getSi()];
-                r.al = (byte) pw.md[r.incSi()].dat;
+                pw.cmd = pw.md[r.getSi() & 0xffff];
+                r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
                 if (r.al == (byte) 0x80) break; // KUMA: Not checked (changed to == in TAG050)
                 if ((r.al & 0xff) < 0x80) return pmd::fmmnp_3;
 
@@ -260,21 +260,21 @@ public class PCMDRV86 {
                 }
             } while (true);
 
-            pmd.FlashMacroList();
+            pmd.flashMacroList();
 
             // END OF MUSIC[When there was an "L" I went back there]
             r.decSi();
-            pw.partWk[r.di].address = r.getSi();
-            pw.partWk[r.di].loopcheck = 3;
-            pw.partWk[r.di].onkai = (byte) 0xff; // -1
-            r.setBx(pw.partWk[r.di].partloop);
+            pw.partWk[r.di & 0xffff].address = r.getSi();
+            pw.partWk[r.di & 0xffff].loopcheck = 3;
+            pw.partWk[r.di & 0xffff].onkai = (byte) 0xff; // -1
+            r.setBx(pw.partWk[r.di & 0xffff].partloop);
 
             if ((r.getBx() & r.getBx()) == 0) return pmd::fmmnp_4;
 
             // When there was an "L"
             r.setSi(r.getBx());
-            pw.partWk[r.di].loopcheck = 1;
-            pw.partWk[r.di].loopCounter++;
+            pw.partWk[r.di & 0xffff].loopcheck = 1;
+            pw.partWk[r.di & 0xffff].loopCounter++;
         } while (true);
     }
 
@@ -289,7 +289,7 @@ public class PCMDRV86 {
 
     private Supplier<Object>[] cmdtblm;
 
-    private void SetupCmdtbl() {
+    private void setupCmdtbl() {
         cmdtblm = new Supplier[] {
                 this::comAtm,            // 0xff (0)
                 pmd::comq,                // 0xfe (1)
@@ -403,14 +403,14 @@ public class PCMDRV86 {
      * Mask on/off for playing part
      */
     private Supplier<Object> pcm_mml_part_mask() {
-        r.al = (byte) pw.md[r.incSi()].dat;
-        if (r.al >= 2)
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        if ((r.al & 0xff) >= 2)
             return pmd::special_0c0h;
 
         if (r.al != 0) { // break pcm_part_maskoff_ret;
 
-            pw.partWk[r.di].partmask |= 0x40;
-            if (pw.partWk[r.di].partmask == 0x40) { // break pmpm_ret;
+            pw.partWk[r.di & 0xffff].partmask |= 0x40;
+            if (pw.partWk[r.di & 0xffff].partmask == 0x40) { // break pmpm_ret;
 
                 stop_86pcm();
             }
@@ -419,8 +419,8 @@ public class PCMDRV86 {
             return this::pcmmnp_1;
         }
 //pcm_part_maskoff_ret:
-        pw.partWk[r.di].partmask &= (byte) 0xbf;
-        if (pw.partWk[r.di].partmask != 0) {
+        pw.partWk[r.di & 0xffff].partmask &= (byte) 0xbf;
+        if (pw.partWk[r.di & 0xffff].partmask != 0) {
 //            break pmpm_ret;
             return this::pcmmnp_1;
         }
@@ -448,7 +448,7 @@ public class PCMDRV86 {
         r.stack.push(r.getCx()); //
 
         // First one = Repeat start position
-        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
         r.addSi((short) 2);
 
         if ((r.getAx() & 0x8000) == 0) { // break prs1_minus;
@@ -458,12 +458,12 @@ public class PCMDRV86 {
             int a = (pw.repeat_size2 & 0xffff) * 0x1_0000 + (pw.repeat_size1 & 0xffff);
             a -= r.getAx() & 0xffff; // Repeat size = total size - specified value
             pw.repeat_size1 = (short) a;
-            pw.repeat_size2 = (short) (a >> 16);
+            pw.repeat_size2 = (short) (a >>> 16);
 
             a = (pw.repeat_ofs2 & 0xffff) * 0x1_0000 + (pw.repeat_ofs & 0xffff);
             a += r.getAx(); // Add the specified value from the repeat start position
             pw.repeat_ofs = (short) a;
-            pw.repeat_ofs2 = (short) (a >> 16);
+            pw.repeat_ofs2 = (short) (a >>> 16);
 
 //            break prs2_set;
         } else {
@@ -478,17 +478,17 @@ public class PCMDRV86 {
             int a = (r.getCx() & 0xffff) * 0x1_0000 + (r.getDx() & 0xffff);
             a -= r.getAx() & 0xffff;
             r.setDx((short) a);
-            r.setCx((short) (a >> 16));
+            r.setCx((short) (a >>> 16));
 
             a = (pw.repeat_ofs2 & 0xffff) * 0x1_0000 + (pw.repeat_ofs & 0xffff);
             a += r.getDx(); // Repeat start position
-            a += r.getCx() * 0x1_0000; // Add (total size - specified value)
+            a += (r.getCx() & 0xffff) * 0x1_0000; // Add (total size - specified value)
             pw.repeat_ofs = (short) a;
-            pw.repeat_ofs2 = (short) (a >> 16);
+            pw.repeat_ofs2 = (short) (a >>> 16);
         }
         // 2nd = Repeat end position
 //prs2_set:
-        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
         r.addSi((short) 2);
 
         if (r.getAx() != 0) { // break prs3_set;// If 0, do not calculate
@@ -500,15 +500,15 @@ public class PCMDRV86 {
                 pw._size2 = 0;
 
                 int a = (r.getCx() & 0xffff) * 0x1_0000 + (r.getDx() & 0xffff);
-                a -= r.getAx(); // Subtract (old size - new size) from repeat size
+                a -= (r.getAx() & 0xffff); // Subtract (old size - new size) from repeat size
                 r.setDx((short) a);
-                r.setCx((short) (a >> 16));
+                r.setCx((short) (a >>> 16));
 
                 a = (pw.repeat_size2 & 0xffff) * 0x1_0000 + (pw.repeat_size1 & 0xffff);
-                a -= r.getAx(); // Repeat size = total size - specified value
+                a -= (r.getAx() & 0xffff); // Repeat size = total size - specified value
                 a -= (r.getCx() & 0xffff) * 0x1_0000;
-                pw.repeat_size1 = (short) (a & 0xffff);
-                pw.repeat_size2 = (short) ((a & 0xffff_0000) >> 16);
+                pw.repeat_size1 = (short) a;
+                pw.repeat_size2 = (short) (a >>> 16);
 
 //                break prs3_set;
             } else {
@@ -517,14 +517,14 @@ public class PCMDRV86 {
                 r.setAx((short) (-r.getAx()));
                 pcm86vol_chk();
 
-                int a = pw.repeat_size2 * 0x10000 + pw.repeat_size1;
-                a -= r.getAx(); // From repeat size
+                int a = (pw.repeat_size2 & 0xffff) * 0x1_0000 + (pw.repeat_size1 & 0xffff);
+                a -= (r.getAx() & 0xffff); // From repeat size
                 // Subtract neg(specified value)
-                pw.repeat_size1 = (short) (a & 0xffff);
-                pw.repeat_size2 = (short) ((a & 0xffff_0000) >> 16);
+                pw.repeat_size1 = (short) a;
+                pw.repeat_size2 = (short) (a >>> 16);
 
                 a = (pw._size2 & 0xffff) * 0x1_0000 + pw._size1;
-                a -= r.getAx(); // Subtract the specified value from the original size
+                a -= (r.getAx() & 0xffff); // Subtract the specified value from the original size
             }
         }
         // 3rd = Release start position
@@ -532,7 +532,7 @@ public class PCMDRV86 {
         r.setCx(r.stack.pop());
         r.setDx(r.stack.pop()); // cx:dx = Overall size return
 
-        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
         r.addSi((short) 2);
 
         if (r.getAx() != (short) 0x8000) { // break prs_exit; // Do not set if 8000H
@@ -552,15 +552,15 @@ public class PCMDRV86 {
                 pcm86vol_chk();
                 // Release size = total size - specified value
                 int a = (pw.release_size2 & 0xffff) * 0x1_0000 + (pw.release_size1 & 0xffff);
-                a -= r.getAx();
-                pw.release_size1 = (short) (a & 0xffff);
-                pw.release_size2 = (short) ((a & 0xffff_0000) >> 16);
+                a -= (r.getAx() & 0xffff);
+                pw.release_size1 = (short) a;
+                pw.release_size2 = (short) (a >>> 16);
 
                 // Add the specified value from the release start position
                 a = (pw.release_ofs2 & 0xffff) * 0x1_0000 + (pw.release_ofs & 0xffff);
-                a += r.getAx();
-                pw.release_ofs = (short) (a & 0xffff);
-                pw.release_ofs2 = (short) ((a & 0xffff_0000) >> 16);
+                a += (r.getAx() & 0xffff);
+                pw.release_ofs = (short) a;
+                pw.release_ofs2 = (short) (a >>> 16);
 
 //                break prs_exit;
             } else {
@@ -572,15 +572,15 @@ public class PCMDRV86 {
                 pw.release_size2 = 0;
 
                 int a = (r.getCx() & 0xffff) * 0x1_0000 + (r.getDx() & 0xffff);
-                a -= r.getAx();
-                r.setDx((short) (a & 0xffff));
-                r.setCx((short) ((a & 0xffff_0000) >> 16));
+                a -= (r.getAx() & 0xffff);
+                r.setDx((short) a);
+                r.setCx((short) (a >>> 16));
 
                 a = (pw.release_ofs2 & 0xffff) * 0x1_0000 + (pw.release_ofs & 0xffff);
-                a += r.getDx(); // At the release start position
+                a += (r.getDx() & 0xffff); // At the release start position
                 a += (r.getCx() & 0xffff) * 0x1_0000; // Add (total size - specified value)
-                pw.release_ofs = (short) (a & 0xffff);
-                pw.release_ofs2 = (short) ((a & 0xffff_0000) >> 16);
+                pw.release_ofs = (short) a;
+                pw.release_ofs2 = (short) (a >>> 16);
             }
         }
 //prs_exit:
@@ -605,7 +605,7 @@ public class PCMDRV86 {
      * COMMAND ')' [VOLUME UP]
      */
     public Supplier<Object> comvolupm() {
-        r.al = pw.partWk[r.di].volume;
+        r.al = pw.partWk[r.di & 0xffff].volume;
         r.carry = (r.al & 0xff) + 16 > 0xff;
         r.al += 16;
         return vupckm();
@@ -617,10 +617,10 @@ public class PCMDRV86 {
     }
 
     private Supplier<Object> vsetm() {
-        pw.partWk[r.di].volume = r.al;
+        pw.partWk[r.di & 0xffff].volume = r.al;
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
         MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
         cd.additionalData = md;
         pmd.writeDummy(cd);
@@ -630,9 +630,9 @@ public class PCMDRV86 {
 
     // V2.3 EXTEND
     public Supplier<Object> comvolupm2() {
-        r.al = (byte) pw.md[r.incSi()].dat;
-        r.carry = (r.al & 0xff) + (pw.partWk[r.di].volume & 0xff) > 0xff;
-        r.al += pw.partWk[r.di].volume;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        r.carry = (r.al & 0xff) + (pw.partWk[r.di & 0xffff].volume & 0xff) > 0xff;
+        r.al += pw.partWk[r.di & 0xffff].volume;
         return vupckm();
     }
 
@@ -640,8 +640,8 @@ public class PCMDRV86 {
      * COMMAND '(' [VOLUME DOWN]
      */
     public Supplier<Object> comvoldownm() {
-        r.al = pw.partWk[r.di].volume;
-        r.carry = r.al - 16 < 0;
+        r.al = pw.partWk[r.di & 0xffff].volume;
+        r.carry = (r.al & 0xff) - 16 < 0;
         r.al -= 16;
         if (r.carry) r.al = 0;
         return this::vsetm;
@@ -649,10 +649,10 @@ public class PCMDRV86 {
 
     // V2.3 EXTEND
     public Supplier<Object> comvoldownm2() {
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.ah = r.al;
-        r.al = pw.partWk[r.di].volume;
-        r.carry = r.al - r.ah < 0;
+        r.al = pw.partWk[r.di & 0xffff].volume;
+        r.carry = (r.al & 0xff) - (r.ah & 0xff) < 0;
         r.al -= r.ah;
         if (r.carry) r.al = 0;
         return this::vsetm;
@@ -667,7 +667,7 @@ public class PCMDRV86 {
      */
     private Supplier<Object> pansetm() {
         r.ah = 0;
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al--;
         if (r.al != 0) { // break psm_right;
             r.al--;
@@ -694,13 +694,13 @@ public class PCMDRV86 {
      * px-127～+127,0or1
      */
     private Supplier<Object> pansetm_ex() {
-        r.al = (byte) pw.md[r.incSi()].dat;
-        r.ah = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        r.ah = (byte) pw.md[r.incSi() & 0xffff].dat;
         return this::set_pcm_pan;
     }
 
     private Supplier<Object> set_pcm_pan() {
-        pw.partWk[r.di].fmpan = r.al;
+        pw.partWk[r.di & 0xffff].fmpan = r.al;
         pw.revpan = r.ah;
 
         return set_pcm_pan2();
@@ -744,8 +744,8 @@ public class PCMDRV86 {
      * COMMAND '@' [NEIRO Change]
      */
     private Supplier<Object> comAtm() {
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].voicenum = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].voicenum = r.al;
         return this::neiro_set;
     }
 
@@ -754,27 +754,27 @@ public class PCMDRV86 {
         //r.ax += r.ax;
         //r.bx = r.getAx();
         //r.ax += r.ax;
-        //r.bx += r.ax; // bx=al*6
+        //r.bx += r.ax; // bx = al * 6
         //r.bx += 0; // offset pcmadrs
-        //r.ax = (short)(pw.pcmadrs_86[r.bx] + pw.pcmadrs_86[r.bx + 1] * 0x100); // ofs2(w)
-        //r.carry = (r.bx + 2) > 0xffff;
+        //r.ax = (short) (pw.pcmadrs_86[r.bx & 0xffff] + pw.pcmadrs_86[(r.bx & 0xffff) + 1] * 0x100); // ofs2(w)
+        //r.carry = ((r.bx & 0xffff) + 2) > 0xffff;
         //r.bx += 2;
         //pw._start_ofs = r.getAx();
         //r.ax = 0;
-        //r.al += (byte)(pw.pcmadrs_86[r.bx] + (r.carry ? 1 : 0)); // ofs1(b)
+        //r.al += (byte) ((pw.pcmadrs_86[r.bx & 0xffff] & 0xff) + (r.carry ? 1 : 0)); // ofs1(b)
         //r.bx++;
         //pw._start_ofs2 = r.getAx();
-        //r.ax = (short)(pw.pcmadrs_86[r.bx] + pw.pcmadrs_86[r.bx + 1] * 0x100);
+        //r.ax = (short) ((pw.pcmadrs_86[r.bx & 0xffff] & 0xff) + (pw.pcmadrs_86[(r.bx & 0xffff) + 1] & 0xff) * 0x100);
         //r.bx++;
         //r.bx++;
         //pw._size1 = r.getAx();
         //r.ah = 0;
-        //r.al = pw.pcmadrs_86[r.bx];
+        //r.al = pw.pcmadrs_86[r.bx & 0xffff];
         //pw._size2 = r.getAx();
         //pw.repeat_flag = 0;
         //pw.release_flag1 = 0;
 
-        ChipDatum cd = new ChipDatum(2, 0, r.al);
+        ChipDatum cd = new ChipDatum(2, 0, r.al & 0xff);
         p86drv.apply(cd);
 
         return null;
@@ -784,9 +784,9 @@ public class PCMDRV86 {
      * PCM VOLUME SET
      */
     private void volsetm() {
-        r.al = pw.partWk[r.di].volpush;
+        r.al = pw.partWk[r.di & 0xffff].volpush;
         if (r.al == 0) { // break vsm_01;
-            r.al = pw.partWk[r.di].volume;
+            r.al = pw.partWk[r.di & 0xffff].volume;
         }
 //vsm_01:
         r.dl = r.al;
@@ -796,7 +796,7 @@ public class PCMDRV86 {
         r.al = pw.pcm_voldown;
         if (r.al != 0) { // break pcm_fade_calc;
             r.al = (byte) -r.al;
-            r.setAx((short) (r.al * r.dl));
+            r.setAx((short) ((r.al & 0xff) * (r.dl & 0xff)));
             r.dl = r.ah;
         }
         //
@@ -806,7 +806,7 @@ public class PCMDRV86 {
         r.al = pw.fadeout_volume;
         if (r.al != 0) { // break pcm_env_calc;
             r.al = (byte) -r.al;
-            r.setAx((short) (r.al * r.dl));
+            r.setAx((short) ((r.al & 0xff) * (r.dl & 0xff)));
             r.dl = r.ah;
         }
         //
@@ -818,9 +818,9 @@ public class PCMDRV86 {
             mv_out();
             return;
         }
-        if (pw.partWk[r.di].envf == (byte) 0xff) { // -1 // break normal_mvset;
+        if (pw.partWk[r.di & 0xffff].envf == (byte) 0xff) { // -1 // break normal_mvset;
             // Extended volume = al * (eenv_vol + 1) / 16
-            r.dl = pw.partWk[r.di].eenv_volume;
+            r.dl = pw.partWk[r.di & 0xffff].eenv_volume;
             if (r.dl == 0) {
 //                break mv_min;
 //mv_min: // ↑
@@ -829,9 +829,9 @@ public class PCMDRV86 {
                 return;
             }
             r.dl++;
-            r.setAx((short) (r.al * r.dl));
+            r.setAx((short) ((r.al & 0xff) * (r.dl & 0xff)));
             r.srAx(3);
-            r.carry = ((r.getAx() % 2) != 0);
+            r.carry = (((r.getAx() & 0xffff) % 2) != 0);
             r.srAx(1);
             if (r.carry) { // break mvset;
                 r.incAx();
@@ -839,7 +839,7 @@ public class PCMDRV86 {
 //            break mvset;
         } else {
 //normal_mvset:
-            r.ah = pw.partWk[r.di].eenv_volume; // .penv;
+            r.ah = pw.partWk[r.di & 0xffff].eenv_volume; // .penv;
             if ((r.ah & 0x80) != 0) { // break mvplus;
                 // -
                 r.ah = (byte) -r.ah;
@@ -847,7 +847,7 @@ public class PCMDRV86 {
                 r.ah += r.ah;
                 r.ah += r.ah;
                 r.ah += r.ah;
-                r.carry = r.al - r.ah < 0;
+                r.carry = (r.al & 0xff) - (r.ah & 0xff) < 0;
                 r.al -= r.ah;
                 if (r.carry) { // break mvset;
 //mv_min:
@@ -873,18 +873,18 @@ public class PCMDRV86 {
         // Volume LFO Calculation
         //
 //mvset:
-        if ((pw.partWk[r.di].lfoswi & 0x22) == 0) {
+        if ((pw.partWk[r.di & 0xffff].lfoswi & 0x22) == 0) {
             mv_out();
             return;
         }
         r.setDx((short) 0);
         r.ah = r.dl;
-        if ((pw.partWk[r.di].lfoswi & 0x2) != 0) { // break mv_nolfo1;
-            r.setDx(pw.partWk[r.di].lfodat);
+        if ((pw.partWk[r.di & 0xffff].lfoswi & 0x2) != 0) { // break mv_nolfo1;
+            r.setDx(pw.partWk[r.di & 0xffff].lfodat);
         }
 //mv_nolfo1:
-        if ((pw.partWk[r.di].lfoswi & 0x20) != 0) { // break mv_nolfo2;
-            r.addDx(pw.partWk[r.di]._lfodat);
+        if ((pw.partWk[r.di & 0xffff].lfoswi & 0x20) != 0) { // break mv_nolfo2;
+            r.addDx(pw.partWk[r.di & 0xffff]._lfodat);
         }
 //mv_nolfo2:
         if ((r.getDx() & 0x8000) == 0) { // break mvlfo_minus;
@@ -915,19 +915,19 @@ public class PCMDRV86 {
         // Volume Settings
         if (pw.pcm86_vol != 0) { // break pcm_normal_set;
             // Same volume settings as SPB
-            // al = sqr(al)
+            //al = sqr(al)
             r.ah = r.al;
             r.al = 0;
             r.carry = true;
 
 //sqr_loop:
             while (true) {
-                boolean c = (r.ah - (byte) (r.al + (r.carry ? 1 : 0))) < 0;
-                r.ah -= (byte) (r.al + (r.carry ? 1 : 0));
+                boolean c = ((r.ah & 0xff) - ((r.al & 0xff) + (r.carry ? 1 : 0))) < 0;
+                r.ah -= (byte) ((r.al & 0xff) + (r.carry ? 1 : 0));
                 if (c) break; // pcm_vol_set;
 
-                c = (r.ah - (byte) (r.al + (c ? 1 : 0))) < 0;
-                r.ah -= (byte) (r.al + (c ? 1 : 0));
+                c = ((r.ah & 0xff) - ((r.al & 0xff) + (c ? 1 : 0))) < 0;
+                r.ah -= (byte) ((r.al & 0xff) + (c ? 1 : 0));
                 if (c) break; // pcm_vol_set;
 
                 r.al++;
@@ -937,23 +937,23 @@ public class PCMDRV86 {
             }
         } else {
 //pcm_normal_set:
-            r.al >>= 4;
+            r.al >>>= 4;
         }
 //pcm_vol_set:
-        ChipDatum cd = new ChipDatum(4, 0, r.al);
+        ChipDatum cd = new ChipDatum(4, 0, r.al & 0xff);
         p86drv.apply(cd);
         //r.al &= 0b0000_1111;
         //r.al ^= 0b0000_1111;
         //r.al |= 0xa0; // PCM Volume
         //r.dx = 0xa466;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
     }
 
     /**
      * PCM KEYON
      */
     private void keyonm() {
-        if (pw.partWk[r.di].onkai == (byte) 0xff) { //-1 // break keyonm_00;
+        if (pw.partWk[r.di & 0xffff].onkai == (byte) 0xff) { //-1 // break keyonm_00;
             return; // when a rest
         }
 //keyonm_00:
@@ -984,20 +984,19 @@ public class PCMDRV86 {
         //    r.ax = r.stack.pop();
         //    pw.release_flag2 = 1; // Released
 
-        //kofm_not_release:;
-        //    if (pw.partWk[r.di].envf == 0xff) // -1
+//kofm_not_release:
+        //    if (pw.partWk[r.di & 0xffff].envf == 0xff) // -1
         //        break kofm1_ext;
-        //    if (pw.partWk[r.di].envf != 2)
-        //    {
+        //    if (pw.partWk[r.di & 0xffff].envf != 2) {
         //        pmd.keyoffp();
         //        return;
         //    }
 
-        //kofm_ret:;
+//kofm_ret:
         //    return;
 
-        //kofm1_ext:;
-        //    if (pw.partWk[r.di].eenv_count == 4)
+//kofm1_ext:
+        //    if (pw.partWk[r.di & 0xffff].eenv_count == 4)
         //        break kofm_ret;
 
         //    pmd.keyoffp();
@@ -1007,17 +1006,17 @@ public class PCMDRV86 {
      * PCM Frequency Settings
      */
     private void otodasim() {
-        r.setBx(pw.partWk[r.di].fnum);
+        r.setBx(pw.partWk[r.di & 0xffff].fnum);
         if (r.getBx() == 0) { // break tone_set;
             return;
         }
 //tone_set:
-        r.setAx(pw.partWk[r.di].fnum2);
+        r.setAx(pw.partWk[r.di & 0xffff].fnum2);
         if (pw.pcm86_vol == 1) { // When matching with ADPCM
             tone_set2(); // Cut Detune
             return;
         }
-        if (pw.partWk[r.di].detune == 0) {
+        if (pw.partWk[r.di & 0xffff].detune == 0) {
             tone_set2();
             return;
         }
@@ -1026,18 +1025,18 @@ public class PCMDRV86 {
         r.setDx(r.getBx());
 
         int c = (r.getDx() & 0xffff) * 0x10000 + (r.getCx() & 0xffff);
-        c >>= 5;
-        r.setDx((short) (c >> 16));
+        c >>>= 5;
+        r.setDx((short) (c >>> 16));
         r.setCx((short) c);
 
         //for (int i = 0; i < 5; i++) { // rept 5
         //    r.carry = (r.dx & 1) != 0;
-        //    r.dx >>= 1;
-        //    r.cx >>= 1;
+        //    r.dx >>>= 1;
+        //    r.cx >>>= 1;
         //    if (r.carry) r.cx |= 0x8000;
         //} // endm   ;cx=zzzzzxxx xxxxxxxx
 
-        r.setDx(pw.partWk[r.di].detune);
+        r.setDx(pw.partWk[r.di & 0xffff].detune);
         if ((r.getDx() & 0x8000) == 0) { // break tsdt_minus;
             r.carry = (r.getCx() & 0xffff) + (r.getDx() & 0xffff) > 0xffff;
             r.addCx(r.getDx());
@@ -1060,7 +1059,7 @@ public class PCMDRV86 {
 
         c = (r.getDx() & 0xffff) * 0x1_0000 + (r.getCx() & 0xffff);
         c <<= 5;
-        r.setDx((short) (c >> 16));
+        r.setDx((short) (c >>> 16));
         r.setCx((short) c);
         //for (int i = 0; i < 5; i++) { // rept 5
         //    r.carry = (r.cx & 0x8000) != 0;
@@ -1081,8 +1080,8 @@ public class PCMDRV86 {
         pw.addsize2 = r.getAx();
         pw.addsize1 = r.bl;
         //pw.addsize1 &= 0x1f;
-        //logger.log(Level.TRACE, "{0:x}  {1:x}", pw.addsize1, pw.addsize2);
-        ChipDatum cd = new ChipDatum(5, pw.addsize1, pw.addsize2);
+        //logger.log(Level.TRACE, "%x  %x".formatted(pw.addsize1, pw.addsize2));
+        ChipDatum cd = new ChipDatum(5, pw.addsize1 & 0xff, pw.addsize2 & 0xff);
         p86drv.apply(cd);
 
         //r.carry = false;
@@ -1095,8 +1094,8 @@ public class PCMDRV86 {
         //r.dx = 0xa468;
         ////pushf
         ////cli
-        //r.al = pc98.InPort(r.dx);
-        //pc98.OutPort(0x5f, r.al);
+        //r.al = pc98.inPort(r.dx);
+        //pc98.outPort(0x5f, r.al);
         //r.al &= 0xf8;
         //r.al |= r.bl;
         //pc98.OutPort(r.dx, r.al);
@@ -1116,9 +1115,9 @@ public class PCMDRV86 {
 
         if (pw.pcm86_vol == 1) { // break fsm_noad;
 
-            if (r.al >= 0x65) { // o7e? // break fsm_noad;
+            if ((r.al & 0xff) >= 0x65) { // o7e? // break fsm_noad;
                 r.al = 0x50; // o6
-                if (r.ah < 5) { // ah=onkai // break fsm_00;
+                if ((r.ah & 0xff) < 5) { // ah=onkai // break fsm_00;
                     r.al = 0x60; // o7
                 }
 //fsm_00:
@@ -1126,28 +1125,28 @@ public class PCMDRV86 {
             }
         }
 //fsm_noad:
-        pw.partWk[r.di].onkai = r.al;
+        pw.partWk[r.di & 0xffff].onkai = r.al;
 
         r.al &= (byte) 0xf0;
-        r.al >>= 1;
-        r.bl = r.al; // bl=octave*8
-        r.al >>= 1; // al=octave*4
+        r.al >>>= 1;
+        r.bl = r.al; // bl = octave * 8
+        r.al >>>= 1; // al = octave * 4
         r.bl += r.al;
 
-        r.bl += r.ah; // bl=octave*12 + Scale
+        r.bl += r.ah; // bl = octave * 12 + Scale
         r.bh = 0;
         r.setAx(r.getBx());
         //r.bx += r.bx;
         //r.bx += r.ax;
         //r.bx += 0; // offset pcm_tune_data
-        //logger.log(Level.TRACE, "bx:%d",r.bx);
-        r.al = (byte) (int) pw.pcm_tune_data86[r.getBx()].getItem1();
+        //logger.log(Level.TRACE, "bx:%d".formatted(r.bx));
+        r.al = (byte) (int) pw.pcm_tune_data86[r.getBx() & 0xffff].getItem1();
         r.orAx(0xff00);
-        pw.partWk[r.di].fnum = r.getAx(); // ax=0ff00h + addsize1
+        pw.partWk[r.di & 0xffff].fnum = r.getAx(); // ax = 0ff00h + addsize1
         //r.bx++;
-        r.setAx((short) (int) pw.pcm_tune_data86[r.getBx()].getItem2()); // ax=addsize2
-        pw.partWk[r.di].fnum2 = r.getAx();
-        //logger.log(Level.TRACE, "fnum:{0:x} fnum2:{1:x}", pw.partWk[r.di].fnum, pw.partWk[r.di].fnum2);
+        r.setAx((short) (int) pw.pcm_tune_data86[r.getBx() & 0xffff].getItem2()); // ax = addsize2
+        pw.partWk[r.di & 0xffff].fnum2 = r.getAx();
+        //logger.log(Level.TRACE, "fnum:%x fnum2:%x".formatted(pw.partWk[r.di & 0xffff].fnum, pw.partWk[r.di & 0xffff].fnum2));
     }
 
     /**
@@ -1198,7 +1197,7 @@ public class PCMDRV86 {
         // FIFO interrupt flag reset
         //
         r.setDx((short) 0xa468);
-        r.al = pc98.inPort(r.getDx());
+        r.al = pc98.inPort(r.getDx() & 0xffff);
         pc98.outPort((short) 0x5f, r.al);
         r.al &= (byte) 0xef;
         pc98.outPort(r.getDx(), r.al); // Clear FIFO interrupt flag
@@ -1251,17 +1250,17 @@ public class PCMDRV86 {
         //r.stack.push(r.ds);
 
         r.ah = (byte) 0xfb; // -5
-        ChipDatum cd = new ChipDatum(r.ah, -1, -1);
+        ChipDatum cd = new ChipDatum(r.ah & 0xff, 0xff, 0xff);
         p86drv.apply(cd); // p86drv pushems
 
         r.ah = pw.addsize1;
         r.setBx(pw.addsize2);
 
         get_data_offset(); // ds:si = data offset
-        trans_table[r.bp / 2].run();
+        trans_table[(r.bp & 0xffff) / 2].run();
 
         r.ah = (byte) 0xfc; // -4
-        cd = new ChipDatum(r.ah, -1, -1);
+        cd = new ChipDatum(r.ah & 0xff, 0xff, 0xff);
         p86drv.apply(cd); // p86drv popems
 
         //    pop ds
@@ -1324,7 +1323,7 @@ public class PCMDRV86 {
             // mov al,[si]
             pc98.outPort(r.getDx(), r.al); // left
             r.stack.push(r.getAx());
-            r.setAx((short) (r.getAx() * pw.pcm86_pan_dat));
+            r.setAx((short) ((r.getAx() & 0xffff) * (pw.pcm86_pan_dat & 0xff)));
             r.addAx(r.getAx());
             r.al = r.ah;
             pc98.outPort(r.getDx(), r.al); // right
@@ -1350,7 +1349,7 @@ public class PCMDRV86 {
             pc98.outPort(r.getDx(), r.al); // left
             r.al = (byte) -r.al;
             r.stack.push(r.getAx());
-            r.setAx((short) (r.getAx() * pw.pcm86_pan_dat));
+            r.setAx((short) ((r.getAx() & 0xffff) * (pw.pcm86_pan_dat & 0xff)));
             r.addAx(r.getAx());
             r.al = r.ah;
             pc98.outPort(r.getDx(), r.al); // right
@@ -1374,7 +1373,7 @@ public class PCMDRV86 {
         do {
             // mov al,[si]
             r.stack.push(r.getAx());
-            r.setAx((short) (r.getAx() * pw.pcm86_pan_dat));
+            r.setAx((short) ((r.getAx() & 0xffff) * (pw.pcm86_pan_dat & 0xff)));
             r.addAx(r.getAx());
             r.al = r.ah;
             pc98.outPort(r.getDx(), r.al); // left
@@ -1399,7 +1398,7 @@ public class PCMDRV86 {
         do {
             // mov al,[si]
             r.stack.push(r.getAx());
-            r.setAx((short) (r.getAx() * pw.pcm86_pan_dat));
+            r.setAx((short) ((r.getAx() & 0xffff) * (pw.pcm86_pan_dat & 0xff)));
             r.addAx(r.getAx());
             r.al = r.ah;
             pc98.outPort(r.getDx(), r.al); // left
@@ -1425,11 +1424,11 @@ public class PCMDRV86 {
         //pushf
         r.al = r.ah;
         r.ah = 0; // ax=addsize1
-        r.bp += (short) (r.getAx() + (r.carry ? 1 : 0)); // Add bp according to addsize
+        r.bp += (short) ((r.getAx() & 0xffff) + (r.carry ? 1 : 0)); // Add bp according to addsize
         //popf
         //pushf
-        r.addSi((short) (r.getAx() + (r.carry ? 1 : 0))); // Add address according to addsize
-        if (r.getSi() >= 0x4000) { // 16K Over Check(for EMS) break not_add_ofs2;
+        r.addSi((short) ((r.getAx() & 0xffff) + (r.carry ? 1 : 0))); // Add address according to addsize
+        if ((r.getSi() & 0xffff) >= 0x4000) { // 16K Over Check(for EMS) break not_add_ofs2;
 
             //[[[segment over]]]
             r.carry = (pw.start_ofs & 0xffff) + (r.bp & 0xffff) > 0xffff;
@@ -1441,8 +1440,8 @@ public class PCMDRV86 {
         }
 //not_add_ofs2:
         //popf
-        boolean c = (r.di - (short) (r.getAx() + (r.carry ? 1 : 0))) < 0;
-        r.di -= (short) (r.getAx() + (r.carry ? 1 : 0)); // Subtract size according to addsize
+        boolean c = (r.di - (short) ((r.getAx() & 0xffff) + (r.carry ? 1 : 0))) < 0;
+        r.di -= (short) ((r.getAx() & 0xffff) + (r.carry ? 1 : 0)); // Subtract size according to addsize
         r.ah = r.al; // Revert to ah=addsize1
         if (!c) { // break addadd_sizeseg;
             if (r.di != 0) { // break addadd_justcheck;
@@ -1454,7 +1453,7 @@ public class PCMDRV86 {
             }
         } else {
 //addadd_sizeseg:
-            r.carry = (pw.size2 - 1) < 0;
+            r.carry = ((pw.size2 & 0xffff) - 1) < 0;
             pw.size2 -= 1;
             if (!r.carry) { // break addadd_repchk;
 //                return;
@@ -1478,7 +1477,7 @@ public class PCMDRV86 {
                 r.bp = 0;
 
                 r.ah = (byte) 0xfd;
-                ChipDatum cd = new ChipDatum(r.ah, -1, -1);
+                ChipDatum cd = new ChipDatum(r.ah, 0xff, 0xff);
                 p86drv.apply(cd); // get data offset = ds:dx
 
                 r.setSi(r.getDx()); // DS:SI= DATA ADDRESS
@@ -1503,7 +1502,7 @@ public class PCMDRV86 {
         r.setAx(pw.start_ofs2); // cs:[start_ofs2]
 
         r.ah = (byte) 0xfd;
-        ChipDatum cd = new ChipDatum(r.ah, -1, -1);
+        ChipDatum cd = new ChipDatum(r.ah & 0xff, 0xff, 0xff);
         p86drv.apply(cd); // get data offset = ds:dx
 
         r.setSi(r.getDx()); // DS:SI= DATA ADDRESS
@@ -1550,7 +1549,7 @@ public class PCMDRV86 {
      * 86B play PCM
      */
     private void play_86pcm() {
-        ChipDatum cd = new ChipDatum(3, pw.pcm86_pan_flag, pw.pcm86_pan_dat);
+        ChipDatum cd = new ChipDatum(3, pw.pcm86_pan_flag & 0xff, pw.pcm86_pan_dat & 0xff);
         p86drv.apply(cd);
 
         cd = new ChipDatum(7, 0, 0);
@@ -1560,41 +1559,41 @@ public class PCMDRV86 {
         ////cli
 
         //r.dx = 0xa468;
-        //r.al = pc98.InPort(r.dx);
+        //r.al = pc98.inPort(r.dx);
         //// A468 reset bit7 （FIFO Stop）
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al &= 0x7f;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         //// A468 reset bit6 （CPU->FIFO mode）
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al &= 0xbf;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         //// A468 set bit3  （FIFO reset setting）
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al |= 8;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         //// A468 reset bit3 （FIFO reset release）
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al &= 0xf7;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         //// A468 reset bit5 （Disable FIFO interrupts/Prepare A46A settings）
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al &= 0xdf;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         //// A468 reset bit4 （Clear interrupt flag）
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.putPort(0x5f, r.al);
         //r.al &= 0xef;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         //// PAN OUT to A46A （8bit L/Rch）
         //r.dx = 0xa46a;
         //r.al = 0xf2;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         ////popf
 
@@ -1617,32 +1616,32 @@ public class PCMDRV86 {
         //// Interrupt Settings
         ////
         //r.dx = 0xa468;
-        //r.al = pc98.InPort(r.dx);
+        //r.al = pc98.inPort(r.dx);
 
         //// A468 set bit4  （Clear interrupt flag）
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al |= 0x10;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         //// A468 set bit5  （Enable FIFO interrupt/prepare A46A settings）
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al |= 0x20;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         //// Set the A46A FIFO interrupt size
         //r.dx = 0xa46a;
         //r.al = (byte)(+(pw.trans_size / 128) - 1);
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.putPort(r.dx, r.al);
 
         ////
         //// Start playing
         ////
         //r.dx = 0xa468;
-        //r.al = pc98.InPort(r.dx);
+        //r.al = pc98.inPort(r.dx);
         //// A468 set bit7  （PCM Start playing）
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al |= 0x80;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         //pw.play86_flag = 1;
         //pw.trans_flag = 1;
@@ -1664,34 +1663,34 @@ public class PCMDRV86 {
         ////cli
 
         //r.dx = 0xa468;
-        //r.al = pc98.InPort(r.dx);
+        //r.al = pc98.inPort(r.dx);
 
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al &= 0x7f;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         //// FIFO reset
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al |= 0x08;
-        //pc98.OutPort(r.dx, r.al); // Reset process
+        //pc98.outPort(r.dx, r.al); // Reset process
 
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al &= 0xf7;
-        //pc98.OutPort(r.dx, r.al); // Reset process completed
+        //pc98.outPort(r.dx, r.al); // Reset process completed
 
         //// Disable FIFO interrupts
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al &= 0xdf;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         //// FIFO interrupt flag reset
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al &= 0xef;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
-        //pc98.OutPort(0x5f, r.al);
+        //pc98.outPort(0x5f, r.al);
         //r.al |= 0x10;
-        //pc98.OutPort(r.dx, r.al);
+        //pc98.outPort(r.dx, r.al);
 
         //pw.play86_flag = 0; // cs:[play86_flag]
         //pw.trans_flag = 0; // cs:[trans_flag]
@@ -1714,7 +1713,7 @@ public class PCMDRV86 {
         pw.partWk[pw.part10].partmask |= 2; // PCM Part Mask
         pw.pcmflag = 1;
         pw.pcm_effec_num = r.al;
-        pw._voice_delta_n = r.getDx();
+        pw._voice_delta_n = r.getDx() & 0xffff;
         pw._pcm_volume = r.cl;
         pw._pcmpan = r.ch;
 
