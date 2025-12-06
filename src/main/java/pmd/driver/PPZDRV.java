@@ -26,8 +26,14 @@ public class PPZDRV {
     private int bank = 0;
     private int ptr = 0;
 
+    private final Supplier<Object> mp1z_ = this::mp1z;
+    private final Supplier<Object> mnp_ret_;
+    private final Supplier<Object> porta_returnz_ = this::porta_returnz;
+    private final Supplier<Object> _ppzmnp_1 = this::ppzmnp_1;
+
     public PPZDRV(PMD pmd, PW pw, X86Register r, Pc98 pc98, Function<ChipDatum, Integer> ppz8em, byte[][] pcmData) {
         this.pmd = pmd;
+        mnp_ret_ = pmd::mnp_ret;
         this.pw = pw;
         this.r = r;
         this.pc98 = pc98;
@@ -108,9 +114,6 @@ mp2z: // ↑
 
                 // ELSE COMMANDS
                 Object o = commandsz();
-                Supplier<Object> mp1z_ = this::mp1z;
-                Supplier<Object> mnp_ret_ = pmd::mnp_ret;
-                Supplier<Object> porta_returnz_ = this::porta_returnz;
                 while (o != null && o != mp1z_) {
                     o = ((Supplier<Object>) o).get();
                     if (o == mnp_ret_)
@@ -259,11 +262,9 @@ mp2z: // ↑
                 if ((r.al & 0xff) < 0x80) return this::ppzmnp_3;
 
                 Object o = commandsz();
-                Supplier<Object> _ppzmnp_1 = this::ppzmnp_1;
-                Supplier<Object> _mnp_ret = pmd::mnp_ret;
                 while (o != null && o != _ppzmnp_1) {
                     o = ((Supplier<Object>) o).get();
-                    if (o == _mnp_ret)
+                    if (o == mnp_ret_)
                         return pmd::mnp_ret;
                 }
             } while (true);
@@ -415,7 +416,7 @@ mp2z: // ↑
             r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
             r.addSi((short) 2);
             if (r.getAx() != 0) { // break no_init_ppz;
-                r.andAx((short) pw.mmlbuf);
+                r.addAx((short) pw.mmlbuf);
                 pw.partWk[r.di & 0xffff].address = r.getAx();
 
                 pw.partWk[r.di & 0xffff].leng = 1; // Play begins in 1 count
@@ -432,7 +433,7 @@ mp2z: // ↑
 //no_init_ppz:
             r.di++; // type qq
             r.decCx();
-        } while (r.getCx() == 0); // break ppz_ex_loop;
+        } while (r.getCx() != 0); // break ppz_ex_loop;
 //ppzext_exit:
         r.di = r.stack.pop();
         return null;
@@ -550,7 +551,7 @@ pmpz_ret: // ↑
         r.addDx(r.getDx());
         r.addDx(r.getDx());
         r.addDx(r.getCx()); // x 12h
-        ptr += r.getDx();
+        ptr += r.getDx() & 0xffff;
     }
 
     /**
@@ -904,7 +905,7 @@ zv_out: // ↑
             r.al = pw.partb;
             r.dl = pw.partWk[r.di & 0xffff].voicenum;
             r.dh = r.dl;
-            r.addDx((short) 0x807f); // dx=voicenum
+            r.andDx((short) 0x807f); // dx=voicenum
             ChipDatum cd = new ChipDatum(0x01, r.al & 0xff, r.getDx() & 0xffff);
             ppz8em.apply(cd); // .PlayPCM(r.al, r.dx); // ppz keyon
         }
@@ -953,7 +954,7 @@ zv_out: // ↑
             a += a;
             a += a; // x16
             r.carry = (r.getCx() & 0xffff) + (a & 0xffff) > 0xffff;
-            r.andCx((short) a);
+            r.addCx((short) a);
             r.addBx((short) ((a >>> 16) + (r.carry ? 1 : 0)));
         }
 //odz_not_porta:

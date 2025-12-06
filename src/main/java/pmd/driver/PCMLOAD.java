@@ -48,7 +48,7 @@ public class PCMLOAD {
 
     private byte[] getPCMDataFromFile(String fnPcm) {
         try (Stream pd = appendFileReaderCallback != null ? appendFileReaderCallback.apply(fnPcm) : null) {
-            return ReadAllBytes(pd);
+            return readAllBytes(pd);
         } catch (Exception e) {
             return null;
         }
@@ -57,7 +57,7 @@ public class PCMLOAD {
     /**
      * Read binary from a stream in bulk
      */
-    private byte[] ReadAllBytes(Stream stream) {
+    private byte[] readAllBytes(Stream stream) {
         if (stream == null) return null;
 
         var buf = new byte[8192];
@@ -146,7 +146,7 @@ public class PCMLOAD {
         else if (ext.equals(".PVI")) r.ch = 0;
 
         r.carry = (pw.ppz_bank & 1) != 0;
-        pw.ppz_bank >>>= 1;
+        pw.ppz_bank = (byte) ((pw.ppz_bank & 0xff) >>> 1);
         if (r.carry) { // break p8_load_skip; // load skip
 
             // PVI/PZI Import
@@ -226,7 +226,7 @@ public class PCMLOAD {
         r.setDx((short) 0); // offset ppzbank_mes
         //ppz_error_main2(String.format(pw.ppzbank_mes, r.al));
         r.setDx(r.stack.pop());
-        ppz_error_main2(String.format(pw.ppzbank_mes, r.al & 0xff) + msg);
+        ppz_error_main2(String.format(pw.ppzbank_mes, (char) (r.al & 0xff)) + msg);
     }
 
     private void ppz_error_main2(String msg) {
@@ -928,7 +928,7 @@ public class PCMLOAD {
 //o4600x:
         do {
             r.al = pc98.inPort(r.getDx() & 0xffff);
-        } while ((r.al & 0x80) == 0); // break o4600x;
+        } while ((r.al & 0x80) != 0); // break o4600x;
         r.al = 8; // PCMDAT reg.
         pc98.outPort(r.getDx(), r.al);
         r.stack.push(r.getCx());
@@ -958,8 +958,8 @@ public class PCMLOAD {
             r.setBx(r.getDx());
             r.setDx(b);
 
-            r.incCx();
-        } while (r.getCx() == 0); // break fast_store_loop;
+            r.decCx();
+        } while (r.getCx() != 0); // break fast_store_loop;
 
         sti_sub();
 
@@ -1021,7 +1021,7 @@ public class PCMLOAD {
         do {
             r.al = pc98.inPort(r.getDx() & 0xffff);
             r.al |= r.al;
-        } while ((r.al & 0x80) == 0); // break o4600;
+        } while ((r.al & 0x80) != 0); // break o4600;
         r.al = r.bh;
         //cli
         pc98.outPort(r.getDx(), r.al);

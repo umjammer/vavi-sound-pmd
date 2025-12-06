@@ -33,7 +33,7 @@ public class Pc98 {
             return 0;
         } else if (v == 0x18a) { // FM sound data loading
             if ((fm1_reg & 0xff) < 0x10) {
-                return psgDat[(fm1_reg & 0xff)];
+                return psgDat[fm1_reg & 0xff];
             }
             return 0;
         } else if (v == 0x18c) { // Read FM sound source status flag(extension)
@@ -46,11 +46,11 @@ public class Pc98 {
     }
 
     public void outPort(short dx, byte al) {
-        if (dx == 0x02) {
+        if ((dx & 0xffff) == 0x02) {
 
-        } else if (dx == 0x188) {
+        } else if ((dx & 0xffff) == 0x188) {
             fm1_reg = al;
-        } else if (dx == 0x18a) {
+        } else if ((dx & 0xffff) == 0x18a) {
             cd.port = 0;
             cd.address = fm1_reg;
             cd.data = al & 0xff;
@@ -60,9 +60,9 @@ public class Pc98 {
                 psgDat[fm1_reg & 0xff] = al;
             }
             writeOPNARegister.accept(cd);
-        } else if (dx == 0x18c) {
+        } else if ((dx & 0xffff) == 0x18c) {
             fm2_reg = al;
-        } else if (dx == 0x18e) {
+        } else if ((dx & 0xffff) == 0x18e) {
             cd.port = 1;
             cd.address = fm2_reg;
             cd.data = al & 0xff;

@@ -38,7 +38,7 @@ public class X86Register {
 
     // >>=
     public void srAx(int value) {
-        setAx((short) (getAx() >>> value));
+        setAx((short) ((getAx() & 0xffff) >>> value));
     }
 
     // |=
@@ -86,7 +86,7 @@ public class X86Register {
 
     // >>=
     public void srBx(int value) {
-        setBx((short) (getBx() >>> value));
+        setBx((short) ((getBx() & 0xffff) >>> value));
     }
 
     // <<=
@@ -162,9 +162,13 @@ public class X86Register {
         subDx((short) 1);
     }
 
+    public void andDx(short value) {
+        setDx((short) (getDx() & value));
+    }
+
     // >>=
     public void srDx(int value) {
-        setDx((short) (getDx() >>> value));
+        setDx((short) ((getDx() & 0xffff) >>> value));
     }
 
     short di;

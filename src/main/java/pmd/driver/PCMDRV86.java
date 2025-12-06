@@ -18,8 +18,13 @@ public class PCMDRV86 {
     private Runnable[] trans_table;
     private final byte[][] pcmData;
 
+    private final Supplier<Object> mp1m = this::mp1m;
+    private final Supplier<Object> pcmmnp_1 = this::pcmmnp_1;
+    private final Supplier<Object> mnp_ret;
+
     public PCMDRV86(PMD pmd, PW pw, X86Register r, Pc98 pc98, Function<ChipDatum, Integer> p86drv, byte[][] pcmData) {
         this.pmd = pmd;
+        this.mnp_ret = pmd::mnp_ret;
         this.pw = pw;
         this.r = r;
         this.pc98 = pc98;
@@ -32,7 +37,7 @@ public class PCMDRV86 {
     /**
      * PCM sound source performance main (86B PCM)
      */
-    //pcmmain_ret:
+//pcmmain_ret:
     // ret
     public void pcmmain() {
         r.setSi(pw.partWk[r.di & 0xffff].address); // si = PART DATA ADDRESS
@@ -89,11 +94,9 @@ public class PCMDRV86 {
 
             // ELSE COMMANDS
             Object o = commandsm();
-            Supplier<Object> mp1m_ = this::mp1m;
-            Supplier<Object> mnp_ret_ = pmd::mnp_ret;
-            while (o != null && o != mp1m_) {
+            while (o != null && o != mp1m) {
                 o = ((Supplier<Object>) o).get();
-                if (o == mnp_ret_)
+                if (o == mnp_ret)
                     return pmd::mnp_ret;
                 //if ((Supplier<Object>)o == porta_returnm)
                 //return porta_returnm;
@@ -251,11 +254,9 @@ public class PCMDRV86 {
                 if ((r.al & 0xff) < 0x80) return pmd::fmmnp_3;
 
                 Object o = commandsm();
-                Supplier<Object> _pcmmnp_1 = this::pcmmnp_1;
-                Supplier<Object> _mnp_ret = pmd::mnp_ret;
-                while (o != null && o != _pcmmnp_1) {
+                while (o != null && o != pcmmnp_1) {
                     o = ((Supplier<Object>) o).get();
-                    if (o == _mnp_ret)
+                    if (o == mnp_ret)
                         return pmd::mnp_ret;
                 }
             } while (true);
@@ -937,7 +938,7 @@ public class PCMDRV86 {
             }
         } else {
 //pcm_normal_set:
-            r.al >>>= 4;
+            r.al= (byte) ((r.al & 0xff) >>> 4);
         }
 //pcm_vol_set:
         ChipDatum cd = new ChipDatum(4, 0, r.al & 0xff);
@@ -1081,7 +1082,7 @@ public class PCMDRV86 {
         pw.addsize1 = r.bl;
         //pw.addsize1 &= 0x1f;
         //logger.log(Level.TRACE, "%x  %x".formatted(pw.addsize1, pw.addsize2));
-        ChipDatum cd = new ChipDatum(5, pw.addsize1 & 0xff, pw.addsize2 & 0xff);
+        ChipDatum cd = new ChipDatum(5, pw.addsize1 & 0xff, pw.addsize2 & 0xffff);
         p86drv.apply(cd);
 
         //r.carry = false;
@@ -1128,9 +1129,9 @@ public class PCMDRV86 {
         pw.partWk[r.di & 0xffff].onkai = r.al;
 
         r.al &= (byte) 0xf0;
-        r.al >>>= 1;
+        r.al = (byte) ((r.al & 0xff) >>> 1);
         r.bl = r.al; // bl = octave * 8
-        r.al >>>= 1; // al = octave * 4
+        r.al = (byte) ((r.al & 0xff) >>> 1); // al = octave * 4
         r.bl += r.al;
 
         r.bl += r.ah; // bl = octave * 12 + Scale
@@ -1420,7 +1421,7 @@ public class PCMDRV86 {
      *  cy=1 ... Transfer end
      */
     private void add_address() {
-        pw.addsizew += r.getBx(); // bx=addsize2
+        pw.addsizew += (r.getBx() & 0xffff); // bx=addsize2
         //pushf
         r.al = r.ah;
         r.ah = 0; // ax=addsize1
@@ -1440,8 +1441,8 @@ public class PCMDRV86 {
         }
 //not_add_ofs2:
         //popf
-        boolean c = (r.di - (short) ((r.getAx() & 0xffff) + (r.carry ? 1 : 0))) < 0;
-        r.di -= (short) ((r.getAx() & 0xffff) + (r.carry ? 1 : 0)); // Subtract size according to addsize
+        boolean c = ((r.di & 0xffff) - ((r.getAx() & 0xffff) + (r.carry ? 1 : 0))) < 0;
+        r.di = (short) ((r.di & 0xffff) - ((r.getAx() & 0xffff) + (r.carry ? 1 : 0))); // Subtract size according to addsize
         r.ah = r.al; // Revert to ah=addsize1
         if (!c) { // break addadd_sizeseg;
             if (r.di != 0) { // break addadd_justcheck;

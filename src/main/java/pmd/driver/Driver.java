@@ -224,7 +224,7 @@ getmemo_errret:
     }
 
     private static String getNRDString(/* ref */ short[] index) {
-        if (srcBuf == null || srcBuf.length < 1 || index[0] < 0 || index[0] >= srcBuf.length) return "";
+        if (srcBuf == null || srcBuf.length < 1 || (index[0] & 0xffff) >= srcBuf.length) return "";
 
         try {
             List<Byte> lst = new ArrayList<>();
@@ -457,7 +457,7 @@ getmemo_errret:
         if (buf == null) return "";
         if (buf.length < 3) return "";
 
-        String head = "%c%c%c".formatted((char) buf[0], (char) buf[1], (char) buf[2]);
+        String head = "%c%c%c".formatted((char) (buf[0] & 0xff), (char) (buf[1] & 0xff), (char) (buf[2] & 0xff));
         return head;
     }
 

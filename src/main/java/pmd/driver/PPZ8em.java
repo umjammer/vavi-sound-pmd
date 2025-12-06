@@ -277,8 +277,8 @@ public class PPZ8em {
         logger.log(Level.TRACE, "ppz8em: SetPan: %d".formatted(dx));
 
         chWk[al].pan = dx;
-        chWk[al].panL = ((chWk[al].pan & 0xffff) < 6 ? 1.0 : (0.25 * (9 - chWk[al].pan)));
-        chWk[al].panR = ((chWk[al].pan & 0xffff) > 4 ? 1.0 : (0.25 * chWk[al].pan));
+        chWk[al].panL = ((chWk[al].pan & 0xffff) < 6 ? 1.0 : (0.25 * (9 - (chWk[al].pan & 0xffff))));
+        chWk[al].panR = ((chWk[al].pan & 0xffff) > 4 ? 1.0 : (0.25 * (chWk[al].pan & 0xffff)));
     }
 
     /**
@@ -290,7 +290,7 @@ public class PPZ8em {
     public void setSrcFrequency(byte al, short dx) {
         logger.log(Level.TRACE, "ppz8em: SetSrcFrequency: %d".formatted(dx));
 
-        chWk[al]._srcFrequency = dx;
+        chWk[al]._srcFrequency = dx & 0xffff;
     }
 
     /**
@@ -369,7 +369,7 @@ public class PPZ8em {
             int n = chWk[i].ptr >= pcmData[chWk[i].bank].length ? 0x80 : pcmData[chWk[i].bank][chWk[i].ptr] & 0xff;
             l += (int) (VolumeTable[chWk[i].volume][n] * chWk[i].panL);
             r += (int) (VolumeTable[chWk[i].volume][n] * chWk[i].panR);
-            chWk[i].delta += ((long) chWk[i].srcFrequency * (long) chWk[i].frequency / (long) 0x8000) / samplingRate;
+            chWk[i].delta += ((long) chWk[i].srcFrequency * ((long) chWk[i].frequency & 0xffff_ffffL) / (long) 0x8000) / samplingRate;
             chWk[i].ptr += (int) chWk[i].delta;
             chWk[i].delta -= (int) chWk[i].delta;
 

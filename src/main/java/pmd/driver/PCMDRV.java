@@ -21,8 +21,14 @@ public class PCMDRV {
     private final Pc98 pc98;
     private final PPZDRV ppzdrv;
 
+    private final Supplier<Object> mp1m_ = this::mp1m;
+    private final Supplier<Object> _mnp_ret;
+    private final Supplier<Object> _porta_returnm = this::porta_returnm;
+    private final Supplier<Object> _pcmmnp_1 = this::pcmmnp_1;
+
     public PCMDRV(PMD pmd, PW pw, X86Register r, Pc98 pc98, PPZDRV ppzdrv) {
         this.pmd = pmd;
+        _mnp_ret = pmd::mnp_ret;
         this.pw = pw;
         this.r = r;
         this.pc98 = pc98;
@@ -34,7 +40,7 @@ public class PCMDRV {
     /**
      * PCM sound source performance main
      */
-    //pcmmain_ret:
+//pcmmain_ret:
     // ret
     public void pcmmain() {
         r.setSi(pw.partWk[r.di & 0xffff].address); // si = PART DATA ADDRESS
@@ -43,17 +49,17 @@ public class PCMDRV {
 
         //if (r.si == pw.jumpIndex) pw.jumpIndex = -1; // KUMA:Added
 
-//        Supplier<Object> ret = null;
-//        if (pw.partWk[r.di & 0xffff].partmask != 0)
-//            ret = this::pcmmain_nonplay;
-//        else
-//            ret = this::pcmmain_c_1;
-//
-//        if (ret != null) {
-//            do {
-//                ret = (Supplier<Object>) ret.get();
-//            } while (ret != null);
-//        }
+        Supplier<Object> ret = null;
+        if (pw.partWk[r.di & 0xffff].partmask != 0)
+            ret = this::pcmmain_nonplay;
+        else
+            ret = this::pcmmain_c_1;
+
+        if (ret != null) {
+            do {
+                ret = (Supplier<Object>) ret.get();
+            } while (ret != null);
+        }
     }
 
     private Supplier<Object> pcmmain_c_1() {
@@ -93,9 +99,6 @@ public class PCMDRV {
 
             // ELSE COMMANDS
             Object o = commandsm();
-            Supplier<Object> mp1m_ = this::mp1m;
-            Supplier<Object> _mnp_ret = pmd::mnp_ret;
-            Supplier<Object> _porta_returnm = this::porta_returnm;
             while (o != null && o != mp1m_) {
                 o = ((Supplier<Object>) o).get();
                 if (o == _mnp_ret)
@@ -252,8 +255,6 @@ public class PCMDRV {
                 if ((r.al & 0xff) < 0x80) return pmd::fmmnp_3;
 
                 Object o = commandsm();
-                Supplier<Object> _pcmmnp_1 = this::pcmmnp_1;
-                Supplier<Object> _mnp_ret = pmd::mnp_ret;
                 while (o != null && o != _pcmmnp_1) {
                     o = ((Supplier<Object>) o).get();
                     if (o == _mnp_ret)

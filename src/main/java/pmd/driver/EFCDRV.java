@@ -220,7 +220,7 @@ public class EFCDRV {
 
         r.al = (byte) (pw.crtEfcDat[r.incSi() & 0xffff].dat & 0xff);
 
-        r.setAx((short) (r.al & 0xff)); //    cbw
+        r.setAx(r.al); //    cbw
         pw.eswtst = r.getAx(); // Sweep increment (TONE)
         r.al = (byte) (pw.crtEfcDat[r.incSi() & 0xffff].dat & 0xff);
         pw.eswnst = r.al; // Sweep Increment (NOISE)
@@ -290,10 +290,10 @@ public class EFCDRV {
         r.al = r.dl;
         r.al &= 15;
         pw.eswnct = r.al;
-        r.dl >>>= 1;
-        r.dl >>>= 1;
-        r.dl >>>= 1;
-        r.dl >>>= 1;
+        r.dl = (byte) ((r.dl & 0xff) >>> 1);
+        r.dl = (byte) ((r.dl & 0xff) >>> 1);
+        r.dl = (byte) ((r.dl & 0xff) >>> 1);
+        r.dl = (byte) ((r.dl & 0xff) >>> 1);
         pw.eswnhz += r.dl;
         r.dl = pw.eswnhz;
         r.dh = 6;
