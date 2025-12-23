@@ -1379,7 +1379,7 @@ pd03: // ↑
                 r.stack.push(r.getAx());
                 r.al = pw.partWk[r.di & 0xffff].leng;
                 r.setAx((short) ((r.al & 0xff) * (pw.partWk[r.di & 0xffff].qdatb & 0xff)));
-                r.dl += r.ah;
+                r.dl = (byte) ((r.dl & 0xff) + (r.ah & 0xff));
                 r.setAx(r.stack.pop());
             }
 //cq_set:
@@ -5419,8 +5419,8 @@ reloop: // ↑
 
         r.bl = r.al;
         r.bl &= 0xf;
-        r.al &= 0xf0;
-        r.al = (byte) ((r.al & 0xff) >>> 4);; // KUMA: Actually, it's ror x4
+        r.al &= (byte) 0xf0;
+        r.al = (byte) ((r.al & 0xff) >>> 4); // KUMA: Actually, it's ror x4
         r.bh = r.al; // bh=OCT bl = ONKAI
 
         if ((r.dl & 0x80) != 0) { // break shiftplus;
@@ -5430,7 +5430,7 @@ reloop: // ↑
             //
 //shiftminus:
             r.carry = false;
-            if ((r.bl & 0xff) + (r.dl & 0xff) > 0xff) r.carry = true;
+            if (((r.bl & 0xff) + (r.dl & 0xff)) > 0xff) r.carry = true;
             r.bl += r.dl;
             if (!r.carry) { // break sfm2;
 
@@ -5438,13 +5438,13 @@ reloop: // ↑
                 do {
                     r.bh--;
                     r.carry = false;
-                    if ((r.bl & 0xff) + 12 > 0xff) r.carry = true;
+                    if (((r.bl & 0xff) + 12) > 0xff) r.carry = true;
                     r.bl += 12;
                 } while (!r.carry);
             }
 //sfm2:
             r.al = r.bh;
-            r.al = (byte) (((r.al & 0xff) >> 4) | ((r.al << 4) & 0xff)); // ror x4
+            r.al = (byte) (((r.al & 0xff) >>> 4) | ((r.al & 0xff) << 4)); // ror x4
             r.al |= r.bl;
             return;
         }
@@ -5462,7 +5462,7 @@ reloop: // ↑
         } while (true);
 //spm2:
         r.al = r.bh;
-        r.al = (byte) (((r.al & 0xff) >> 4) | ((r.al & 0xff) << 4)); // ror x4
+        r.al = (byte) (((r.al & 0xff) >>> 4) | ((r.al & 0xff) << 4)); // ror x4
         r.al |= r.bl;
 
 //osret: ret

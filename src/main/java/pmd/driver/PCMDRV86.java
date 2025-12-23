@@ -44,17 +44,17 @@ public class PCMDRV86 {
         if (r.getSi() == 0)
             return;
 
-//        Supplier<Object> ret = null;
-//        if (pw.partWk[r.di & 0xffff].partmask != 0)
-//            ret = this::pcmmain_nonplay;
-//        else
-//            ret = this::pcmmain_c_1;
-//
-//        if (ret != null) {
-//            do {
-//                ret = (Supplier<Object>) ret.get();
-//            } while (ret != null);
-//        }
+        Supplier<Object> ret = null;
+        if (pw.partWk[r.di & 0xffff].partmask != 0)
+            ret = this::pcmmain_nonplay;
+        else
+            ret = this::pcmmain_c_1;
+
+        if (ret != null) {
+            do {
+                ret = (Supplier<Object>) ret.get();
+            } while (ret != null);
+        }
     }
 
     private Supplier<Object> pcmmain_c_1() {
@@ -1177,7 +1177,7 @@ public class PCMDRV86 {
 //i5_trans:
             r.stack.push(r.getBx());
             r.stack.push(r.getCx());
-            r.stack.push((short) (r.sign ? 1 : 0));
+            r.stack.push(r.getSi());
             r.stack.push(r.di);
             r.stack.push(r.bp);
 

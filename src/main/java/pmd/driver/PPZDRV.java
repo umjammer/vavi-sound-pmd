@@ -59,20 +59,20 @@ public class PPZDRV {
             return; // break pcmmain_ret;
 
         //if (r.si == pw.jumpIndex)
-        //pw.jumpIndex = -1; // KUMA:Added
+        //    pw.jumpIndex = -1; // KUMA:Added
         //logger.log(Level.TRACE, "%d", r.si);
 
-//        Supplier<Object> ret = null;
-//        if (pw.partWk[r.di & 0xffff].partmask != 0)
-//            ret = this::ppzmain_nonplay;
-//        else
-//            ret = this::ppzmain_c_1;
-//
-//        if (ret != null) {
-//            do {
-//                ret = (Supplier<Object>) ret.get();
-//            } while (ret != null);
-//        }
+        Supplier<Object> ret;
+        if (pw.partWk[r.di & 0xffff].partmask != 0)
+            ret = this::ppzmain_nonplay;
+        else
+            ret = this::ppzmain_c_1;
+
+        if (ret != null) {
+            do {
+                ret = (Supplier<Object>) ret.get();
+            } while (ret != null);
+        }
     }
 
     private Supplier<Object> ppzmain_c_1() {
@@ -1043,7 +1043,7 @@ zv_out: // ↑
                 do {
                     r.carry = (r.getAx() & 0xffff) + (r.getAx() & 0xffff) > 0xffff;
                     r.addAx(r.getAx());
-                    r.setDx((short) ((r.getDx() & 0xffff) + (r.carry ? 1 : 0)));
+                    r.setDx((short) ((r.getDx() & 0xffff) + (r.getDx() & 0xffff) + (r.carry ? 1 : 0)));
                     r.decCx();
                 } while (r.getCx() != 0); // break ppz_over_o5_loop;
             }

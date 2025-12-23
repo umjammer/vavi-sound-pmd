@@ -21,7 +21,7 @@ public class EFCDRV {
     }
 
     public void effgo() {
-        if (pw.ppsdrv_flag != 0) { //break effgo2;
+        if (pw.ppsdrv_flag != 0) { // break effgo2;
             r.al |= (byte) 0x80;
             r.zero = pw.last_shot_data == r.al;
             pw.last_shot_data = r.al;
