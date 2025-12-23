@@ -52,7 +52,7 @@ public class Pc98 {
             fm1_reg = al;
         } else if ((dx & 0xffff) == 0x18a) {
             cd.port = 0;
-            cd.address = fm1_reg;
+            cd.address = fm1_reg & 0xff;
             cd.data = al & 0xff;
             //cd.additionalData = pw.cmd;
 
@@ -64,7 +64,7 @@ public class Pc98 {
             fm2_reg = al;
         } else if ((dx & 0xffff) == 0x18e) {
             cd.port = 1;
-            cd.address = fm2_reg;
+            cd.address = fm2_reg & 0xff;
             cd.data = al & 0xff;
             //cd.additionalData = pw.cmd;
             writeOPNARegister.accept(cd);
