@@ -95,7 +95,7 @@ public class PPZDRV {
 
     private Supplier<Object> mp1z0() {
         pw.partWk[r.di & 0xffff].lfoswi &= (byte) 0xf7; // Porta off
-        return this::mp1z;
+        return mp1z_;
     }
 
     private Supplier<Object> mp1z() // DATA READ
@@ -117,9 +117,9 @@ mp2z: // ↑
                 while (o != null && o != mp1z_) {
                     o = ((Supplier<Object>) o).get();
                     if (o == mnp_ret_)
-                        return pmd::mnp_ret;
+                        return mnp_ret_;
                     if (o == porta_returnz_)
-                        return this::porta_returnz;
+                        return porta_returnz_;
                 }
             } while (true);
 
@@ -138,7 +138,7 @@ mp2z: // ↑
             r.setSi(r.getBx());
             pw.partWk[r.di & 0xffff].loopcheck = 1;
             pw.partWk[r.di & 0xffff].loopCounter++;
-            return this::mp1z;
+            return mp1z_;
         }
 //mp2z:
         // F - NUMBER SET
@@ -154,7 +154,7 @@ mp2z: // ↑
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         pw.partWk[r.di & 0xffff].leng = r.al;
         pmd.calc_q();
-        return this::porta_returnz;
+        return porta_returnz_;
     }
 
     private Supplier<Object> porta_returnz() {
@@ -181,9 +181,9 @@ mp2z: // ↑
         pw.volpush_flag = r.al;
         pw.partWk[r.di & 0xffff].keyoff_flag = r.al;
         if (pw.md[r.getSi() & 0xffff].dat != 0xfb) // If there is an '&' immediately after, keyoff will not occur.
-            return pmd::mnp_ret;
+            return mnp_ret_;
         pw.partWk[r.di & 0xffff].keyoff_flag = 2;
-        return pmd::mnp_ret;
+        return mnp_ret_;
     }
 
     private Supplier<Object> mpexitz() {
@@ -234,12 +234,12 @@ mp2z: // ↑
         if (!r.carry) { // break volsz2;
             if ((pw.lfo_switch & 0x22) == 0) { // break volsz2;
                 if (pw.fadeout_speed == 0)
-                    return pmd::mnp_ret;
+                    return mnp_ret_;
             }
         }
 //volsz2:
         volsetz();
-        return pmd::mnp_ret;
+        return mnp_ret_;
     }
 
     /**
@@ -248,9 +248,9 @@ mp2z: // ↑
     private Supplier<Object> ppzmain_nonplay() {
         pw.partWk[r.di & 0xffff].keyoff_flag = (byte) 0xff; // -1
         pw.partWk[r.di & 0xffff].leng--;
-        if (pw.partWk[r.di & 0xffff].leng != 0) return pmd::mnp_ret;
+        if (pw.partWk[r.di & 0xffff].leng != 0) return mnp_ret_;
 
-        return this::ppzmnp_1;
+        return _ppzmnp_1;
     }
 
     private Supplier<Object> ppzmnp_1() {
@@ -265,7 +265,7 @@ mp2z: // ↑
                 while (o != null && o != _ppzmnp_1) {
                     o = ((Supplier<Object>) o).get();
                     if (o == mnp_ret_)
-                        return pmd::mnp_ret;
+                        return mnp_ret_;
                 }
             } while (true);
 
@@ -469,16 +469,16 @@ pmpz_ret: // ↑
             }
 //pmpz_ret:
             //r.ax = r.stack.pop(); // commandsm
-            return this::ppzmnp_1;
+            return _ppzmnp_1;
         }
 //ppz_part_maskoff_ret:
         pw.partWk[r.di & 0xffff].partmask &= (byte) 0xbf;
         if (pw.partWk[r.di & 0xffff].partmask != 0) {
 //            break pmpz_ret;
-            return this::ppzmnp_1;
+            return _ppzmnp_1;
         }
         //r.ax = r.stack.pop(); // commandsm
-        return this::mp1z; // restore the part
+        return mp1z_; // restore the part
     }
 
     /**
@@ -617,7 +617,7 @@ pmpz_ret: // ↑
         pw.partWk[r.di & 0xffff].porta_num2 = r.getAx(); // quotient
         pw.partWk[r.di & 0xffff].porta_num3 = r.getDx(); // remainder
         pw.partWk[r.di & 0xffff].lfoswi |= 8; // Porta ON
-        return this::porta_returnz;
+        return porta_returnz_;
     }
 
     /**
@@ -695,7 +695,7 @@ pmpz_ret: // ↑
                     pw.partWk[r.getBx() & 0xffff].partmask &= (byte) 0xef; // Mask off
                     if (pw.partWk[r.getBx() & 0xffff].partmask == 0) { // break cAtz_emuoff;
                         //r.bx = r.stack.pop();
-                        ret = this::mp1z; // Part revival preparation
+                        ret = mp1z_; // Part revival preparation
                         //r.stack.push(r.bx);
                     }
 //cAtz_emuoff:

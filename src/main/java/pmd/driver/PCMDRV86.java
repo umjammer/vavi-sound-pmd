@@ -78,7 +78,7 @@ public class PCMDRV86 {
     }
 
     private Supplier<Object> mp1m0() {
-        return this::mp1m;
+        return mp1m;
     }
 
     private Supplier<Object> mp1m() { // DATA READ
@@ -97,7 +97,7 @@ public class PCMDRV86 {
             while (o != null && o != mp1m) {
                 o = ((Supplier<Object>) o).get();
                 if (o == mnp_ret)
-                    return pmd::mnp_ret;
+                    return mnp_ret;
                 //if ((Supplier<Object>)o == porta_returnm)
                 //return porta_returnm;
             }
@@ -120,7 +120,7 @@ public class PCMDRV86 {
 
             pw.partWk[r.di & 0xffff].loopcheck = 1;
             pw.partWk[r.di & 0xffff].loopCounter++;
-            return this::mp1m;
+            return mp1m;
         }
 //mp2m:
         // F - NUMBER SET
@@ -157,9 +157,9 @@ public class PCMDRV86 {
         pw.volpush_flag = r.al;
         pw.partWk[r.di & 0xffff].keyoff_flag = r.al;
         if (pw.md[r.getSi() & 0xffff].dat != 0xfb) // If there is an '&' immediately after, keyoff will not occur.
-            return pmd::mnp_ret;
+            return mnp_ret;
         pw.partWk[r.di & 0xffff].keyoff_flag = 2;
-        return pmd::mnp_ret;
+        return mnp_ret;
     }
 
     private Supplier<Object> mpexitm() {
@@ -199,23 +199,23 @@ public class PCMDRV86 {
                 if ((pw.lfo_switch & 0x22) == 0) { // break volsm2;
 //volsm1:
                     if (pw.fadeout_speed == 0)
-                        return pmd::mnp_ret;
+                        return mnp_ret;
                 }
             }
 //volsm2:
             volsetm();
-            return pmd::mnp_ret;
+            return mnp_ret;
         }
 //not_lfo3m:
         pmd.soft_env();
         if (!r.carry)  { // break volsm2;
 //        break volsm1; // <<
             if (pw.fadeout_speed == 0) // <<
-                return pmd::mnp_ret; // <<
+                return mnp_ret; // <<
         }
 //volsm2: // <<
         volsetm(); // <<
-        return pmd::mnp_ret; // <<
+        return mnp_ret; // <<
     }
 
     /**
@@ -223,18 +223,18 @@ public class PCMDRV86 {
      */
     private Supplier<Object> pcmmain_nonplay() {
         pw.partWk[r.di & 0xffff].leng--;
-        if (pw.partWk[r.di & 0xffff].leng != 0) return pmd::mnp_ret;
+        if (pw.partWk[r.di & 0xffff].leng != 0) return mnp_ret;
 
         if ((pw.partWk[r.di & 0xffff].partmask & 2) == 0) // Check bit1 (pcm sound effect?)
-            return this::pcmmnp_1;
+            return pcmmnp_1;
 
         if (pw.play86_flag == 1)
-            return this::pcmmnp_1; // The interrupt PCM is still ringing
+            return pcmmnp_1; // The interrupt PCM is still ringing
         pw.pcmflag = 0; // PCM sound effect end
         pw.pcm_effec_num = (byte) 255;
         pw.partWk[r.di & 0xffff].partmask &= 0xfd; // clear bit1
         if (pw.partWk[r.di & 0xffff].partmask != 0)
-            return this::pcmmnp_1;
+            return pcmmnp_1;
 
         r.al = pw.partWk[r.di & 0xffff].voicenum;
         neiro_set();
@@ -257,7 +257,7 @@ public class PCMDRV86 {
                 while (o != null && o != pcmmnp_1) {
                     o = ((Supplier<Object>) o).get();
                     if (o == mnp_ret)
-                        return pmd::mnp_ret;
+                        return mnp_ret;
                 }
             } while (true);
 
@@ -417,16 +417,16 @@ public class PCMDRV86 {
             }
 //pmpm_ret:
             //    pop ax; commandsm
-            return this::pcmmnp_1;
+            return pcmmnp_1;
         }
 //pcm_part_maskoff_ret:
         pw.partWk[r.di & 0xffff].partmask &= (byte) 0xbf;
         if (pw.partWk[r.di & 0xffff].partmask != 0) {
 //            break pmpm_ret;
-            return this::pcmmnp_1;
+            return pcmmnp_1;
         }
         //    pop ax  ;commandsm
-        return this::mp1m; // Part-time revival
+        return mp1m; // Part-time revival
     }
 
     /**

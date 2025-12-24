@@ -1136,6 +1136,9 @@ pd03: // ↑
     // Mainly FM sound source playback
     //
 
+    private final Supplier<Object> mpexitRef = this::mpexit;
+    private final Supplier<Object> mpexitpRef = this::mpexitp;
+    private final Supplier<Object> mp10Ref = this::mp10;
     private final Supplier<Object> mp1Ref = this::mp1;
     private final Supplier<Object> mnp_retRef = this::mnp_ret;
     private final Supplier<Object> porta_returnRef = this::porta_return;
@@ -1180,13 +1183,13 @@ pd03: // ↑
         }
 //mp0:
         // LENGTH CHECK
-        if (r.al != 0) return this::mpexit;
-        return this::mp10;
+        if (r.al != 0) return mpexitRef;
+        return mp10Ref;
     }
 
     private Supplier<Object> mp10() {
         pw.partWk[r.di & 0xffff].lfoswi &= (byte) 0xf7; // Porta off
-        return this::mp1;
+        return mp1Ref;
     }
 
     private Supplier<Object> mp1() { // DATA READ
@@ -1225,13 +1228,13 @@ pd03: // ↑
                 pw.partWk[r.di & 0xffff].loopcheck = 3;
                 pw.partWk[r.di & 0xffff].onkai = (byte) 0xff; // -1
                 r.setBx(pw.partWk[r.di & 0xffff].partloop);
-                if (r.getBx() == 0) return this::mpexit;
+                if (r.getBx() == 0) return mpexitRef;
 
                 // When there was an "L"
                 r.setSi(r.getBx());
                 pw.partWk[r.di & 0xffff].loopcheck = 1;
                 pw.partWk[r.di & 0xffff].loopCounter++;
-                return this::mp1;
+                return mp1Ref;
             }
 
             // ELSE COMMANDS
@@ -1239,9 +1242,9 @@ pd03: // ↑
             while (o != null && o != mp1Ref) {
                 o = ((Supplier<Object>) o).get();
                 if (o == mnp_retRef)
-                    return this::mnp_ret;
+                    return mnp_retRef;
                 if (o == porta_returnRef)
-                    return this::porta_return;
+                    return porta_returnRef;
             }
         } while (true);
     }
@@ -1276,9 +1279,9 @@ pd03: // ↑
         pw.volpush_flag = r.al;
         pw.partWk[r.di & 0xffff].keyoff_flag = r.al;
         if (pw.md[r.getSi() & 0xffff].dat != 0xfb) // If there is an '&' immediately after, keyoff will not occur.
-            return this::mnp_ret;
+            return mnp_retRef;
         pw.partWk[r.di & 0xffff].keyoff_flag = 2;
-        return this::mnp_ret;
+        return mnp_retRef;
     }
 
     private Supplier<Object> mpexit() { // LFO & Portament & Fadeout processing to finish
@@ -1309,7 +1312,7 @@ pd03: // ↑
             if (pw.fadeout_speed != 0) {
                 volset();
             }
-            return this::mnp_ret;
+            return mnp_retRef;
         }
         r.al = r.cl;
         r.al &= 8;
@@ -1351,11 +1354,11 @@ pd03: // ↑
 //vols:
         if ((pw.lfo_switch & 0x22) == 0) {
 //nolfosw:
-            if (pw.fadeout_speed == 0) return this::mnp_ret;
+            if (pw.fadeout_speed == 0) return mnp_retRef;
         }
 //vol_set:
         volset();
-        return this::mnp_ret;
+        return mnp_retRef;
     }
 
     public Supplier<Object> mnp_ret() {
@@ -1447,15 +1450,15 @@ pd03: // ↑
     private Supplier<Object> fmmain_nonplay() {
         pw.partWk[r.di & 0xffff].keyoff_flag = (byte) 0xff; // -1
         pw.partWk[r.di & 0xffff].leng--;
-        if (pw.partWk[r.di & 0xffff].leng != 0) return this::mnp_ret;
+        if (pw.partWk[r.di & 0xffff].leng != 0) return mnp_retRef;
 
         if ((pw.partWk[r.di & 0xffff].partmask & 2) != 0) { // Check bit1 (FM sound effect?)
             if (pw.fm_effec_flag == 0) { // ; Did the sound effect end?
                 pw.partWk[r.di & 0xffff].partmask &= (byte) 0xfd; // clear bit1
-                if (pw.partWk[r.di & 0xffff].partmask == 0) return this::mp10; // If partmask is 0, restore it.
+                if (pw.partWk[r.di & 0xffff].partmask == 0) return mp10Ref; // If partmask is 0, restore it.
             }
         }
-        return this::fmmnp_1;
+        return fmmnp_1Ref;
     }
 
     private Supplier<Object> fmmnp_1() {
@@ -1469,7 +1472,7 @@ pd03: // ↑
                 Object o = commands();
                 while (o != null && o != fmmnp_1Ref) {
                     o = ((Supplier<Object>) o).get();
-                    if (o == mnp_retRef) return this::mnp_ret;
+                    if (o == mnp_retRef) return mnp_retRef;
                 }
 
             } while (true);
@@ -1514,7 +1517,7 @@ pd03: // ↑
     public Supplier<Object> fmmnp_4() {
         pw.tieflag = 0;
         pw.volpush_flag = 0;
-        return this::mnp_ret;
+        return mnp_retRef;
     }
 
     //
@@ -1561,11 +1564,11 @@ pd03: // ↑
 
     // LENGTH CHECK
     private Supplier<Object> mp0p() {
-        if (r.al != 0) return this::mpexitp;
+        if (r.al != 0) return mpexitpRef;
 
         pw.partWk[r.di & 0xffff].lfoswi &= (byte) 0xf7; // Porta off
 
-        return this::mp1p;
+        return mp1pRef;
     }
 
     // DATA READ
@@ -1578,7 +1581,7 @@ pd03: // ↑
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         if ((r.al & 0xff) < 0x80) return this::mp2p;
         if (r.al == (byte) 0x80) return this::mp15p;
-        return this::mp1cp;
+        return mp1cpRef;
     }
 
     // ELSE COMMANDS
@@ -1586,10 +1589,10 @@ pd03: // ↑
         Object o = commandsp();
         while (o != null && o != mp1cpRef && o != mp1pRef) {
             o = ((Supplier<Object>) o).get();
-            if (o == mnp_retRef) return this::mnp_ret;
+            if (o == mnp_retRef) return mnp_retRef;
         }
 
-        return this::mp1p;
+        return mp1pRef;
     }
 
     // END OF MUSIC[When there was an "L" I went back there]
@@ -1601,13 +1604,13 @@ pd03: // ↑
         pw.partWk[r.di & 0xffff].loopcheck = 3;
         pw.partWk[r.di & 0xffff].onkai = (byte) 0xff; // -1
         r.setBx(pw.partWk[r.di & 0xffff].partloop);
-        if (r.getBx() == 0) return this::mpexitp;
+        if (r.getBx() == 0) return mpexitpRef;
 
         // When there was an "L"
         r.setSi(r.getBx());
         pw.partWk[r.di & 0xffff].loopcheck = 1;
         pw.partWk[r.di & 0xffff].loopCounter++;
-        return this::mp1p;
+        return mp1pRef;
     }
 
     // TONE SET
@@ -1650,10 +1653,10 @@ pd03: // ↑
         pw.partWk[r.di & 0xffff].keyoff_flag = r.al;
         if (pw.md[r.getSi() & 0xffff].dat != 0xfb) // If there is an '&' immediately after, keyoff will not occur.
         {
-            return this::mnp_ret;
+            return mnp_retRef;
         }
         pw.partWk[r.di & 0xffff].keyoff_flag = 2;
-        return this::mnp_ret;
+        return mnp_retRef;
     }
 
     private Supplier<Object> mpexitp() {
@@ -1719,10 +1722,10 @@ pd03: // ↑
     private Supplier<Object> psgmain_nonplay() {
         pw.partWk[r.di & 0xffff].keyoff_flag = (byte) 0xff; // -1
         pw.partWk[r.di & 0xffff].leng--;
-        if (pw.partWk[r.di & 0xffff].leng != 0) return this::mnp_ret;
+        if (pw.partWk[r.di & 0xffff].leng != 0) return mnp_retRef;
 
         pw.partWk[r.di & 0xffff].lfoswi &= 0xf7; // Porta off
-        return this::psgmnp_1;
+        return psgmnp_1Ref;
     }
 
     private Supplier<Object> psgmnp_1() {
@@ -1736,16 +1739,16 @@ psgmnp_4:
 
                 if (r.al == (byte) 0xda) { // break psgmnp_3;
                     ssgdrum_check(); // Check for SSG revival only in the case of Portament?
-                    if (r.carry) return this::mp1cp; // In case of revival, proceed to the main process
+                    if (r.carry) return mp1cpRef; // In case of revival, proceed to the main process
                 }
 //psgmnp_3:
                 Object o = commandsp();
                 while (o != null && o != psgmnp_1Ref) {
                     o = ((Supplier<Object>) o).get();
                     if (o == mnp_retRef)
-                        return this::mnp_ret;
+                        return mnp_retRef;
                     if (o == porta_returnpRef)
-                        return this::porta_returnp;
+                        return porta_returnpRef;
                 }
 
             } while (true);
@@ -2984,18 +2987,18 @@ _fb_notfm3:
             }
 //fmpm_ret:
             //r.ax = r.stack.pop(); // commands
-            return this::fmmnp_1; // Move to part mask processing
+            return fmmnp_1Ref; // Move to part mask processing
         }
 //fm_mml_part_maskoff:
 
         pw.partWk[r.di & 0xffff].partmask &= (byte) 0xbf;
         if (pw.partWk[r.di & 0xffff].partmask != 0) {
 //            break fmpm_ret;
-            return this::fmmnp_1; // Move to part mask processing // <<
+            return fmmnp_1Ref; // Move to part mask processing // <<
         }
         neiro_reset(); // Resetting the tone
         //r.ax = r.stack.pop(); // commands
-        return this::mp1; // revival the part
+        return mp1Ref; // revival the part
     }
 
     private Supplier<Object> ssg_mml_part_mask() {
@@ -3019,17 +3022,17 @@ _fb_notfm3:
 //smpm_ret:
 
             //r.ax = r.stack.pop(); // commandsp
-            return this::psgmnp_1;
+            return psgmnp_1Ref;
         }
 //ssg_part_maskoff_ret:
 
         pw.partWk[r.di & 0xffff].partmask &= (byte) 0xbf;
         if (pw.partWk[r.di & 0xffff].partmask != 0) {
 //            break smpm_ret;
-            return this::psgmnp_1; // <<
+            return psgmnp_1Ref; // <<
         }
         //r.ax = r.stack.pop(); // commandsp
-        return this::mp1p; // revival the part
+        return mp1pRef; // revival the part
     }
 
     private Supplier<Object> rhythm_mml_part_mask() {
@@ -3694,8 +3697,8 @@ sm_notfm3: // ↑
             pw.partWk[r.di & 0xffff].neiromask = r.ah;
             //r.bx = r.stack.pop(); // commands
             if (pw.partWk[r.di & 0xffff].partmask == 0)
-                return this::mp1; // restore part
-            return this::fmmnp_1;
+                return mp1Ref; // restore part
+            return fmmnp_1Ref;
         }
 //sm_no_change:
         return null;
@@ -3936,7 +3939,7 @@ sm_notfm3: // ↑
             pw.partWk[r.di & 0xffff].porta_num3 = r.getDx(); // remainder
             pw.partWk[r.di & 0xffff].lfoswi |= 8; // Porta ON
             //r.ax = r.stack.pop(); // commands
-            return this::porta_return;
+            return porta_returnRef;
         }
 //porta_notset:
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat; // Skip the first note (when masked)
@@ -3986,7 +3989,7 @@ sm_notfm3: // ↑
         pw.partWk[r.di & 0xffff].porta_num3 = r.getDx(); // remainder
         pw.partWk[r.di & 0xffff].lfoswi |= 8; // Porta ON
         //r.ax = r.stack.pop(); // commandsp
-        return this::porta_returnp;
+        return porta_returnpRef;
     }
 
     /**
