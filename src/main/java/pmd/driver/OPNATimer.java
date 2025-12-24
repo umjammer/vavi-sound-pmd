@@ -62,7 +62,7 @@ public class OPNATimer {
                 break;
             case 0x25:
                 timerA &= 0x3fc;
-                timerA |= ((data & 0xff) & 3);
+                timerA |= (data & 3);
                 break;
 
             case 0x26:
