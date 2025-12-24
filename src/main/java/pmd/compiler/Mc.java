@@ -4422,8 +4422,8 @@ notend: // ↑
 //ge_no_depf:
             cy = getnum(/* out */ bx, /* out */ dl);
 
-            mml_seg.ge_depth = dl[0];
-            mml_seg.ge_depth2 = dl[0];
+            mml_seg.ge_depth = /* signed */ dl[0];
+            mml_seg.ge_depth2 = /* signed */ dl[0];
 
             ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
             if (ch != ',') return enmPass2JumpTable.olc03;
@@ -4485,7 +4485,7 @@ notend: // ↑
 
                 cy = getnum(/* out */ bx, /* out */ dl);
 
-                mml_seg.ss_depth = dl[0];
+                mml_seg.ss_depth = /* signed */ dl[0];
 
                 ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
                 if (ch == ',') { // break ss_exit;
@@ -5641,11 +5641,11 @@ sss_notfm2:
             work.al += (byte) mml_seg.ge_depth2;
             if (mml_seg.ge_dep_flag != 1) { // break gem_01;
 
-                if (work.al < -15) { // break gem_00;
+                if (/* signed */ work.al < -15) { // break gem_00;
                     work.al = (byte) (256 - 15);
                 }
 //gem_00:
-                mml_seg.ge_depth = work.al;
+                mml_seg.ge_depth = /* signed */ work.al;
                 return;
             }
         }
@@ -6726,7 +6726,7 @@ prs200: // ↑
 
         cy = getnum(/* out */ bx, /* out */ dl);
 
-        mml_seg.volss = dl[0];
+        mml_seg.volss = /* signed */ dl[0];
         work.dx = (work.dx & 0xff00) | (byte) mml_seg.nowvol;
 //#if !efc
         if (mml_seg.part == mml_seg.pcmpart) return enmPass2JumpTable.vsetm1;
@@ -7690,7 +7690,7 @@ voldown4: // ↑
                 mml_seg.bend3 = 1;
                 m_seg.m_buf.set(work.di++, new MmlDatum(work.ah & 0xff));
                 cy = getnum(/* out */ bx, /* out */ dl);
-                mml_seg.bend1 = dl[0];
+                mml_seg.bend1 = /* signed */ dl[0];
                 ch = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
                 if (ch == ',') { // break bset;
                     work.si++;

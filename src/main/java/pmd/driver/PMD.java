@@ -288,7 +288,7 @@ try {
      */
     private void fm_efcplay() {
         r.setBx((short) pw.efcdat);
-        r.setAx((short) (pw.md[(r.getBx() & 0xffff) + 254].dat + pw.md[(r.getBx() & 0xffff) + 254 + 1].dat * 0x100));
+        r.setAx((short) (pw.md[(r.getBx() + 254) & 0xffff].dat + pw.md[(r.getBx() + 254 + 1) & 0xffff].dat * 0x100));
         r.addAx(r.getBx());
         pw.prgdat_adr2 = r.getAx();
         r.di = (short) pw.part_e; // offset part_e
@@ -1390,7 +1390,7 @@ pd03: // ↑
                 r.stack.push(r.getCx());
                 r.al = pw.partWk[r.di & 0xffff].qdat3;
                 r.al &= 0x7f;
-                r.setAx(r.al); // cbw
+                r.setAx(/* signed */ r.al); // cbw
                 r.incAx();
 
                 r.stack.push(r.getDx());
@@ -1933,7 +1933,7 @@ rfin: // ↑
                 r.addAx(r.getAx());
                 r.addAx((short) pw.radtbl); // KUMA: R part address table 0x00 to maximum 0x7f can exist
                 r.setBx(r.getAx());
-                r.setAx((short) (pw.md[r.getBx() & 0xffff].dat + pw.md[(r.getBx() & 0xffff) + 1].dat * 0x100)); // mov ax,[bx]
+                r.setAx((short) (pw.md[r.getBx() & 0xffff].dat + pw.md[(r.getBx() + 1) & 0xffff].dat * 0x100)); // mov ax,[bx]
 
                 r.addAx((short) pw.mmlbuf);
                 pw.rhyadr = r.getAx() & 0xffff;
@@ -2130,7 +2130,7 @@ rolop:
     private void rshot() {
         if (pw.board2 != 0) {
 //rshot:
-            r.setDx((short) ((pw.rhydat[r.getBx() & 0xffff] & 0xff) + (pw.rhydat[(r.getBx() & 0xffff) + 1] & 0xff) * 0x100));
+            r.setDx((short) ((PW.rhydat[r.getBx() & 0xffff] & 0xff) + (PW.rhydat[(r.getBx() + 1) & 0xffff] & 0xff) * 0x100));
             byte x = r.dh;
             r.dh = r.dl;
             r.dl = x;
@@ -3911,7 +3911,7 @@ sm_notfm3: // ↑
                 r.bh = (byte) ((r.bh & 0x80) | (((r.bh & 0xff) >>> 1) & 0x7f));
                 r.bh = (byte) ((r.bh & 0x80) | (((r.bh & 0xff) >>> 1) & 0x7f));
                 r.al = r.bh;
-                r.setAx(r.al); // ax=octarb difference
+                r.setAx(/* signed */ r.al); // ax=octarb difference
                 r.setBx((short) 0x26a);
                 int ans = (r.getAx() & 0xffff) * (r.getBx() & 0xffff); // (dx) ax = 26ah * octarb difference
                 r.setDx((short) (ans >>> 16));
@@ -3929,9 +3929,9 @@ sm_notfm3: // ↑
             pw.partWk[r.di & 0xffff].leng = r.bl;
             calc_q();
             r.bh = 0;
-            int src = r.getAx() & 0xffff;
-            r.setDx((short) (src % (r.getBx() & 0xffff))); // ax=(26ah * ovtarb difference + pitch difference) / note length
-            r.setAx((short) (src / (r.getBx() & 0xffff)));
+            int src = /* signed */ r.getAx();
+            r.setDx((short) (src % /* signed */ r.getBx())); // ax=(26ah * ovtarb difference + pitch difference) / note length
+            r.setAx((short) (src / /* signed */ r.getBx()));
             pw.partWk[r.di & 0xffff].porta_num2 = r.getAx(); // quotient
             pw.partWk[r.di & 0xffff].porta_num3 = r.getDx(); // remainder
             pw.partWk[r.di & 0xffff].lfoswi |= 8; // Porta ON
@@ -3979,9 +3979,9 @@ sm_notfm3: // ↑
         pw.partWk[r.di & 0xffff].leng = r.bl;
         calc_q();
         r.bh = 0;
-        int src = r.getAx() & 0xffff;
-        r.setDx((short) (src % (r.getBx() & 0xffff))); // ax = psg_tune difference / note length
-        r.setAx((short) (src / (r.getBx() & 0xffff)));
+        int src = /* signed */ r.getAx();
+        r.setDx((short) (src % /* signed */ r.getBx())); // ax = psg_tune difference / note length
+        r.setAx((short) (src / /* signed */ r.getBx()));
         pw.partWk[r.di & 0xffff].porta_num2 = r.getAx(); // quotient
         pw.partWk[r.di & 0xffff].porta_num3 = r.getDx(); // remainder
         pw.partWk[r.di & 0xffff].lfoswi |= 8; // Porta ON
@@ -4481,13 +4481,13 @@ comAt_afset:
     public Supplier<Object> comd() {
         logger.log(Level.TRACE, "comd");
 
-        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
         r.addSi((short) 2);
         pw.partWk[r.di & 0xffff].detune = r.getAx();
 
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
-        cd.additionalData = new MmlDatum(0, MMLType.Detune, pw.cmd.linePos, pw.partWk[r.di & 0xffff].detune & 0xffff);
+        cd.additionalData = new MmlDatum(0, MMLType.Detune, pw.cmd.linePos, /* signed */ pw.partWk[r.di & 0xffff].detune);
         writeDummy(cd);
 
         return null;
@@ -4499,13 +4499,13 @@ comAt_afset:
     public Supplier<Object> comdd() {
         logger.log(Level.TRACE, "comdd");
 
-        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
         r.addSi((short) 2);
         pw.partWk[r.di & 0xffff].detune += r.getAx();
 
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
-        cd.additionalData = new MmlDatum(0, MMLType.Detune, pw.cmd.linePos, pw.partWk[r.di & 0xffff].detune & 0xffff);
+        cd.additionalData = new MmlDatum(0, MMLType.Detune, pw.cmd.linePos, /* signed */ pw.partWk[r.di & 0xffff].detune);
         writeDummy(cd);
 
         return null;
@@ -4615,9 +4615,9 @@ reloop: // ↑
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         pw.partWk[r.di & 0xffff].shift = r.al;
 
-        //For IDEs
+        // For IDEs
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
-        cd.additionalData = new MmlDatum(0, MMLType.KeyShift, pw.cmd.linePos, pw.partWk[r.di & 0xffff].shift & 0xff);
+        cd.additionalData = new MmlDatum(0, MMLType.KeyShift, pw.cmd.linePos, /* signed */ pw.partWk[r.di & 0xffff].shift);
         writeDummy(cd);
 
         return null;
@@ -4633,9 +4633,9 @@ reloop: // ↑
         r.al += pw.partWk[r.di & 0xffff].shift;
         pw.partWk[r.di & 0xffff].shift = r.al;
 
-        //For IDEs
+        // For IDEs
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
-        cd.additionalData = new MmlDatum(0, MMLType.KeyShift, pw.cmd.linePos, pw.partWk[r.di & 0xffff].shift & 0xff);
+        cd.additionalData = new MmlDatum(0, MMLType.KeyShift, pw.cmd.linePos, /* signed */ pw.partWk[r.di & 0xffff].shift);
         writeDummy(cd);
 
         return null;
@@ -5496,7 +5496,7 @@ reloop: // ↑
         r.bl &= 0xf; // bl=ONKAI
         r.bh = 0;
         //r.bx += r.bx;
-        r.setAx((short) pw.fnum_data[r.getBx() & 0xffff]);
+        r.setAx((short) PW.fnum_data[r.getBx() & 0xffff]);
 
         //
         // BLOCK SET
@@ -5532,10 +5532,10 @@ reloop: // ↑
         r.bl &= 0xf;
         r.bh = 0; // bx=onkai
         //r.bx += r.bx;
-        r.setAx((short) pw.psg_tune_data[r.getBx() & 0xffff]);
+        r.setAx((short) PW.psg_tune_data[r.getBx() & 0xffff]);
 
         r.carry = r.cl == 0 ? false : ((r.getAx() & (1 << (r.cl - 1))) != 0);
-        r.setAx((short) (r.getAx() >> (r.cl & 0xff))); //    shr ax,cl
+        r.setAx((short) (/* singed */ r.getAx() >> (r.cl & 0xff))); //    shr ax,cl
 
         if (r.carry) { // break pt_non_inc;
             r.incAx();
@@ -5868,7 +5868,7 @@ od_non_ch3: // ↑
         //
         // PSG Portament set
         //
-        r.setAx((short) ((r.getAx() & 0xffff) + (pw.partWk[r.di & 0xffff].porta_num & 0xffff)));
+        r.setAx((short) (/* signed */ r.getAx() + /* signed */ pw.partWk[r.di & 0xffff].porta_num));
         //
         // PSG Detune/LFO set
         //
@@ -5889,7 +5889,7 @@ od_non_ch3: // ↑
             r.setBx(pw.partWk[r.di & 0xffff].detune);
             if (r.getBx() != 0) { // break od_ext_lfo; // To LFO
 
-                int ans = r.getAx() * r.getBx(); //  imul    bx
+                int ans = /* signed */ r.getAx() * /* signed */ r.getBx(); //  imul    bx
                 ans <<= 4;
                 r.setDx((short) (ans >> 16));
                 r.setAx((short) (ans >> 0));
@@ -5919,7 +5919,7 @@ od_non_ch3: // ↑
                 }
 //od_ext_notlfo2:
                 if (r.getDx() != 0) { // break extlfo_set;
-                    int ans1 = r.getAx() * r.getDx(); //  imul    dx
+                    int ans1 = /* signed */ r.getAx() * /* signed */ r.getDx(); //  imul    dx
                     ans1 <<= 4;
                     r.setDx((short) (ans1 >> 16));
                     r.setAx((short) (ans1 >> 0));
@@ -6827,13 +6827,13 @@ lfo20: // ↑
                                         r.ah = (byte) -r.ah;
                                     }
 //lfo2ns:
-                                    r.setAx((short) (r.al * (r.ah & 0xff))); // When lfowave=5 1step = step×｜step｜
+                                    r.setAx((short) (/* signed */ r.al * (r.ah & 0xff))); // When lfowave=5 1step = step×｜step｜
                                     break lfo20;
                                 } else {
 //lfo_kukei: dup
                                     // Square wave lfowave = 2
-                                    r.al = pw.partWk[r.di & 0xffff].step; // TODO unreachable
-                                    r.setAx((short) ((r.al & 0xff) * (pw.partWk[r.di & 0xffff].time & 0xff)));
+                                    r.al = pw.partWk[r.di & 0xffff].step;
+                                    r.setAx((short) (/* signed */ r.al * /* signed */ pw.partWk[r.di & 0xffff].time));
                                     pw.partWk[r.di & 0xffff].lfodat = r.getAx();
                                     md_inc();
                                     pw.partWk[r.di & 0xffff].step = (byte) -pw.partWk[r.di & 0xffff].step;
@@ -6843,7 +6843,7 @@ lfo20: // ↑
                         }
 //lfo_sankaku:
                         r.al = pw.partWk[r.di & 0xffff].step;
-                        r.setAx(r.al); // cbw
+                        r.setAx(/* signed */ r.al); // cbw
                     }
 //lfo20:
                     pw.partWk[r.di & 0xffff].lfodat += r.getAx();
@@ -6877,7 +6877,7 @@ lfo20: // ↑
                     break not_nokogiri;
                 // sawtooth lfowave = 1,6
                 r.al = pw.partWk[r.di & 0xffff].step;
-                r.setAx(r.al); // cbw
+                r.setAx(/* signed */ r.al); // cbw
                 pw.partWk[r.di & 0xffff].lfodat += r.getAx();
                 r.al = pw.partWk[r.di & 0xffff].time;
                 if (r.al != (byte) 0xff) { // -1 // break nk_lfo3;
@@ -6904,7 +6904,7 @@ lfo20: // ↑
                 }
 //lfoone_nodec:
                 r.al = pw.partWk[r.di & 0xffff].step;
-                r.setAx(r.al); // cbw
+                r.setAx(/* signed */ r.al); // cbw
                 pw.partWk[r.di & 0xffff].lfodat += r.getAx();
             }
 //lfoone_ret:
@@ -7613,18 +7613,18 @@ lfo20: // ↑
             if (pw.board2 != 0) {
                 if (r.ah != 1) {
 //                    break opi_nef;
-                    bxTbl = pw.fmoff_nef; // <<
+                    bxTbl = PW.fmoff_nef; // <<
                     r.setBx((short) 0); // offset fmoff_nef // <<
                 }
             } else {
 
-                bxTbl = pw.fmoff_ef;
+                bxTbl = PW.fmoff_ef;
                 r.setBx((short) 0); // offset fmoff_ef
 //            break opi_ef;
             }
         } else {
 //opi_nef:
-            bxTbl = pw.fmoff_nef;
+            bxTbl = PW.fmoff_nef;
             r.setBx((short) 0); // offset fmoff_nef
         }
 //opi_ef:
@@ -8005,10 +8005,10 @@ getmemo_errret: // ↑
                 if (pw.md[r.getSi() & 0xffff].dat != 0x1a)
                     break getmemo_errret; // File with no tone = Unable to obtain memo address
                 r.addSi((short) 0x18);
-                r.setSi((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
+                r.setSi((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
                 r.addSi((short) pw.mmlbuf);
                 r.subSi((short) 4);
-                r.setBx((short) (pw.md[(r.getSi() & 0xffff) + 2].dat + pw.md[(r.getSi() & 0xffff) + 3].dat * 0x100)); // bh=0feh,bl=ver
+                r.setBx((short) (pw.md[(r.getSi() + 2) & 0xffff].dat + pw.md[(r.getSi() + 3) & 0xffff].dat * 0x100)); // bh=0feh,bl=ver
                 if (r.bl != 0x40) { // For Ver4.0 & 00H // break getmemo_exec;
                     if (r.bh != (byte) 0xfe)
                         break getmemo_errret; // 0feh for version 4.1 and later
@@ -8024,12 +8024,12 @@ getmemo_errret: // ↑
                     r.al++; // Then add +1 to al (0FEH for #PPZFile)
                 }
 //getmemo_oldver47:
-                r.setSi((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
+                r.setSi((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
                 r.addSi((short) pw.mmlbuf);
                 r.al++;
 //getmemo_loop:
                 do {
-                    r.setDx((short) (pw.md[(r.getSi() & 0xffff) + 0].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
+                    r.setDx((short) (pw.md[(r.getSi() + 0) & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
                     if (r.getDx() == 0)
                         break getmemo_errret;
                     r.addSi((short) 2);
@@ -8605,7 +8605,7 @@ pm_fm2: // ↑
         pw.partWk[r.di & 0xffff].clear(); // PartData Initialization
         r.addBx(r.getBx());
         r.addBx((short) pw.efcdat);
-        r.setAx((short) (pw.md[r.getBx() & 0xffff].dat + pw.md[(r.getBx() & 0xffff) + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getBx() & 0xffff].dat + pw.md[(r.getBx() + 1) & 0xffff].dat * 0x100));
         r.addAx((short) pw.efcdat);
         r.di = (short) pw.part_e;
         pw.partWk[r.di & 0xffff].address = r.getAx(); // Set of addresses
@@ -8894,8 +8894,8 @@ vtc000: // ↑
         if (r.carry) { // break rew_ret;
             r.setDx(pw.syousetu);
             r.al = pw.syousetu_lng;
-            r.al = (byte) ((r.al & 0xff) >>> 1);
-            r.al = (byte) ((r.al & 0xff) >>> 1);
+            r.al = (byte) (/* signed */ r.al >> 1);
+            r.al = (byte) (/* signed */ r.al >> 1);
             if ((pw.opncount & 0xff) >= r.al) {
                 ff_music_main();
                 return;

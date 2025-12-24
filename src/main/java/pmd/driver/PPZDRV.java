@@ -611,9 +611,9 @@ pmpz_ret: // ↑
         pmd.calc_q();
 
         r.bh = 0;
-        int src = (r.getAx() & 0xffff);
-        r.setDx((short) (src % (r.getBx() & 0xffff))); // ax = delta_n difference / note length
-        r.setAx((short) (src / (r.getBx() & 0xffff)));
+        int src = /* signed */ r.getAx();
+        r.setDx((short) (src % /* signed */ r.getBx())); // ax = delta_n difference / note length
+        r.setAx((short) (src / /* signed */ r.getBx()));
         pw.partWk[r.di & 0xffff].porta_num2 = r.getAx(); // quotient
         pw.partWk[r.di & 0xffff].porta_num3 = r.getDx(); // remainder
         pw.partWk[r.di & 0xffff].lfoswi |= 8; // Porta ON
@@ -948,14 +948,14 @@ zv_out: // ↑
         //
         r.setAx(pw.partWk[r.di & 0xffff].porta_num);
         if (r.getAx() != 0) { // break odz_not_porta;
-            int a = r.getAx() & 0xffff;
+            int a = /* signed */ r.getAx();
             a += a;
             a += a;
             a += a;
             a += a; // x16
             r.carry = (r.getCx() & 0xffff) + (a & 0xffff) > 0xffff;
             r.addCx((short) a);
-            r.addBx((short) ((a >>> 16) + (r.carry ? 1 : 0)));
+            r.addBx((short) ((a >> 16) + (r.carry ? 1 : 0)));
         }
 //odz_not_porta:
         r.setAx((short) 0);
@@ -972,8 +972,8 @@ zv_out: // ↑
         r.addAx(pw.partWk[r.di & 0xffff].detune);
         r.dl = r.ch;
         r.dh = r.bl;
-        int a = (r.getAx() & 0xffff) * (r.getDx() & 0xffff);
-        r.setDx((short) (a >>> 16));
+        int a = /* signed */ r.getAx() * (r.getDx() & 0xffff);
+        r.setDx((short) (a >> 16));
         r.setAx((short) a);
         if ((r.getDx() & 0x8000) == 0) { // break odz_minus;
 

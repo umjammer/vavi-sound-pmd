@@ -507,9 +507,9 @@ public class PCMDRV {
         pw.partWk[r.di & 0xffff].leng = r.bl;
         pmd.calc_q();
         r.bh = 0;
-        int src = r.getAx() & 0xffff;
-        r.setDx((short) (src % (r.getBx() & 0xffff))); // ax = delta_n difference / note length
-        r.setAx((short) (src / (r.getBx() & 0xffff)));
+        int src = /* signed */ r.getAx();
+        r.setDx((short) (src % /* signed */ r.getBx())); // ax = delta_n difference / note length
+        r.setAx((short) (src / /* signed */ r.getBx()));
         pw.partWk[r.di & 0xffff].porta_num2 = r.getAx(); // quotient
         pw.partWk[r.di & 0xffff].porta_num3 = r.getDx(); // remainder
         pw.partWk[r.di & 0xffff].lfoswi |= 8; // Porta ON
@@ -908,7 +908,7 @@ mv_min:
         //
         // Portament/LFO/Detune SET
         //
-        r.setBx((short) ((r.getBx() & 0xffff) + (pw.partWk[r.di & 0xffff].porta_num & 0xffff)));
+        r.setBx((short) (/* signed */ r.getBx() + /* signed */ pw.partWk[r.di & 0xffff].porta_num));
         r.setDx((short) 0);
         if ((pw.partWk[r.di & 0xffff].lfoswi & 0x11) != 0) { // break odm_not_lfo;
             if ((pw.partWk[r.di & 0xffff].lfoswi & 0x1) != 0) { // break odm_not_lfo1;
