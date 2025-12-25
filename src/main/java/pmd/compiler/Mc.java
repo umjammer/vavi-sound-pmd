@@ -3,7 +3,6 @@ package pmd.compiler;
 import java.awt.Point;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -6302,11 +6301,11 @@ prs200: // ↑
 
         MmlDatum cmd;
 
-        if (work.ctype == MMLType.unknown) {
+        if (work.ctype == MMLType.Unknown) {
             cmd = new MmlDatum(work.dx & 0xff);
         } else {
             cmd = new MmlDatum(work.dx & 0xff, work.ctype, MakeLinePos(), work.cargs);
-            work.ctype = MMLType.unknown;
+            work.ctype = MMLType.Unknown;
             work.cargs = null;
         }
 
