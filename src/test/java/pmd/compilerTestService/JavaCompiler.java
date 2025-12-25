@@ -97,7 +97,7 @@ public class JavaCompiler extends DosCompiler {
     static void addEnv(List<String> envs, String envname) {
         var env = System.getenv(envname);
         if (env != null && !env.isEmpty()) {
-            envs.add(java.lang.String.format("%s=%s", envname, env));
+            envs.add("%s=%s".formatted(envname, env));
         }
     }
 

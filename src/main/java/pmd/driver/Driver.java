@@ -100,57 +100,57 @@ public class Driver implements IDriver {
         lpw.mmlbuf = 1;
         lpw.md = srcBuf;
 
-        String str;
+        StringBuilder str;
         short[] adr = new short[] {get_memo(1, lr, lpw)};
         if (adr[0] != 0) {
-            str = getNRDString(/* ref */ adr);
-            tags.add(new Tuple<>("title", str));
+            str = new StringBuilder(getNRDString(/* ref */ adr));
+            tags.add(new Tuple<>("title", str.toString()));
         }
 
         adr[0] = get_memo(2, lr, lpw);
         if (adr[0] != 0) {
-            str = getNRDString(/* ref */ adr);
-            tags.add(new Tuple< >("composer", str));
+            str = new StringBuilder(getNRDString(/* ref */ adr));
+            tags.add(new Tuple<>("composer", str.toString()));
         }
 
         adr[0] = get_memo(3, lr, lpw);
         if (adr[0] != 0) {
-            str = getNRDString(/* ref */ adr);
-            tags.add(new Tuple< >("arranger", str));
+            str = new StringBuilder(getNRDString(/* ref */ adr));
+            tags.add(new Tuple<>("arranger", str.toString()));
         }
 
         int al = 4;
-        str = "";
+        str = new StringBuilder();
         do {
             adr[0] = get_memo(al, lr, lpw);
-            if (adr[0] != 0) str += "\r\n" + getNRDString(/* ref */ adr);
+            if (adr[0] != 0) str.append("\r\n").append(getNRDString(/* ref */ adr));
             al++;
         } while (adr[0] != 0);
-        str = !str.isEmpty() ? str.substring(2) : "";
-        if (str != null && !str.isEmpty()) {
-            tags.add(new Tuple< >("memo", str));
+        str = new StringBuilder((!str.isEmpty()) ? str.substring(2) : "");
+        if (!str.isEmpty()) {
+            tags.add(new Tuple<>("memo", str.toString()));
         }
 
         adr[0] = get_memo(0, lr, lpw);
         if (adr[0] != 0) {
-            str = getNRDString(/* ref */ adr);
-            tags.add(new Tuple< >("PCMFile", str));
-            if (work != null) work.ppcFile = str.trim();
+            str = new StringBuilder(getNRDString(/* ref */ adr));
+            tags.add(new Tuple<>("PCMFile", str.toString()));
+            if (work != null) work.ppcFile = str.toString().trim();
         }
 
         adr[0] = get_memo(-1, lr, lpw);
         if (adr[0] != 0) {
-            str = getNRDString(/* ref */ adr);
-            tags.add(new Tuple< >("PPSFile", str));
-            if (work != null) work.ppsFile = str.trim();
+            str = new StringBuilder(getNRDString(/* ref */ adr));
+            tags.add(new Tuple<>("PPSFile", str.toString()));
+            if (work != null) work.ppsFile = str.toString().trim();
         }
 
         adr[0] = get_memo(-2, lr, lpw);
         if (adr[0] != 0) {
-            str = getNRDString(/* ref */ adr);
-            tags.add(new Tuple< >("PPZFile", str));
+            str = new StringBuilder(getNRDString(/* ref */ adr));
+            tags.add(new Tuple<>("PPZFile", str.toString()));
             if (work != null) {
-                work.ppz1File = str.trim();
+                work.ppz1File = str.toString().trim();
                 String[] p = work.ppz1File.split(",");
                 if (p.length > 1) {
                     work.ppz1File = p[0];
@@ -169,45 +169,45 @@ getmemo_errret:
             {
                 r.al = (byte) al;
                 r.setSi((short) pw.mmlbuf);
-                if (pw.md[r.getSi()].dat != 0x1a)
+                if (pw.md[r.getSi() & 0xffff].dat != 0x1a)
                     break getmemo_errret; // File with no tone = Unable to obtain memo address
-                r.setSi((short) (r.getSi() + 0x18));
-                r.setSi((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
-                r.setSi((short) (r.getSi() + pw.mmlbuf));
-                r.setSi((short) (r.getSi() - 4));
-                r.setBx((short) (pw.md[r.getSi() + 2].dat + pw.md[r.getSi() + 3].dat * 0x100)); // bh=0feh,bl=ver
+                r.setSi((short) ((r.getSi() & 0xffff) + 0x18));
+                r.setSi((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
+                r.setSi((short) ((r.getSi() & 0xffff) + pw.mmlbuf));
+                r.setSi((short) ((r.getSi() & 0xffff) - 4));
+                r.setBx((short) (pw.md[(r.getSi() & 0xffff) + 2].dat + pw.md[(r.getSi() & 0xffff) + 3].dat * 0x100)); // bh=0feh,bl=ver
                 if (r.bl != 0x40) { //Ver4.0 & In the case of 00H
 //                    break getmemo_exec;
                     if (r.bh != (byte) 0xfe)
                         break getmemo_errret; // 0feh for version 4.1 and later
-                    if (r.bl < 0x41)
+                    if ((r.bl & 0xff) < 0x41)
                         break getmemo_errret; // If MC version is 4.1 or earlier, Error
                 }
 //getmemo_exec:
 
-                if (r.bl >= 0x42) // Is it version 4.2 or later?
+                if ((r.bl & 0xff) >= 0x42) // Is it version 4.2 or later?
 //                    break getmemo_oldver41;
                     r.al++; // Then add +1 to al (0FFH #PPSFile)
 //getmemo_oldver41:
 
-                if (r.bl >= 0x48) // Is it version 4.8 or later?
+                if ((r.bl & 0xff) >= 0x48) // Is it version 4.8 or later?
 //                    break getmemo_oldver47;
                     r.al++; // Then add +1 to al (0FEH for #PPZFile)
 //getmemo_oldver47:
-                r.setSi((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+                r.setSi((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
                 r.setSi((short) (r.getSi() + pw.mmlbuf));
                 r.al++;
 //getmemo_loop:
                 do {
-                    r.setDx((short) (pw.md[r.getSi() + 0].dat + pw.md[r.getSi() + 1].dat * 0x100));
+                    r.setDx((short) (pw.md[(r.getSi() & 0xffff) + 0].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
                     if (r.getDx() == 0)
                         break getmemo_errret;
-                    r.setSi((short) (r.getSi() + 2));
+                    r.setSi((short) ((r.getSi() & 0xffff) + 2));
                     r.al--;
                 } while (r.al != 0);
 //                    break getmemo_loop;
 //getmemo_exit:
-                r.setDx((short) (r.getDx() + pw.mmlbuf));
+                r.setDx((short) ((r.getDx() & 0xffff) + pw.mmlbuf));
                 pw.ds_push = 0; // r.cs; No Segments
                 pw.dx_push = r.getDx();
                 return r.getDx();
@@ -224,12 +224,12 @@ getmemo_errret:
     }
 
     private static String getNRDString(/* ref */ short[] index) {
-        if (srcBuf == null || srcBuf.length < 1 || index[0] < 0 || index[0] >= srcBuf.length) return "";
+        if (srcBuf == null || srcBuf.length < 1 || (index[0] & 0xffff) >= srcBuf.length) return "";
 
         try {
             List<Byte> lst = new ArrayList<>();
-            for (; srcBuf[index[0]].dat != 0; index[0]++) {
-                lst.add((byte) srcBuf[index[0]].dat);
+            for (; srcBuf[index[0] & 0xffff].dat != 0; index[0]++) {
+                lst.add((byte) srcBuf[index[0] & 0xffff].dat);
             }
 
             String n = new String(ByteUtil.toByteArray(lst), Common.charset);
@@ -247,7 +247,7 @@ getmemo_errret:
      */
     @Override
     public GD3Tag getGD3TagInfo(byte[] srcBuf) {
-        List<MmlDatum> sc = new ArrayList<MmlDatum>();
+        List<MmlDatum> sc = new ArrayList<>();
         for (byte b : srcBuf) sc.add(new MmlDatum(b & 0xff));
         Driver.srcBuf = sc.toArray(MmlDatum[]::new);
         List<Tuple<String, String>> lstTag = getTags();
@@ -284,11 +284,10 @@ getmemo_errret:
 
     @Override
     public void init(List<ChipAction> chipsAction, MmlDatum[] srcBuf, Function<String, Stream> appendFileReaderCallback_, Object... addtionalOption) {
-        //    throw new UnsupportedOperationException();
-        //}
+//      throw new UnsupportedOperationException();
+//    }
 
-        //public void Init(Action<ChipDatum> opnaWrite, Action<long, int> opnaWaitSend, MmlDatum[] srcBuf, Object addtionalOption)
-        //{
+//    public void Init(Action<ChipDatum> opnaWrite, Action<long, int> opnaWaitSend, MmlDatum[] srcBuf, Object addtionalOption) {
         Consumer<ChipDatum> opnaWrite = chipsAction.get(0)::writeRegister;
         BiConsumer<Long, Integer> opnaWaitSend = chipsAction.get(0)::waitSend;
 
@@ -326,11 +325,11 @@ getmemo_errret:
         Function<ChipDatum, Integer> p86Write = (Function<ChipDatum, Integer>) option[4];
         init(srcBuf,
                 opnaWrite, opnaWaitSend,
-                pdno, po
-                , appendFileReaderCallback
-                , ppz8Write
-                , ppsdrvWrite
-                , p86Write);
+                pdno, po,
+                appendFileReaderCallback,
+                ppz8Write,
+                ppsdrvWrite,
+                p86Write);
 
         pdnos[2] = pdno.isAUTO;
         pdnos[3] = pdno.isVA;
@@ -343,7 +342,7 @@ getmemo_errret:
     public void init(
             String fileName,
             Consumer<ChipDatum> opnaWrite, BiConsumer<Long, Integer> opnaWaitSend,
-            PMDOption addtionalPMDDotNETOption, String[] addtionalPMDOption,
+            PMDOption additionalPMDDotNETOption, String[] additionalPMDOption,
             Function<String, Stream> appendFileReaderCallback,
             Function<ChipDatum, Integer> ppz8Write,
             Function<ChipDatum, Integer> ppsdrvWrite,
@@ -351,20 +350,19 @@ getmemo_errret:
         if (!Path.getExtension(fileName).equalsIgnoreCase(".xml")) {
             byte[] srcBuf = File.readAllBytes(fileName);
             if (srcBuf.length < 1) return;
-            init(srcBuf, opnaWrite, opnaWaitSend, addtionalPMDDotNETOption, addtionalPMDOption
-                    , appendFileReaderCallback != null ? CreateAppendFileReaderCallback(Path.getDirectoryName(fileName)) : null
-                    , ppz8Write
-                    , ppsdrvWrite
-                    , p86Write);
+            init(srcBuf, opnaWrite, opnaWaitSend, additionalPMDDotNETOption, additionalPMDOption,
+                    appendFileReaderCallback != null ? CreateAppendFileReaderCallback(Path.getDirectoryName(fileName)) : null,
+                    ppz8Write,
+                    ppsdrvWrite,
+                    p86Write);
         } else {
             try (InputStream sr = Files.newInputStream(java.nio.file.Path.of(fileName))) {
                 MmlDatum[] s = Serdes.Util.deserialize(sr, new MmlDatum[0]); // TODO
-                init(s, opnaWrite, opnaWaitSend, addtionalPMDDotNETOption, addtionalPMDOption
-                        , appendFileReaderCallback != null ? CreateAppendFileReaderCallback(Path.getDirectoryName(fileName)) : null
-                        , ppz8Write
-                        , ppsdrvWrite
-                        , p86Write
-                );
+                init(s, opnaWrite, opnaWaitSend, additionalPMDDotNETOption, additionalPMDOption,
+                        appendFileReaderCallback != null ? CreateAppendFileReaderCallback(Path.getDirectoryName(fileName)) : null,
+                        ppz8Write,
+                        ppsdrvWrite,
+                        p86Write);
             } catch (IOException e) {
                 throw new dotnet4j.io.IOException(e);
             }
@@ -378,7 +376,7 @@ getmemo_errret:
     public void init(
             byte[] srcBuf,
             Consumer<ChipDatum> opnaWrite, BiConsumer<Long, Integer> opnaWaitSend,
-            PMDOption addtionalPMDDotNETOption, String[] addtionalPMDOption,
+            PMDOption additionalPMDDotNETOption, String[] additionalPMDOption,
             Function<String, Stream> appendFileReaderCallback,
             Function<ChipDatum, Integer> ppz8Write,
             Function<ChipDatum, Integer> ppsdrvWrite,
@@ -386,18 +384,18 @@ getmemo_errret:
         if (srcBuf == null || srcBuf.length < 1) return;
         List<MmlDatum> bl = new ArrayList<>();
         for (byte b : srcBuf) bl.add(new MmlDatum(b & 0xff));
-        init(bl.toArray(MmlDatum[]::new), opnaWrite, opnaWaitSend, addtionalPMDDotNETOption, addtionalPMDOption
-                , appendFileReaderCallback
-                , ppz8Write
-                , ppsdrvWrite
-                , p86Write
+        init(bl.toArray(MmlDatum[]::new), opnaWrite, opnaWaitSend, additionalPMDDotNETOption, additionalPMDOption,
+                appendFileReaderCallback,
+                ppz8Write,
+                ppsdrvWrite,
+                p86Write
         );
     }
 
     public void init(
             MmlDatum[] srcBuf,
             Consumer<ChipDatum> opnaWrite, BiConsumer<Long, Integer> opnaWaitSend,
-            PMDOption addtionalPMDDotNETOption, String[] addtionalPMDOption,
+            PMDOption additionalPMDDotNETOption, String[] additionalPMDOption,
             Function<String, Stream> appendFileReaderCallback,
             Function<ChipDatum, Integer> ppz8Write,
             Function<ChipDatum, Integer> ppsdrvWrite,
@@ -414,13 +412,13 @@ getmemo_errret:
 
         work = new PW();
         getTags();
-        addtionalPMDDotNETOption.PPCHeader = CheckPPC(appendFileReaderCallback);
+        additionalPMDDotNETOption.PPCHeader = CheckPPC(appendFileReaderCallback);
 
-        work.setOption(addtionalPMDDotNETOption, addtionalPMDOption);
+        work.setOption(additionalPMDDotNETOption, additionalPMDOption);
         work.timer = new OPNATimer(44100, 7987200);
 
-        //PPZ8em ppz8em = addtionalPMDDotNETOption.ppz8em;
-        //PPSDRV ppsdrv = addtionalPMDDotNETOption.ppsdrv;
+        //PPZ8em ppz8em = additionalPMDDotNETOption.ppz8em;
+        //PPSDRV ppsdrv = additionalPMDDotNETOption.ppsdrv;
 
         pmd = new PMD(
                 srcBuf,
@@ -450,7 +448,7 @@ getmemo_errret:
         int extn = 0;
         String[] ppcExtTbl = new String[] {".PPC", ".P86", ".PVI"};
         while (true) {
-            buf = Common.GetPCMDataFromFile(work.ppcFile, appendFileReaderCallback);
+            buf = Common.getPCMDataFromFile(work.ppcFile, appendFileReaderCallback);
             if (buf != null) break;
             if (extn == 3) break;
             extn++;
@@ -459,7 +457,7 @@ getmemo_errret:
         if (buf == null) return "";
         if (buf.length < 3) return "";
 
-        String head = "%c%c%c".formatted((char) buf[0], (char) buf[1], (char) buf[2]);
+        String head = "%c%c%c".formatted((char) (buf[0] & 0xff), (char) (buf[1] & 0xff), (char) (buf[2] & 0xff));
         return head;
     }
 
@@ -479,9 +477,9 @@ getmemo_errret:
 
     public void dispStatus() {
         pmd.int60_main((short) 5);
-        int syosetu = (pmd.pw.al_push & 0xffff) + (pmd.pw.ah_push & 0xffff) * 0x100;
+        int syosetu = (pmd.pw.al_push & 0xff) + (pmd.pw.ah_push & 0xff) * 0x100;
 
-        logger.log(Level.TRACE, String.format("Measure: %d", syosetu));
+        logger.log(Level.TRACE, "Measure: %d".formatted(syosetu));
     }
 
     @Override
@@ -489,7 +487,7 @@ getmemo_errret:
         if (work.getStatus() < 0) return;
 
         try {
-            pmd.Rendering();
+            pmd.rendering();
         } catch (Exception e) {
             renderingException = e;
             work.setStatus(-1);
@@ -510,7 +508,7 @@ getmemo_errret:
 
     @Override
     public void startRendering(int renderingFreq, Tuple<String, Integer>[] chipsMasterClock) {
-        synchronized (work.SystemInterrupt) {
+        synchronized (work.systemInterrupt) {
 
             work.timeCounter = 0L;
             this.renderingFreq = renderingFreq <= 0 ? 44100 : renderingFreq;
@@ -526,7 +524,7 @@ getmemo_errret:
 
     @Override
     public void stopRendering() {
-        synchronized (work.SystemInterrupt) {
+        synchronized (work.systemInterrupt) {
             if (work.getStatus() > 0) work.setStatus(0);
 
             logger.log(Level.TRACE, "Stop rendering.");

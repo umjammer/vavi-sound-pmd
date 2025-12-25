@@ -194,10 +194,7 @@ public class Compiler implements ICompiler {
 //            logger.log(Level.ERROR, pe.getMessage());
         } catch (Exception e) {
             work.compilerInfo.errorList.add(new Tuple3<>(-1, -1, e.getMessage()));
-            logger.log(Level.ERROR, String.format(
-                    rb.getString("E0000")
-                    , e.getMessage()
-                    ), e);
+            logger.log(Level.ERROR, rb.getString("E0000").formatted(e.getMessage()), e);
         }
 
         return null;

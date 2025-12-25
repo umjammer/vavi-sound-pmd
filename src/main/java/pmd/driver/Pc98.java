@@ -7,20 +7,20 @@ import musicDriverInterface.ChipDatum;
 
 public class Pc98 {
 
-    private Consumer<ChipDatum> WriteOPNARegister;
-    private ChipDatum cd = new ChipDatum(0, 0, 0);
+    private final Consumer<ChipDatum> writeOPNARegister;
+    private final ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
     private byte fm1_reg = 0;
     private byte fm2_reg = 0;
-    private PW pw;
+    private final PW pw;
 
-    private byte[] psgDat = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    private final byte[] psgDat = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    public Pc98(Consumer<ChipDatum> WriteOPNARegister, PW pw) {
-        this.WriteOPNARegister = WriteOPNARegister;
+    public Pc98(Consumer<ChipDatum> writeOPNARegister, PW pw) {
+        this.writeOPNARegister = writeOPNARegister;
         this.pw = pw;
     }
 
-    public byte InPort(int v) {
+    public byte inPort(int v) {
         if (v == 0x2) {
             return 0;
         } else if (v == 0xa468) {
@@ -32,8 +32,8 @@ public class Pc98 {
         } else if (v == 0x188) { // Read FM sound source status flag
             return 0;
         } else if (v == 0x18a) { // FM sound data loading
-            if (fm1_reg < 0x10) {
-                return psgDat[fm1_reg];
+            if ((fm1_reg & 0xff) < 0x10) {
+                return psgDat[fm1_reg & 0xff];
             }
             return 0;
         } else if (v == 0x18c) { // Read FM sound source status flag(extension)
@@ -46,32 +46,32 @@ public class Pc98 {
     }
 
     public void outPort(short dx, byte al) {
-        if (dx == 0x02) {
+        if ((dx & 0xffff) == 0x02) {
 
-        } else if (dx == 0x188) {
+        } else if ((dx & 0xffff) == 0x188) {
             fm1_reg = al;
-        } else if (dx == 0x18a) {
+        } else if ((dx & 0xffff) == 0x18a) {
             cd.port = 0;
-            cd.address = fm1_reg;
-            cd.data = al;
+            cd.address = fm1_reg & 0xff;
+            cd.data = al & 0xff;
             //cd.additionalData = pw.cmd;
 
             if ((fm1_reg & 0xff) < 0x10) {
                 psgDat[fm1_reg & 0xff] = al;
             }
-            WriteOPNARegister.accept(cd);
-        } else if (dx == 0x18c) {
+            writeOPNARegister.accept(cd);
+        } else if ((dx & 0xffff) == 0x18c) {
             fm2_reg = al;
-        } else if (dx == 0x18e) {
+        } else if ((dx & 0xffff) == 0x18e) {
             cd.port = 1;
-            cd.address = fm2_reg;
-            cd.data = al;
+            cd.address = fm2_reg & 0xff;
+            cd.data = al & 0xff;
             //cd.additionalData = pw.cmd;
-            WriteOPNARegister.accept(cd);
+            writeOPNARegister.accept(cd);
         }
     }
 
-    public boolean GetGraphKey() {
+    public boolean getGraphKey() {
         // TODO Not implemented
         return false;
     }

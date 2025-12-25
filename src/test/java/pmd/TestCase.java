@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class TestCase {
 
-     @Test
+    @Test
     void test1() throws Exception {
          X86Register r = new X86Register();
          short x;
@@ -29,5 +29,11 @@ class TestCase {
 Debug.printf("%02x, %02x", r.ah & 0xff, r.al & 0xff);
          x = r.getAx();
          assertEquals(392, x);
+
+         r.setSi((short) 1);
+         short s2 = r.incSi();
+         short s3 = r.getSi();
+         assertEquals(1, s2);
+         assertEquals(2, s3);
      }
 }

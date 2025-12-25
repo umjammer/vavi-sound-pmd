@@ -17,16 +17,17 @@ import pmd.common.Common;
 import pmd.common.PmdDosExitException;
 import pmd.common.PmdDosExitException.PmdErrorExitException;
 import pmd.common.PmdException;
-import vavi.util.Debug;
 
 import static java.lang.System.getLogger;
 
 
 /**
- * Professional Music Driver[P.M.D.] version 4.8
+ * Professional Music Driver [P.M.D.]
  * FOR PC98(+ Speak Board)
  *
  * @author M.Kajihara
+ * @version 4.8
+ * @see "https://gemini.google.com/app/3cbfc288ae580d61"
  */
 public class PMD {
 
@@ -83,31 +84,35 @@ public class PMD {
         efcdrv = new EFCDRV(this, pw, r, ppsdrv);
         this.WriteOPNARegister = WriteOPNARegister;
 
-        Set_int60_jumptable();
-        Set_n_int60_jumptable();
-        SetupCmdtbl();
-        SetupCmdtblp();
-        SetupCmdtblr();
-        SetupComtbl0c0h();
+        set_int60_jumptable();
+        set_n_int60_jumptable();
+        setupCmdtbl();
+        setupCmdtblp();
+        setupCmdtblr();
+        setupComtbl0c0h();
 
         comstart();
     }
 
-    public void Rendering() {
+    public void rendering() {
         if (pw.getStatus() == 0) return;
 
-        synchronized (pw.SystemInterrupt) {
+        synchronized (pw.systemInterrupt) {
             do {
                 pw.timer.timer();
                 pw.timeCounter++;
                 if ((pw.timer.getStatReg() & 3) != 0) {
-                    synchronized (r.lockobj) {
-                        FM_Timer_main();
+                    synchronized (r.lockObj) {
+try {
+                        fm_Timer_main();
+} catch (Exception e) {
+ logger.log(Level.ERROR, e.getMessage(), e);
+}
                     }
                 }
             } while (pw.jumpIndex != -1 && pw.nowLoopCounter < 1);
 
-            //Work.SystemInterrupt = false;
+            //Work.systemInterrupt = false;
         }
     }
 
@@ -134,7 +139,7 @@ public class PMD {
 
     public void error_exit(int qq) {
         // Program terminated (error code qq)
-        throw new PmdErrorExitException(String.format("error code:%d", qq));
+        throw new PmdErrorExitException("error code:%d".formatted(qq));
     }
 
     public void print_mes(String qq) {
@@ -146,34 +151,34 @@ public class PMD {
 
     public void print_chr(String qq) {
         // Display characters on the console
-        logger.log(Level.INFO, qq);
+        System.out.print(qq);
     }
 
     public void print_line(String bx) {
         // Display message on console (from bx position to 0)
-        logger.log(Level.INFO, bx);
+        System.out.println(bx);
     }
 
 //#if DEBUG
-//        private PMDDotNET.Common.AutoExtendList<byte> debugBuff = new Common.AutoExtendList<byte>();
-//        private PMDDotNET.Common.AutoExtendList<byte> debug2Buff = new Common.AutoExtendList<byte>();
+//        private List<Byte> debugBuff = new ArrayList<>();
+//        private List<Byte> debug2Buff = new ArrayList<>();
 //#endif
 
     public void debug(int adr) {
 //#if DEBUG
-//        debugBuff.Set(adr, (byte)(debugBuff.Get(adr) + 1));
+//        debugBuff.set(adr, (byte)(debugBuff.get(adr) + 1));
 //#endif
     }
 
     public void debug2(int adr, byte dat) {
 //#if DEBUG
-//        debug2Buff.Set(adr * 2, dat);
+//        debug2Buff.set(adr * 2, dat);
 //#endif
     }
 
     public void debug_pcm(int adr) {
 //#if DEBUG
-//        r.al = pc98.InPort(0xa468); // 86 Sound Source FIFO
+//        r.al = pc98.inPort(0xa468); // 86 Sound Source FIFO
 //        if ((r.al & 0x10) != 0) {
 //            debug(adr);
 //        }
@@ -184,7 +189,7 @@ public class PMD {
 //        r.cx = (short) pw.wait_clock;
 //        do {
 //            r.cx--;
-//        } while (r.cx > 0);
+//        } while ((r.cx & 0xffff) > 0);
     }
 
     public void _waitP() {
@@ -192,7 +197,7 @@ public class PMD {
 //        r.cx = (short) pw.wait_clock;
 //        do {
 //            r.cx--;
-//        } while (r.cx > 0);
+//        } while ((r.cx & 0xffff) > 0);
 //        r.cx = p;
     }
 
@@ -202,15 +207,15 @@ public class PMD {
 //        r.cx = (short) (pw.wait_clock * 32);
 //        do {
 //            r.cx--;
-//        } while (r.cx > 0);
+//        } while ((r.cx & 0xffff) > 0);
 //        r.cx = p;
     }
 
     /** For Address out break:ax */
     public void rdychk() {
-        r.al = pc98.InPort(r.getDx() & 0xffff); // Useless reading
+        r.al = pc98.inPort(r.getDx() & 0xffff); // Useless reading
         do {
-            r.al = pc98.InPort(r.getDx() & 0xffff);
+            r.al = pc98.inPort(r.getDx() & 0xffff);
         } while ((r.al & 0x80) != 0);
     }
 
@@ -225,11 +230,11 @@ public class PMD {
     }
 
     public void int60_main(short ax) {
-        synchronized (r.lockobj) {
+        synchronized (r.lockObj) {
             r.setAx(ax);
 
             pw.int60flag++;
-            if (r.ah >= int60_max + 1) {
+            if ((r.ah & 0xff) >= int60_max + 1) {
                 int60_error();
                 return;
             }
@@ -283,7 +288,7 @@ public class PMD {
      */
     private void fm_efcplay() {
         r.setBx((short) pw.efcdat);
-        r.setAx((short) (pw.md[(r.getBx() & 0xffff) + 254].dat + pw.md[(r.getBx() & 0xffff) + 254 + 1].dat * 0x100));
+        r.setAx((short) (pw.md[(r.getBx() + 254) & 0xffff].dat + pw.md[(r.getBx() + 254 + 1) & 0xffff].dat * 0x100));
         r.addAx(r.getBx());
         pw.prgdat_adr2 = r.getAx();
         r.di = (short) pw.part_e; // offset part_e
@@ -311,8 +316,8 @@ public class PMD {
             pw.partb = r.ah;
         }
 
-        if (pw.md[r.getSi()].dat == 0x80) { // break not_end_fmefc;
-            if (pw.partWk[r.di].leng == 0) { // break not_end_fmefc;
+        if (pw.md[r.getSi() & 0xffff].dat == 0x80) { // break not_end_fmefc;
+            if (pw.partWk[r.di & 0xffff].leng == 0) { // break not_end_fmefc;
 
                 fm_effect_off();
             }
@@ -324,8 +329,8 @@ public class PMD {
      * Start playing
      */
     private void mstart_f() {
-        r.al = pw.TimerAflag;
-        r.al |= pw.TimerBflag;
+        r.al = pw.timerAFlag;
+        r.al |= pw.timerBFlag;
         if (r.al == 0) {
             mstart();
             return;
@@ -357,17 +362,17 @@ public class PMD {
             if (pw.ademu != 0) {
                 r.setAx((short) 0x1800);
                 pw.adpcm_emulate = r.al;
-                ChipDatum cd = new ChipDatum(0x18, r.al, 0);
+                ChipDatum cd = new ChipDatum(0x18, r.al & 0xff, 0);
                 ppz8em.apply(cd); // .SetAdpcmEmu(r.al); // ADPCMEmulate OFF
                 r.setBx((short) pw.part10); // offset part10 //  Mask PCM(bit4)
-                pw.partWk[r.getBx()].partmask |= 0x10; // Mask PCM(bit4)
+                pw.partWk[r.getBx() & 0xffff].partmask |= 0x10; // Mask PCM(bit4)
             } else {
                 //
                 // If you use NEC YM2608, you can mask the PCM part.
                 //
                 if (pw.pcm_gs_flag != 0) {
                     r.setBx((short) pw.part10); // offset part10 //  Mask PCM(bit4)
-                    pw.partWk[r.getBx()].partmask |= 4; // Mask PCM(bit2)
+                    pw.partWk[r.getBx() & 0xffff].partmask |= 4; // Mask PCM(bit2)
                 }
                 //not_mask_pcm:
             }
@@ -382,7 +387,7 @@ public class PMD {
                 ChipDatum cd = new ChipDatum(0x19, 0, 0x01);
                 ppz8em.apply(cd); // .SetReleaseFlag(0x01); // Do not release resident
                 r.ah = 0;
-                cd = new ChipDatum(0x00, 0, 0);
+                cd = new ChipDatum(0x00, 0xff, 0xff);
                 ppz8em.apply(cd); // .Initialize();
                 //r.ah = 6;
                 //ppz8em.Reserve();
@@ -410,15 +415,15 @@ public class PMD {
     private void play_init() {
         r.setSi((short) pw.mmlbuf);
 
-        r.al = (byte) pw.md[r.getSi() - 1].dat;
+        r.al = (byte) pw.md[(r.getSi() & 0xffff) - 1].dat;
         pw.x68_flg = r.al;
 
         // 2.6 Additions
         pw.prg_flg = 0;
-        if (pw.md[r.getSi()].dat != (pw.max_part2 + 1) * 2) {
-            r.setBx(Common.GetLe16(pw.md, r.getSi() + (2 * (pw.max_part2 + 1))));
+        if (pw.md[r.getSi() & 0xffff].dat != (pw.max_part2 + 1) * 2) {
+            r.setBx(Common.getLe16(pw.md, (r.getSi() & 0xffff) + (2 * (pw.max_part2 + 1))));
             r.addBx(r.getSi());
-            pw.prgdat_adr = r.getBx();
+            pw.prgdat_adr = r.getBx() & 0xffff;
             pw.prg_flg = 1;
         }
 
@@ -431,58 +436,59 @@ public class PMD {
         pw.part_data_table = new int[22];
         for (int i = 0; i < pw.part_data_table.length; i++) pw.part_data_table[i] = i; // KUMA: Because it's an ordered sequence.
 
-// din0:
+//din0:
         do {
-            r.di = (short) pw.part_data_table[r.getBx()]; // di = part workarea // KUMA: Index of each part
+            r.di = (short) pw.part_data_table[r.getBx() & 0xffff]; // di = part workarea // KUMA: Index of each part
             r.incBx();
-Debug.printf("%d, %d\n", r.getSi(), Common.GetLe16(pw.md, r.getSi()));
-            r.setAx(Common.GetLe16(pw.md, r.getSi())); // ax = part start addr
+//logger.log(Level.DEBUG, "si: %d, get: %d, len: %d".formatted(r.getSi(), Common.GetLe16(pw.md, r.getSi() & 0xffff), pw.md.length));
+            // usually file starts 00 1a 00 ..
+            r.setAx(Common.getLe16(pw.md, r.getSi() & 0xffff)); // ax = part start addr
             r.addSi((short) 2);
 
             r.addAx((short) pw.mmlbuf);
-            if (pw.md[r.getAx()].dat == 0x80) { // Do not play if the first digit is 80h
+            if (pw.md[r.getAx() & 0xffff].dat == 0x80) { // Do not play if the first digit is 80h
                 r.setAx((short) 0);
             }
 //din1:
 
-            pw.partWk[r.di].address = r.getAx();
+            pw.partWk[r.di & 0xffff].address = r.getAx();
 
-            pw.partWk[r.di].leng = 1; // One more count to start playing
+            pw.partWk[r.di & 0xffff].leng = 1; // One more count to start playing
             r.al = (byte) 0xff; // -1
-            pw.partWk[r.di].keyoff_flag = r.al; // Currently being keyed off
-            pw.partWk[r.di].mdc = r.al; // MDepth Counter(Infinite)
-            pw.partWk[r.di].mdc2 = r.al;//
-            pw.partWk[r.di]._mdc = r.al;//
-            pw.partWk[r.di]._mdc2 = r.al;//
-            pw.partWk[r.di].onkai = r.al; // rest
-            pw.partWk[r.di].onkai_def = r.al; // rest
-            if (r.dl < 6) { // break din_not_fm;
+            pw.partWk[r.di & 0xffff].keyoff_flag = r.al; // Currently being keyed off
+            pw.partWk[r.di & 0xffff].mdc = r.al; // MDepth Counter(Infinite)
+            pw.partWk[r.di & 0xffff].mdc2 = r.al; //
+            pw.partWk[r.di & 0xffff]._mdc = r.al; //
+            pw.partWk[r.di & 0xffff]._mdc2 = r.al; //
+            pw.partWk[r.di & 0xffff].onkai = r.al; // rest
+            pw.partWk[r.di & 0xffff].onkai_def = r.al; // rest
+            if ((r.dl & 0xff) < 6) { // break din_not_fm;
 
                 // at Part 0,1,2,3,4,5 (FM1 to 6)
-                pw.partWk[r.di].volume = 108; // FM VOLUME DEFAULT= 108
-                pw.partWk[r.di].fmpan = (byte) 0xc0; // FM PAN = Middle
+                pw.partWk[r.di & 0xffff].volume = 108; // FM VOLUME DEFAULT= 108
+                pw.partWk[r.di & 0xffff].fmpan = (byte) 0xc0; // FM PAN = Middle
                 if (pw.board2 != 0) {
-                    pw.partWk[r.di].slotmask = (byte) 0xf0; // FM SLOT MASK
-                    pw.partWk[r.di].neiromask = (byte) 0xff; // FM Neiro MASK
+                    pw.partWk[r.di & 0xffff].slotmask = (byte) 0xf0; // FM SLOT MASK
+                    pw.partWk[r.di & 0xffff].neiromask = (byte) 0xff; // FM Neiro MASK
                 } else {
-                    if (r.dl < 3) { // break din_fm_mask; // OPN 3,4,5 neiro/slotmask remains 0
-                        pw.partWk[r.di].slotmask = (byte) 0xf0; // FM SLOT MASK
-                        pw.partWk[r.di].neiromask = (byte) 0xff; // FM Neiro MASK
+                    if ((r.dl & 0xff) < 3) { // break din_fm_mask; // OPN 3,4,5 neiro/slotmask remains 0
+                        pw.partWk[r.di & 0xffff].slotmask = (byte) 0xf0; // FM SLOT MASK
+                        pw.partWk[r.di & 0xffff].neiromask = (byte) 0xff; // FM Neiro MASK
 //                        break init_exit;
                     } else {
 //din_fm_mask:
-                        pw.partWk[r.di].partmask |= 0x20; // FM mask at s0
+                        pw.partWk[r.di & 0xffff].partmask |= 0x20; // FM mask at s0
                     }
                 }
 
 //                break init_exit;
             } else {
 //din_not_fm:
-                if (r.dl < 9) { // break din_not_psg;
+                if ((r.dl & 0xff) < 9) { // break din_not_psg;
                     // at Part 6,7,8 (PSG1 to 3)
-                    pw.partWk[r.di].volume = 8; // PSG VOLUME DEFAULT= 8
-                    pw.partWk[r.di].psgpat = 7; // PSG = TONE
-                    pw.partWk[r.di].envf = 3; // PSG ENV = NONE / normal
+                    pw.partWk[r.di & 0xffff].volume = 8; // PSG VOLUME DEFAULT= 8
+                    pw.partWk[r.di & 0xffff].psgpat = 7; // PSG = TONE
+                    pw.partWk[r.di & 0xffff].envf = 3; // PSG ENV = NONE / normal
 //                    break init_exit;
                 } else {
 //din_not_psg:
@@ -490,13 +496,13 @@ Debug.printf("%d, %d\n", r.getSi(), Common.GetLe16(pw.md, r.getSi()));
                         if (pw.board2 != 0) {
                             if (pw.adpcm != 0) {
                                 // at Part 9 (OPNA/ADPCM)
-                                pw.partWk[r.di].volume = (byte) 128; // PCM VOLUME DEFAULT= 128
-                                pw.partWk[r.di].fmpan = (byte) 0xc0; // PCM PAN = Middle
+                                pw.partWk[r.di & 0xffff].volume = (byte) 128; // PCM VOLUME DEFAULT= 128
+                                pw.partWk[r.di & 0xffff].fmpan = (byte) 0xc0; // PCM PAN = Middle
                             }
                             if (pw.pcm != 0) {
                                 // at Part 9 (OPNA/PCM)
-                                pw.partWk[r.di].volume = (byte) 128; // PCM VOLUME DEFAULT= 128
-                                pw.partWk[r.di].fmpan = 0x00;
+                                pw.partWk[r.di & 0xffff].volume = (byte) 128; // PCM VOLUME DEFAULT= 128
+                                pw.partWk[r.di & 0xffff].fmpan = 0x00;
                                 pw.pcm86_pan_flag = 0; // Mid
                                 pw.revpan = 0; // Reverse phase off
                             }
@@ -506,7 +512,7 @@ Debug.printf("%d, %d\n", r.getSi(), Common.GetLe16(pw.md, r.getSi()));
 //din_not_pcm:
                         if (r.dl == 10) { // break not_rhythm;
                             // at Part 10 (Rhythm)
-                            pw.partWk[r.di].volume = 15; // PPSDRV volume
+                            pw.partWk[r.di & 0xffff].volume = 15; // PPSDRV volume
 //                            break init_exit;
                         } else {
 //not_rhythm:
@@ -518,15 +524,15 @@ Debug.printf("%d, %d\n", r.getSi(), Common.GetLe16(pw.md, r.getSi()));
             r.dl++;
             r.decCx();
 
-        } while (r.getCx() > 0);
+        } while ((r.getCx() & 0xffff) > 0);
 
         //
         // Set Rhythm's address table
         //
-        r.setAx(Common.GetLe16(pw.md, r.getSi())); // ax = part start addr
+        r.setAx(Common.getLe16(pw.md, r.getSi() & 0xffff)); // ax = part start addr
         r.addSi((short) 2);
         r.addAx((short) pw.mmlbuf);
-        pw.radtbl = r.getAx();
+        pw.radtbl = r.getAx() & 0xffff;
 
         pw.rhyadr = 0; // offset rhydmy
         pw.rd = pw.rdDmy; // rhyadr refers to rdDmy (music data array for dummy)
@@ -551,27 +557,27 @@ Debug.printf("%d, %d\n", r.getSi(), Common.GetLe16(pw.md, r.getSi()));
         do {
             r.stack.push(r.getCx());
             r.setBx(r.di++); // KUMA: Maybe it should be incremented...
-            r.dh = pw.partWk[r.getBx()].partmask;
-            r.dl = pw.partWk[r.getBx()].keyon_flag;
+            r.dh = pw.partWk[r.getBx() & 0xffff].partmask;
+            r.dl = pw.partWk[r.getBx() & 0xffff].keyon_flag;
             r.setCx((short) 0); // type qq // KUMA: Does it fit the size of the partwork?
 
             //pushf
             //cli
 
             r.al = 0;
-            pw.partWk[r.getBx()].Clear();
+            pw.partWk[r.getBx() & 0xffff].clear();
 
             r.dh &= 0xf; // 0dh;temporary,s,m,ade other than
-            pw.partWk[r.getBx()].partmask = r.dh; // Save only partmask
-            pw.partWk[r.getBx()].keyon_flag = r.dl; // keyon_flag save
-            pw.partWk[r.getBx()].onkai = (byte) 0xff; // -1; // Set onkai to rest
-            pw.partWk[r.getBx()].onkai_def = (byte) 0xff; // -1; // Set onkai to rest
+            pw.partWk[r.getBx() & 0xffff].partmask = r.dh; // Save only partmask
+            pw.partWk[r.getBx() & 0xffff].keyon_flag = r.dl; // keyon_flag save
+            pw.partWk[r.getBx() & 0xffff].onkai = (byte) 0xff; // -1; // Set onkai to rest
+            pw.partWk[r.getBx() & 0xffff].onkai_def = (byte) 0xff; // -1; // Set onkai to rest
 
             //popf
 
             r.setCx(r.stack.pop());
             r.decCx();
-        } while (r.getCx() > 0);
+        } while ((r.getCx() & 0xffff) > 0);
 
         r.setAx((short) 0);
         pw.tieflag = r.al;
@@ -579,7 +585,7 @@ Debug.printf("%d, %d\n", r.getSi(), Common.GetLe16(pw.md, r.getSi()));
         pw.status2 = r.al;
         pw.syousetu = r.getAx();
         pw.opncount = r.al;
-        pw.TimerAtime = r.al;
+        pw.timerATime = r.al;
         pw.lastTimerAtime = r.al;
         pw.fmKeyOnDataTbl = new byte[] {
             0, 0, 0, 0, 0, 0
@@ -594,12 +600,12 @@ Debug.printf("%d, %d\n", r.getSi(), Common.GetLe16(pw.md, r.getSi()));
         pw.ura_key3Ptr = 5;
         pw.fm3_alg_fb = r.al;
         pw.af_check = r.al;
-        pw.pcmstart = r.getAx();
-        pw.pcmstop = r.getAx();
+        pw.pcmstart = r.getAx() & 0xffff;
+        pw.pcmstop = r.getAx() & 0xffff;
         pw.pcmrepeat1 = r.getAx();
         pw.pcmrepeat2 = r.getAx();
         pw.pcmrelease = (short) 0x8000;
-        pw.kshot_dat = r.getAx();
+        pw.kshot_dat = r.getAx() & 0xffff;
         pw.rshot_dat = r.al;
         pw.last_shot_data = r.al;
         pw.slotdetune_flag = r.al;
@@ -671,7 +677,7 @@ Debug.printf("%d, %d\n", r.getSi(), Common.GetLe16(pw.md, r.getSi()));
 //sr03:
                 r.dh++;
                 r.decCx();
-            } while (r.getCx() > 0);
+            } while ((r.getCx() & 0xffff) > 0);
 
             if (pw.board2 != 0) {
                 sel46();
@@ -686,8 +692,7 @@ Debug.printf("%d, %d\n", r.getSi(), Common.GetLe16(pw.md, r.getSi()));
         // For YM2203, this is the end
         //
         if (pw.board2 == 0) {
-            if (pw.ongen == 0) // 2203 ?
-            {
+            if (pw.ongen == 0) { // 2203 ?
                 return;
             }
         }
@@ -751,7 +756,8 @@ pd03: // ↑
             r.setCx((short) 6);
             r.al = (byte) 0b1100_1111;
             do {
-                pw.rdat[r.di++] = r.al;
+                pw.rdat[r.di & 0xffff] = r.al;
+                r.di++;
                 r.decCx();
             } while (r.getCx() != 0);
 
@@ -768,9 +774,9 @@ pd03: // ↑
 
                 r.dl <<= 2; // 0 - 63 > 0 - 255
                 r.al = (byte) -r.al;
-                r.setAx((short) (r.al * r.dl));
+                r.setAx((short) ((r.al & 0xff) * (r.dl & 0xff)));
                 r.dl = r.ah;
-                r.dl >>= 2; // 0 - 255 > 0 - 63
+                r.dl = (byte)((r.dl & 0xff) >>> 2); // 0 - 255 > 0 - 63
             }
 //rtlset2r:
             pw.rhyvol = r.dl;
@@ -801,7 +807,7 @@ pd03: // ↑
                 do {
                     r.al = r.cl;
                     r.al--;
-                    ChipDatum cd = new ChipDatum(0x13, r.al, r.getDx());
+                    ChipDatum cd = new ChipDatum(0x13, r.al & 0xff, r.getDx() & 0xffff);
                     ppz8em.apply(cd); // .SetPan(r.al, r.dx);
                     r.decCx();
                 } while (r.getCx() != 0);
@@ -828,8 +834,8 @@ pd03: // ↑
      * Stops music.
      */
     private void mstop_f() {
-        r.al = pw.TimerAflag;
-        r.al |= pw.TimerBflag;
+        r.al = pw.timerAFlag;
+        r.al |= pw.timerBFlag;
         if (r.al != 0) {
             pw.music_flag |= 2; // Do not execute during TA/TB processing
             pw.ah_push = (byte) 0xff; // -1
@@ -874,27 +880,27 @@ pd03: // ↑
 
             r.di = (short) pw.part7; // offset part7
             w = 0;
-            if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+            if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
             pw.partb = 1;
             psgmain(); // SSG1
-            if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+            if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
             r.di = (short) pw.part8; // offset part8
             w = 0;
-            if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+            if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
             pw.partb = 2;
             psgmain(); // SSG2
-            if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+            if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
             r.di = (short) pw.part9; // offset part9
             w = 0;
-            if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+            if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
             pw.partb = 3;
             psgmain(); // SSG3
-            if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+            if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
         }
 //mmain_fm:
@@ -903,84 +909,84 @@ pd03: // ↑
 
             r.di = (short) pw.part4; // offset part4
             w = 0;
-            if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+            if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
             pw.partb = 1;
             fmmain(); // FM4 OPNA
-            if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+            if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
             r.di = (short) pw.part5; // offset part5
             w = 0;
-            if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+            if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
             pw.partb = 2;
             fmmain(); // FM5 OPNA
-            if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+            if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
             r.di = (short) pw.part6; // offset part6
             w = 0;
-            if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+            if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
             pw.partb = 3;
             fmmain(); // FM6 OPNA
-            if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+            if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
             sel44();
         }
 
         r.di = (short) pw.part1; // offset part1
         w = 0;
-        if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+        if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
         pw.partb = 1;
         fmmain(); // FM1
-        if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-            pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+        if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+            pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
         r.di = (short) pw.part2; // offset part2
         w = 0;
-        if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+        if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
         pw.partb = 2;
         fmmain(); // FM2
-        if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-            pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+        if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+            pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
         r.di = (short) pw.part3; // offset part3
         w = 0;
-        if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+        if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
         pw.partb = 3;
         fmmain(); // FM3
-        if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-            pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+        if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+            pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
         r.di = (short) pw.part3b; // offset part3b
         w = 0;
-        if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+        if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
         fmmain(); // FM3 Expansion 1
-        if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-            pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+        if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+            pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
         r.di = (short) pw.part3c; // offset part3c
         w = 0;
-        if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+        if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
         fmmain(); // FM3 Expansion 2
-        if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-            pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+        if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+            pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
         r.di = (short) pw.part3d; // offset part3d
         w = 0;
-        if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+        if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
         fmmain(); // FM3 Expansion 3
-        if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-            pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+        if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+            pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
         if (pw.x68_flg == 0) { // break mmain_exit;
 
             r.di = (short) pw.part11; // offset part11
             w = 0;
-            if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+            if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
             rhythmmain(); // RHYTHM
-            if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+            if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
             pw.checkJumpIndexSI = true;
             pw.checkJumpIndexBX = false;
@@ -988,81 +994,81 @@ pd03: // ↑
             if (pw.board2 != 0) {
                 r.di = (short) pw.part10; // offset part10
                 w = 0;
-                if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+                if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
                 if (pw.useP86DRV) {
                     pcmdrv86.pcmmain(); // ADPCM/PCM(IN "pcmdrv.asm"/"pcmdrv86.asm")
-                    if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                        pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+                    if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                        pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
                 } else {
                     pcmdrv.pcmmain();
-                    if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                        pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+                    if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                        pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
                 }
 
                 if (pw.ppz != 0) {
                     r.di = (short) pw.part10a; // offset part10a
                     w = 0;
-                    if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+                    if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
                     pw.partb = 0;
                     ppzdrv.ppzmain();
-                    if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                        pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+                    if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                        pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
                     r.di = (short) pw.part10b; // offset part10b
                     w = 0;
-                    if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+                    if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
                     pw.partb = 1;
                     ppzdrv.ppzmain();
-                    if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                        pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+                    if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                        pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
                     r.di = (short) pw.part10c; // offset part10c
                     w = 0;
-                    if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+                    if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
                     pw.partb = 2;
                     ppzdrv.ppzmain();
-                    if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                        pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+                    if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                        pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
                     r.di = (short) pw.part10d; // offset part10d
                     w = 0;
-                    if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+                    if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
                     pw.partb = 3;
                     ppzdrv.ppzmain();
-                    if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                        pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+                    if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                        pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
                     r.di = (short) pw.part10e; // offset part10e
                     w = 0;
-                    if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+                    if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
                     pw.partb = 4;
                     ppzdrv.ppzmain();
-                    if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                        pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+                    if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                        pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
                     r.di = (short) pw.part10f; // offset part10f
                     w = 0;
-                    if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+                    if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
                     pw.partb = 5;
                     ppzdrv.ppzmain();
-                    if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                        pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+                    if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                        pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
                     r.di = (short) pw.part10g; // offset part10g
                     w = 0;
-                    if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+                    if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
                     pw.partb = 6;
                     ppzdrv.ppzmain();
-                    if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                        pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+                    if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                        pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
 
                     r.di = (short) pw.part10h; // offset part10h
                     w = 0;
-                    if (pw.partWk[pw.part_data_table[r.di]].address == 0) w = 1; // kuma: added
+                    if (pw.partWk[pw.part_data_table[r.di & 0xffff]].address == 0) w = 1; // kuma: added
                     pw.partb = 7;
                     ppzdrv.ppzmain();
-                    if (w == 0 && !(pw.partWk[r.di].loopcheck == 3 && pw.partWk[r.di].partloop == 0))
-                        pw.nowLoopCounter = Math.min(pw.partWk[r.di].loopCounter, pw.nowLoopCounter); // kuma: added
+                    if (w == 0 && !(pw.partWk[r.di & 0xffff].loopcheck == 3 && pw.partWk[r.di & 0xffff].partloop == 0))
+                        pw.nowLoopCounter = Math.min(pw.partWk[r.di & 0xffff].loopCounter, pw.nowLoopCounter); // kuma: added
                 }
             }
         }
@@ -1080,11 +1086,11 @@ pd03: // ↑
 
 //mm_din0:
         do {
-            r.di = (short) pw.part_data_table[r.getBx()]; // [bx]; di = part workarea
+            r.di = (short) pw.part_data_table[r.getBx() & 0xffff]; // [bx]; di = part workarea
             r.incBx();
 
-            if (pw.partWk[r.di].loopcheck != 3) { // break mm_notset;
-                pw.partWk[r.di].loopcheck = 0;
+            if (pw.partWk[r.di & 0xffff].loopcheck != 3) { // break mm_notset;
+                pw.partWk[r.di & 0xffff].loopcheck = 0;
             }
 //mm_notset:
             r.decCx();
@@ -1130,134 +1136,135 @@ pd03: // ↑
     // Mainly FM sound source playback
     //
 
+    private final Supplier<Object> mpexitRef = this::mpexit;
+    private final Supplier<Object> mpexitpRef = this::mpexitp;
+    private final Supplier<Object> mp10Ref = this::mp10;
+    private final Supplier<Object> mp1Ref = this::mp1;
+    private final Supplier<Object> mnp_retRef = this::mnp_ret;
+    private final Supplier<Object> porta_returnRef = this::porta_return;
+    private final Supplier<Object> porta_returnpRef = this::porta_returnp;
+    private final Supplier<Object> fmmnp_1Ref = this::fmmnp_1;
+    private final Supplier<Object> psgmnp_1Ref = this::psgmnp_1;
+    private final Supplier<Object> mp1cpRef = this::mp1cp;
+    private final Supplier<Object> mp1pRef = this::mp1p;
+
 //    private void fmmain_ret() {
 //        ret
 //    }
 
     private void fmmain() {
-        r.setSi(pw.partWk[pw.part_data_table[r.di]].address); // si = PART DATA ADDRESS
-        if (r.getSi()  == 0) return;
+        r.setSi(pw.partWk[pw.part_data_table[r.di & 0xffff]].address); // si = PART DATA ADDRESS
+        if (r.getSi() == 0) return;
 
-        Supplier<Object> ret = null;
-        if (pw.partWk[r.di].partmask != 0)
+        Supplier<Object> ret;
+        if (pw.partWk[r.di & 0xffff].partmask != 0)
             ret = this::fmmain_nonplay;
         else
             ret = this::fmmain_c_1;
 
-        if (ret != null) {
-            do {
-                ret = (Supplier<Object>) ret.get();
-            } while (ret != null);
-        }
+        do {
+            ret = (Supplier<Object>) ret.get();
+        } while (ret != null);
     }
 
     private Supplier<Object> fmmain_c_1() {
         // Duration -1
-        pw.partWk[r.di].leng--;
-        r.al = pw.partWk[r.di].leng;
+        pw.partWk[r.di & 0xffff].leng--;
+        r.al = pw.partWk[r.di & 0xffff].leng;
 
         // KEYOFF CHECK & Keyoff
-        if ((pw.partWk[r.di].keyoff_flag & 3) == 0) { // already keyed off? // break mp0;
+        if ((pw.partWk[r.di & 0xffff].keyoff_flag & 3) == 0) { // already keyed off? // break mp0;
 
-            if (r.al <= pw.partWk[r.di].qdat) { // Q value => keyoff when remaining Length value // break mp0;
+            if ((r.al & 0xff) <= (pw.partWk[r.di & 0xffff].qdat & 0xff)) { // Q value => keyoff when remaining Length value // break mp0;
 
                 keyoff(); // AL will not break
-                pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
+                pw.partWk[r.di & 0xffff].keyoff_flag = (byte) 0xff; // -1
             }
         }
 //mp0:
         // LENGTH CHECK
-        if (r.al != 0) return this::mpexit;
-        return this::mp10;
+        if (r.al != 0) return mpexitRef;
+        return mp10Ref;
     }
 
     private Supplier<Object> mp10() {
-        pw.partWk[r.di].lfoswi &= (byte) 0xf7; // Porta off
-        return this::mp1;
+        pw.partWk[r.di & 0xffff].lfoswi &= (byte) 0xf7; // Porta off
+        return mp1Ref;
     }
 
     private Supplier<Object> mp1() { // DATA READ
-mp2: // ↑
-        {
-mp15: // ↑
-            {
-                do {
-                    pw.cmd = pw.md[r.getSi()];
-                    //if (r.si == pw.jumpIndex)
-                    //pw.jumpIndex = -1; // KUMA:Added
+        do {
+            pw.cmd = pw.md[r.getSi() & 0xffff];
+            //if (r.si == pw.jumpIndex)
+            //pw.jumpIndex = -1; // KUMA:Added
 
-                    r.al = (byte) pw.md[r.incSi()].dat;
-                    if ((r.al & 0xff) >= 0x80)
-                        break mp2;
-                    if (r.al == (byte) 0x80) break mp15;
-
-                    // ELSE COMMANDS
-                    Object o = commands();
-                    Supplier<Object> mp1_ = this::mp1;
-                    Supplier<Object> mnp_ret_ = this::mnp_ret;
-                    Supplier<Object> porta_return_ = this::porta_return;
-                    while (o != null && o != mp1_) {
-                        o = ((Supplier<Object>) o).get();
-                        if (o == mnp_ret_)
-                            return this::mnp_ret;
-                        if (o == porta_return_)
-                            return this::porta_return;
-                    }
-                } while (true);
-            }
-            // END OF MUSIC[When there was an "L" I went back there]
-//mp15:
-            FlashMacroList();
-
-            r.decSi();
-            pw.partWk[r.di].address = r.getSi(); // mov[di],si
-            pw.partWk[r.di].loopcheck = 3;
-            pw.partWk[r.di].onkai = (byte) 0xff; // -1
-            r.setBx(pw.partWk[r.di].partloop);
-            if (r.getBx() == 0) return this::mpexit;
-
-            // When there was an "L"
-            r.setSi(r.getBx());
-            pw.partWk[r.di].loopcheck = 1;
-            pw.partWk[r.di].loopCounter++;
-            return this::mp1;
-        }
+            r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+            if ((r.al & 0xff) < 0x80) { // break mp2;
 //mp2:
-        // F-NUMBER SET
+                // F-NUMBER SET
 
-        FlashMacroList();
+                flashMacroList();
 
-        lfoinit();
-        oshift();
-        fnumset();
+                lfoinit();
+                oshift();
+                fnumset();
 
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = pw.cmd;
-        WriteOPNARegister.accept(cd);
+                ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+                cd.additionalData = pw.cmd;
+                WriteOPNARegister.accept(cd);
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].leng = r.al;
-        calc_q();
-        return porta_return();
+                r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+                pw.partWk[r.di & 0xffff].leng = r.al;
+                calc_q();
+                return porta_return();
+            }
+            if (r.al == (byte) 0x80) { // break mp15;
+                // END OF MUSIC[When there was an "L" I went back there]
+//mp15:
+                flashMacroList();
+
+                r.decSi();
+                pw.partWk[r.di & 0xffff].address = r.getSi(); // mov[di],si
+                pw.partWk[r.di & 0xffff].loopcheck = 3;
+                pw.partWk[r.di & 0xffff].onkai = (byte) 0xff; // -1
+                r.setBx(pw.partWk[r.di & 0xffff].partloop);
+                if (r.getBx() == 0) return mpexitRef;
+
+                // When there was an "L"
+                r.setSi(r.getBx());
+                pw.partWk[r.di & 0xffff].loopcheck = 1;
+                pw.partWk[r.di & 0xffff].loopCounter++;
+                return mp1Ref;
+            }
+
+            // ELSE COMMANDS
+            Object o = commands();
+            while (o != null && o != mp1Ref) {
+                o = ((Supplier<Object>) o).get();
+                if (o == mnp_retRef)
+                    return mnp_retRef;
+                if (o == porta_returnRef)
+                    return porta_returnRef;
+            }
+        } while (true);
     }
 
-    public void FlashMacroList() {
+    public void flashMacroList() {
         if (pw.cmd.args != null && pw.cmd.args.size() > 2) {
             Object obj = pw.cmd.args.get(2);
-            if (obj != null && obj instanceof MmlDatum[]) {
-                MmlDatum[] mds = (MmlDatum[]) obj;
+            if (obj instanceof MmlDatum[] mds) {
                 for (MmlDatum md : mds) execIDESpecialCommand(md);
             }
         }
     }
 
     private Supplier<Object> porta_return() {
-        if (pw.partWk[r.di].volpush != 0) { // break mp_new;
-            if (pw.partWk[r.di].onkai != (byte) 0xff) { // break mp_new;
+        if (pw.partWk[r.di & 0xffff].volpush != 0) { // break mp_new;
+            if (pw.partWk[r.di & 0xffff].onkai != (byte) 0xff) { // break mp_new;
                 pw.volpush_flag--;
                 if (pw.volpush_flag != 0) { // break mp_new;
                     pw.volpush_flag = 0;
-                    pw.partWk[r.di].volpush = 0;
+                    pw.partWk[r.di & 0xffff].volpush = 0;
                 }
             }
         }
@@ -1265,47 +1272,47 @@ mp15: // ↑
         volset();
         otodasi();
         keyon();
-        pw.partWk[r.di].keyon_flag++;
-        pw.partWk[r.di].address = r.getSi();
+        pw.partWk[r.di & 0xffff].keyon_flag++;
+        pw.partWk[r.di & 0xffff].address = r.getSi();
         r.al = 0;
         pw.tieflag = r.al;
         pw.volpush_flag = r.al;
-        pw.partWk[r.di].keyoff_flag = r.al;
-        if (pw.md[r.getSi()].dat != 0xfb) // If there is an '&' immediately after, keyoff will not occur.
-            return this::mnp_ret;
-        pw.partWk[r.di].keyoff_flag = 2;
-        return this::mnp_ret;
+        pw.partWk[r.di & 0xffff].keyoff_flag = r.al;
+        if (pw.md[r.getSi() & 0xffff].dat != 0xfb) // If there is an '&' immediately after, keyoff will not occur.
+            return mnp_retRef;
+        pw.partWk[r.di & 0xffff].keyoff_flag = 2;
+        return mnp_retRef;
     }
 
     private Supplier<Object> mpexit() { // LFO & Portament & Fadeout processing to finish
         if (pw.board2 != 0) {
-            if (pw.partWk[r.di].hldelay_c != 0) {
-                pw.partWk[r.di].hldelay_c--;
-                if (pw.partWk[r.di].hldelay_c == 0) {
+            if (pw.partWk[r.di & 0xffff].hldelay_c != 0) {
+                pw.partWk[r.di & 0xffff].hldelay_c--;
+                if (pw.partWk[r.di & 0xffff].hldelay_c == 0) {
                     r.dh = pw.partb;
                     r.dh += (byte) (0xb4 - 1);
-                    r.dl = pw.partWk[r.di].fmpan;
+                    r.dl = pw.partWk[r.di & 0xffff].fmpan;
                     opnset();
                 }
             }
 //not_hldelay:
         }
-        if (pw.partWk[r.di].sdelay_c != 0) {
-            pw.partWk[r.di].sdelay_c--;
-            if (pw.partWk[r.di].sdelay_c == 0) {
-                if ((pw.partWk[r.di].keyoff_flag & 1) == 0) { // Have you already keyed off?
+        if (pw.partWk[r.di & 0xffff].sdelay_c != 0) {
+            pw.partWk[r.di & 0xffff].sdelay_c--;
+            if (pw.partWk[r.di & 0xffff].sdelay_c == 0) {
+                if ((pw.partWk[r.di & 0xffff].keyoff_flag & 1) == 0) { // Have you already keyed off?
                     keyon();
                 }
             }
         }
 //not_sdelay:
-        r.cl = pw.partWk[r.di].lfoswi;
+        r.cl = pw.partWk[r.di & 0xffff].lfoswi;
         if ((r.cl & r.cl) == 0) {
             //break nolfosw; // Processing without skipping
             if (pw.fadeout_speed != 0) {
                 volset();
             }
-            return this::mnp_ret;
+            return mnp_retRef;
         }
         r.al = r.cl;
         r.al &= 8;
@@ -1327,7 +1334,7 @@ mp15: // ↑
             if (r.carry) {
                 lfo_change();
                 //popf
-                r.al = pw.partWk[r.di].lfoswi;
+                r.al = pw.partWk[r.di & 0xffff].lfoswi;
                 r.al &= 0x30;
                 pw.lfo_switch |= r.al;
             } else {
@@ -1347,16 +1354,16 @@ mp15: // ↑
 //vols:
         if ((pw.lfo_switch & 0x22) == 0) {
 //nolfosw:
-            if (pw.fadeout_speed == 0) return this::mnp_ret;
+            if (pw.fadeout_speed == 0) return mnp_retRef;
         }
 //vol_set:
         volset();
-        return this::mnp_ret;
+        return mnp_retRef;
     }
 
     public Supplier<Object> mnp_ret() {
         r.al = pw.loop_work;
-        r.al &= pw.partWk[r.di].loopcheck;
+        r.al &= pw.partWk[r.di & 0xffff].loopcheck;
         pw.loop_work = r.al;
         _ppz();
         return null;
@@ -1367,39 +1374,39 @@ mp15: // ↑
      *  break dx
      */
     public void calc_q() {
-        if (pw.md[r.getSi()].dat != 0xc1) { //&& // break cq_sular;
+        if (pw.md[r.getSi() & 0xffff].dat != 0xc1) { //&& // break cq_sular;
 
-            r.dl = pw.partWk[r.di].qdata;
-            if (pw.partWk[r.di].qdatb != 0) { // break cq_set;
+            r.dl = pw.partWk[r.di & 0xffff].qdata;
+            if (pw.partWk[r.di & 0xffff].qdatb != 0) { // break cq_set;
 
                 r.stack.push(r.getAx());
-                r.al = pw.partWk[r.di].leng;
-                r.setAx((short) (r.al * pw.partWk[r.di].qdatb));
-                r.dl += r.ah;
+                r.al = pw.partWk[r.di & 0xffff].leng;
+                r.setAx((short) ((r.al & 0xff) * (pw.partWk[r.di & 0xffff].qdatb & 0xff)));
+                r.dl = (byte) ((r.dl & 0xff) + (r.ah & 0xff));
                 r.setAx(r.stack.pop());
             }
 //cq_set:
-            if (pw.partWk[r.di].qdat3 != 0) { // break cq_set2;
+            if (pw.partWk[r.di & 0xffff].qdat3 != 0) { // break cq_set2;
 
                 // Random-Q
                 r.stack.push(r.getAx());
                 r.stack.push(r.getCx());
-                r.al = pw.partWk[r.di].qdat3;
+                r.al = pw.partWk[r.di & 0xffff].qdat3;
                 r.al &= 0x7f;
-                r.setAx(r.al); // cbw
+                r.setAx(/* signed */ r.al); // cbw
                 r.incAx();
 
                 r.stack.push(r.getDx());
                 rnd();
                 r.setDx(r.stack.pop());
 
-                if ((pw.partWk[r.di].qdat3 & 0x80) == 0) { // break cqr_minus;
+                if ((pw.partWk[r.di & 0xffff].qdat3 & 0x80) == 0) { // break cqr_minus;
 
                     r.dl += r.al;
 //                    break cqr_exit;
                 } else {
 //cqr_minus:
-                    r.carry = (r.dl - r.al) < 0;
+                    r.carry = ((r.dl & 0xff) - (r.al & 0xff)) < 0;
                     r.dl -= r.al;
                     if (r.carry) { // break cqr_exit;
                         r.dl = 0;
@@ -1410,28 +1417,28 @@ mp15: // ↑
                 r.setAx(r.stack.pop());
             }
 //cq_set2:
-            if (pw.partWk[r.di].qdat2 != 0) { // break cq_sete;
+            if (pw.partWk[r.di & 0xffff].qdat2 != 0) { // break cq_sete;
 
-                r.dh = pw.partWk[r.di].leng;
-                r.carry = (r.dh - pw.partWk[r.di].qdat2) < 0;
-                r.dh -= pw.partWk[r.di].qdat2;
+                r.dh = pw.partWk[r.di & 0xffff].leng;
+                r.carry = ((r.dh & 0xff) - (pw.partWk[r.di & 0xffff].qdat2 & 0xff)) < 0;
+                r.dh -= pw.partWk[r.di & 0xffff].qdat2;
                 if (r.carry) {
 //                    break cq_zero;
-                    pw.partWk[r.di].qdat = 0; // <<
+                    pw.partWk[r.di & 0xffff].qdat = 0; // <<
                     return; // <<
                 }
-                if (r.dl - r.dh >= 0) { // break cq_sete;
+                if ((r.dl & 0xff) - (r.dh & 0xff) >= 0) { // break cq_sete;
                     r.dl = r.dh; // Minimum guaranteed gate value setting
                 }
             }
 //cq_sete:
-            pw.partWk[r.di].qdat = r.dl;
+            pw.partWk[r.di & 0xffff].qdat = r.dl;
             return;
         }
 //cq_sular:
         r.incSi(); // Slur Command
 //cq_zero:
-        pw.partWk[r.di].qdat = 0;
+        pw.partWk[r.di & 0xffff].qdat = 0;
     }
 
     /**
@@ -1441,69 +1448,67 @@ mp15: // ↑
      * true: break mp10
      */
     private Supplier<Object> fmmain_nonplay() {
-        pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
-        pw.partWk[r.di].leng--;
-        if (pw.partWk[r.di].leng != 0) return this::mnp_ret;
+        pw.partWk[r.di & 0xffff].keyoff_flag = (byte) 0xff; // -1
+        pw.partWk[r.di & 0xffff].leng--;
+        if (pw.partWk[r.di & 0xffff].leng != 0) return mnp_retRef;
 
-        if ((pw.partWk[r.di].partmask & 2) != 0) { // Check bit1 (FM sound effect?)
+        if ((pw.partWk[r.di & 0xffff].partmask & 2) != 0) { // Check bit1 (FM sound effect?)
             if (pw.fm_effec_flag == 0) { // ; Did the sound effect end?
-                pw.partWk[r.di].partmask &= (byte) 0xfd; // clear bit1
-                if (pw.partWk[r.di].partmask == 0) return this::mp10; // If partmask is 0, restore it.
+                pw.partWk[r.di & 0xffff].partmask &= (byte) 0xfd; // clear bit1
+                if (pw.partWk[r.di & 0xffff].partmask == 0) return mp10Ref; // If partmask is 0, restore it.
             }
         }
-        return this::fmmnp_1;
+        return fmmnp_1Ref;
     }
 
     private Supplier<Object> fmmnp_1() {
         do {
             do {
-                pw.cmd = pw.md[r.getSi()];
-                r.al = (byte) pw.md[r.incSi()].dat;
+                pw.cmd = pw.md[r.getSi() & 0xffff];
+                r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
                 if (r.al == (byte) 0x80) break;
                 if ((r.al & 0xff) < 0x80) return this::fmmnp_3;
 
                 Object o = commands();
-                Supplier<Object> fmmnp_1_ = this::fmmnp_1;
-                Supplier<Object> mnp_ret_ = this::mnp_ret;
-                while (o != null && o !=fmmnp_1_) {
+                while (o != null && o != fmmnp_1Ref) {
                     o = ((Supplier<Object>) o).get();
-                    if (o == mnp_ret_) return this::mnp_ret;
+                    if (o == mnp_retRef) return mnp_retRef;
                 }
 
             } while (true);
 
-            FlashMacroList();
+            flashMacroList();
 
 //fmmnp_2:
             // END OF MUSIC[When there was an "L" I went back there]
             r.decSi();
-            pw.partWk[r.di].address = r.getSi();
-            pw.partWk[r.di].loopcheck = 3;
-            pw.partWk[r.di].onkai = (byte) 0xff; // -1
-            r.subBx(pw.partWk[r.di].partloop);
+            pw.partWk[r.di & 0xffff].address = r.getSi();
+            pw.partWk[r.di & 0xffff].loopcheck = 3;
+            pw.partWk[r.di & 0xffff].onkai = (byte) 0xff; // -1
+            r.setBx(pw.partWk[r.di & 0xffff].partloop);
             if ((r.getBx() & r.getBx()) == 0) return this::fmmnp_4;
             // When there was an "L"
             r.setSi(r.getBx());
-            pw.partWk[r.di].loopcheck = 1;
-            pw.partWk[r.di].loopCounter++;
+            pw.partWk[r.di & 0xffff].loopcheck = 1;
+            pw.partWk[r.di & 0xffff].loopCounter++;
         } while (true);
     }
 
     public Supplier<Object> fmmnp_3() {
-        FlashMacroList();
+        flashMacroList();
 
-        pw.partWk[r.di].fnum = 0; // Set to Rest
-        pw.partWk[r.di].onkai = (byte) 0xff; // -1
-        pw.partWk[r.di].onkai_def = (byte) 0xff; // -1
+        pw.partWk[r.di & 0xffff].fnum = 0; // Set to Rest
+        pw.partWk[r.di & 0xffff].onkai = (byte) 0xff; // -1
+        pw.partWk[r.di & 0xffff].onkai_def = (byte) 0xff; // -1
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].leng = r.al; // Sound length setting
-        pw.partWk[r.di].keyon_flag++;
-        pw.partWk[r.di].address = r.getSi();
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].leng = r.al; // Sound length setting
+        pw.partWk[r.di & 0xffff].keyon_flag++;
+        pw.partWk[r.di & 0xffff].address = r.getSi();
 
         pw.volpush_flag--;
         if (pw.volpush_flag != 0) {
-            pw.partWk[r.di].volpush = 0;
+            pw.partWk[r.di & 0xffff].volpush = 0;
         }
 
         return this::fmmnp_4;
@@ -1512,7 +1517,7 @@ mp15: // ↑
     public Supplier<Object> fmmnp_4() {
         pw.tieflag = 0;
         pw.volpush_flag = 0;
-        return this::mnp_ret;
+        return mnp_retRef;
     }
 
     //
@@ -1521,13 +1526,13 @@ mp15: // ↑
     //psgmain_ret:
     //ret
     private void psgmain() {
-        r.setSi(pw.partWk[pw.part_data_table[r.di]].address); // si = PART DATA ADDRESS
+        r.setSi(pw.partWk[pw.part_data_table[r.di & 0xffff]].address); // si = PART DATA ADDRESS
         if (r.getSi()  == 0) return;
 
         //if (r.si == pw.jumpIndex) pw.jumpIndex = -1; // KUMA:Added
 
         Supplier<Object> ret = null;
-        if (pw.partWk[r.di].partmask != 0)
+        if (pw.partWk[r.di & 0xffff].partmask != 0)
             ret = this::psgmain_nonplay;
         else
             ret = this::psgmain_c_1;
@@ -1541,101 +1546,98 @@ mp15: // ↑
 
     private Supplier<Object> psgmain_c_1() {
         // Duration -1
-        pw.partWk[r.di].leng--;
-        r.al = pw.partWk[r.di].leng;
+        pw.partWk[r.di & 0xffff].leng--;
+        r.al = pw.partWk[r.di & 0xffff].leng;
 
         // KEYOFF CHECK & Keyoff
-        if ((pw.partWk[r.di].keyoff_flag & 3) != 0) // Have you already keyed off?
+        if ((pw.partWk[r.di & 0xffff].keyoff_flag & 3) != 0) // Have you already keyed off?
             return this::mp0p;
 
-        if (r.al > pw.partWk[r.di].qdat) // Q value => keyoff when remaining Length value
+        if ((r.al & 0xff) > (pw.partWk[r.di & 0xffff].qdat & 0xff)) // Q value => keyoff when remaining Length value
             return this::mp0p;
 
         keyoffp(); // AL will not break
-        pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
+        pw.partWk[r.di & 0xffff].keyoff_flag = (byte) 0xff; // -1
 
         return this::mp0p;
     }
 
     // LENGTH CHECK
     private Supplier<Object> mp0p() {
-        if (r.al != 0) return this::mpexitp;
+        if (r.al != 0) return mpexitpRef;
 
-        pw.partWk[r.di].lfoswi &= (byte) 0xf7; // Porta off
+        pw.partWk[r.di & 0xffff].lfoswi &= (byte) 0xf7; // Porta off
 
-        return this::mp1p;
+        return mp1pRef;
     }
 
     // DATA READ
     private Supplier<Object> mp1p() {
-        pw.cmd = pw.md[r.getSi()];
+        pw.cmd = pw.md[r.getSi() & 0xffff];
 
         //if (r.si == pw.jumpIndex)
         //pw.jumpIndex = -1; // KUMA:Added
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         if ((r.al & 0xff) < 0x80) return this::mp2p;
         if (r.al == (byte) 0x80) return this::mp15p;
-        return this::mp1cp;
+        return mp1cpRef;
     }
 
     // ELSE COMMANDS
     private Supplier<Object> mp1cp() {
         Object o = commandsp();
-        Supplier<Object> mp1cp_ = this::mp1cp;
-        Supplier<Object> mp1p_ = this::mp1p;
-        Supplier<Object> mnp_ret_ = this::mnp_ret;
-        while (o != null && o != mp1cp_ && o != mp1p_) {
+        while (o != null && o != mp1cpRef && o != mp1pRef) {
             o = ((Supplier<Object>) o).get();
-            if (o == mnp_ret_) return this::mnp_ret;
+            if (o == mnp_retRef) return mnp_retRef;
         }
 
-        return this::mp1p;
+        return mp1pRef;
     }
 
     // END OF MUSIC[When there was an "L" I went back there]
     private Supplier<Object> mp15p() {
-        FlashMacroList();
+        flashMacroList();
 
         r.decSi();
-        pw.partWk[r.di].address = r.getSi(); // mov[di],si
-        pw.partWk[r.di].loopcheck = 3;
-        pw.partWk[r.di].onkai = (byte) 0xff; // -1
-        r.setBx(pw.partWk[r.di].partloop);
-        if (r.getBx() == 0) return this::mpexitp;
+        pw.partWk[r.di & 0xffff].address = r.getSi(); // mov[di],si
+        pw.partWk[r.di & 0xffff].loopcheck = 3;
+        pw.partWk[r.di & 0xffff].onkai = (byte) 0xff; // -1
+        r.setBx(pw.partWk[r.di & 0xffff].partloop);
+        if (r.getBx() == 0) return mpexitpRef;
 
         // When there was an "L"
         r.setSi(r.getBx());
-        pw.partWk[r.di].loopcheck = 1;
-        pw.partWk[r.di].loopCounter++;
-        return this::mp1p;
+        pw.partWk[r.di & 0xffff].loopcheck = 1;
+        pw.partWk[r.di & 0xffff].loopCounter++;
+        return mp1pRef;
     }
 
     // TONE SET
     private Supplier<Object> mp2p() {
-        FlashMacroList();
+        flashMacroList();
 
         lfoinitp();
         oshiftp();
         fnumsetp();
 
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
         cd.additionalData = pw.cmd;
         WriteOPNARegister.accept(cd);
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].leng = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].leng = r.al;
         calc_q();
         return porta_returnp();
     }
 
     private Supplier<Object> porta_returnp() {
-        if (pw.partWk[r.di].volpush != 0) {
-            if (pw.partWk[r.di].onkai != (byte) 0xff) {
+        if (pw.partWk[r.di & 0xffff].volpush != 0) {
+            if (pw.partWk[r.di & 0xffff].onkai != (byte) 0xff) {
                 pw.volpush_flag--;
                 if (pw.volpush_flag != 0) {
                     pw.volpush_flag = 0;
-                    pw.partWk[r.di].volpush = 0;
+                    pw.partWk[r.di & 0xffff].volpush = 0;
                 }
             }
         }
@@ -1643,22 +1645,22 @@ mp15: // ↑
         volsetp();
         otodasip();
         keyonp();
-        pw.partWk[r.di].keyon_flag++;
-        pw.partWk[r.di].address = r.getSi();
+        pw.partWk[r.di & 0xffff].keyon_flag++;
+        pw.partWk[r.di & 0xffff].address = r.getSi();
         r.al = 0;
         pw.tieflag = r.al;
         pw.volpush_flag = r.al;
-        pw.partWk[r.di].keyoff_flag = r.al;
-        if (pw.md[r.getSi()].dat != 0xfb) // If there is an '&' immediately after, keyoff will not occur.
+        pw.partWk[r.di & 0xffff].keyoff_flag = r.al;
+        if (pw.md[r.getSi() & 0xffff].dat != 0xfb) // If there is an '&' immediately after, keyoff will not occur.
         {
-            return this::mnp_ret;
+            return mnp_retRef;
         }
-        pw.partWk[r.di].keyoff_flag = 2;
-        return this::mnp_ret;
+        pw.partWk[r.di & 0xffff].keyoff_flag = 2;
+        return mnp_retRef;
     }
 
     private Supplier<Object> mpexitp() {
-        r.cl = pw.partWk[r.di].lfoswi;
+        r.cl = pw.partWk[r.di & 0xffff].lfoswi;
         r.al = r.cl;
         r.al &= 8;
         pw.lfo_switch = r.al;
@@ -1682,7 +1684,7 @@ mp15: // ↑
                 if (r.carry) {
                     lfo_change();
                     //    popf
-                    r.al = pw.partWk[r.di].lfoswi;
+                    r.al = pw.partWk[r.di & 0xffff].lfoswi;
                     r.al &= 0x30;
                     pw.lfo_switch |= r.al;
                 } else {
@@ -1718,58 +1720,55 @@ mp15: // ↑
      * SSG sound source main: When part is masked
      */
     private Supplier<Object> psgmain_nonplay() {
-        pw.partWk[r.di].keyoff_flag = (byte) 0xff; // -1
-        pw.partWk[r.di].leng--;
-        if (pw.partWk[r.di].leng != 0) return this::mnp_ret;
+        pw.partWk[r.di & 0xffff].keyoff_flag = (byte) 0xff; // -1
+        pw.partWk[r.di & 0xffff].leng--;
+        if (pw.partWk[r.di & 0xffff].leng != 0) return mnp_retRef;
 
-        pw.partWk[r.di].lfoswi &= 0xf7; // Porta off
-        return this::psgmnp_1;
+        pw.partWk[r.di & 0xffff].lfoswi &= 0xf7; // Porta off
+        return psgmnp_1Ref;
     }
 
     private Supplier<Object> psgmnp_1() {
 psgmnp_4:
         do {
             do {
-                pw.cmd = pw.md[r.getSi()];
-                r.al = (byte) pw.md[r.incSi()].dat;
+                pw.cmd = pw.md[r.getSi() & 0xffff];
+                r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
                 if (r.al == (byte) 0x80) break;
                 if ((r.al & 0xff) < 0x80) break psgmnp_4;
 
                 if (r.al == (byte) 0xda) { // break psgmnp_3;
                     ssgdrum_check(); // Check for SSG revival only in the case of Portament?
-                    if (r.carry) return this::mp1cp; // In case of revival, proceed to the main process
+                    if (r.carry) return mp1cpRef; // In case of revival, proceed to the main process
                 }
 //psgmnp_3:
                 Object o = commandsp();
-                Supplier<Object> psgmnp_1_ = this::psgmnp_1;
-                Supplier<Object> mnp_ret_ = this::mnp_ret;
-                Supplier<Object> porta_returnp_ = this::porta_returnp;
-                while (o != null && o != psgmnp_1_) {
+                while (o != null && o != psgmnp_1Ref) {
                     o = ((Supplier<Object>) o).get();
-                    if (o == mnp_ret_)
-                        return this::mnp_ret;
-                    if (o == porta_returnp_)
-                        return this::porta_returnp;
+                    if (o == mnp_retRef)
+                        return mnp_retRef;
+                    if (o == porta_returnpRef)
+                        return porta_returnpRef;
                 }
 
             } while (true);
 
             // END OF MUSIC[When there was an "L" I went back there]
 //psgmnp_2:
-            FlashMacroList();
+            flashMacroList();
 
             r.decSi();
-            pw.partWk[r.di].address = r.getSi();
-            pw.partWk[r.di].loopcheck = 3;
-            pw.partWk[r.di].onkai = (byte) 0xff; // -1
-            r.setBx(pw.partWk[r.di].partloop);
+            pw.partWk[r.di & 0xffff].address = r.getSi();
+            pw.partWk[r.di & 0xffff].loopcheck = 3;
+            pw.partWk[r.di & 0xffff].onkai = (byte) 0xff; // -1
+            r.setBx(pw.partWk[r.di & 0xffff].partloop);
 
             if ((r.getBx() & r.getBx()) == 0) return this::fmmnp_4;
 
             // When there was an "L"
             r.setSi(r.getBx());
-            pw.partWk[r.di].loopcheck = 1;
-            pw.partWk[r.di].loopCounter++;
+            pw.partWk[r.di & 0xffff].loopcheck = 1;
+            pw.partWk[r.di & 0xffff].loopCounter++;
         } while (true);
 
 //psgmnp_4:
@@ -1786,9 +1785,9 @@ psgmnp_4:
      * output cy = 1: Resurrect
      */
     private void ssgdrum_check() {
-        if ((pw.partWk[r.di].partmask & 1) == 0) { // Check bit0 (SSG masked?) // break sdrchk_2; // Do not stop the drum while SSG is masked
-            if ((pw.partWk[r.di].partmask & 2) != 0) { // Check bit1 (SSG sound effect in progress?) // break sdrchk_2; //SSG drums are not playing
-                if (pw.effon < 2) { // Are any sound effects other than SSG drums being played? // break sdrchk_2; // Do not turn off normal sound effects
+        if ((pw.partWk[r.di & 0xffff].partmask & 1) == 0) { // Check bit0 (SSG masked?) // break sdrchk_2; // Do not stop the drum while SSG is masked
+            if ((pw.partWk[r.di & 0xffff].partmask & 2) != 0) { // Check bit1 (SSG sound effect in progress?) // break sdrchk_2; //SSG drums are not playing
+                if ((pw.effon & 0xff) < 2) { // Are any sound effects other than SSG drums being played? // break sdrchk_2; // Do not turn off normal sound effects
 
                     r.ah = r.al; // AL will not break
                     r.ah &= 0xf; // When it is 0DAH (portament), it is 0AH, so it is okay.
@@ -1799,8 +1798,8 @@ psgmnp_4:
                             r.setAx(r.stack.pop());
                         }
 //sdrchk_1:
-                        pw.partWk[r.di].partmask &= (byte) 0xfd; // clear bit1
-                        if (pw.partWk[r.di].partmask == 0) { // break sdrchk_2; // Still masked by something
+                        pw.partWk[r.di & 0xffff].partmask &= (byte) 0xfd; // clear bit1
+                        if (pw.partWk[r.di & 0xffff].partmask == 0) { // break sdrchk_2; // Still masked by something
                             r.carry = true;
                             return; // If partmask is 0, restore it.
                         }
@@ -1822,14 +1821,14 @@ psgmnp_4:
     private void rhythmmain() {
         pw.checkJumpIndexSI = true;
         pw.checkJumpIndexBX = false;
-        r.setSi(pw.partWk[pw.part_data_table[r.di]].address); // si = PART DATA ADDRESS
-        if (r.getSi()  == 0) return;
+        r.setSi(pw.partWk[pw.part_data_table[r.di & 0xffff]].address); // si = PART DATA ADDRESS
+        if (r.getSi() == 0) return;
 
         //if (r.si == pw.jumpIndex) pw.jumpIndex = -1; // KUMA:Added
 
         // Duration -1
-        pw.partWk[r.di].leng--;
-        if (pw.partWk[r.di].leng != 0) {
+        pw.partWk[r.di & 0xffff].leng--;
+        if (pw.partWk[r.di & 0xffff].leng != 0) {
             mnp_ret();
             return;
         }
@@ -1844,9 +1843,9 @@ psgmnp_4:
     private void rhyms00() {
 //rhyms00:
         while (true) {
-            pw.cmd = pw.rd[r.getBx()];
-            r.al = (byte) pw.rd[r.getBx()].dat; // rd is set to either md (regular performance data) or rdDmy (dummy performance data).
-            r.decBx();
+            pw.cmd = pw.rd[r.getBx() & 0xffff];
+            r.al = (byte) pw.rd[r.getBx() & 0xffff].dat; // rd is set to either md (regular performance data) or rdDmy (dummy performance data).
+            r.incBx();
 
             if (r.al == (byte) 0xff) {
                 reom();
@@ -1859,7 +1858,7 @@ psgmnp_4:
             }
             break;
         }
-        FlashMacroList();
+        flashMacroList();
 
         pw.kshot_dat = 0; // rest
         rlnset();
@@ -1869,16 +1868,16 @@ psgmnp_4:
      * Read and set note length
      */
     private void rlnset() {
-        r.al = (byte) pw.rd[r.getBx()].dat; // mov al,[bx]
+        r.al = (byte) pw.rd[r.getBx() & 0xffff].dat; // mov al,[bx]
 
-        if (r.getBx() == pw.jumpIndex)
+        if ((r.getBx() & 0xffff) == pw.jumpIndex)
             pw.jumpIndex = -1; // KUMA:Added
 
         r.incBx();
 
-        pw.rhyadr = r.getBx();
-        pw.partWk[r.di].leng = r.al;
-        pw.partWk[r.di].keyon_flag++;
+        pw.rhyadr = r.getBx() & 0xffff;
+        pw.partWk[r.di & 0xffff].leng = r.al;
+        pw.partWk[r.di & 0xffff].keyon_flag++;
 
         fmmnp_4();
         mnp_ret();
@@ -1886,7 +1885,7 @@ psgmnp_4:
 
 //    private void mnp_ret() {
 //        r.al = pw.loop_work;
-//        r.al &= pw.partWk[r.di].loopcheck;
+//        r.al &= pw.partWk[r.di & 0xffff].loopcheck;
 //        pw.loop_work = r.al;
 //        _ppz();
 //        return;
@@ -1894,17 +1893,17 @@ psgmnp_4:
 
     private void reom() {
         // KUMA: Analysis of K part
-//reom:
+reom:
         while (true) {
 rfin: // ↑
             {
                 pw.checkJumpIndexSI = true;
                 pw.checkJumpIndexBX = false;
                 do {
-                    pw.cmd = pw.md[r.getSi()];
-                    r.al = (byte) pw.md[r.getSi()].dat;
+                    pw.cmd = pw.md[r.getSi() & 0xffff];
+                    r.al = (byte) pw.md[r.getSi() & 0xffff].dat;
 
-                    if (r.getSi() == pw.jumpIndex)
+                    if ((r.getSi() & 0xffff) == pw.jumpIndex)
                         pw.jumpIndex = -1; // KUMA: Added for skip playback
 
                     r.incSi();
@@ -1918,29 +1917,29 @@ rfin: // ↑
                     }
                 } while (true);
 
-                //KUMA: Preparing to switch processing to R part
+                // KUMA: Preparing to switch processing to R part
 
                 //logger.log(Level.TRACE, "%d", pw.cmd);
 
-                FlashMacroList();
+                flashMacroList();
 
                 MmlDatum md = new MmlDatum(MMLType.TraceLocate, null, LinePos.Copy(pw.cmd.linePos), 0xff);
                 md = new MmlDatum(MMLType.TraceLocate, List.of(0, 1, md), LinePos.Copy(pw.cmd.linePos), 0xff);
-                ChipDatum cd = new ChipDatum(-1, -1, -1);
+                ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
                 cd.additionalData = md;
                 writeDummy(cd);
 
 //re00:
-                pw.partWk[r.di].address = r.getSi();
+                pw.partWk[r.di & 0xffff].address = r.getSi();
                 pw.checkJumpIndexSI = false;
                 r.ah = 0;
                 r.addAx(r.getAx());
                 r.addAx((short) pw.radtbl); // KUMA: R part address table 0x00 to maximum 0x7f can exist
                 r.setBx(r.getAx());
-                r.setAx((short) (pw.md[r.getBx() & 0xffff].dat + pw.md[(r.getBx() & 0xffff) + 1].dat * 0x100)); // mov ax,[bx]
+                r.setAx((short) (pw.md[r.getBx() & 0xffff].dat + pw.md[(r.getBx() + 1) & 0xffff].dat * 0x100)); // mov ax,[bx]
 
                 r.addAx((short) pw.mmlbuf);
-                pw.rhyadr = r.getAx();
+                pw.rhyadr = r.getAx() & 0xffff;
 
                 //KUMA: Switch processing to R part
 
@@ -1951,13 +1950,13 @@ rfin: // ↑
 
 //rhyms00:
                 while (true) {
-                    pw.cmd = pw.rd[r.getBx() & 0xffff];// mov al,[bx]
-                    r.al = (byte) pw.rd[r.getBx() & 0xffff].dat;// mov al,[bx]
+                    pw.cmd = pw.rd[r.getBx() & 0xffff]; // mov al,[bx]
+                    r.al = (byte) pw.rd[r.getBx() & 0xffff].dat; // mov al,[bx]
                     r.incBx();
 
                     if (r.al == (byte) 0xff) { // KUMA: If R part is terminated, return to K part analysis
                         pw.checkJumpIndexBX = false;
-                        continue; // break reom;
+                        continue reom; // break reom;
                     }
 
                     // 0x00 - 0x7f : rest
@@ -1974,7 +1973,7 @@ rfin: // ↑
 
                 // KUMA: If al is 0 to 0x7f, it processes a rest.
 
-                FlashMacroList();
+                flashMacroList();
 
                 pw.kshot_dat = 0; // rest
                 rlnset();
@@ -1984,25 +1983,25 @@ rfin: // ↑
 //rfin:
             // KUMA: K part termination
 
-            FlashMacroList();
+            flashMacroList();
 
             r.decSi();
-            pw.partWk[r.di].address = r.getSi(); // mov[di],si
-            pw.partWk[r.di].loopcheck = 3;
-            r.setBx(pw.partWk[r.di].partloop);
+            pw.partWk[r.di & 0xffff].address = r.getSi(); // mov[di],si
+            pw.partWk[r.di & 0xffff].loopcheck = 3;
+            r.setBx(pw.partWk[r.di & 0xffff].partloop);
             if (r.getBx() != 0) { // break rf00;
 
                 // When there was an "L"
                 r.setSi(r.getBx());
-                pw.partWk[r.di].loopcheck = 1;
-                pw.partWk[r.di].loopCounter++;
+                pw.partWk[r.di & 0xffff].loopcheck = 1;
+                pw.partWk[r.di & 0xffff].loopCounter++;
                 continue; // break reom;
             }
             break;
         }
 //rf00:
         r.setBx((short) 0); // offset rhydmy
-        pw.rhyadr = r.getBx();
+        pw.rhyadr = r.getBx() & 0xffff;
         pw.rd = pw.rdDmy;
 
         fmmnp_4();
@@ -2041,7 +2040,7 @@ rfin: // ↑
             return 1;
         }
 //rhy_shot:
-        if (pw.partWk[r.di].partmask != 0) { // break r_nonmask;
+        if (pw.partWk[r.di & 0xffff].partmask != 0) { // break r_nonmask;
             pw.kshot_dat = 0;
             r.incBx();
             rlnset(); // If masked
@@ -2049,8 +2048,8 @@ rfin: // ↑
         }
 //r_nonmask:
         r.ah = r.al;
-        pw.cmd = pw.rd[r.getBx()];
-        r.al = (byte) pw.rd[r.getBx()].dat; // Original note commands
+        pw.cmd = pw.rd[r.getBx() & 0xffff];
+        r.al = (byte) pw.rd[r.getBx() & 0xffff].dat; // Original note commands
         r.incBx();
         r.andAx(0x3fff);
         pw.kshot_dat = r.getAx();
@@ -2068,7 +2067,7 @@ rfin: // ↑
 //rsb2lp:
                 do {
                     r.carry = ((r.getAx() & 1) != 0);
-                    r.setAx((short) ((r.getAx() >> 1) | (r.carry ? 0x8000 : 0)));
+                    r.setAx((short) (((r.getAx() & 0xffff) >> 1) | (r.carry ? 0x8000 : 0)));
                     if (r.carry) {
                         rshot();
 //                        break rsb200;
@@ -2134,7 +2133,7 @@ rolop:
     private void rshot() {
         if (pw.board2 != 0) {
 //rshot:
-            r.setDx((short) ((pw.rhydat[r.getBx() & 0xffff] & 0xff) + (pw.rhydat[(r.getBx() & 0xffff) + 1] & 0xff) * 0x100));
+            r.setDx((short) ((PW.rhydat[r.getBx() & 0xffff] & 0xff) + (PW.rhydat[(r.getBx() + 1) & 0xffff] & 0xff) * 0x100));
             byte x = r.dh;
             r.dh = r.dl;
             r.dl = x;
@@ -2196,136 +2195,136 @@ rolop:
 //        if (r.si - 1 < pw.md.length && pw.md[r.si - 1].type == MMLType.IDE) { // KUMA: Added
 //            // The al register is irrelevant, and if type is IDE, it is processed as a special command for IDE.
 //            // (The compiler needs to be adjusted to create this state only when a compilation request is made from the IDE.)
-//            ExecIDESpecialCommand(pw.md[r.si - 1]);
+//            execIDESpecialCommand(pw.md[r.si - 1]);
 //            return null;
 //        }
 
-        if (r.al < pw.com_end) {
+        if ((r.al & 0xff) < (pw.com_end & 0xff)) {
             return out_of_commands();
         }
 
-        r.setBx((byte) ~r.al);
+        r.setBx((short) ((~r.al) & 0xff));
         if (pw.ppz != 0) {
             r.stack.push(r.getAx());
             _ppz();
             r.setAx(r.stack.pop());
         }
 
-        logger.log(Level.TRACE, String.format("bx:%d di:%d", r.getBx(), r.di));
+        logger.log(Level.TRACE, "bx:%04x di:%02x".formatted(r.getBx() & 0xffff, r.di & 0xff));
 
-        Supplier<Object> o = pw.currentCommandTable[r.getBx()];
+        Supplier<Object> o = pw.currentCommandTable[r.getBx() & 0xffff];
 
         if (o == null)
-            logger.log(Level.ERROR, String.format("bx:%d di:%d", r.getBx(), r.di));
+            logger.log(Level.ERROR, "bx:%04x di:%02x".formatted(r.getBx() & 0xffff, r.di & 0xff));
 
         return o;
     }
 
     private Supplier<Object> out_of_commands() {
         r.decSi();
-        pw.md[r.getSi()].dat = 0x80; // Part END
+        pw.md[r.getSi() & 0xffff].dat = 0x80; // Part END
         return null;
     }
 
     private Supplier<Object>[] cmdtbl;
 
-    private void SetupCmdtbl() {
+    private void setupCmdtbl() {
         cmdtbl = new Supplier[] {
-                this::comAt                      // 0xff(0)
-                , this::comq                     // 0xfe(1)
-                , this::comv                     // 0xfd(2)
-                , this::comt                     // 0xfc(3)
-                , this::comtie                   // 0xfb(4)
-                , this::comd                     // 0xfa(5)
-                , this::comstloop                // 0xf9(6)
-                , this::comedloop                // 0xf8(7)
-                , this::comexloop                // 0xf7(8)
-                , this::comlopset                // 0xf6(9)
-                , this::comshift                 // 0xf5(10)
-                , this::comvolup                 // 0xf4(11)
-                , this::comvoldown               // 0xf3(12)
-                , this::lfoset                   // 0xf2(13)
-                , this::lfoswitch_f              // 0xf1(14)
-                , this::jump4                    // 0xf0(15)
-                , this::comy                     // 0xef(16)
-                , this::jump1                    // 0xee(17)
-                , this::jump1                    // 0xed(18)
-                //FOR SB2
-                , this::panset                   // 0xec(19)
-                , this::rhykey                   // 0xeb(20)
-                , this::rhyvs                    // 0xea(21)
-                , this::rpnset                   // 0xe9(22)
-                , this::rmsvs                    // 0xe8(23)
+                this::comAt,             // 0xff(0)
+                this::comq,              // 0xfe(1)
+                this::comv,              // 0xfd(2)
+                this::comt,              // 0xfc(3)
+                this::comtie,            // 0xfb(4)
+                this::comd,              // 0xfa(5)
+                this::comstloop,         // 0xf9(6)
+                this::comedloop,         // 0xf8(7)
+                this::comexloop,         // 0xf7(8)
+                this::comlopset,         // 0xf6(9)
+                this::comshift,          // 0xf5(10)
+                this::comvolup,          // 0xf4(11)
+                this::comvoldown,        // 0xf3(12)
+                this::lfoset,            // 0xf2(13)
+                this::lfoswitch_f,       // 0xf1(14)
+                this::jump4,             // 0xf0(15)
+                this::comy,              // 0xef(16)
+                this::jump1,             // 0xee(17)
+                this::jump1,             // 0xed(18)
+                // FOR SB2
+                this::panset,            // 0xec(19)
+                this::rhykey,            // 0xeb(20)
+                this::rhyvs,             // 0xea(21)
+                this::rpnset,            // 0xe9(22)
+                this::rmsvs,             // 0xe8(23)
                 // added for V2.0
-                , this::comshift2                // 0xe7(24)
-                , this::rmsvs_sft                // 0xe6(25)
-                , this::rhyvs_sft                // 0xe5(26)
+                this::comshift2,         // 0xe7(24)
+                this::rmsvs_sft,         // 0xe6(25)
+                this::rhyvs_sft,         // 0xe5(26)
                 //
-                , this::hlfo_delay               // 0xe4(27)
+                this::hlfo_delay,        // 0xe4(27)
                 // added for V2.3
-                , this::comvolup2                // 0xe3(28)
-                , this::comvoldown2              // 0xe2(29)
+                this::comvolup2,         // 0xe3(28)
+                this::comvoldown2,       // 0xe2(29)
                 // added for V2.4
-                , this::hlfo_set                 // 0xe1(30)
-                , this::hlfo_onoff               // 0xe0(31)
+                this::hlfo_set,          // 0xe1(30)
+                this::hlfo_onoff,        // 0xe0(31)
                 //
-                , this::syousetu_lng_set         // 0xdf(32)
+                this::syousetu_lng_set,  // 0xdf(32)
                 //
-                , this::vol_one_up_fm            // 0xde(33)
-                , this::vol_one_down             // 0xdd(34)
+                this::vol_one_up_fm,     // 0xde(33)
+                this::vol_one_down,      // 0xdd(34)
                 //
-                , this::status_write             // 0xdc(35)
-                , this::status_add               // 0xdb(36)
+                this::status_write,      // 0xdc(35)
+                this::status_add,        // 0xdb(36)
                 //
-                , this::porta                    // 0xda(37)
+                this::porta,             // 0xda(37)
                 //
-                , this::jump1                    // 0xd9(38)
-                , this::jump1                    // 0xd8(39)
-                , this::jump1                    // 0xd7(40)
+                this::jump1,             // 0xd9(38)
+                this::jump1,             // 0xd8(39)
+                this::jump1,             // 0xd7(40)
                 //
-                , this::mdepth_set               // 0xd6(41)
+                this::mdepth_set,        // 0xd6(41)
                 //
-                , this::comdd                    // 0xd5(42)
+                this::comdd,             // 0xd5(42)
                 //
-                , this::ssg_efct_set             // 0xd4(43)
-                , this::fm_efct_set              // 0xd3(44)
-                , this::fade_set                 // 0xd2(45)
+                this::ssg_efct_set,      // 0xd4(43)
+                this::fm_efct_set,       // 0xd3(44)
+                this::fade_set,          // 0xd2(45)
                 //
-                , this::jump1                    // 0xd1(46)
+                this::jump1,             // 0xd1(46)
                 //
-                , this::jump1                    // 0xd0(47)
+                this::jump1,             // 0xd0(47)
                 //
-                , this::slotmask_set             // 0xcf(48)
-                , this::jump6                    // 0xce(49)
-                , this::jump5                    // 0xcd(50)
-                , this::jump1                    // 0xcc(51)
-                , this::lfowave_set              // 0xcb(52)
-                , this::lfo_extend               // 0xca(53)
-                , this::jump1                    // 0xc9(54)
-                , this::slotdetune_set           // 0xc8(55)
-                , this::slotdetune_set2          // 0xc7(56)
-                , this::fm3_extpartset           // 0xc6(57)
-                , this::volmask_set              // 0xc5(58)
-                , this::comq2                    // 0xc4(59)
-                , this::panset_ex                // 0xc3(60)
-                , this::lfoset_delay             // 0xc2(61)
-                , this::jump0                    // 0xc1(62) ,slurs
-                , this::fm_mml_part_mask         // 0xc0(63)
-                , this::_lfoset                  // 0xbf(64)
-                , this::_lfoswitch_f             // 0xbe(65)
-                , this::_mdepth_set              // 0xbd(66)
-                , this::_lfowave_set             // 0xbc(67)
-                , this::_lfo_extend              // 0xbb(68)
-                , this::_volmask_set             // 0xba(69)
-                , this::_lfoset_delay            // 0xb9(70)
-                , this::tl_set                   // 0xb8(71)
-                , this::mdepth_count             // 0xb7(72)
-                , this::fb_set                   // 0xb6(73)
-                , this::slot_delay               // 0xb5(74)
-                , this::jump16                   // 0xb4(75)
-                , this::comq3                    // 0xb3(76)
-                , this::comshift_master          // 0xb2(77)
-                , this::comq4                    // 0xb1(78)
+                this::slotmask_set,      // 0xcf(48)
+                this::jump6,             // 0xce(49)
+                this::jump5,             // 0xcd(50)
+                this::jump1,             // 0xcc(51)
+                this::lfowave_set,       // 0xcb(52)
+                this::lfo_extend,        // 0xca(53)
+                this::jump1,             // 0xc9(54)
+                this::slotdetune_set,    // 0xc8(55)
+                this::slotdetune_set2,   // 0xc7(56)
+                this::fm3_extpartset,    // 0xc6(57)
+                this::volmask_set,       // 0xc5(58)
+                this::comq2,             // 0xc4(59)
+                this::panset_ex,         // 0xc3(60)
+                this::lfoset_delay,      // 0xc2(61)
+                this::jump0,             // 0xc1(62), slurs
+                this::fm_mml_part_mask,  // 0xc0(63)
+                this::_lfoset,           // 0xbf(64)
+                this::_lfoswitch_f,      // 0xbe(65)
+                this::_mdepth_set,       // 0xbd(66)
+                this::_lfowave_set,      // 0xbc(67)
+                this::_lfo_extend,       // 0xbb(68)
+                this::_volmask_set,      // 0xba(69)
+                this::_lfoset_delay,     // 0xb9(70)
+                this::tl_set,            // 0xb8(71)
+                this::mdepth_count,      // 0xb7(72)
+                this::fb_set,            // 0xb6(73)
+                this::slot_delay,        // 0xb5(74)
+                this::jump16,            // 0xb4(75)
+                this::comq3,             // 0xb3(76)
+                this::comshift_master,   // 0xb2(77)
+                this::comq4              // 0xb1(78)
         };
     }
 
@@ -2333,203 +2332,203 @@ rolop:
 
     private Supplier<Object>[] cmdtblp;
 
-    private void SetupCmdtblp() {
+    private void setupCmdtblp() {
         cmdtblp = new Supplier[] {
-                this::jump1                        // (0xff) 0
-                , this::comq                       // (0xfe) 1
-                , this::comv                       // (0xfd) 2
-                , this::comt                       // (0xfc) 3
-                , this::comtie                     // (0xfb) 4
-                , this::comd                       // (0xfa) 5
-                , this::comstloop                  // (0xf9) 6
-                , this::comedloop                  // (0xf8) 7
-                , this::comexloop                  // (0xf7) 8
-                , this::comlopset                  // (0xf6) 9
-                , this::comshift                   // (0xf5) 10
-                , this::comvolupp                  // (0xf4) 11
-                , this::comvoldownp                // (0xf3) 12
-                , this::lfoset                     // (0xf2) 13
-                , this::lfoswitch                  // (0xf1) 14
-                , this::psgenvset                  // (0xf0) 15
-                , this::comy                       // (0xef) 16
-                , this::psgnoise                   // (0xee) 17
-                , this::psgsel                     // (0xed) 18
+                this::jump1,              // (0xff) 0
+                this::comq,               // (0xfe) 1
+                this::comv,               // (0xfd) 2
+                this::comt,               // (0xfc) 3
+                this::comtie,             // (0xfb) 4
+                this::comd,               // (0xfa) 5
+                this::comstloop,          // (0xf9) 6
+                this::comedloop,          // (0xf8) 7
+                this::comexloop,          // (0xf7) 8
+                this::comlopset,          // (0xf6) 9
+                this::comshift,           // (0xf5) 10
+                this::comvolupp,          // (0xf4) 11
+                this::comvoldownp,        // (0xf3) 12
+                this::lfoset,             // (0xf2) 13
+                this::lfoswitch,          // (0xf1) 14
+                this::psgenvset,          // (0xf0) 15
+                this::comy,               // (0xef) 16
+                this::psgnoise,           // (0xee) 17
+                this::psgsel,             // (0xed) 18
                 //
-                , this::jump1                      // (0xec) 19
-                , this::rhykey                     // (0xeb) 20
-                , this::rhyvs                      // (0xea) 21
-                , this::rpnset                     // (0xe9) 22
-                , this::rmsvs                      // (0xe8) 23
+                this::jump1,              // (0xec) 19
+                this::rhykey,             // (0xeb) 20
+                this::rhyvs,              // (0xea) 21
+                this::rpnset,             // (0xe9) 22
+                this::rmsvs,              // (0xe8) 23
                 //
-                , this::comshift2                  // (0xe7) 24
-                , this::rmsvs_sft                  // (0xe6) 25
-                , this::rhyvs_sft                  // (0xe5) 26
+                this::comshift2,          // (0xe7) 24
+                this::rmsvs_sft,          // (0xe6) 25
+                this::rhyvs_sft,          // (0xe5) 26
                 //
-                , this::jump1                      // (0xe4) 27
+                this::jump1,              // (0xe4) 27
                 // added for V2.3
-                , this::comvolupp2                 // 0E3H 28
-                , this::comvoldownp2               // 0E2H 29
+                this::comvolupp2,         // 0E3H 28
+                this::comvoldownp2,       // 0E2H 29
                 //
-                , this::jump1                      // 0E1H 30
-                , this::jump1                      // 0E0H 31
+                this::jump1,              // 0E1H 30
+                this::jump1,              // 0E0H 31
                 //
-                , this::syousetu_lng_set           // 0DFH 32
+                this::syousetu_lng_set,   // 0DFH 32
                 //
-                , this::vol_one_up_psg             // 0DEH 33
-                , this::vol_one_down               // 0DDH 34
+                this::vol_one_up_psg,     // 0DEH 33
+                this::vol_one_down,       // 0DDH 34
                 //
-                , this::status_write               // 0DCH 35
-                , this::status_add                 // 0DBH 36
+                this::status_write,       // 0DCH 35
+                this::status_add,         // 0DBH 36
                 //
-                , this::portap                     // 0DAH 37
+                this::portap,             // 0DAH 37
                 //
-                , this::jump1                      // 0D9H 38
-                , this::jump1                      // 0D8H 39
-                , this::jump1                      // 0D7H 40
+                this::jump1,              // 0D9H 38
+                this::jump1,              // 0D8H 39
+                this::jump1,              // 0D7H 40
                 //
-                , this::mdepth_set                 // 0D6H 41
+                this::mdepth_set,         // 0D6H 41
                 //
-                , this::comdd                      // 0d5h 42
+                this::comdd,              // 0d5h 42
                 //
-                , this::ssg_efct_set               // 0d4h 43
-                , this::fm_efct_set                // 0d3h 44
-                , this::fade_set                   // 0d2h 45
+                this::ssg_efct_set,       // 0d4h 43
+                this::fm_efct_set,        // 0d3h 44
+                this::fade_set,           // 0d2h 45
                 //
-                , this::jump1                      // (0xd1) 46
-                , this::psgnoise_move              // 0d0h 47
+                this::jump1,              // (0xd1) 46
+                this::psgnoise_move,      // 0d0h 47
                 //
-                , this::jump1                      // (0xcf) 48
-                , this::jump6                      // 0ceh 49
-                , this::extend_psgenvset           // 0cdh 50
-                , this::detune_extend              // 0cch 51
-                , this::lfowave_set                // 0cbh 52
-                , this::lfo_extend                 // 0cah 53
-                , this::envelope_extend            // 0c9h 54
-                , this::jump3                      // 0c8h 55
-                , this::jump3                      // 0c7h 56
-                , this::jump6                      // 0c6h 57
-                , this::jump1                      // 0c5h 58
-                , this::comq2                      // 0c4h 59
-                , this::jump2                      // 0c3h 60
-                , this::lfoset_delay               // 0c2h 61
-                , this::jump0                      // 0c1h, slurs 62
-                , this::ssg_mml_part_mask          // 0c0h 63
-                , this::_lfoset                    // 0bfh 64
-                , this::_lfoswitch                 // 0beh 65
-                , this::_mdepth_set                // 0bdh 66
-                , this::_lfowave_set               // 0bch 67
-                , this::_lfo_extend                // 0bbh 68
-                , this::jump1                      // 0bah 69
-                , this::_lfoset_delay              // 0b9h 70
-                , this::jump2                      // 0b8h 71
-                , this::mdepth_count               // 0b7h 72
-                , this::jump1
-                , this::jump2
-                , this::jump16                     // 0b4h
-                , this::comq3                      // 0b3h
-                , this::comshift_master            // 0b2h
-                , this::comq4                      // 0b1h
+                this::jump1,              // (0xcf) 48
+                this::jump6,              // 0ceh 49
+                this::extend_psgenvset,   // 0cdh 50
+                this::detune_extend,      // 0cch 51
+                this::lfowave_set,        // 0cbh 52
+                this::lfo_extend,         // 0cah 53
+                this::envelope_extend,    // 0c9h 54
+                this::jump3,              // 0c8h 55
+                this::jump3,              // 0c7h 56
+                this::jump6,              // 0c6h 57
+                this::jump1,              // 0c5h 58
+                this::comq2,              // 0c4h 59
+                this::jump2,              // 0c3h 60
+                this::lfoset_delay,       // 0c2h 61
+                this::jump0,              // 0c1h, slurs 62
+                this::ssg_mml_part_mask,  // 0c0h 63
+                this::_lfoset,            // 0bfh 64
+                this::_lfoswitch,         // 0beh 65
+                this::_mdepth_set,        // 0bdh 66
+                this::_lfowave_set,       // 0bch 67
+                this::_lfo_extend,        // 0bbh 68
+                this::jump1,              // 0bah 69
+                this::_lfoset_delay,      // 0b9h 70
+                this::jump2,              // 0b8h 71
+                this::mdepth_count,       // 0b7h 72
+                this::jump1,
+                this::jump2,
+                this::jump16,             // 0b4h
+                this::comq3,              // 0b3h
+                this::comshift_master,    // 0b2h
+                this::comq4               // 0b1h
         };
     }
 
     private Supplier<Object>[] cmdtblr;
 
-    private void SetupCmdtblr() {
+    private void setupCmdtblr() {
         cmdtblr = new Supplier[] {
-                this::jump1                        // 0xff 0
-                , this::jump1                      // 0xfe 1
-                , this::comv                       // 0xfd 2
-                , this::comt                       // 0xfc 3
-                , this::comtie                     // 0xfb 4
-                , this::comd                       // 0xfa 5
-                , this::comstloop                  // 0xf9 6
-                , this::comedloop                  // 0xf8 7
-                , this::comexloop                  // 0xf7 8
-                , this::comlopset                  // 0xf6 9
-                , this::jump1                      // 0xf5 10
-                , this::comvolupp                  // 0xf4 11
-                , this::comvoldownp                // 0xf3 12
-                , this::jump4                      // 0xf2 13
-                , this::pdrswitch                  // 0xf1 14
-                , this::jump4                      // 0xf0 15
-                , this::comy                       // 0xef 16
-                , this::jump1                      // 0xee 17
-                , this::jump1                      // 0xed 18
+                this::jump1,                 // 0xff 0
+                this::jump1,                 // 0xfe 1
+                this::comv,                  // 0xfd 2
+                this::comt,                  // 0xfc 3
+                this::comtie,                // 0xfb 4
+                this::comd,                  // 0xfa 5
+                this::comstloop,             // 0xf9 6
+                this::comedloop,             // 0xf8 7
+                this::comexloop,             // 0xf7 8
+                this::comlopset,             // 0xf6 9
+                this::jump1,                 // 0xf5 10
+                this::comvolupp,             // 0xf4 11
+                this::comvoldownp,           // 0xf3 12
+                this::jump4,                 // 0xf2 13
+                this::pdrswitch,             // 0xf1 14
+                this::jump4,                 // 0xf0 15
+                this::comy,                  // 0xef 16
+                this::jump1,                 // 0xee 17
+                this::jump1,                 // 0xed 18
                 //
-                , this::jump1                      // 0xec 19
-                , this::rhykey                     // 0xeb 20
-                , this::rhyvs                      // 0xea 21
-                , this::rpnset                     // 0xe9 22
-                , this::rmsvs                      // 0xe8 23
+                this::jump1,                 // 0xec 19
+                this::rhykey,                // 0xeb 20
+                this::rhyvs,                 // 0xea 21
+                this::rpnset,                // 0xe9 22
+                this::rmsvs,                 // 0xe8 23
                 //
-                , this::jump1                      // 0xe7 24
-                , this::rmsvs_sft                  // 0xe6 25
-                , this::rhyvs_sft                  // 0xe5 26
+                this::jump1,                 // 0xe7 24
+                this::rmsvs_sft,             // 0xe6 25
+                this::rhyvs_sft,             // 0xe5 26
                 //
-                , this::jump1                      // 0E4H 27
+                this::jump1,                 // 0E4H 27
                 //
-                , this::comvolupp2                 // 0E3H 28
-                , this::comvoldownp2               // 0E2H 29
+                this::comvolupp2,            // 0E3H 28
+                this::comvoldownp2,          // 0E2H 29
                 //
-                , this::jump1                      // 0E1H 30
-                , this::jump1                      // 0E0H 31
+                this::jump1,                 // 0E1H 30
+                this::jump1,                 // 0E0H 31
                 //
-                , this::syousetu_lng_set           // 0DFH 32
+                this::syousetu_lng_set,      // 0DFH 32
                 //
-                , this::vol_one_up_psg             // 0DEH 33
-                , this::vol_one_down               // 0DDH 34
+                this::vol_one_up_psg,        // 0DEH 33
+                this::vol_one_down,          // 0DDH 34
                 //
-                , this::status_write               // 0DCH 35
-                , this::status_add                 // 0DBH 36
+                this::status_write,          // 0DCH 35
+                this::status_add,            // 0DBH 36
                 //
-                , this::jump1                      // Portamento = Normal pitch command 0xda 37
+                this::jump1,                 // Portamento = Normal pitch command 0xda 37
                 //
-                , this::jump1                      // 0D9H 38
-                , this::jump1                      // 0D8H 39
-                , this::jump1                      // 0D7H 40
+                this::jump1,                 // 0D9H 38
+                this::jump1,                 // 0D8H 39
+                this::jump1,                 // 0D7H 40
                 //
-                , this::jump2                      // 0D6H 41
+                this::jump2,                 // 0D6H 41
                 //
-                , this::comdd                      // 0d5h 42
+                this::comdd,                 // 0d5h 42
                 //
-                , this::ssg_efct_set               // 0d4h 43
-                , this::fm_efct_set                // 0d3h 44
-                , this::fade_set                   // 0d2h 45
+                this::ssg_efct_set,          // 0d4h 43
+                this::fm_efct_set,           // 0d3h 44
+                this::fade_set,              // 0d2h 45
                 //
-                , this::jump1                      // 0xd1 46
-                , this::jump1                      // 0d0h 47
+                this::jump1,                 // 0xd1 46
+                this::jump1,                 // 0d0h 47
                 //
-                , this::jump1                      // 0xcf 48
-                , this::jump6                      // 0ceh 49
-                , this::jump5                      // 0cdh 50
-                , this::jump1                      // 0cch 51
-                , this::jump1                      // 0xcb 52
-                , this::jump1                      // 0xca 53
-                , this::jump1                      // 0xc9 54
-                , this::jump3                      // 0xc8 55
-                , this::jump3                      // 0xc7 56
-                , this::jump6                      // 0xc6 57
-                , this::jump1                      // 0c5h 58
-                , this::jump1                      // 0xc4 59
-                , this::jump2                      // 0c3h 60
-                , this::jump1                      // 0xc2 61
-                , this::jump0                      // 0c1h, slurs 62
-                , this::rhythm_mml_part_mask       // 0c0h 63
-                , this::jump4                      // 0bfh 64
-                , this::jump1                      // 0beh 65
-                , this::jump2                      // 0bdh 66
-                , this::jump1                      // 0bch 67
-                , this::jump1                      // 0bbh 68
-                , this::jump1                      // 0bah 69
-                , this::jump1                      // 0b9h 70
-                , this::jump2                      // 0xb8 71
-                , this::jump1                      // 0xb7 72
-                , this::jump1                      // 0xb6 73
-                , this::jump2                      // 0xb5 74
-                , this::jump16                     // 0b4h 75
-                , this::jump1                      // 0xb3 76
-                , this::jump1                      // 0b2h 77
-                , this::jump1                      // 0b1h 78
+                this::jump1,                 // 0xcf 48
+                this::jump6,                 // 0ceh 49
+                this::jump5,                 // 0cdh 50
+                this::jump1,                 // 0cch 51
+                this::jump1,                 // 0xcb 52
+                this::jump1,                 // 0xca 53
+                this::jump1,                 // 0xc9 54
+                this::jump3,                 // 0xc8 55
+                this::jump3,                 // 0xc7 56
+                this::jump6,                 // 0xc6 57
+                this::jump1,                 // 0c5h 58
+                this::jump1,                 // 0xc4 59
+                this::jump2,                 // 0c3h 60
+                this::jump1,                 // 0xc2 61
+                this::jump0,                 // 0c1h, slurs 62
+                this::rhythm_mml_part_mask,  // 0c0h 63
+                this::jump4,                 // 0bfh 64
+                this::jump1,                 // 0beh 65
+                this::jump2,                 // 0bdh 66
+                this::jump1,                 // 0bch 67
+                this::jump1,                 // 0bbh 68
+                this::jump1,                 // 0bah 69
+                this::jump1,                 // 0b9h 70
+                this::jump2,                 // 0xb8 71
+                this::jump1,                 // 0xb7 72
+                this::jump1,                 // 0xb6 73
+                this::jump2,                 // 0xb5 74
+                this::jump16,                // 0b4h 75
+                this::jump1,                 // 0xb3 76
+                this::jump1,                 // 0b2h 77
+                this::jump1,                 // 0b1h 78
         };
     }
 
@@ -2592,7 +2591,7 @@ rolop:
      * Additional special instructions for 0c0h
      */
     public Supplier<Object> special_0c0h() {
-        if (r.al < pw.com_end_0c0h) {
+        if ((r.al & 0xff) < (pw.com_end_0c0h & 0xff)) {
             return this::out_of_commands;
         }
 
@@ -2601,24 +2600,24 @@ rolop:
         r.ah = 0;
         r.setBx(r.getAx());
 
-        return comtbl0c0h[r.getBx() / 2];
+        return comtbl0c0h[(r.getBx() & 0xffff) / 2];
     }
 
     private Supplier<Object>[] comtbl0c0h;
 
-    private void SetupComtbl0c0h() {
+    private void setupComtbl0c0h() {
         comtbl0c0h = new Supplier[] {
-                this::vd_fm        // 0ffh
-                , this::_vd_fm
-                , this::vd_ssg
-                , this::_vd_ssg
-                , this::vd_pcm
-                , this::_vd_pcm
-                , this::vd_rhythm
-                , this::_vd_rhythm // 0f8h
-                , this::pmd86_s
-                , this::vd_ppz
-                , this::_vd_ppz    // 0f5h
+                this::vd_fm,  // 0ffh
+                this::_vd_fm,
+                this::vd_ssg,
+                this::_vd_ssg,
+                this::vd_pcm,
+                this::_vd_pcm,
+                this::vd_rhythm,
+                this::_vd_rhythm,  // 0f8h
+                this::pmd86_s,
+                this::vd_ppz,
+                this::_vd_ppz  // 0f5h
         };
     }
 
@@ -2626,7 +2625,7 @@ rolop:
      * /s Option control
      */
     private Supplier<Object> pmd86_s() {
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al &= 1;
         pw.pcm86_vol = r.al;
         return null;
@@ -2639,35 +2638,35 @@ rolop:
         r.setBx((short) 0); // offset fm_voldown
 
 //vd_main:;
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         pw.fm_voldown = r.al;
         return null;
     }
 
     private Supplier<Object> vd_ssg() {
         r.setBx((short) 0); // offset ssg_voldown
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         pw.ssg_voldown = r.al;
         return null;
     }
 
     private Supplier<Object> vd_pcm() {
         r.setBx((short) 0); // offset pcm_voldown
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         pw.pcm_voldown = r.al;
         return null;
     }
 
     private Supplier<Object> vd_rhythm() {
         r.setBx((short) 0); // offset rhythm_voldown
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         pw.rhythm_voldown = r.al;
         return null;
     }
 
     private Supplier<Object> vd_ppz() {
         r.setBx((short) 0); // offset ppz_voldown
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         pw.ppz_voldown = r.al;
         return null;
     }
@@ -2680,22 +2679,23 @@ rolop:
     }
 
     private void _vd_main(/* ref */ byte[] a, byte b) {
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         if (r.al != 0) { // break _vd_reset;
             if ((r.al & 0x80) == 0) { // break _vd_sign;
 
                 r.carry = (a[0] & 0xff) + (r.al & 0xff) > 0xff;
                 a[0] += r.al;
-                if (r.carry) { // break _vd_ret;
-                    a[0] = (byte) 255;
+                if (!r.carry) { // break _vd_ret;
+                    return;
                 }
+                a[0] = (byte) 255;
 //_vd_ret:
                 return;
             }
 //_vd_sign:
             r.carry = (a[0] & 0xff) + (r.al & 0xff) > 0xff;
             a[0] += r.al;
-            if (!r.carry) { // break _vd_ret;
+            if (r.carry) { // break _vd_ret;
                 return;
             }
             a[0] = 0;
@@ -2737,18 +2737,18 @@ rolop:
      * slot keyon delay
      */
     private Supplier<Object> slot_delay() {
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al &= 0xf;
         r.al ^= 0xf;
         r.al = r.ror(r.al, 1);
         r.al = r.ror(r.al, 1);
         r.al = r.ror(r.al, 1);
         r.al = r.ror(r.al, 1);
-        pw.partWk[r.di].sdelay_m = r.al;
+        pw.partWk[r.di & 0xffff].sdelay_m = r.al;
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].sdelay = r.al;
-        pw.partWk[r.di].sdelay_c = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].sdelay = r.al;
+        pw.partWk[r.di & 0xffff].sdelay_c = r.al;
         return null;
     }
 
@@ -2758,7 +2758,7 @@ rolop:
     private Supplier<Object> fb_set() {
         r.dh = (byte) (0xb0 - 1);
         r.dh += pw.partb; // dh=ALG/FB port address
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         if ((r.al & 0x80) == 0) { // break _fb_set;
 //fb_set2:
             //  ;in al 00000xxx Function block to be set
@@ -2779,7 +2779,7 @@ fb_notfm3:
                         if (r.di == pw.part_e) // offset part_e
                             break fb_notfm3;
                     }
-                    if ((pw.partWk[r.di].slotmask & 0x10) == 0) { // If you are not using slot 1
+                    if ((pw.partWk[r.di & 0xffff].slotmask & 0x10) == 0) { // If you are not using slot 1
 //                    break fb_ret; // No output
                         return null;
                     }
@@ -2790,13 +2790,13 @@ fb_notfm3:
 //                break fb_exit;
                 } else {
 //fb_notfm3:
-                    r.dl = pw.partWk[r.di].alg_fb;
+                    r.dl = pw.partWk[r.di & 0xffff].alg_fb;
                     r.dl &= 0x7;
                     r.dl |= r.al;
                 }
 //fb_exit:
                 opnset();
-                pw.partWk[r.di].alg_fb = r.dl;
+                pw.partWk[r.di & 0xffff].alg_fb = r.dl;
 //fb_ret:
                 return null;
             }
@@ -2819,7 +2819,7 @@ _fb_notfm3:
 //                break _fb_next;
             } else {
 //_fb_notfm3:
-                r.dl = pw.partWk[r.di].alg_fb;
+                r.dl = pw.partWk[r.di & 0xffff].alg_fb;
             }
 //_fb_next:
             r.dl = r.rol(r.dl, 1);
@@ -2828,7 +2828,7 @@ _fb_notfm3:
             r.dl &= 7;
             r.al += r.dl;
             if ((r.al & 0x80) == 0) { // break _fb_zero;
-                if (r.al < 8) {
+                if ((r.al & 0xff) < 8) {
 //                    break fb_set2;
 //fb_set2:
                     //  ;in al 00000xxx Function block to be set
@@ -2851,19 +2851,19 @@ _fb_notfm3:
     private Supplier<Object> tl_set() {
         r.dh = 0x40 - 1;
         r.dh += pw.partb; // dh=TL FM Port Address
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.ah = r.al;
         r.ah &= 0xf;
-        r.ch = pw.partWk[r.di].slotmask; // ch=slotmask 43210000
+        r.ch = pw.partWk[r.di & 0xffff].slotmask; // ch=slotmask 43210000
         r.ch = r.ror(r.ch, 1);
         r.ch = r.ror(r.ch, 1);
         r.ch = r.ror(r.ch, 1);
         r.ch = r.ror(r.ch, 1);
         r.ah &= r.ch; // ah = slot to change 00004321
-        r.dl = (byte) pw.md[r.getSi()].dat; // dl=change value
+        r.dl = (byte) pw.md[r.getSi() & 0xffff].dat; // dl=change value
         r.incSi();
         r.setBx((short) 0); // offset opnset
-        if (pw.partWk[r.di].partmask != 0) { // Are the parts masked? // break ts_00;
+        if (pw.partWk[r.di & 0xffff].partmask != 0) { // Are the parts masked? // break ts_00;
             r.setBx((short) 1); // offset dummy_ret
         }
 //ts_00:
@@ -2871,28 +2871,28 @@ _fb_notfm3:
             r.dl &= 127;
             r.ah = r.ror(r.ah, 1);
             if (r.carry) { // break ts_01;
-                pw.partWk[r.di].slot1 = r.dl;
+                pw.partWk[r.di & 0xffff].slot1 = r.dl;
                 if (r.getBx() == 0) opnset();
             }
 //ts_01:
             r.dh += 8;
             r.ah = r.ror(r.ah, 1);
             if (r.carry) { // break ts_02;
-                pw.partWk[r.di].slot2 = r.dl;
+                pw.partWk[r.di & 0xffff].slot2 = r.dl;
                 if (r.getBx() == 0) opnset();
             }
 //ts_02:
             r.dh -= 4;
             r.ah = r.ror(r.ah, 1);
             if (r.carry) { // break ts_03;
-                pw.partWk[r.di].slot3 = r.dl;
+                pw.partWk[r.di & 0xffff].slot3 = r.dl;
                 if (r.getBx() == 0) opnset();
             }
 //ts_03:
             r.dh += 8;
             r.ah = r.ror(r.ah, 1);
             if (r.carry) { // break ts_04;
-                pw.partWk[r.di].slot4 = r.dl;
+                pw.partWk[r.di & 0xffff].slot4 = r.dl;
                 if (r.getBx() == 0) opnset();
 //dummy_ret:
             }
@@ -2904,7 +2904,7 @@ _fb_notfm3:
         r.al = r.dl;
         r.ah = r.ror(r.ah, 1);
         if (r.carry) { // break tls_01;
-            r.dl = pw.partWk[r.di].slot1;
+            r.dl = pw.partWk[r.di & 0xffff].slot1;
             r.dl += r.al;
             if ((r.dl & 0x80) != 0) { // break tls_0b;
                 r.dl = 0;
@@ -2914,13 +2914,13 @@ _fb_notfm3:
             }
 //tls_0b:
             if (r.getBx() == 0) opnset();
-            pw.partWk[r.di].slot1 = r.dl;
+            pw.partWk[r.di & 0xffff].slot1 = r.dl;
         }
 //tls_01:
         r.dh += 8;
         r.ah = r.ror(r.ah, 1);
         if (r.carry) { // break tls_02;
-            r.dl = pw.partWk[r.di].slot2;
+            r.dl = pw.partWk[r.di & 0xffff].slot2;
             r.dl += r.al;
             if ((r.dl & 0x80) != 0) { // break tls_1b;
                 r.dl = 0;
@@ -2930,13 +2930,13 @@ _fb_notfm3:
             }
 //tls_1b:
             if (r.getBx() == 0) opnset();
-            pw.partWk[r.di].slot2 = r.dl;
+            pw.partWk[r.di & 0xffff].slot2 = r.dl;
         }
 //tls_02:
         r.dh -= 4;
         r.ah = r.ror(r.ah, 1);
         if (r.carry) { // break tls_03;
-            r.dl = pw.partWk[r.di].slot3;
+            r.dl = pw.partWk[r.di & 0xffff].slot3;
             r.dl += r.al;
             if ((r.dl & 0x80) != 0) { // break tls_2b;
                 r.dl = 0;
@@ -2946,13 +2946,13 @@ _fb_notfm3:
             }
 //tls_2b:
             if (r.getBx() == 0) opnset();
-            pw.partWk[r.di].slot3 = r.dl;
+            pw.partWk[r.di & 0xffff].slot3 = r.dl;
         }
 //tls_03:
         r.dh += 8;
         r.ah = r.ror(r.ah, 1);
         if (r.carry) { // break tls_04;
-            r.dl = pw.partWk[r.di].slot4;
+            r.dl = pw.partWk[r.di & 0xffff].slot4;
             r.dl += r.al;
             if ((r.dl & 0x80) != 0) { // break tls_3b;
                 r.dl = 0;
@@ -2962,7 +2962,7 @@ _fb_notfm3:
             }
 //tls_3b:
             if (r.getBx() == 0) opnset();
-            pw.partWk[r.di].slot4 = r.dl;
+            pw.partWk[r.di & 0xffff].slot4 = r.dl;
         }
 //tls_04:
         return null;
@@ -2974,44 +2974,44 @@ _fb_notfm3:
     private Supplier<Object> fm_mml_part_mask() {
         logger.log(Level.TRACE, "fm_mml_part_mask");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        if (r.al >= 2)
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        if ((r.al & 0xff) >= 2)
             return this::special_0c0h;
 
         if (r.al != 0) { // break fm_mml_part_maskoff;
 
-            pw.partWk[r.di].partmask |= 0x40;
-            if (pw.partWk[r.di].partmask == 0x40) { // break fmpm_ret;
+            pw.partWk[r.di & 0xffff].partmask |= 0x40;
+            if (pw.partWk[r.di & 0xffff].partmask == 0x40) { // break fmpm_ret;
 
                 silence_fmpart(); // Sound Cancellation
             }
 //fmpm_ret:
             //r.ax = r.stack.pop(); // commands
-            return this::fmmnp_1; // Move to part mask processing
+            return fmmnp_1Ref; // Move to part mask processing
         }
 //fm_mml_part_maskoff:
 
-        pw.partWk[r.di].partmask &= (byte) 0xbf;
-        if (pw.partWk[r.di].partmask != 0) {
+        pw.partWk[r.di & 0xffff].partmask &= (byte) 0xbf;
+        if (pw.partWk[r.di & 0xffff].partmask != 0) {
 //            break fmpm_ret;
-            return this::fmmnp_1; // Move to part mask processing // <<
+            return fmmnp_1Ref; // Move to part mask processing // <<
         }
         neiro_reset(); // Resetting the tone
         //r.ax = r.stack.pop(); // commands
-        return this::mp1; // revival the part
+        return mp1Ref; // revival the part
     }
 
     private Supplier<Object> ssg_mml_part_mask() {
         logger.log(Level.TRACE, "ssg_mml_part_mask");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        if (r.al >= 2)
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        if ((r.al & 0xff) >= 2)
             return this::special_0c0h;
 
         if (r.al != 0) { // break ssg_part_maskoff_ret;
 
-            pw.partWk[r.di].partmask |= 0x40;
-            if (pw.partWk[r.di].partmask == 0x40) { // break smpm_ret;
+            pw.partWk[r.di & 0xffff].partmask |= 0x40;
+            if (pw.partWk[r.di & 0xffff].partmask == 0x40) { // break smpm_ret;
 
                 psgmsk(); // AL=07h AH = Maskdata
                 r.dh = 7;
@@ -3022,31 +3022,31 @@ _fb_notfm3:
 //smpm_ret:
 
             //r.ax = r.stack.pop(); // commandsp
-            return this::psgmnp_1;
+            return psgmnp_1Ref;
         }
 //ssg_part_maskoff_ret:
 
-        pw.partWk[r.di].partmask &= (byte) 0xbf;
-        if (pw.partWk[r.di].partmask != 0) {
+        pw.partWk[r.di & 0xffff].partmask &= (byte) 0xbf;
+        if (pw.partWk[r.di & 0xffff].partmask != 0) {
 //            break smpm_ret;
-            return this::psgmnp_1; // <<
+            return psgmnp_1Ref; // <<
         }
         //r.ax = r.stack.pop(); // commandsp
-        return this::mp1p; // revival the part
+        return mp1pRef; // revival the part
     }
 
     private Supplier<Object> rhythm_mml_part_mask() {
-        r.al = (byte) pw.md[r.incSi()].dat;
-        if (r.al >= 2)
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        if ((r.al & 0xff) >= 2)
             return this::special_0c0h;
 
         if (r.al != 0) { // break rhythm_part_maskoff_ret;
 
-            pw.partWk[r.di].partmask |= 0x40;
+            pw.partWk[r.di & 0xffff].partmask |= 0x40;
             return null;
         }
 //rhythm_part_maskoff_ret:
-        pw.partWk[r.di].partmask &= (byte) 0xbf;
+        pw.partWk[r.di & 0xffff].partmask &= (byte) 0xbf;
         return null;
     }
 
@@ -3054,13 +3054,13 @@ _fb_notfm3:
      * Reconfiguring the FM sound source
      */
     private void neiro_reset() {
-        if (pw.partWk[r.di].neiromask != 0) { // break nr_ret;
+        if (pw.partWk[r.di & 0xffff].neiromask != 0) { // break nr_ret;
 
-            r.dl = pw.partWk[r.di].voicenum;
-            r.bl = pw.partWk[r.di].slot1; //    mov bx, word ptr slot1[di]; bh=s3 bl = s1
-            r.bh = pw.partWk[r.di].slot3;
-            r.cl = pw.partWk[r.di].slot2; //    mov cx, word ptr slot2[di]; ch=s4 cl = s2
-            r.ch = pw.partWk[r.di].slot4;
+            r.dl = pw.partWk[r.di & 0xffff].voicenum;
+            r.bl = pw.partWk[r.di & 0xffff].slot1; //    mov bx, word ptr slot1[di]; bh=s3 bl = s1
+            r.bh = pw.partWk[r.di & 0xffff].slot3;
+            r.cl = pw.partWk[r.di & 0xffff].slot2; //    mov cx, word ptr slot2[di]; ch=s4 cl = s2
+            r.ch = pw.partWk[r.di & 0xffff].slot4;
             r.stack.push(r.getBx());
             r.stack.push(r.getCx());
             pw.af_check = 1;
@@ -3068,13 +3068,13 @@ _fb_notfm3:
             pw.af_check = 0;
             r.setCx(r.stack.pop());
             r.setBx(r.stack.pop());
-            pw.partWk[r.di].slot1 = r.bl;
-            pw.partWk[r.di].slot3 = r.bh;
-            pw.partWk[r.di].slot2 = r.cl;
-            pw.partWk[r.di].slot4 = r.ch;
-            r.al = pw.partWk[r.di].carrier;
+            pw.partWk[r.di & 0xffff].slot1 = r.bl;
+            pw.partWk[r.di & 0xffff].slot3 = r.bh;
+            pw.partWk[r.di & 0xffff].slot2 = r.cl;
+            pw.partWk[r.di & 0xffff].slot4 = r.ch;
+            r.al = pw.partWk[r.di & 0xffff].carrier;
             r.al = (byte) ~r.al;
-            r.al &= pw.partWk[r.di].slotmask; // al<- Slots where you can reset TL 4321xxxx
+            r.al &= pw.partWk[r.di & 0xffff].slotmask; // al<- Slots where you can reset TL 4321xxxx
             if (r.al != 0) { // break nr_exit;
                 r.dh = 0x4c - 1;
                 r.dh += pw.partb; // dh=TL FM Port Address
@@ -3120,14 +3120,14 @@ _fb_notfm3:
      * PDR switch
      */
     private Supplier<Object> pdrswitch() {
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         if (pw.ppsdrv_flag != 0) { // break pdrsw_ret;
 
             r.dl = r.al;
             r.dl &= 1;
-            r.al >>= 1;
+            r.al = (byte) ((r.al & 0xff) >>> 1);
             r.ah = 5;
-            ChipDatum cd = new ChipDatum(0x03, r.al, r.dl);
+            ChipDatum cd = new ChipDatum(0x03, r.al & 0xff, r.dl & 0xff);
             ppsdrv.apply(cd); // .SetParam(r.al, r.dl); // int ppsdrv
         }
 //pdrsw_ret:
@@ -3138,7 +3138,7 @@ _fb_notfm3:
      * Setting the volume mask slot
      */
     private Supplier<Object> volmask_set() {
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al &= 0xf;
         if (r.al != 0) { // break vms_zero;
 
@@ -3148,12 +3148,12 @@ _fb_notfm3:
             r.al = r.rol(r.al, 1); // Move to the top 4 bits
 
             r.al |= 0xf; // If a value other than 0 is specified, the lower 4 bits are set to 1.
-            pw.partWk[r.di].volmask = r.al;
+            pw.partWk[r.di & 0xffff].volmask = r.al;
             return this::ch3_setting;
         }
 //vms_zero:
-        r.al = pw.partWk[r.di].carrier;
-        pw.partWk[r.di].volmask = r.al; // Set carrier position
+        r.al = pw.partWk[r.di & 0xffff].carrier;
+        pw.partWk[r.di & 0xffff].volmask = r.al; // Set carrier position
 
         return this::ch3_setting;
     }
@@ -3161,7 +3161,7 @@ _fb_notfm3:
     public Supplier<Object> _volmask_set() {
         logger.log(Level.TRACE, "_volmask_set");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al &= 0xf;
         if (r.al != 0) { // break _vms_zero;
 
@@ -3170,12 +3170,12 @@ _fb_notfm3:
             r.al = r.rol(r.al, 1);
             r.al = r.rol(r.al, 1); // Move to the top 4 bits
             r.al |= 0xf; // If a value other than 0 is specified, the lower 4 bits are set to 1.
-            pw.partWk[r.di]._volmask = r.al;
+            pw.partWk[r.di & 0xffff]._volmask = r.al;
             return this::ch3_setting;
         }
 //_vms_zero:
-        r.al = pw.partWk[r.di].carrier;
-        pw.partWk[r.di]._volmask = r.al; // Set carrier position
+        r.al = pw.partWk[r.di & 0xffff].carrier;
+        pw.partWk[r.di & 0xffff]._volmask = r.al; // Set carrier position
 
         return this::ch3_setting;
     }
@@ -3213,7 +3213,7 @@ vms_not_p3: // ↑
 
         r.stack.push(r.di);
 
-        r.setAx((short) ((byte) pw.md[r.getSi() & 0xffff].dat + (byte) pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
         r.addSi((short) 2);
         if (r.getAx() != 0) { // break fm3ext_part3c;
             r.addAx((short) pw.mmlbuf);
@@ -3222,7 +3222,7 @@ vms_not_p3: // ↑
         }
 //fm3ext_part3c:
 
-        r.setAx((short) ((byte) pw.md[r.getSi() & 0xffff].dat + (byte) pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
         r.addSi((short) 2);
         if (r.getAx() != 0) { // break fm3ext_part3d;
             r.addAx((short) pw.mmlbuf);
@@ -3231,7 +3231,7 @@ vms_not_p3: // ↑
         }
 //fm3ext_part3d:
 
-        r.setAx((short) ((byte) pw.md[r.getSi() & 0xffff].dat + (byte) pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
         r.addSi((short) 2);
         if (r.getAx() != 0) { // break fm3ext_exit;
 
@@ -3245,21 +3245,21 @@ vms_not_p3: // ↑
     }
 
     private void fm3_partinit() {
-        pw.partWk[r.di].address = r.getAx();
-        pw.partWk[r.di].leng = 1; // Playing starts in 1 count
+        pw.partWk[r.di & 0xffff].address = r.getAx();
+        pw.partWk[r.di & 0xffff].leng = 1; // Playing starts in 1 count
         r.al = (byte) 0xff; // -1
-        pw.partWk[r.di].keyoff_flag = r.al; // Currently being keyed off
-        pw.partWk[r.di].mdc = r.al; // MDepth Counter(infinite)
-        pw.partWk[r.di].mdc2 = r.al;
-        pw.partWk[r.di]._mdc = r.al;
-        pw.partWk[r.di]._mdc2 = r.al;
-        pw.partWk[r.di].onkai = r.al; // rest
-        pw.partWk[r.di].onkai_def = r.al; // rest
-        pw.partWk[r.di].volume = 108; // FM VOLUME DEFAULT= 108
+        pw.partWk[r.di & 0xffff].keyoff_flag = r.al; // Currently being keyed off
+        pw.partWk[r.di & 0xffff].mdc = r.al; // MDepth Counter(infinite)
+        pw.partWk[r.di & 0xffff].mdc2 = r.al;
+        pw.partWk[r.di & 0xffff]._mdc = r.al;
+        pw.partWk[r.di & 0xffff]._mdc2 = r.al;
+        pw.partWk[r.di & 0xffff].onkai = r.al; // rest
+        pw.partWk[r.di & 0xffff].onkai_def = r.al; // rest
+        pw.partWk[r.di & 0xffff].volume = 108; // FM VOLUME DEFAULT= 108
         r.setBx((short) pw.part3); // offset part3
-        r.al = pw.partWk[r.getBx()].fmpan;
-        pw.partWk[r.di].fmpan = r.al; // FM PAN = Same as CH3
-        pw.partWk[r.di].partmask |= 0x20; // partmask for s0
+        r.al = pw.partWk[r.getBx() & 0xffff].fmpan;
+        pw.partWk[r.di & 0xffff].fmpan = r.al; // FM PAN = Same as CH3
+        pw.partWk[r.di & 0xffff].partmask |= 0x20; // partmask for s0
     }
 
     /**
@@ -3268,10 +3268,10 @@ vms_not_p3: // ↑
     private Supplier<Object> detune_extend() {
         logger.log(Level.TRACE, "detune_extend");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al &= 1;
-        pw.partWk[r.di].extendmode &= (byte) 0xfe;
-        pw.partWk[r.di].extendmode |= r.al;
+        pw.partWk[r.di & 0xffff].extendmode &= (byte) 0xfe;
+        pw.partWk[r.di & 0xffff].extendmode |= r.al;
         return null;
     }
 
@@ -3281,12 +3281,12 @@ vms_not_p3: // ↑
     public Supplier<Object> lfo_extend() {
         logger.log(Level.TRACE, "lfo_extend");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al &= 1;
         r.al <<= 1;
 
-        pw.partWk[r.di].extendmode &= (byte) 0xfd;
-        pw.partWk[r.di].extendmode |= r.al;
+        pw.partWk[r.di & 0xffff].extendmode &= (byte) 0xfd;
+        pw.partWk[r.di & 0xffff].extendmode |= r.al;
         return null;
     }
 
@@ -3296,13 +3296,13 @@ vms_not_p3: // ↑
     public Supplier<Object> envelope_extend() {
         logger.log(Level.TRACE, "envelope_extend");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al &= 1;
         r.al <<= 1;
         r.al <<= 1;
 
-        pw.partWk[r.di].extendmode &= (byte) 0xfb;
-        pw.partWk[r.di].extendmode |= r.al;
+        pw.partWk[r.di & 0xffff].extendmode &= (byte) 0xfb;
+        pw.partWk[r.di & 0xffff].extendmode |= r.al;
         return null;
     }
 
@@ -3312,8 +3312,8 @@ vms_not_p3: // ↑
     public Supplier<Object> lfowave_set() {
         logger.log(Level.TRACE, "lfowave_set");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].lfo_wave = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].lfo_wave = r.al;
 
         return null;
     }
@@ -3324,23 +3324,23 @@ vms_not_p3: // ↑
     public Supplier<Object> extend_psgenvset() {
         logger.log(Level.TRACE, "extend_psgenvset");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al &= 0x1f;
-        pw.partWk[r.di].eenv_ar = r.al;
+        pw.partWk[r.di & 0xffff].eenv_ar = r.al;
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al &= 0x1f;
-        pw.partWk[r.di].eenv_dr = r.al;
+        pw.partWk[r.di & 0xffff].eenv_dr = r.al;
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al &= 0x1f;
-        pw.partWk[r.di].eenv_sr = r.al;
+        pw.partWk[r.di & 0xffff].eenv_sr = r.al;
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.ah = r.al;
 
         r.al &= 0x0f;
-        pw.partWk[r.di].eenv_rr = r.al;
+        pw.partWk[r.di & 0xffff].eenv_rr = r.al;
 
         r.ah = r.rol(r.ah, 1);
         r.ah = r.rol(r.ah, 1);
@@ -3349,18 +3349,18 @@ vms_not_p3: // ↑
 
         r.ah &= 0xf;
         r.ah ^= 0xf;
-        pw.partWk[r.di].eenv_sl = r.ah;
+        pw.partWk[r.di & 0xffff].eenv_sl = r.ah;
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al &= 0x0f;
-        pw.partWk[r.di].eenv_al = r.al;
+        pw.partWk[r.di & 0xffff].eenv_al = r.al;
 
-        if (pw.partWk[r.di].envf != (byte) 0xff) { // break not_set_count; // Has it gone from Normal to Extended?
+        if (pw.partWk[r.di & 0xffff].envf != (byte) 0xff) { // break not_set_count; // Has it gone from Normal to Extended?
 
-            pw.partWk[r.di].envf = (byte) 0xff;
+            pw.partWk[r.di & 0xffff].envf = (byte) 0xff;
 
-            pw.partWk[r.di].eenv_count = 4; // RR
-            pw.partWk[r.di].eenv_volume = 0; // Volume
+            pw.partWk[r.di & 0xffff].eenv_count = 4; // RR
+            pw.partWk[r.di & 0xffff].eenv_volume = 0; // Volume
         }
 //not_set_count:
 
@@ -3380,9 +3380,9 @@ vms_not_p3: // ↑
                 return this::jump3;
         }
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.bl = r.al;
-        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
         r.addSi((short) 2);
 
         r.bl = r.ror(r.bl, 1);
@@ -3418,35 +3418,35 @@ vms_not_p3: // ↑
             if (pw.fmsel == 1) // It cannot be specified back
                 return this::jump3;
         } else {
-            if (r.di == pw.part_e)
+            if ((r.di & 0xffff) == pw.part_e)
                 return this::jump3;
         }
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.bl = r.al;
-        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() & 0xffff) + 1].dat * 0x100));
         r.addSi((short) 2);
 
         r.carry = ((r.bl & 0x01) != 0);
-        r.bl = (byte) (((r.bl >> 1) & 0x7f) | (r.bl << 7));
+        r.bl = (byte) ((((r.bl & 0xff) >>> 1) & 0x7f) | ((r.bl & 0xff) << 7));
         if (r.carry) { // break sds_slot2;
             pw.slot_detune1 = r.getAx();
         }
 //sds_slot2:
         r.carry = ((r.bl & 0x01) != 0);
-        r.bl = (byte) (((r.bl >> 1) & 0x7f) | (r.bl << 7));
+        r.bl = (byte) ((((r.bl & 0xff) >>> 1) & 0x7f) | ((r.bl & 0xff) << 7));
         if (r.carry) { // break sds_slot3;
             pw.slot_detune2 = r.getAx();
         }
 //sds_slot3:
         r.carry = ((r.bl & 0x01) != 0);
-        r.bl = (byte) (((r.bl >> 1) & 0x7f) | (r.bl << 7));
+        r.bl = (byte) ((((r.bl & 0xff) >>> 1) & 0x7f) | ((r.bl & 0xff) << 7));
         if (r.carry) { // break sds_slot4;
             pw.slot_detune3 = r.getAx();
         }
 //sds_slot4:
         r.carry = ((r.bl & 0x01) != 0);
-        r.bl = (byte) (((r.bl >> 1) & 0x7f) | (r.bl << 7));
+        r.bl = (byte) ((((r.bl & 0xff) >>> 1) & 0x7f) | ((r.bl & 0xff) << 7));
         if (!r.carry) return this::sds_check;
         pw.slot_detune4 = r.getAx();
         return this::sds_check;
@@ -3489,18 +3489,18 @@ cm_set: // ↑
                 {
 cm_clear: // ↑
                     {
-                        if ((pw.partWk[r.di].slotmask & 0xf0) != 0) { //s0 // break cm_clear;
-                            if (pw.partWk[r.di].slotmask != (byte) 0xf0)
+                        if ((pw.partWk[r.di & 0xffff].slotmask & 0xf0) != 0) { //s0 // break cm_clear;
+                            if (pw.partWk[r.di & 0xffff].slotmask != (byte) 0xf0)
                                 break cm_set;
-                            if ((pw.partWk[r.di].volmask & 0x0f) == 0)
+                            if ((pw.partWk[r.di & 0xffff].volmask & 0x0f) == 0)
                                 break cm_clear;
-                            if ((pw.partWk[r.di].lfoswi & 0x1) != 0)
+                            if ((pw.partWk[r.di & 0xffff].lfoswi & 0x1) != 0)
                                 break cm_set;
 
                             //cm_noset1:;
-                            if ((pw.partWk[r.di]._volmask & 0x0f) == 0)
+                            if ((pw.partWk[r.di & 0xffff]._volmask & 0x0f) == 0)
                                 break cm_clear;
-                            if ((pw.partWk[r.di].lfoswi & 0x10) != 0)
+                            if ((pw.partWk[r.di & 0xffff].lfoswi & 0x10) != 0)
                                 break cm_set;
                         }
                     }
@@ -3524,7 +3524,7 @@ cm_clear: // ↑
         }
 //cm_set_main:
         if (pw.board2 == 0) {
-            if ((pw.partWk[r.di].partmask & 2) != 0) { // Is the effect/part masked?
+            if ((pw.partWk[r.di & 0xffff].partmask & 2) != 0) { // Is the effect/part masked?
                 cm_nowefcplaying();
                 return;
             }
@@ -3570,7 +3570,7 @@ cm_clear: // ↑
     }
 
     private void otodasi_cm() {
-        if (pw.partWk[r.di].partmask == 0) { // break ocm_ret;
+        if (pw.partWk[r.di & 0xffff].partmask == 0) { // break ocm_ret;
             otodasi();
         }
 //ocm_ret:
@@ -3588,13 +3588,13 @@ cm_clear: // ↑
     private Supplier<Object> slotmask_set() {
         logger.log(Level.TRACE, "slotmask_set");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.ah = r.al;
         r.al &= 0xf;
         if (r.al != 0) { // break sm_not_car;
 
-            r.al = (byte) ((r.al << 4) | ((r.al >> 4) & 0x0f));
-            pw.partWk[r.di].carrier = r.al;
+            r.al = (byte) ((r.al << 4) | (((r.al & 0xff) >>> 4) & 0x0f));
+            pw.partWk[r.di & 0xffff].carrier = r.al;
 //            break sm_set;
         } else {
 //sm_not_car:
@@ -3617,36 +3617,36 @@ sm_notfm3: // ↑
                     break sm_car_set;
                 }
 //sm_notfm3:
-                //r.dl = pw.partWk[r.di].voicenum;
+                //r.dl = pw.partWk[r.di & 0xffff].voicenum;
                 //r.stack.push(r.ax);
                 //toneadr_calc();
                 //r.ax = r.stack.pop();
                 //r.bl = (byte)pw.inst[r.bx + 24].dat;
-                r.bl = pw.partWk[r.di].alg_fb;
+                r.bl = pw.partWk[r.di & 0xffff].alg_fb;
             }
 //sm_car_set:
             r.bh = 0;
             r.bl &= 7;
             r.addBx((short) 0); // offset carrier_table
-            r.al = (byte) pw.carrier_table[r.getBx()];
-            pw.partWk[r.di].carrier = r.al;
+            r.al = (byte) pw.carrier_table[r.getBx() & 0xffff];
+            pw.partWk[r.di & 0xffff].carrier = r.al;
         }
 //sm_set:
         r.ah &= (byte) 0xf0;
-        if (pw.partWk[r.di].slotmask != r.ah) { // break sm_no_change;
-            pw.partWk[r.di].slotmask = r.ah;
+        if (pw.partWk[r.di & 0xffff].slotmask != r.ah) { // break sm_no_change;
+            pw.partWk[r.di & 0xffff].slotmask = r.ah;
             if ((r.ah & 0xf0) == 0) { // break sm_noset_pm;
-                pw.partWk[r.di].partmask |= 0x20; // Part mask when s0
+                pw.partWk[r.di & 0xffff].partmask |= 0x20; // Part mask when s0
 //                break sms_ns;
             } else {
 //sm_noset_pm:
-                pw.partWk[r.di].partmask &= (byte) 0xdf; // Part mask release when not s0
+                pw.partWk[r.di & 0xffff].partmask &= (byte) 0xdf; // Part mask release when not s0
             }
 //sms_ns:
             ch3_setting(); // Change of ch3mode only for FM3ch
             if (r.carry) { // break sms_nms;
                 // For ch3, keyon is processed in the previous FM3 part.
-                if (r.di != pw.part3) { // break sm_exit;
+                if ((r.di & 0xffff) != pw.part3) { // break sm_exit;
 
                     r.stack.push(r.bp);
                     r.bp = r.di;
@@ -3673,7 +3673,7 @@ sm_notfm3: // ↑
             }
 //sms_nms:
             r.ah = 0;
-            r.al = pw.partWk[r.di].slotmask;
+            r.al = pw.partWk[r.di & 0xffff].slotmask;
             r.al = r.rol(r.al, 1); // slot4
             if (r.carry) { // break sms_n4;
                 r.ah |= 0b0001_0001;
@@ -3694,19 +3694,19 @@ sm_notfm3: // ↑
                 r.ah |= (byte) 0b1000_1000;
             }
 //sms_n1:
-            pw.partWk[r.di].neiromask = r.ah;
+            pw.partWk[r.di & 0xffff].neiromask = r.ah;
             //r.bx = r.stack.pop(); // commands
-            if (pw.partWk[r.di].partmask == 0)
-                return this::mp1; // restore part
-            return this::fmmnp_1;
+            if (pw.partWk[r.di & 0xffff].partmask == 0)
+                return mp1Ref; // restore part
+            return fmmnp_1Ref;
         }
 //sm_no_change:
         return null;
     }
 
     private void keyon_sm() {
-        if (pw.partWk[r.di].partmask == 0) { // break ksm_ret;
-            if ((pw.partWk[r.di].keyoff_flag & 1) == 0) { // Are you in keyon? // break ksm_ret; // During keyoff
+        if (pw.partWk[r.di & 0xffff].partmask == 0) { // break ksm_ret;
+            if ((pw.partWk[r.di & 0xffff].keyoff_flag & 1) == 0) { // Are you in keyon? // break ksm_ret; // During keyoff
                 keyon();
             }
         }
@@ -3719,8 +3719,8 @@ sm_notfm3: // ↑
     public Supplier<Object> ssg_efct_set() {
         logger.log(Level.TRACE, "ssg_efct_set");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        if (pw.partWk[r.di].partmask != 0)
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        if (pw.partWk[r.di & 0xffff].partmask != 0)
             return null;
 
         if (r.al != 0) { // break ses_off;
@@ -3749,8 +3749,8 @@ sm_notfm3: // ↑
     public Supplier<Object> fm_efct_set() {
         logger.log(Level.TRACE, "fm_efct_set");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        if (pw.partWk[r.di].partmask != 0)
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        if (pw.partWk[r.di & 0xffff].partmask != 0)
             return null; // ses_ret;↑
 
         if (r.al != 0) { // break fes_off;
@@ -3809,7 +3809,7 @@ sm_notfm3: // ↑
         logger.log(Level.TRACE, "fade_set");
 
         pw.fadeout_flag = 1;
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         // KUMA: The fout processing is done here.
         pw.fadeout_speed = r.al;
         return null;
@@ -3821,11 +3821,11 @@ sm_notfm3: // ↑
     public Supplier<Object> mdepth_set() {
         logger.log(Level.TRACE, "mdepth_set");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].mdspd = r.al;
-        pw.partWk[r.di].mdspd2 = r.al;
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].mdepth = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].mdspd = r.al;
+        pw.partWk[r.di & 0xffff].mdspd2 = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].mdepth = r.al;
 
         return null;
     }
@@ -3833,15 +3833,15 @@ sm_notfm3: // ↑
     public Supplier<Object> mdepth_count() {
         logger.log(Level.TRACE, "mdepth_count");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al |= r.al;
         if ((r.al & 0x80) == 0) { // break mdc_lfo2;
             if (r.al == 0) { // break mdc_no_deca;
                 r.al--; // 255
             }
 //mdc_no_deca:
-            pw.partWk[r.di].mdc = r.al;
-            pw.partWk[r.di].mdc2 = r.al;
+            pw.partWk[r.di & 0xffff].mdc = r.al;
+            pw.partWk[r.di & 0xffff].mdc2 = r.al;
 
             return null;
         }
@@ -3851,8 +3851,8 @@ sm_notfm3: // ↑
             r.al--; // 255
         }
 //mdc_no_decb:
-        pw.partWk[r.di]._mdc = r.al;
-        pw.partWk[r.di]._mdc2 = r.al;
+        pw.partWk[r.di & 0xffff]._mdc = r.al;
+        pw.partWk[r.di & 0xffff]._mdc2 = r.al;
 
         return null;
     }
@@ -3861,17 +3861,17 @@ sm_notfm3: // ↑
      * It's a portamento calculation.
      */
     public void porta_calc() {
-        r.setAx(pw.partWk[r.di].porta_num2);
-        pw.partWk[r.di].porta_num += r.getAx();
-        if (pw.partWk[r.di].porta_num3 != 0) { // break pc_ret;
-            if ((pw.partWk[r.di].porta_num3 & 0x8000) == 0) { // break pc_minus;
+        r.setAx(pw.partWk[r.di & 0xffff].porta_num2);
+        pw.partWk[r.di & 0xffff].porta_num += r.getAx();
+        if (pw.partWk[r.di & 0xffff].porta_num3 != 0) { // break pc_ret;
+            if ((pw.partWk[r.di & 0xffff].porta_num3 & 0x8000) == 0) { // break pc_minus;
 
-                pw.partWk[r.di].porta_num3--;
-                pw.partWk[r.di].porta_num++;
+                pw.partWk[r.di & 0xffff].porta_num3--;
+                pw.partWk[r.di & 0xffff].porta_num++;
             } else {
 //pc_minus:
-            pw.partWk[r.di].porta_num3++;
-            pw.partWk[r.di].porta_num--;
+                pw.partWk[r.di & 0xffff].porta_num3++;
+                pw.partWk[r.di & 0xffff].porta_num--;
             }
         }
 //pc_ret:
@@ -3881,28 +3881,28 @@ sm_notfm3: // ↑
      * Portamento (FM)
      */
     private Supplier<Object> porta() {
-        if (pw.partWk[r.di].partmask == 0) { // break porta_notset;
+        if (pw.partWk[r.di & 0xffff].partmask == 0) { // break porta_notset;
 
-            ChipDatum cd = new ChipDatum(-1, -1, -1);
+            ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
             cd.additionalData = pw.cmd;
             WriteOPNARegister.accept(cd);
 
-            r.al = (byte) pw.md[r.incSi()].dat;
+            r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
             lfoinit();
             oshift();
             fnumset();
-            r.setAx(pw.partWk[r.di].fnum);
+            r.setAx(pw.partWk[r.di & 0xffff].fnum);
             r.stack.push(r.getAx());
-            r.al = pw.partWk[r.di].onkai;
+            r.al = pw.partWk[r.di & 0xffff].onkai;
             r.stack.push(r.getAx());
-            r.al = (byte) pw.md[r.incSi()].dat;
+            r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
             oshift();
             fnumset();
-            r.setBx(pw.partWk[r.di].fnum); // bx = fnum value of portamento destination
+            r.setBx(pw.partWk[r.di & 0xffff].fnum); // bx = fnum value of portamento destination
             r.setCx(r.stack.pop());
-            pw.partWk[r.di].onkai = r.cl;
+            pw.partWk[r.di & 0xffff].onkai = r.cl;
             r.setCx(r.stack.pop());
-            pw.partWk[r.di].fnum = r.getCx(); // cx = fnum value of the portamento source
+            pw.partWk[r.di & 0xffff].fnum = r.getCx(); // cx = fnum value of the portamento source
             r.setAx((short) 0);
             r.stack.push(r.getCx());
             r.stack.push(r.getBx());
@@ -3910,14 +3910,14 @@ sm_notfm3: // ↑
             r.bh &= 0x38;
             r.bh -= r.ch; // Previous octarb - Original octarb
             if (r.bh != 0) { // break not_octarb;
-                r.bh = (byte) ((r.bh & 0x80) | ((r.bh >> 1) & 0x7f));
-                r.bh = (byte) ((r.bh & 0x80) | ((r.bh >> 1) & 0x7f));
-                r.bh = (byte) ((r.bh & 0x80) | ((r.bh >> 1) & 0x7f));
+                r.bh = (byte) ((r.bh & 0x80) | (((r.bh & 0xff) >>> 1) & 0x7f));
+                r.bh = (byte) ((r.bh & 0x80) | (((r.bh & 0xff) >>> 1) & 0x7f));
+                r.bh = (byte) ((r.bh & 0x80) | (((r.bh & 0xff) >>> 1) & 0x7f));
                 r.al = r.bh;
-                r.setAx(r.al); // ax=octarb difference
+                r.setAx(/* signed */ r.al); // ax=octarb difference
                 r.setBx((short) 0x26a);
-                int ans = r.getAx() * r.getBx(); // (dx) ax = 26ah * octarb difference
-                r.setDx((short) (ans >> 16));
+                int ans = (r.getAx() & 0xffff) * (r.getBx() & 0xffff); // (dx) ax = 26ah * octarb difference
+                r.setDx((short) (ans >>> 16));
                 r.setAx((short) ans);
             }
 //not_octarb:
@@ -3927,22 +3927,22 @@ sm_notfm3: // ↑
             r.andBx((short) 0x7ff);
             r.subBx(r.getCx());
             r.addAx(r.getBx()); // ax=26ah * octarb difference + pitch difference
-            r.bl = (byte) pw.md[r.getSi()].dat;
+            r.bl = (byte) pw.md[r.getSi() & 0xffff].dat;
             r.incSi();
-            pw.partWk[r.di].leng = r.bl;
+            pw.partWk[r.di & 0xffff].leng = r.bl;
             calc_q();
             r.bh = 0;
-            int src = r.getAx();
-            r.setDx((short) (src % r.getBx())); // ax=(26ah * ovtarb difference + pitch difference) / note length
-            r.setAx((short) (src / r.getBx()));
-            pw.partWk[r.di].porta_num2 = r.getAx(); // quotient
-            pw.partWk[r.di].porta_num3 = r.getDx(); // remainder
-            pw.partWk[r.di].lfoswi |= 8; // Porta ON
+            int src = /* signed */ r.getAx();
+            r.setDx((short) (src % /* signed */ r.getBx())); // ax=(26ah * ovtarb difference + pitch difference) / note length
+            r.setAx((short) (src / /* signed */ r.getBx()));
+            pw.partWk[r.di & 0xffff].porta_num2 = r.getAx(); // quotient
+            pw.partWk[r.di & 0xffff].porta_num3 = r.getDx(); // remainder
+            pw.partWk[r.di & 0xffff].lfoswi |= 8; // Porta ON
             //r.ax = r.stack.pop(); // commands
-            return this::porta_return;
+            return porta_returnRef;
         }
 //porta_notset:
-        r.al = (byte) pw.md[r.incSi()].dat; // Skip the first note (when masked)
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat; // Skip the first note (when masked)
         return null;
     }
 
@@ -3950,46 +3950,46 @@ sm_notfm3: // ↑
      * Portamento (PSG)
      */
     private Supplier<Object> portap() {
-        if (pw.partWk[r.di].partmask != 0) {
-            r.al = (byte) pw.md[r.incSi()].dat;
+        if (pw.partWk[r.di & 0xffff].partmask != 0) {
+            r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
             return null;
             //return porta_notset;
         }
 
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
         cd.additionalData = pw.cmd;
         WriteOPNARegister.accept(cd);
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         lfoinitp();
         oshiftp();
         fnumsetp();
-        r.setAx(pw.partWk[r.di].fnum);
+        r.setAx(pw.partWk[r.di & 0xffff].fnum);
         r.stack.push(r.getAx());
-        r.al = pw.partWk[r.di].onkai;
+        r.al = pw.partWk[r.di & 0xffff].onkai;
         r.stack.push(r.getAx());
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         oshiftp();
         fnumsetp();
-        r.setAx(pw.partWk[r.di].fnum); // ax = psg_tune value of portamento destination
+        r.setAx(pw.partWk[r.di & 0xffff].fnum); // ax = psg_tune value of portamento destination
         r.setBx(r.stack.pop());
-        pw.partWk[r.di].onkai = r.bl;
+        pw.partWk[r.di & 0xffff].onkai = r.bl;
         r.setBx(r.stack.pop()); // bx = psg_tune value of portamento source
-        pw.partWk[r.di].fnum = r.getBx();
+        pw.partWk[r.di & 0xffff].fnum = r.getBx();
         r.subAx(r.getBx()); // ax = psg_tune difference
-        r.bl = (byte) pw.md[r.getSi()].dat;
+        r.bl = (byte) pw.md[r.getSi() & 0xffff].dat;
         r.incSi();
-        pw.partWk[r.di].leng = r.bl;
+        pw.partWk[r.di & 0xffff].leng = r.bl;
         calc_q();
         r.bh = 0;
-        int src = r.getAx();
-        r.setDx((short) (src % r.getBx())); // ax = psg_tune difference / note length
-        r.setAx((short) (src / r.getBx()));
-        pw.partWk[r.di].porta_num2 = r.getAx(); // quotient
-        pw.partWk[r.di].porta_num3 = r.getDx(); // remainder
-        pw.partWk[r.di].lfoswi |= 8; // Porta ON
+        int src = /* signed */ r.getAx();
+        r.setDx((short) (src % /* signed */ r.getBx())); // ax = psg_tune difference / note length
+        r.setAx((short) (src / /* signed */ r.getBx()));
+        pw.partWk[r.di & 0xffff].porta_num2 = r.getAx(); // quotient
+        pw.partWk[r.di & 0xffff].porta_num3 = r.getDx(); // remainder
+        pw.partWk[r.di & 0xffff].lfoswi |= 8; // Porta ON
         //r.ax = r.stack.pop(); // commandsp
-        return this::porta_returnp;
+        return porta_returnpRef;
     }
 
     /**
@@ -3998,7 +3998,7 @@ sm_notfm3: // ↑
     public Supplier<Object> status_write() {
         logger.log(Level.TRACE, "status_write");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         pw.status = r.al;
         return null;
     }
@@ -4009,7 +4009,7 @@ sm_notfm3: // ↑
     public Supplier<Object> status_add() {
         logger.log(Level.TRACE, "status_add");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.setBx((short) 0); // offset status
         r.al += pw.status; // add al,[bx]
         pw.status = r.al; // mov[bx],al
@@ -4022,8 +4022,8 @@ sm_notfm3: // ↑
     private Supplier<Object> vol_one_up_fm() {
         logger.log(Level.TRACE, "vol_one_up_fm");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        r.al += pw.partWk[r.di].volume;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        r.al += pw.partWk[r.di & 0xffff].volume;
         if ((r.al & 0xff) < 128)
             return this::vo_vset;
         r.al = 127;
@@ -4032,7 +4032,7 @@ sm_notfm3: // ↑
 
     private Supplier<Object> vo_vset() {
         r.al++;
-        pw.partWk[r.di].volpush = r.al;
+        pw.partWk[r.di & 0xffff].volpush = r.al;
         pw.volpush_flag = 1;
         return null;
     }
@@ -4040,9 +4040,9 @@ sm_notfm3: // ↑
     private Supplier<Object> vol_one_up_psg() {
         logger.log(Level.TRACE, "vol_one_up_psg");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        r.al += pw.partWk[r.di].volume;
-        if (r.al < 16)
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        r.al += pw.partWk[r.di & 0xffff].volume;
+        if ((r.al & 0xff) < 16)
             return this::vo_vset;
         r.al = 15;
         return this::vo_vset;
@@ -4051,9 +4051,9 @@ sm_notfm3: // ↑
     public Supplier<Object> vol_one_up_pcm() {
         logger.log(Level.TRACE, "vol_one_up_pcm");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        r.carry = (r.al & 0xff) + (pw.partWk[r.di].volume & 0xff) > 0xff;
-        r.al += pw.partWk[r.di].volume;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        r.carry = (r.al & 0xff) + (pw.partWk[r.di & 0xffff].volume & 0xff) > 0xff;
+        r.al += pw.partWk[r.di & 0xffff].volume;
         if (r.carry) return this::voup_over;
         return this::vmax_check;
     }
@@ -4072,10 +4072,10 @@ sm_notfm3: // ↑
     public Supplier<Object> vol_one_down() {
         logger.log(Level.TRACE, "vol_one_down");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.ah = r.al;
-        r.al = pw.partWk[r.di].volume;
-        r.carry = r.al < r.ah;
+        r.al = pw.partWk[r.di & 0xffff].volume;
+        r.carry = (r.al & 0xff) < (r.ah & 0xff);
         r.al -= r.ah;
         if (!r.carry) return this::vmax_check;
         r.al = 0;
@@ -4086,31 +4086,31 @@ sm_notfm3: // ↑
      * FM Sound Generator Hard LFO Settings (v2.4 Extended)
      */
     private Supplier<Object> hlfo_set() {
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         if (pw.board2 != 0) {
             r.ah = r.al;
-            r.al = pw.partWk[r.di].fmpan;
+            r.al = pw.partWk[r.di & 0xffff].fmpan;
             r.al &= (byte) 0b1100_0000;
             r.al |= r.ah;
-            pw.partWk[r.di].fmpan = r.al;
+            pw.partWk[r.di & 0xffff].fmpan = r.al;
             if (pw.partb == 3) { // break hlfoset_notfm3;
                 if (pw.fmsel == 0) { // break hlfoset_notfm3;
                     // Only in the case of 2608, so part_e is impossible
                     // For FM3, set all four parts
                     r.stack.push(r.di);
                     r.di = (short) pw.part3; // offset part3
-                    pw.partWk[r.di].fmpan = r.al;
+                    pw.partWk[r.di & 0xffff].fmpan = r.al;
                     r.di = (short) pw.part3b; // offset part3b
-                    pw.partWk[r.di].fmpan = r.al;
+                    pw.partWk[r.di & 0xffff].fmpan = r.al;
                     r.di = (short) pw.part3c; // offset part3c
-                    pw.partWk[r.di].fmpan = r.al;
+                    pw.partWk[r.di & 0xffff].fmpan = r.al;
                     r.di = (short) pw.part3d; // offset part3d
-                    pw.partWk[r.di].fmpan = r.al;
+                    pw.partWk[r.di & 0xffff].fmpan = r.al;
                     r.di = r.stack.pop();
                 }
             }
 //hlfoset_notfm3:
-            if (pw.partWk[r.di].partmask == 0) { // Are the parts masked? // break hlfo_exit;
+            if (pw.partWk[r.di & 0xffff].partmask == 0) { // Are the parts masked? // break hlfo_exit;
                 r.dh = pw.partb;
                 r.dh += (byte) (0xb4 - 1);
                 calc_panout();
@@ -4125,7 +4125,7 @@ sm_notfm3: // ↑
      * FM Sound Source Hard LFO Switch (V2.4 Expansion)
      */
     private Supplier<Object> hlfo_onoff() {
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         if (pw.board2 != 0) {
             r.dl = r.al;
             r.dh = 0x22;
@@ -4141,9 +4141,9 @@ sm_notfm3: // ↑
      * FM Sound Source Hardware LFO Delay Settings
      */
     private Supplier<Object> hlfo_delay() {
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         if (pw.board2 != 0) {
-            pw.partWk[r.di].hldelay = r.al;
+            pw.partWk[r.di & 0xffff].hldelay = r.al;
         }
         return null;
     }
@@ -4154,12 +4154,12 @@ sm_notfm3: // ↑
     public Supplier<Object> syousetu_lng_set() {
         logger.log(Level.TRACE, "syousetu_lng_set");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         pw.syousetu_lng = r.al;
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Tempo, null, pw.tempo_d & 0xff, pw.syousetu_lng & 0xff);
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        MmlDatum md = new MmlDatum(0, MMLType.Tempo, null, pw.tempo_d & 0xff, pw.syousetu_lng & 0xff);
         cd.additionalData = md;
         WriteOPNARegister.accept(cd);
 
@@ -4172,19 +4172,17 @@ sm_notfm3: // ↑
     private Supplier<Object> comAt() {
         logger.log(Level.TRACE, "com@");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].voicenum = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].voicenum = r.al;
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos
-                , 0xff
-                , (int) pw.partWk[r.di].voicenum
-        );
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        cd.additionalData = new MmlDatum(0, MMLType.Instrument, pw.cmd.linePos,
+                0xff, pw.partWk[r.di & 0xffff].voicenum & 0xff);
         writeDummy(cd);
 
         r.dl = r.al;
-        if (pw.partWk[r.di].partmask == 0) { // Are the parts masked? // break comAt_mask;
+        if (pw.partWk[r.di & 0xffff].partmask == 0) { // Are the parts masked? // break comAt_mask;
 
             neiroset();
             return null;
@@ -4192,8 +4190,8 @@ sm_notfm3: // ↑
 //comAt_mask:
         toneadr_calc();
 
-        r.dl = (byte) pw.inst[r.getBx() + 24].dat; //    mov dl,24[bx]
-        pw.partWk[r.di].alg_fb = r.dl; // alg/fb settings
+        r.dl = (byte) pw.inst[(r.getBx() + 24) & 0xffff].dat; //    mov dl,24[bx]
+        pw.partWk[r.di & 0xffff].alg_fb = r.dl; // alg/fb settings
         r.andBx((short) 4);
 
         neiroset_tl(); // tl setting (NO break dl)
@@ -4203,7 +4201,7 @@ comAt_afset:
             // If masked on FM3ch, set fm3_alg_fb
             if (pw.partb == 3) { // break comAt_exit;
 
-                if (pw.partWk[r.di].neiromask != 0) { // break comAt_exit;
+                if (pw.partWk[r.di & 0xffff].neiromask != 0) { // break comAt_exit;
 
                     if (pw.board2 != 0) {
                         if (pw.fmsel == 0)
@@ -4219,7 +4217,7 @@ comAt_afset:
         }
 //comAt_afset:
         // ;in. dl = alg/fb
-        if ((pw.partWk[r.di].slotmask & 0x10) == 0) { // If you are not using slot 1 // break comAt_notslot1;
+        if ((pw.partWk[r.di & 0xffff].slotmask & 0x10) == 0) { // If you are not using slot 1 // break comAt_notslot1;
 
             r.al = pw.fm3_alg_fb;
             r.al &= 0b0011_1000; // fb uses previous value
@@ -4228,7 +4226,7 @@ comAt_afset:
         }
 //comAt_notslot1:
         pw.fm3_alg_fb = r.dl;
-        pw.partWk[r.di].alg_fb = r.al;
+        pw.partWk[r.di & 0xffff].alg_fb = r.al;
         return null;
     }
 
@@ -4238,9 +4236,9 @@ comAt_afset:
     public Supplier<Object> comq() {
         logger.log(Level.TRACE, "comq");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].qdata = r.al;
-        pw.partWk[r.di].qdat3 = 0;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].qdata = r.al;
+        pw.partWk[r.di & 0xffff].qdat3 = 0;
         comq_dmy();
 
         return null;
@@ -4249,8 +4247,8 @@ comAt_afset:
     public Supplier<Object> comq3() {
         logger.log(Level.TRACE, "comq3");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].qdat2 = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].qdat2 = r.al;
         comq_dmy();
 
         return null;
@@ -4259,8 +4257,8 @@ comAt_afset:
     public Supplier<Object> comq4() {
         logger.log(Level.TRACE, "comq4");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].qdat3 = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].qdat3 = r.al;
         comq_dmy();
 
         return null;
@@ -4272,8 +4270,8 @@ comAt_afset:
     public Supplier<Object> comq2() {
         logger.log(Level.TRACE, "comq2");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].qdatb = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].qdatb = r.al;
         comq_dmy();
 
         return null;
@@ -4281,12 +4279,12 @@ comAt_afset:
 
     private void comq_dmy() {
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Gatetime, pw.cmd.linePos
-                , (int) pw.partWk[r.di].qdatb // Q%
-                , (int) pw.partWk[r.di].qdata // q [X] -x  ,  x    : Number 1
-                , (int) pw.partWk[r.di].qdat2 // q  x  -x  , [X]   : Number 3
-                , (int) pw.partWk[r.di].qdat3 // q  x [-X] ,  x    : Number 2
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        MmlDatum md = new MmlDatum(0, MMLType.Gatetime, pw.cmd.linePos,
+                pw.partWk[r.di & 0xffff].qdatb & 0xff , // Q%
+                pw.partWk[r.di & 0xffff].qdata & 0xff, // q [X] -x  ,  x    : Number 1
+                pw.partWk[r.di & 0xffff].qdat2 & 0xff, // q  x  -x  , [X]   : Number 3
+                pw.partWk[r.di & 0xffff].qdat3 & 0xff  // q  x [-X] ,  x    : Number 2
         );
         cd.additionalData = md;
         writeDummy(cd);
@@ -4298,12 +4296,12 @@ comAt_afset:
     public Supplier<Object> comv() {
         logger.log(Level.TRACE, "comv");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].volume = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].volume = r.al;
 
-        //For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
+        // For IDEs
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
         cd.additionalData = md;
         writeDummy(cd);
 
@@ -4319,8 +4317,8 @@ comAt_afset:
     public Supplier<Object> comt() {
         logger.log(Level.TRACE, "comt");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        if (r.al < (byte) 251) { // break comt_sp0;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        if ((r.al & 0xff) < 251) { // break comt_sp0;
 //comt_exit1:
             pw.tempo_d = r.al; // T(FC)
             pw.tempo_d_push = r.al;
@@ -4330,10 +4328,10 @@ comAt_afset:
         r.al++;
         if (r.al == 0) { // break comt_sp1;
 
-            r.al = (byte) pw.md[r.incSi()].dat; // t(FC FF)
+            r.al = (byte) pw.md[r.incSi() & 0xffff].dat; // t(FC FF)
 
 //comt_exit2c:
-            if (r.al < 18) { // break comt_exit2;
+            if ((r.al & 0xff) < 18) { // break comt_exit2;
 //comt_2c_over:
                 r.al = 18;
             }
@@ -4345,7 +4343,7 @@ comAt_afset:
 //comt_sp1:
         r.al++;
         boolean zero = r.al == 0;
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         if (zero) { // break comt_sp2;
 
             r.ah = pw.tempo_d_push; // T± (FC FE)
@@ -4402,7 +4400,7 @@ comAt_afset:
         }
 //        break comt_exit2c;
 //comt_exit2c: // <<
-        if (r.al < 18) { // break comt_exit2; // <<
+        if ((r.al & 0xff) < 18) { // break comt_exit2; // <<
 //comt_2c_over: // <<
             r.al = 18; // <<
         } // <<
@@ -4415,7 +4413,7 @@ comAt_afset:
     /**
      * T->t conversion
      * input[tempo_d]
-     *  output[tempo_48]
+     * output[tempo_48]
      */
     private Supplier<Object> calc_tb_tempo() {
         // TEMPO = 112CH / [ 256 - TB] timerB -> tempo
@@ -4423,11 +4421,11 @@ comAt_afset:
         r.bl -= pw.tempo_d; // tempo_d register value
         r.al = (byte) 255;
 
-        if (r.bl >= 18) { // break ctbt_exit;
+        if ((r.bl & 0xff) >= 18) { // break ctbt_exit;
 
             r.setAx((short) 0x112c);
-            r.ah = (byte) (0x112c % r.bl);
-            r.al = (byte) (0x112c / r.bl);
+            r.ah = (byte) (0x112c % (r.bl & 0xff));
+            r.al = (byte) (0x112c / (r.bl & 0xff));
             if ((r.ah & 0x80) != 0) { // break ctbt_exit;
                 r.al++; // Rounding
             }
@@ -4442,19 +4440,19 @@ comAt_afset:
     /**
      * t->T transformation
      * input[tempo_48]
-     *  output[tempo_d]
+     * output[tempo_d]
      */
     private Supplier<Object> calc_tempo_tb() {
         // TB = 256 - [ 112CH / TEMPO] tempo -> timerB
         r.bl = pw.tempo_48;
         r.al = 0;
 
-        if (r.bl >= 18) { // break cttb_exit;
+        if ((r.bl & 0xff) >= 18) { // break cttb_exit;
 
             r.setAx((short) 0x112c);
 
-            r.al = (byte) (0x112c / r.bl);
-            r.ah = (byte) (0x112c % r.bl);
+            r.al = (byte) (0x112c / (r.bl & 0xff));
+            r.ah = (byte) (0x112c % (r.bl & 0xff));
 
             r.dl = 0;
             r.dl -= r.al;
@@ -4486,15 +4484,13 @@ comAt_afset:
     public Supplier<Object> comd() {
         logger.log(Level.TRACE, "comd");
 
-        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
         r.addSi((short) 2);
-        pw.partWk[r.di].detune = r.getAx();
+        pw.partWk[r.di & 0xffff].detune = r.getAx();
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Detune, pw.cmd.linePos
-                , (int) pw.partWk[r.di].detune
-        );
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        cd.additionalData = new MmlDatum(0, MMLType.Detune, pw.cmd.linePos, /* signed */ pw.partWk[r.di & 0xffff].detune);
         writeDummy(cd);
 
         return null;
@@ -4506,15 +4502,13 @@ comAt_afset:
     public Supplier<Object> comdd() {
         logger.log(Level.TRACE, "comdd");
 
-        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
         r.addSi((short) 2);
-        pw.partWk[r.di].detune += r.getAx();
+        pw.partWk[r.di & 0xffff].detune += r.getAx();
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Detune, pw.cmd.linePos
-                , (int) pw.partWk[r.di].detune
-        );
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        cd.additionalData = new MmlDatum(0, MMLType.Detune, pw.cmd.linePos, /* signed */ pw.partWk[r.di & 0xffff].detune);
         writeDummy(cd);
 
         return null;
@@ -4524,17 +4518,17 @@ comAt_afset:
      * COMMAND '[' [Loop Start]
      */
     public Supplier<Object> comstloop() {
-        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
         r.addSi((short) 2);
         r.setBx(r.getAx());
         r.setAx((short) pw.mmlbuf);
-        if (r.di == pw.part_e) { // break comst_nonefc;
+        if ((r.di & 0xffff) == pw.part_e) { // break comst_nonefc;
             r.setAx((short) pw.efcdat);
         }
 //comst_nonefc:
         r.addBx(r.getAx());
         r.incBx();
-        pw.md[r.getBx()].dat = 0;
+        pw.md[r.getBx() & 0xffff].dat = 0;
 
         return null;
     }
@@ -4545,12 +4539,12 @@ comAt_afset:
     public Supplier<Object> comedloop() {
 reloop: // ↑
         {
-            r.al = (byte) (pw.md[r.incSi()].dat);
+            r.al = (byte) (pw.md[r.incSi() & 0xffff].dat);
             if (r.al != 0) { // break muloop; // If 0, loop unconditionally
                 r.ah = r.al;
-                pw.md[r.getSi()].dat++;
+                pw.md[r.getSi() & 0xffff].dat++;
 
-                r.al = (byte) (pw.md[r.incSi()].dat);
+                r.al = (byte) (pw.md[r.incSi() & 0xffff].dat);
                 if (r.ah != r.al)
                     break reloop;
                 r.addSi((short) 2);
@@ -4558,15 +4552,15 @@ reloop: // ↑
             }
 //muloop:
             r.incSi();
-            pw.partWk[r.di].loopcheck = 1;
+            pw.partWk[r.di & 0xffff].loopcheck = 1;
         }
 //reloop:
-        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
         r.addSi((short) 2);
         r.addAx((short) 2);
 
         r.setBx((short) pw.mmlbuf);
-        if (r.di == pw.part_e) { // break comed_nonefc;
+        if ((r.di & 0xffff) == pw.part_e) { // break comed_nonefc;
             r.setBx((short) pw.efcdat);
         }
 //comed_nonefc:
@@ -4581,21 +4575,21 @@ reloop: // ↑
      * COMMAND ':' [Escape from the loop]
      */
     public Supplier<Object> comexloop() {
-        r.setAx((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
         r.addSi((short) 2);
         r.setBx(r.getAx());
 
         r.setAx((short) pw.mmlbuf);
-        if (r.di == pw.part_e) { // break comex_nonefc;
+        if ((r.di & 0xffff) == pw.part_e) { // break comex_nonefc;
             r.setAx((short) pw.efcdat);
         }
 //comex_nonefc:
         r.addBx(r.getAx());
 
-        r.dl = (byte) pw.md[r.getBx()].dat;
+        r.dl = (byte) pw.md[r.getBx() & 0xffff].dat;
         r.dl--;
         r.incBx();
-        if (r.dl != pw.md[r.getBx()].dat) { // break loopexit;
+        if (r.dl != pw.md[r.getBx() & 0xffff].dat) { // break loopexit;
             return null;
         }
 //loopexit:
@@ -4610,7 +4604,7 @@ reloop: // ↑
     public Supplier<Object> comlopset() {
         logger.log(Level.TRACE, "comlopset");
 
-        pw.partWk[r.di].partloop = r.getSi();
+        pw.partWk[r.di & 0xffff].partloop = r.getSi();
 
         return null;
     }
@@ -4621,14 +4615,12 @@ reloop: // ↑
     public Supplier<Object> comshift() {
         logger.log(Level.TRACE, "comshift");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].shift = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].shift = r.al;
 
-        //For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.KeyShift, pw.cmd.linePos
-                , (int) pw.partWk[r.di].shift
-        );
+        // For IDEs
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        cd.additionalData = new MmlDatum(0, MMLType.KeyShift, pw.cmd.linePos, /* signed */ pw.partWk[r.di & 0xffff].shift);
         writeDummy(cd);
 
         return null;
@@ -4640,15 +4632,13 @@ reloop: // ↑
     public Supplier<Object> comshift2() {
         logger.log(Level.TRACE, "comshift2");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        r.al += pw.partWk[r.di].shift;
-        pw.partWk[r.di].shift = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        r.al += pw.partWk[r.di & 0xffff].shift;
+        pw.partWk[r.di & 0xffff].shift = r.al;
 
-        //For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.KeyShift, pw.cmd.linePos
-                , (int) pw.partWk[r.di].shift
-        );
+        // For IDEs
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        cd.additionalData = new MmlDatum(0, MMLType.KeyShift, pw.cmd.linePos, /* signed */ pw.partWk[r.di & 0xffff].shift);
         writeDummy(cd);
 
         return null;
@@ -4660,8 +4650,8 @@ reloop: // ↑
     public Supplier<Object> comshift_master() {
         logger.log(Level.TRACE, "comshift_master");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].shift_def = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].shift_def = r.al;
         return null;
     }
 
@@ -4672,7 +4662,7 @@ reloop: // ↑
     private Supplier<Object> comvolup() {
         logger.log(Level.TRACE, "comvolup");
 
-        r.al = pw.partWk[r.di].volume;
+        r.al = pw.partWk[r.di & 0xffff].volume;
         r.al += 4;
         return this::volupck;
     }
@@ -4681,8 +4671,8 @@ reloop: // ↑
         logger.log(Level.TRACE, "volupck");
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.min(r.al & 0xff, 127));
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, Math.min(r.al & 0xff, 127));
         cd.additionalData = md;
         writeDummy(cd);
 
@@ -4695,7 +4685,7 @@ reloop: // ↑
     private Supplier<Object> vset() {
         logger.log(Level.TRACE, "vset");
 
-        pw.partWk[r.di].volume = r.al;
+        pw.partWk[r.di & 0xffff].volume = r.al;
         return null;
     }
 
@@ -4703,8 +4693,8 @@ reloop: // ↑
     private Supplier<Object> comvolup2() {
         logger.log(Level.TRACE, "comvolup2");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        r.al += pw.partWk[r.di].volume;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        r.al += pw.partWk[r.di & 0xffff].volume;
         return this::volupck;
     }
 
@@ -4712,19 +4702,19 @@ reloop: // ↑
     private Supplier<Object> comvolupp() {
         logger.log(Level.TRACE, "comvolupp");
 
-        r.al = pw.partWk[r.di].volume;
+        r.al = pw.partWk[r.di & 0xffff].volume;
         r.al++;
         return this::volupckp;
     }
 
     private Supplier<Object> volupckp() {
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.min(r.al & 0xff, 15));
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, Math.min(r.al & 0xff, 15));
         cd.additionalData = md;
         writeDummy(cd);
 
-        if (r.al < 16)
+        if ((r.al & 0xff) < 16)
             return this::vset;
         r.al = 15;
         return this::vset;
@@ -4734,8 +4724,8 @@ reloop: // ↑
     private Supplier<Object> comvolupp2() {
         logger.log(Level.TRACE, "comvolupp2");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        r.al += pw.partWk[r.di].volume;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        r.al += pw.partWk[r.di & 0xffff].volume;
         return this::volupckp;
     }
 
@@ -4746,15 +4736,15 @@ reloop: // ↑
     private Supplier<Object> comvoldown() {
         logger.log(Level.TRACE, "comvoldown");
 
-        r.al = pw.partWk[r.di].volume;
+        r.al = pw.partWk[r.di & 0xffff].volume;
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - 4, 0));
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - 4, 0));
         cd.additionalData = md;
         writeDummy(cd);
 
-        r.carry = (r.al < 4);
+        r.carry = (r.al & 0xff) < 4;
         r.al -= 4;
         if (!r.carry) return this::vset;
         r.al = 0;
@@ -4765,17 +4755,17 @@ reloop: // ↑
     private Supplier<Object> comvoldown2() {
         logger.log(Level.TRACE, "comvoldown2");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.ah = r.al;
-        r.al = pw.partWk[r.di].volume;
+        r.al = pw.partWk[r.di & 0xffff].volume;
 
         //For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - (r.ah & 0xff), 0));
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - (r.ah & 0xff), 0));
         cd.additionalData = md;
         writeDummy(cd);
 
-        r.carry = (r.al < r.ah);
+        r.carry = (r.al & 0xff) < (r.ah & 0xff);
         r.al -= r.ah;
         if (!r.carry) return this::vset;
         r.al = 0;
@@ -4786,11 +4776,11 @@ reloop: // ↑
     private Supplier<Object> comvoldownp() {
         logger.log(Level.TRACE, "comvoldownp");
 
-        r.al = pw.partWk[r.di].volume;
+        r.al = pw.partWk[r.di & 0xffff].volume;
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - 1, 0));
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - 1, 0));
         cd.additionalData = md;
         writeDummy(cd);
 
@@ -4803,17 +4793,17 @@ reloop: // ↑
     private Supplier<Object> comvoldownp2() {
         logger.log(Level.TRACE, "comvoldownp2");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.ah = r.al;
-        r.al = pw.partWk[r.di].volume;
+        r.al = pw.partWk[r.di & 0xffff].volume;
 
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - (r.ah & 0xff), 0));
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        MmlDatum md = new MmlDatum(0, MMLType.Volume, pw.cmd.linePos, Math.max((r.al & 0xff) - (r.ah & 0xff), 0));
         cd.additionalData = md;
         writeDummy(cd);
 
-        r.carry = (r.al < r.ah);
+        r.carry = (r.al & 0xff) < (r.ah & 0xff);
         r.al -= r.ah;
         if (!r.carry) return this::vset;
         r.al = 0;
@@ -4864,14 +4854,14 @@ reloop: // ↑
     }
 
     public Supplier<Object> _lfoswitch() {
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al &= 7;
         r.al = r.rol(r.al, 1);
         r.al = r.rol(r.al, 1);
         r.al = r.rol(r.al, 1);
         r.al = r.rol(r.al, 1);
-        pw.partWk[r.di].lfoswi &= (byte) 0x8f;
-        pw.partWk[r.di].lfoswi |= r.al;
+        pw.partWk[r.di & 0xffff].lfoswi &= (byte) 0x8f;
+        pw.partWk[r.di & 0xffff].lfoswi |= r.al;
         lfo_change();
         lfoinit_main();
         lfo_change();
@@ -4887,67 +4877,67 @@ reloop: // ↑
      * LFO1<->LFO2 change
      */
     public void lfo_change() {
-        r.setAx(pw.partWk[r.di].lfodat);
-        pw.partWk[r.di].lfodat = pw.partWk[r.di]._lfodat;
-        pw.partWk[r.di]._lfodat = r.getAx();
+        r.setAx(pw.partWk[r.di & 0xffff].lfodat);
+        pw.partWk[r.di & 0xffff].lfodat = pw.partWk[r.di & 0xffff]._lfodat;
+        pw.partWk[r.di & 0xffff]._lfodat = r.getAx();
 
         r.cl = 4;
-        pw.partWk[r.di].lfoswi = (byte) ((pw.partWk[r.di].lfoswi << 4) | ((pw.partWk[r.di].lfoswi & 0xf0) >> 4));
-        pw.partWk[r.di].extendmode = (byte) ((pw.partWk[r.di].extendmode << 4) | ((pw.partWk[r.di].extendmode & 0xf0) >> 4));
+        pw.partWk[r.di & 0xffff].lfoswi = (byte) (((pw.partWk[r.di & 0xffff].lfoswi & 0xff) << 4) | ((pw.partWk[r.di & 0xffff].lfoswi & 0xf0) >>> 4));
+        pw.partWk[r.di & 0xffff].extendmode = (byte) (((pw.partWk[r.di & 0xffff].extendmode & 0xff) << 4) | ((pw.partWk[r.di & 0xffff].extendmode & 0xf0) >>> 4));
 
-        r.al = pw.partWk[r.di].delay;
-        pw.partWk[r.di].delay = pw.partWk[r.di]._delay;
-        pw.partWk[r.di]._delay = r.al;
+        r.al = pw.partWk[r.di & 0xffff].delay;
+        pw.partWk[r.di & 0xffff].delay = pw.partWk[r.di & 0xffff]._delay;
+        pw.partWk[r.di & 0xffff]._delay = r.al;
 
-        r.al = pw.partWk[r.di].speed;
-        pw.partWk[r.di].speed = pw.partWk[r.di]._speed;
-        pw.partWk[r.di]._speed = r.al;
+        r.al = pw.partWk[r.di & 0xffff].speed;
+        pw.partWk[r.di & 0xffff].speed = pw.partWk[r.di & 0xffff]._speed;
+        pw.partWk[r.di & 0xffff]._speed = r.al;
 
-        r.al = pw.partWk[r.di].step;
-        pw.partWk[r.di].step = pw.partWk[r.di]._step;
-        pw.partWk[r.di]._step = r.al;
+        r.al = pw.partWk[r.di & 0xffff].step;
+        pw.partWk[r.di & 0xffff].step = pw.partWk[r.di & 0xffff]._step;
+        pw.partWk[r.di & 0xffff]._step = r.al;
 
-        r.al = pw.partWk[r.di].time;
-        pw.partWk[r.di].time = pw.partWk[r.di]._time;
-        pw.partWk[r.di]._time = r.al;
+        r.al = pw.partWk[r.di & 0xffff].time;
+        pw.partWk[r.di & 0xffff].time = pw.partWk[r.di & 0xffff]._time;
+        pw.partWk[r.di & 0xffff]._time = r.al;
 
-        r.al = pw.partWk[r.di].delay2;
-        pw.partWk[r.di].delay2 = pw.partWk[r.di]._delay2;
-        pw.partWk[r.di]._delay2 = r.al;
+        r.al = pw.partWk[r.di & 0xffff].delay2;
+        pw.partWk[r.di & 0xffff].delay2 = pw.partWk[r.di & 0xffff]._delay2;
+        pw.partWk[r.di & 0xffff]._delay2 = r.al;
 
-        r.al = pw.partWk[r.di].speed2;
-        pw.partWk[r.di].speed2 = pw.partWk[r.di]._speed2;
-        pw.partWk[r.di]._speed2 = r.al;
+        r.al = pw.partWk[r.di & 0xffff].speed2;
+        pw.partWk[r.di & 0xffff].speed2 = pw.partWk[r.di & 0xffff]._speed2;
+        pw.partWk[r.di & 0xffff]._speed2 = r.al;
 
-        r.al = pw.partWk[r.di].step2;
-        pw.partWk[r.di].step2 = pw.partWk[r.di]._step2;
-        pw.partWk[r.di]._step2 = r.al;
+        r.al = pw.partWk[r.di & 0xffff].step2;
+        pw.partWk[r.di & 0xffff].step2 = pw.partWk[r.di & 0xffff]._step2;
+        pw.partWk[r.di & 0xffff]._step2 = r.al;
 
-        r.al = pw.partWk[r.di].time2;
-        pw.partWk[r.di].time2 = pw.partWk[r.di]._time2;
-        pw.partWk[r.di]._time2 = r.al;
+        r.al = pw.partWk[r.di & 0xffff].time2;
+        pw.partWk[r.di & 0xffff].time2 = pw.partWk[r.di & 0xffff]._time2;
+        pw.partWk[r.di & 0xffff]._time2 = r.al;
 
-        r.al = pw.partWk[r.di].mdepth;
-        pw.partWk[r.di].mdepth = pw.partWk[r.di]._mdepth;
-        pw.partWk[r.di]._mdepth = r.al;
+        r.al = pw.partWk[r.di & 0xffff].mdepth;
+        pw.partWk[r.di & 0xffff].mdepth = pw.partWk[r.di & 0xffff]._mdepth;
+        pw.partWk[r.di & 0xffff]._mdepth = r.al;
 
-        r.al = pw.partWk[r.di].mdspd;
-        pw.partWk[r.di].mdspd = pw.partWk[r.di]._mdspd;
-        pw.partWk[r.di]._mdspd = r.al;
+        r.al = pw.partWk[r.di & 0xffff].mdspd;
+        pw.partWk[r.di & 0xffff].mdspd = pw.partWk[r.di & 0xffff]._mdspd;
+        pw.partWk[r.di & 0xffff]._mdspd = r.al;
 
-        r.al = pw.partWk[r.di].mdspd2;
-        pw.partWk[r.di].mdspd2 = pw.partWk[r.di]._mdspd2;
-        pw.partWk[r.di]._mdspd2 = r.al;
-        r.ah = pw.partWk[r.di].lfo_wave;
-        pw.partWk[r.di].lfo_wave = pw.partWk[r.di]._lfo_wave;
-        pw.partWk[r.di]._lfo_wave = r.ah;
+        r.al = pw.partWk[r.di & 0xffff].mdspd2;
+        pw.partWk[r.di & 0xffff].mdspd2 = pw.partWk[r.di & 0xffff]._mdspd2;
+        pw.partWk[r.di & 0xffff]._mdspd2 = r.al;
+        r.ah = pw.partWk[r.di & 0xffff].lfo_wave;
+        pw.partWk[r.di & 0xffff].lfo_wave = pw.partWk[r.di & 0xffff]._lfo_wave;
+        pw.partWk[r.di & 0xffff]._lfo_wave = r.ah;
 
-        r.al = pw.partWk[r.di].mdc;
-        pw.partWk[r.di].mdc = pw.partWk[r.di]._mdc;
-        pw.partWk[r.di]._mdc = r.al;
-        r.al = pw.partWk[r.di].mdc2;
-        pw.partWk[r.di].mdc2 = pw.partWk[r.di]._mdc2;
-        pw.partWk[r.di]._mdc2 = r.al;
+        r.al = pw.partWk[r.di & 0xffff].mdc;
+        pw.partWk[r.di & 0xffff].mdc = pw.partWk[r.di & 0xffff]._mdc;
+        pw.partWk[r.di & 0xffff]._mdc = r.al;
+        r.al = pw.partWk[r.di & 0xffff].mdc2;
+        pw.partWk[r.di & 0xffff].mdc2 = pw.partWk[r.di & 0xffff]._mdc2;
+        pw.partWk[r.di & 0xffff]._mdc2 = r.al;
     }
 
     /**
@@ -4956,29 +4946,29 @@ reloop: // ↑
     public Supplier<Object> lfoset() {
         logger.log(Level.TRACE, "lfoset");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].delay = r.al;
-        pw.partWk[r.di].delay2 = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].delay = r.al;
+        pw.partWk[r.di & 0xffff].delay2 = r.al;
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].speed = r.al;
-        pw.partWk[r.di].speed2 = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].speed = r.al;
+        pw.partWk[r.di & 0xffff].speed2 = r.al;
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].step = r.al;
-        pw.partWk[r.di].step2 = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].step = r.al;
+        pw.partWk[r.di & 0xffff].step2 = r.al;
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].time = r.al;
-        pw.partWk[r.di].time2 = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].time = r.al;
+        pw.partWk[r.di & 0xffff].time2 = r.al;
 
         return this::lfoinit_main;
     }
 
     public Supplier<Object> lfoset_delay() {
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].delay = r.al;
-        pw.partWk[r.di].delay2 = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].delay = r.al;
+        pw.partWk[r.di & 0xffff].delay2 = r.al;
 
         return this::lfoinit_main;
     }
@@ -4989,14 +4979,14 @@ reloop: // ↑
     public Supplier<Object> lfoswitch() {
         logger.log(Level.TRACE, "lfoswitch");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         if ((r.al & 0b1111_1000) != 0) { // break ls_00;
             r.al = 1;
         }
 //ls_00:
         r.al &= 7;
-        pw.partWk[r.di].lfoswi &= (byte) 0xf8;
-        pw.partWk[r.di].lfoswi |= r.al;
+        pw.partWk[r.di & 0xffff].lfoswi &= (byte) 0xf8;
+        pw.partWk[r.di & 0xffff].lfoswi |= r.al;
         return this::lfoinit_main;
     }
 
@@ -5014,22 +5004,22 @@ reloop: // ↑
     public Supplier<Object> psgenvset() {
         logger.log(Level.TRACE, "psgenvset");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].eenv_ar = r.al; // pat
-        pw.partWk[r.di].eenv_arc = r.al; // patb
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].eenv_dr = r.al; // pv2
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].eenv_sr = r.al; // pr1
-        pw.partWk[r.di].eenv_src = r.al; // pr1b
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].eenv_rr = r.al; // pr2
-        pw.partWk[r.di].eenv_rrc = r.al; // pr2b
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].eenv_ar = r.al; // pat
+        pw.partWk[r.di & 0xffff].eenv_arc = r.al; // patb
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].eenv_dr = r.al; // pv2
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].eenv_sr = r.al; // pr1
+        pw.partWk[r.di & 0xffff].eenv_src = r.al; // pr1b
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].eenv_rr = r.al; // pr2
+        pw.partWk[r.di & 0xffff].eenv_rrc = r.al; // pr2b
 
-        if (pw.partWk[r.di].envf == (byte) 0xff) { // break not_set_count2; // Did it go from Expansion to Normal?
+        if (pw.partWk[r.di & 0xffff].envf == (byte) 0xff) { // break not_set_count2; // Did it go from Expansion to Normal?
 
-            pw.partWk[r.di].envf = 2; // RR
-            pw.partWk[r.di].eenv_volume = (byte) 0xf1; // -15; // Volume // .penv
+            pw.partWk[r.di & 0xffff].envf = 2; // RR
+            pw.partWk[r.di & 0xffff].eenv_volume = (byte) 0xf1; // -15; // Volume // .penv
         }
 //not_set_count2:
         return null;
@@ -5041,8 +5031,8 @@ reloop: // ↑
     public Supplier<Object> comy() {
         logger.log(Level.TRACE, "comy");
 
-        r.dh = (byte) pw.md[r.incSi()].dat;
-        r.dl = (byte) pw.md[r.incSi()].dat;
+        r.dh = (byte) pw.md[r.incSi() & 0xffff].dat;
+        r.dl = (byte) pw.md[r.incSi() & 0xffff].dat;
         opnset();
         return null;
     }
@@ -5053,7 +5043,7 @@ reloop: // ↑
     private Supplier<Object> psgnoise() {
         logger.log(Level.TRACE, "psgnoise");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         pw.psnoi = r.al;
         return null;
     }
@@ -5061,13 +5051,13 @@ reloop: // ↑
     private Supplier<Object> psgnoise_move() {
         logger.log(Level.TRACE, "psgnoise_move");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.al += pw.psnoi;
         if ((r.al & 0x80) != 0) { // break pnm_nminus;
             r.al = 0;
         }
 //pnm_nminus:
-        if (r.al >= 32) { // break pnm_set;
+        if ((r.al & 0xff) >= 32) { // break pnm_set;
             r.al = 31;
         }
 //pnm_set:
@@ -5081,8 +5071,8 @@ reloop: // ↑
     private Supplier<Object> psgsel() {
         logger.log(Level.TRACE, "psgsel");
 
-        r.al = (byte) pw.md[r.incSi()].dat;
-        pw.partWk[r.di].psgpat = r.al;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
+        pw.partWk[r.di & 0xffff].psgpat = r.al;
         return null;
     }
 
@@ -5090,7 +5080,7 @@ reloop: // ↑
      * 'p' COMMAND[FM PANNING SET]
      */
     private Supplier<Object> panset() {
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         if (pw.board2 != 0) {
             return panset_main();
         }
@@ -5099,35 +5089,35 @@ reloop: // ↑
 
     private Supplier<Object> panset_main() {
         // For IDEs
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
-        cd.additionalData = new MmlDatum(-1, MMLType.Pan, pw.cmd.linePos, r.al & 0xff);
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
+        cd.additionalData = new MmlDatum(0, MMLType.Pan, pw.cmd.linePos, r.al & 0xff);
         writeDummy(cd);
 
         r.al = r.ror(r.al, 1);
         r.al = r.ror(r.al, 1);
         r.al &= 0b1100_0000;
         r.ah = r.al; // ah<- pan data
-        r.al = pw.partWk[r.di].fmpan;
+        r.al = pw.partWk[r.di & 0xffff].fmpan;
         r.al &= 0b0011_1111;
         r.al |= r.ah;
-        pw.partWk[r.di].fmpan = r.al;
+        pw.partWk[r.di & 0xffff].fmpan = r.al;
         if (pw.partb == 3) { // break panset_notfm3;
             if (pw.fmsel == 0) { // break panset_notfm3;
                 // For FM3, set all four parts
                 r.stack.push(r.di);
                 r.di = (short) pw.part3;
-                pw.partWk[r.di].fmpan = r.al;
+                pw.partWk[r.di & 0xffff].fmpan = r.al;
                 r.di = (short) pw.part3b;
-                pw.partWk[r.di].fmpan = r.al;
+                pw.partWk[r.di & 0xffff].fmpan = r.al;
                 r.di = (short) pw.part3c;
-                pw.partWk[r.di].fmpan = r.al;
+                pw.partWk[r.di & 0xffff].fmpan = r.al;
                 r.di = (short) pw.part3d;
-                pw.partWk[r.di].fmpan = r.al;
+                pw.partWk[r.di & 0xffff].fmpan = r.al;
                 r.di = r.stack.pop();
             }
         }
 //panset_notfm3:
-        if (pw.partWk[r.di].partmask == 0) { // Are the parts masked? break panset_exit;
+        if (pw.partWk[r.di & 0xffff].partmask == 0) { // Are the parts masked? break panset_exit;
             r.dl = r.al;
             r.dh = pw.partb;
             r.dh += (byte) (0xb4 - 1);
@@ -5144,8 +5134,8 @@ reloop: // ↑
      */
     private void calc_panout() {
         if (pw.board2 != 0) {
-            r.dl = pw.partWk[r.di].fmpan;
-            if (pw.partWk[r.di].hldelay_c != 0) { // break cpo_ret;
+            r.dl = pw.partWk[r.di & 0xffff].fmpan;
+            if (pw.partWk[r.di & 0xffff].hldelay_c != 0) { // break cpo_ret;
                 r.dl &= 0xc0; // If HLFO Delay remains, set only the pan
             }
 //cpo_ret:
@@ -5156,7 +5146,7 @@ reloop: // ↑
      * Pan setting Extend
      */
     private Supplier<Object> panset_ex() {
-        r.al = (byte) pw.md[r.incSi()].dat;
+        r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.incSi(); // Skip the reverse flag
         if (pw.board2 != 0) {
             if (r.al == 0) {
@@ -5185,7 +5175,7 @@ reloop: // ↑
     public Supplier<Object> rhykey() {
         if (pw.board2 != 0) {
             r.dh = 0x10;
-            r.al = (byte) pw.md[r.incSi()].dat;
+            r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
             r.al &= pw.rhythmmask;
             if (r.al != 0) { // break rhst_ret;
                 r.dl = r.al;
@@ -5202,11 +5192,11 @@ reloop: // ↑
                     r.stack.push(r.getDx());
                     r.setCx((short) 6);
                     r.dh = 0x18;
-                    //rklp:;
+//rklp:
                     do {
                         r.al = r.ror(r.al, 1);
                         if (r.carry) { // break rk00;
-                            r.dl = pw.rdat[r.getBx()];
+                            r.dl = pw.rdat[r.getBx() & 0xffff];
                             opnset44();
                         }
 //rk00:
@@ -5232,7 +5222,7 @@ reloop: // ↑
                     pw.rshot_dat |= r.dl;
                 }
 //rhst_ret2:
-                if (pw.md[r.getSi()].dat == 0xeb) { // break rhst_ret;
+                if (pw.md[r.getSi() & 0xffff].dat == 0xeb) { // break rhst_ret;
                     _rwait();
                 }
             }
@@ -5247,12 +5237,12 @@ reloop: // ↑
     private void rflag_inc(boolean isShot) {
         r.al = r.dl;
         r.setCx((short) 6);
-        //ri_loop:;
+//ri_loop:
         do {
             r.al = r.ror(r.al, 1);
             if (r.carry) { // break ri_not;
-                if (isShot) pw.rshot[r.getBx()]++;
-                else pw.rdump[r.getBx()]++;
+                if (isShot) pw.rshot[r.getBx() & 0xffff]++;
+                else pw.rdump[r.getBx() & 0xffff]++;
             }
 //ri_not:
             r.incBx();
@@ -5265,7 +5255,7 @@ reloop: // ↑
      */
     public Supplier<Object> rhyvs() {
         if (pw.board2 != 0) {
-            r.al = (byte) pw.md[r.incSi()].dat;
+            r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
             r.cl = (byte) 0xc0;
             r.dl = 0x1f;
             r.dl &= r.al;
@@ -5288,29 +5278,29 @@ reloop: // ↑
         r.al = 0x18 - 1;
         r.al += r.dh;
         r.dh = r.al;
-        r.al = pw.rdat[r.getBx()];
+        r.al = pw.rdat[r.getBx() & 0xffff];
         r.al &= r.cl;
         r.dl |= r.al;
-        pw.rdat[r.getBx()] = r.dl;
+        pw.rdat[r.getBx() & 0xffff] = r.dl;
         opnset44();
         return null;
     }
 
     public Supplier<Object> rhyvs_sft() {
         if (pw.board2 != 0) {
-            r.al = (byte) pw.md[r.incSi()].dat;
+            r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
             r.setBx((short) 0xffff); // offset rdat-1
             r.dh = r.al;
             r.ah = 0;
             r.addBx(r.getAx());
 
             r.dh += 0x18 - 1;
-            r.al = pw.rdat[r.getBx()];
+            r.al = pw.rdat[r.getBx() & 0xffff];
             r.al &= 0b0001_1111;
             r.dl = r.al;
-            r.al = (byte) pw.md[r.incSi()].dat;
+            r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
             r.al += r.dl;
-            if (r.al >= 32) { // break rvss00;
+            if ((r.al & 0xff) >= 32) { // break rvss00;
                 if ((r.al & 0x80) == 0) { // break rvss01;
                     r.al = 31;
 //                    break rvss00;
@@ -5322,10 +5312,10 @@ reloop: // ↑
 //rvss00:
             r.al &= 0b0001_1111;
             r.dl = r.al;
-            r.al = pw.rdat[r.getBx()];
+            r.al = pw.rdat[r.getBx() & 0xffff];
             r.al &= (byte) 0b1110_0000;
             r.dl |= r.al;
-            pw.rdat[r.getBx()] = r.dl;
+            pw.rdat[r.getBx() & 0xffff] = r.dl;
             opnset44();
             return null;
         } else {
@@ -5339,7 +5329,7 @@ reloop: // ↑
      */
     public Supplier<Object> rpnset() {
         if (pw.board2 != 0) {
-            r.al = (byte) pw.md[r.incSi()].dat;
+            r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
             r.ah = r.al;
             r.cl = 0x1f;
             r.ah &= 3;
@@ -5358,12 +5348,12 @@ reloop: // ↑
      */
     public Supplier<Object> rmsvs() {
         if (pw.board2 != 0) {
-            r.al = (byte) pw.md[r.incSi()].dat;
+            r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
             r.dl = r.al;
             r.al = pw.rhythm_voldown;
             if (r.al != 0) {
                 r.al = (byte) -r.al;
-                r.setAx((short) (r.al * r.dl));
+                r.setAx((short) ((r.al & 0xff) * (r.dl & 0xff)));
                 r.dl = r.ah;
             }
             volset2r();
@@ -5385,8 +5375,8 @@ reloop: // ↑
             r.al = pw.fadeout_volume;
             if (r.al != 0) { // break vs2r_000;
                 r.al = (byte) ~r.al;
-                int ans = r.al * r.dl;
-                r.dl = (byte) (ans >> 8);
+                int ans = (r.al & 0xff) * (r.dl & 0xff);
+                r.dl = (byte) (ans >>> 8);
             }
 //vs2r_000:
             opnset44();
@@ -5396,7 +5386,7 @@ reloop: // ↑
     public Supplier<Object> rmsvs_sft() {
         if (pw.board2 != 0) {
             r.dh = 0x11;
-            r.al = (byte) pw.md[r.incSi()].dat;
+            r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
             r.dl = r.al;
             r.al = pw.rhyvol;
             r.al += r.dl;
@@ -5423,18 +5413,18 @@ reloop: // ↑
      * SHIFT[di] Transpose by one
      */
     public void oshift() {
-        //oshiftp:
+//oshiftp:
         if (r.al == 0xf) // rest
             return;
-        r.dl = pw.partWk[r.di].shift;
-        r.dl += pw.partWk[r.di].shift_def;
+        r.dl = pw.partWk[r.di & 0xffff].shift;
+        r.dl += pw.partWk[r.di & 0xffff].shift_def;
         if ((r.dl & r.dl) == 0)
             return;
 
         r.bl = r.al;
         r.bl &= 0xf;
-        r.al &= 0xf0;
-        r.al >>= 4; // KUMA: Actually, it's ror x4
+        r.al &= (byte) 0xf0;
+        r.al = (byte) ((r.al & 0xff) >>> 4); // KUMA: Actually, it's ror x4
         r.bh = r.al; // bh=OCT bl = ONKAI
 
         if ((r.dl & 0x80) != 0) { // break shiftplus;
@@ -5442,23 +5432,23 @@ reloop: // ↑
             //
             // - direction shift
             //
-            //shiftminus:
+//shiftminus:
             r.carry = false;
-            if ((r.bl & 0xff) + (r.dl & 0xff) > 0xff) r.carry = true;
+            if (((r.bl & 0xff) + (r.dl & 0xff)) > 0xff) r.carry = true;
             r.bl += r.dl;
             if (!r.carry) { // break sfm2;
 
-                //sfm1:
+//sfm1:
                 do {
                     r.bh--;
                     r.carry = false;
-                    if ((r.bl & 0xff) + 12 > 0xff) r.carry = true;
+                    if (((r.bl & 0xff) + 12) > 0xff) r.carry = true;
                     r.bl += 12;
                 } while (!r.carry);
             }
 //sfm2:
             r.al = r.bh;
-            r.al = (byte) ((r.al >>> 4) | ((r.al << 4) & 0xff)); // ror x4
+            r.al = (byte) (((r.al & 0xff) >>> 4) | ((r.al & 0xff) << 4)); // ror x4
             r.al |= r.bl;
             return;
         }
@@ -5467,19 +5457,19 @@ reloop: // ↑
         //
 //shiftplus:
         r.bl += r.dl;
-        //spm1:;
+//spm1:
         do {
-            if (r.bl < 0xc)
+            if ((r.bl & 0xff) < 0xc)
                 break; // spm2;
             r.bh++;
             r.bl -= 12;
         } while (true);
 //spm2:
         r.al = r.bh;
-        r.al = (byte) ((r.al >> 4) | ((r.al << 4) & 0xff)); // ror x4
+        r.al = (byte) (((r.al & 0xff) >>> 4) | ((r.al & 0xff) << 4)); // ror x4
         r.al |= r.bl;
 
-        //osret: ret
+//osret: ret
     }
 
     private void oshiftp() {
@@ -5488,7 +5478,7 @@ reloop: // ↑
 
     /**
      * FM BLOCK, F-NUMBER SET
-     * ; INPUTS -- AL[KEY#,0-7F]
+     * @input AL KEY#,0-7F
      */
     private void fnumset() {
         r.ah = r.al;
@@ -5497,7 +5487,7 @@ reloop: // ↑
             fnrest(); // Rests
             return;
         }
-        pw.partWk[r.di].onkai = r.al;
+        pw.partWk[r.di & 0xffff].onkai = r.al;
 
         //
         // BLOCK/FNUM CALICULATE
@@ -5509,19 +5499,19 @@ reloop: // ↑
         r.bl &= 0xf; // bl=ONKAI
         r.bh = 0;
         //r.bx += r.bx;
-        r.setAx((short) pw.fnum_data[r.getBx()]);
+        r.setAx((short) PW.fnum_data[r.getBx() & 0xffff]);
 
         //
         // BLOCK SET
         //
         r.ah |= r.ch;
-        pw.partWk[r.di].fnum = r.getAx();
+        pw.partWk[r.di & 0xffff].fnum = r.getAx();
     }
 
     public void fnrest() {
-        pw.partWk[r.di].onkai = (byte) 0xff;
-        if ((pw.partWk[r.di].lfoswi & 0x11) == 0) { // break fnr_ret;
-            pw.partWk[r.di].fnum = 0; // Pitch LFO not used
+        pw.partWk[r.di & 0xffff].onkai = (byte) 0xff;
+        if ((pw.partWk[r.di & 0xffff].lfoswi & 0x11) == 0) { // break fnr_ret;
+            pw.partWk[r.di & 0xffff].fnum = 0; // Pitch LFO not used
         }
 //fnr_ret:
     }
@@ -5536,46 +5526,46 @@ reloop: // ↑
             fnrest(); // if rest then set FNUM 0
             return;
         }
-        pw.partWk[r.di].onkai = r.al;
+        pw.partWk[r.di & 0xffff].onkai = r.al;
 
         r.cl = r.al;
-        r.cl = (byte) ((r.cl >> 4) | ((r.cl << 4) & 0xff)); // ror x4
+        r.cl = (byte) (((r.cl & 0xff) >> 4) | ((r.cl & 0xff) << 4)); // ror x4
         r.cl &= 0xf; // cl=oct
         r.bl = r.al;
         r.bl &= 0xf;
         r.bh = 0; // bx=onkai
         //r.bx += r.bx;
-        r.setAx((short) pw.psg_tune_data[r.getBx()]);
+        r.setAx((short) PW.psg_tune_data[r.getBx() & 0xffff]);
 
         r.carry = r.cl == 0 ? false : ((r.getAx() & (1 << (r.cl - 1))) != 0);
-        r.setAx((short) (r.getAx() >> r.cl)); //    shr ax,cl
+        r.setAx((short) (/* singed */ r.getAx() >> (r.cl & 0xff))); //    shr ax,cl
 
         if (r.carry) { // break pt_non_inc;
             r.incAx();
         }
 //pt_non_inc:
-        pw.partWk[r.di].fnum = r.getAx();
+        pw.partWk[r.di & 0xffff].fnum = r.getAx();
     }
 
     /**
      * Set[FNUM / BLOCK + DETUNE + LFO]
      */
     private void otodasi() {
-        r.setAx(pw.partWk[r.di].fnum);
+        r.setAx(pw.partWk[r.di & 0xffff].fnum);
         if (r.getAx() == 0) { // break od_00;
             return;
         }
 //od_00:
 od_non_ch3: // ↑
-        if (pw.partWk[r.di].slotmask != 0) { // break od_exit;
+        if (pw.partWk[r.di & 0xffff].slotmask != 0) { // break od_exit;
             r.setCx(r.getAx());
             r.andCx((short) 0x3800); // cx=BLOCK
             r.ah &= 7; // ax=FNUM
             //
             // Portament/LFO/Detune SET
             //
-            r.addAx(pw.partWk[r.di].porta_num);
-            r.addAx(pw.partWk[r.di].detune);
+            r.addAx(pw.partWk[r.di & 0xffff].porta_num);
+            r.addAx(pw.partWk[r.di & 0xffff].detune);
             r.dh = pw.partb;
             if (r.dh == 3) { // Ch 3 // break od_non_ch3;
 
@@ -5593,25 +5583,25 @@ od_non_ch3: // ↑
                 }
             }
 //od_non_ch3:
-            if ((pw.partWk[r.di].lfoswi & 1) != 0) { // break od_not_lfo1;
-                r.addAx(pw.partWk[r.di].lfodat);
+            if ((pw.partWk[r.di & 0xffff].lfoswi & 1) != 0) { // break od_not_lfo1;
+                r.addAx(pw.partWk[r.di & 0xffff].lfodat);
             }
 //od_not_lfo1:
-            if ((pw.partWk[r.di].lfoswi & 0x10) != 0) { // break od_not_lfo2;
-                r.addAx(pw.partWk[r.di]._lfodat);
+            if ((pw.partWk[r.di & 0xffff].lfoswi & 0x10) != 0) { // break od_not_lfo2;
+                r.addAx(pw.partWk[r.di & 0xffff]._lfodat);
             }
 //od_not_lfo2:
             fm_block_calc();
 
 //#if DEBUG
-            //logger.log(Level.TRACE, String.format("cx:{0:X4}  ax:{1:X4}  lfodat:%d  step:%d"
-            //    , r.cx, r.ax, (short)pw.partWk[r.di].lfodat, (sbyte)pw.partWk[r.di].step));
+            //logger.log(Level.TRACE, "cx:%4x  ax:%4x  lfodat:%d  step:%d".formatted(
+            //    r.cx, r.ax, (short)pw.partWk[r.di & 0xffff].lfodat, (sbyte)pw.partWk[r.di & 0xffff].step));
 //#endif
 
             //
             // SET BLOCK/FNUM TO OPN
             // input CX:AX
-            r.orAx(r.getCx()); // AX=block/Fnum
+            r.orAx(r.getCx()); // AX = block / Fnum
             r.dh += (byte) (0xa4 - 1);
             r.dl = r.ah;
             //    pushf
@@ -5632,14 +5622,14 @@ od_non_ch3: // ↑
     private void ch3_special() {
         r.stack.push(r.getSi());
         r.setSi(r.getCx()); // si=block
-        r.bl = pw.partWk[r.di].slotmask; // bl=slot mask 4321xxxx
-        r.cl = pw.partWk[r.di].lfoswi; // cl=lfoswitch
-        r.bh = pw.partWk[r.di].volmask; // bh=lfo1 mask 4321xxxx
+        r.bl = pw.partWk[r.di & 0xffff].slotmask; // bl=slot mask 4321xxxx
+        r.cl = pw.partWk[r.di & 0xffff].lfoswi; // cl=lfoswitch
+        r.bh = pw.partWk[r.di & 0xffff].volmask; // bh=lfo1 mask 4321xxxx
         if ((r.bh & 0xf) == 0) { // break c3s_00;
             r.bh = (byte) 0xf0; // all
         }
 //c3s_00:
-        r.ch = pw.partWk[r.di]._volmask; // ch=lfo2 mask 4321xxxx
+        r.ch = pw.partWk[r.di & 0xffff]._volmask; // ch=lfo2 mask 4321xxxx
         if ((r.ch & 0xf) == 0) { // break ns_sl4;
             r.ch = (byte) 0xf0; // all
         }
@@ -5647,24 +5637,24 @@ od_non_ch3: // ↑
         // slot 4
 //ns_sl4:
         r.carry = (r.bl & 0x80) != 0;
-        r.bl = (byte) ((r.bl << 1) | (r.bl >> 7));
+        r.bl = (byte) (((r.bl & 0xff) << 1) | ((r.bl & 0xff) >>> 7));
         if (r.carry) { // break ns_sl3;
 
             r.stack.push(r.getAx());
             r.addAx(pw.slot_detune4);
             r.carry = (r.bh & 0x80) != 0;
-            r.bh = (byte) ((r.bh << 1) | (r.bh >> 7));
+            r.bh = (byte) (((r.bh & 0xff) << 1) | ((r.bh & 0xff) >>> 7));
             if (r.carry) { // break ns_sl4b;
                 if ((r.cl & 1) != 0) { // break ns_sl4b;
-                    r.addAx(pw.partWk[r.di].lfodat);
+                    r.addAx(pw.partWk[r.di & 0xffff].lfodat);
                 }
             }
 //ns_sl4b:
             r.carry = (r.ch & 0x80) != 0;
-            r.ch = (byte) ((r.ch << 1) | (r.ch >> 7));
+            r.ch = (byte) (((r.ch & 0xff) << 1) | ((r.ch & 0xff) >>> 7));
             if (r.carry) { // break ns_sl4c;
                 if ((r.cl & 0x10) != 0) { // break ns_sl4c;
-                    r.addAx(pw.partWk[r.di]._lfodat);
+                    r.addAx(pw.partWk[r.di & 0xffff]._lfodat);
                 }
             }
 //ns_sl4c:
@@ -5689,24 +5679,24 @@ od_non_ch3: // ↑
         // slot 3
 //ns_sl3:
         r.carry = (r.bl & 0x80) != 0;
-        r.bl = (byte) ((r.bl << 1) | (r.bl >> 7));
+        r.bl = (byte) (((r.bl & 0xff) << 1) | ((r.bl & 0xff) >>> 7));
         if (r.carry) { // break ns_sl2;
 
             r.stack.push(r.getAx());
             r.addAx(pw.slot_detune3);
             r.carry = (r.bh & 0x80) != 0;
-            r.bh = (byte) ((r.bh << 1) | (r.bh >> 7));
+            r.bh = (byte) (((r.bh & 0xff) << 1) | ((r.bh & 0xff) >>> 7));
             if (r.carry) { // break ns_sl3b;
                 if ((r.cl & 1) != 0) { // break ns_sl3b;
-                    r.addAx(pw.partWk[r.di].lfodat);
+                    r.addAx(pw.partWk[r.di & 0xffff].lfodat);
                 }
             }
 //ns_sl3b:
             r.carry = (r.ch & 0x80) != 0;
-            r.ch = (byte) ((r.ch << 1) | (r.ch >> 7));
+            r.ch = (byte) (((r.ch & 0xff) << 1) | ((r.ch & 0xff) >>> 7));
             if (r.carry) { // break ns_sl3c;
                 if ((r.cl & 0x10) != 0) { // break ns_sl3c;
-                    r.addAx(pw.partWk[r.di]._lfodat);
+                    r.addAx(pw.partWk[r.di & 0xffff]._lfodat);
                 }
             }
 //ns_sl3c:
@@ -5731,24 +5721,24 @@ od_non_ch3: // ↑
         // slot 2
 //ns_sl2:
         r.carry = (r.bl & 0x80) != 0;
-        r.bl = (byte) ((r.bl << 1) | (r.bl >> 7));
+        r.bl = (byte) (((r.bl & 0xff) << 1) | ((r.bl & 0xff) >>> 7));
         if (r.carry) { // break ns_sl1;
 
             r.stack.push(r.getAx());
             r.addAx(pw.slot_detune2);
             r.carry = (r.bh & 0x80) != 0;
-            r.bh = (byte) ((r.bh << 1) | (r.bh >> 7));
+            r.bh = (byte) (((r.bh & 0xff) << 1) | ((r.bh & 0xff) >>> 7));
             if (r.carry) { // break ns_sl2b;
                 if ((r.cl & 1) != 0) { // break ns_sl2b;
-                    r.addAx(pw.partWk[r.di].lfodat);
+                    r.addAx(pw.partWk[r.di & 0xffff].lfodat);
                 }
             }
 //ns_sl2b:
             r.carry = (r.ch & 0x80) != 0;
-            r.ch = (byte) ((r.ch << 1) | (r.ch >> 7));
+            r.ch = (byte) (((r.ch & 0xff) << 1) | ((r.ch & 0xff) >>> 7));
             if (r.carry) { // break ns_sl2c;
                 if ((r.cl & 0x10) != 0) { // break ns_sl2c;
-                    r.addAx(pw.partWk[r.di]._lfodat);
+                    r.addAx(pw.partWk[r.di & 0xffff]._lfodat);
                 }
             }
 //ns_sl2c:
@@ -5772,23 +5762,23 @@ od_non_ch3: // ↑
         // slot 1
 //ns_sl1:
         r.carry = (r.bl & 0x80) != 0;
-        r.bl = (byte) ((r.bl << 1) | (r.bl >> 7));
+        r.bl = (byte) (((r.bl & 0xff) << 1) | ((r.bl & 0xff) >>> 7));
         if (r.carry) { // break ns_exit;
 
             r.addAx(pw.slot_detune1);
             r.carry = (r.bh & 0x80) != 0;
-            r.bh = (byte) ((r.bh << 1) | (r.bh >> 7));
+            r.bh = (byte) (((r.bh & 0xff) << 1) | ((r.bh & 0xff) >>> 7));
             if (r.carry) { // break ns_sl1b;
                 if ((r.cl & 1) != 0) { // break ns_sl1b;
-                    r.addAx(pw.partWk[r.di].lfodat);
+                    r.addAx(pw.partWk[r.di & 0xffff].lfodat);
                 }
             }
 //ns_sl1b:
             r.carry = (r.ch & 0x80) != 0;
-            r.ch = (byte) ((r.ch << 1) | (r.ch >> 7));
+            r.ch = (byte) (((r.ch & 0xff) << 1) | ((r.ch & 0xff) >>> 7));
             if (r.carry) { // break ns_sl1c;
                 if ((r.cl & 0x10) != 0) { // break ns_sl1c;
-                    r.addAx(pw.partWk[r.di]._lfodat);
+                    r.addAx(pw.partWk[r.di & 0xffff]._lfodat);
                 }
             }
 //ns_sl1c:
@@ -5812,8 +5802,8 @@ od_non_ch3: // ↑
 
     /**
      * Fixed when the octave changes due to detune of FM sound source
-     *  input CX:block / AX:fnum+detune
-     *  output CX:block / AX:fnum
+     * @input CX block / AX:fnum+detune
+     * @output CX block / AX:fnum
      */
     private void fm_block_calc() {
         r.sign = (r.getAx() & 0x8000) != 0;
@@ -5821,9 +5811,9 @@ od_non_ch3: // ↑
         while (true) {
             if (!r.sign) { // break od1;
 
-                if (r.getAx() >= 0x26a) { // break od1;
+                if ((r.getAx() & 0xffff) >= 0x26a) { // break od1;
                     //
-                    if (r.getAx() < 0x26a * 2) { // 04d2h
+                    if ((r.getAx() & 0xffff) < 0x26a * 2) { // 04d2h
 //                        break od2;
                         return; // <<
                     }
@@ -5838,7 +5828,7 @@ od_non_ch3: // ↑
 //od05:
                     // It won't go any higher
                     r.setCx((short) 0x3800);
-                    if (r.getAx() >= 0x800) { // break od_ret;
+                    if ((r.getAx() & 0xffff) >= 0x800) { // break od_ret;
                         r.setAx((short) 0x7ff); // 04d2h
                     }
 //od_ret:
@@ -5847,7 +5837,7 @@ od_non_ch3: // ↑
             }
             //
 //od1:
-            r.carry = r.getCx() < 0x800;
+            r.carry = (r.getCx() & 0xffff) < 0x800;
             r.subCx((short) 0x800); // oct.down
             if (r.carry) break; // od15;
             r.addAx((short) 0x26a); // 4d2h-26ah
@@ -5858,7 +5848,7 @@ od_non_ch3: // ↑
         r.setCx((short) 0);
         r.sign = (r.getAx() & 0x8000) != 0;
         if (!r.sign) { // break od16;
-            if (r.getAx() >= 8) { // 4
+            if ((r.getAx() & 0xffff) >= 8) { // 4
 //                break od2;
                 return;
             }
@@ -5873,7 +5863,7 @@ od_non_ch3: // ↑
      * PSG pitch setting
      */
     private void otodasip() {
-        r.setAx(pw.partWk[r.di].fnum);
+        r.setAx(pw.partWk[r.di & 0xffff].fnum);
         if (r.getAx() == 0) { // break od_00p;
             return;
         }
@@ -5881,28 +5871,28 @@ od_non_ch3: // ↑
         //
         // PSG Portament set
         //
-        r.setAx((short) (r.getAx() + pw.partWk[r.di].porta_num));
+        r.setAx((short) (/* signed */ r.getAx() + /* signed */ pw.partWk[r.di & 0xffff].porta_num));
         //
         // PSG Detune/LFO set
         //
-        if ((pw.partWk[r.di].extendmode & 1) == 0) { // break od_ext_detune;
-            r.subAx(pw.partWk[r.di].detune);
-            if ((pw.partWk[r.di].lfoswi & 1) != 0) { // break od_notlfo1;
-                r.subAx(pw.partWk[r.di].lfodat);
+        if ((pw.partWk[r.di & 0xffff].extendmode & 1) == 0) { // break od_ext_detune;
+            r.subAx(pw.partWk[r.di & 0xffff].detune);
+            if ((pw.partWk[r.di & 0xffff].lfoswi & 1) != 0) { // break od_notlfo1;
+                r.subAx(pw.partWk[r.di & 0xffff].lfodat);
             }
 //od_notlfo1:
-            if ((pw.partWk[r.di].lfoswi & 0x10) != 0) { // break tonesetp;
-                r.subAx(pw.partWk[r.di]._lfodat);
+            if ((pw.partWk[r.di & 0xffff].lfoswi & 0x10) != 0) { // break tonesetp;
+                r.subAx(pw.partWk[r.di & 0xffff]._lfodat);
             }
 //            break tonesetp;
         } else {
 //od_ext_detune:
             // Calculation of Extended DETUNE (DETUNE)
             r.stack.push(r.getAx());
-            r.setBx(pw.partWk[r.di].detune);
+            r.setBx(pw.partWk[r.di & 0xffff].detune);
             if (r.getBx() != 0) { // break od_ext_lfo; // To LFO
 
-                int ans = r.getAx() * r.getBx(); //  imul    bx
+                int ans = /* signed */ r.getAx() * /* signed */ r.getBx(); //  imul    bx
                 ans <<= 4;
                 r.setDx((short) (ans >> 16));
                 r.setAx((short) (ans >> 0));
@@ -5921,18 +5911,18 @@ od_non_ch3: // ↑
 //od_ext_lfo:
             // Extended DETUNE(LFO) calculation
             r.setDx((short) 0);
-            if ((pw.partWk[r.di].lfoswi & 0x11) != 0) { // break extlfo_set;
+            if ((pw.partWk[r.di & 0xffff].lfoswi & 0x11) != 0) { // break extlfo_set;
                 r.setDx((short) 0);
-                if ((pw.partWk[r.di].lfoswi & 0x1) != 0) { // break od_ext_notlfo1;
-                    r.setDx(pw.partWk[r.di].lfodat);
+                if ((pw.partWk[r.di & 0xffff].lfoswi & 0x1) != 0) { // break od_ext_notlfo1;
+                    r.setDx(pw.partWk[r.di & 0xffff].lfodat);
                 }
 //od_ext_notlfo1:
-                if ((pw.partWk[r.di].lfoswi & 0x10) != 0) { // break od_ext_notlfo2;
-                    r.addDx(pw.partWk[r.di]._lfodat);
+                if ((pw.partWk[r.di & 0xffff].lfoswi & 0x10) != 0) { // break od_ext_notlfo2;
+                    r.addDx(pw.partWk[r.di & 0xffff]._lfodat);
                 }
 //od_ext_notlfo2:
                 if (r.getDx() != 0) { // break extlfo_set;
-                    int ans1 = r.getAx() * r.getDx(); //  imul    dx
+                    int ans1 = /* signed */ r.getAx() * /* signed */ r.getDx(); //  imul    dx
                     ans1 <<= 4;
                     r.setDx((short) (ans1 >> 16));
                     r.setAx((short) (ans1 >> 0));
@@ -5954,7 +5944,7 @@ od_non_ch3: // ↑
         //
 //tonesetp:
         if (true) { // Assault mix: 0 // KUMA: false
-            if (r.getAx() >= 0x1000) { // break tsp_01;
+            if ((r.getAx() & 0xffff) >= 0x1000) { // break tsp_01;
                 if ((r.getAx() & 0x8000) == 0) { // break tsp_00;
                     r.setAx((short) 0xfff);
 //                    break tsp_01;
@@ -5980,11 +5970,11 @@ od_non_ch3: // ↑
 
     /**
      * FM volume set
-    //
-    // Per-slot calculation & output macros
-    //   in. dl Original TL value
-    // dh Register to be output
-    // al Volume fluctuation value center=80h
+     *
+     * Per-slot calculation & output macros
+     * @input dl Original TL value
+     * @input dh Register to be output
+     * @input al Volume fluctuation value center=80h
      */
     private void volset_slot() {
         r.carry = (r.al & 0xff) + (r.dl & 0xff) > 0xff;
@@ -6007,23 +5997,23 @@ od_non_ch3: // ↑
     // FM volume setting main
     //
     private void volset() {
-        r.bl = pw.partWk[r.di].slotmask; // bl<- slotmask
+        r.bl = pw.partWk[r.di & 0xffff].slotmask; // bl<- slotmask
         if (r.bl == 0) { // break vs_exec;
             return; // When SlotMask is 0
         }
 //vs_exec:
-        r.al = pw.partWk[r.di].volpush;
+        r.al = pw.partWk[r.di & 0xffff].volpush;
         if (r.al != 0) { // break vs_00a;
 
             r.al--;
 //            break vs_00;
         } else {
 //vs_00a:
-            r.al = pw.partWk[r.di].volume;
+            r.al = pw.partWk[r.di & 0xffff].volume;
         }
 //vs_00:
         r.cl = r.al;
-        if (r.di == pw.part_e) {
+        if ((r.di & 0xffff) == pw.part_e) {
             fmvs(); // For sound effects, voldown/fadeout has no effect
             return;
         }
@@ -6042,7 +6032,7 @@ od_non_ch3: // ↑
         }
 
         r.al = (byte) -r.al;
-        r.setAx((short) (r.al * r.cl));
+        r.setAx((short) ((r.al & 0xff) * (r.cl & 0xff)));
         r.cl = r.ah;
 
         fm_fade_calc();
@@ -6053,114 +6043,114 @@ od_non_ch3: // ↑
     //
     private void fm_fade_calc() {
         r.al = pw.fadeout_volume;
-        if (r.al >= 2) {
-            r.al >>= 1; // A 50% reduction is enough
+        if ((r.al & 0xff) >= 2) {
+            r.al = (byte) ((r.al & 0xff) >>> 1); // A 50% reduction is enough
             r.al = (byte) -r.al;
-            r.setAx((short) (r.al * r.cl));
+            r.setAx((short) ((r.al & 0xff) * (r.cl & 0xff)));
             r.cl = r.ah;
         }
 
         fmvs();
     }
 
-    //
-    // Set volume to carrier & volume LFO processing
-    //  input cl to Volume[0 - 127]
-    // bl to SlotMask
-    //
+    /**
+     * Set volume to carrier & volume LFO processing
+     * @input cl to Volume[0 - 127]
+     * @input bl to SlotMask
+     */
     private void fmvs() {
         r.bh = 0; // Vol Slot Mask
         r.ch = r.bl; // ch=SlotMask Push
 
         r.stack.push(r.getSi());
         r.setSi((short) 0); // offset vol_tbl
-        pw.vol_tbl[r.getSi()] = 0x80;
-        pw.vol_tbl[r.getSi() + 1] = 0x80;
-        pw.vol_tbl[r.getSi() + 2] = 0x80;
-        pw.vol_tbl[r.getSi() + 3] = 0x80;
+        pw.vol_tbl[r.getSi() & 0xffff] = 0x80;
+        pw.vol_tbl[(r.getSi() & 0xffff) + 1] = 0x80;
+        pw.vol_tbl[(r.getSi() & 0xffff) + 2] = 0x80;
+        pw.vol_tbl[(r.getSi() & 0xffff) + 3] = 0x80;
 
         r.cl = (byte) ~r.cl; // cl=Volume set to carrier +80H(add)
-        r.bl &= pw.partWk[r.di].carrier; // bl=SLOT to set the volume xxxx0000b
+        r.bl &= pw.partWk[r.di & 0xffff].carrier; // bl=SLOT to set the volume xxxx0000b
         r.bh |= r.bl;
         r.bl = r.rol(r.bl, 1);
         if (r.carry) { // break fmvs_01;
 
-            pw.vol_tbl[r.getSi()] = r.cl;
+            pw.vol_tbl[r.getSi() & 0xffff] = r.cl;
         }
 //fmvs_01:
         r.incSi();
         r.bl = r.rol(r.bl, 1);
         if (r.carry) { // break fmvs_02;
 
-            pw.vol_tbl[r.getSi()] = r.cl;
+            pw.vol_tbl[r.getSi() & 0xffff] = r.cl;
         }
 //fmvs_02:
         r.incSi();
         r.bl = r.rol(r.bl, 1);
         if (r.carry) { // break fmvs_03;
 
-            pw.vol_tbl[r.getSi()] = r.cl;
+            pw.vol_tbl[r.getSi() & 0xffff] = r.cl;
         }
 //fmvs_03:
         r.incSi();
         r.bl = r.rol(r.bl, 1);
         if (r.carry) { // break fmvs_04;
 
-            pw.vol_tbl[r.getSi()] = r.cl;
+            pw.vol_tbl[r.getSi() & 0xffff] = r.cl;
         }
 //fmvs_04:
         r.subSi((short) 3);
         if (r.cl != (byte) 255) { // Volume 0? // break fmvs_no_lfo;
 
-            if ((pw.partWk[r.di].lfoswi & 2) != 0) { // break fmvs_not_vollfo1;
+            if ((pw.partWk[r.di & 0xffff].lfoswi & 2) != 0) { // break fmvs_not_vollfo1;
 
-                r.bl = pw.partWk[r.di].volmask;
+                r.bl = pw.partWk[r.di & 0xffff].volmask;
                 r.bl &= r.ch; // bl = SLOT to set volume LFO xxxx0000b
                 r.bh |= r.bl;
-                r.setAx(pw.partWk[r.di].lfodat); // ax = Volume LFO fluctuation value (sub)
+                r.setAx(pw.partWk[r.di & 0xffff].lfodat); // ax = Volume LFO fluctuation value (sub)
                 fmlfo_sub();
             }
 //fmvs_not_vollfo1:
-            if ((pw.partWk[r.di].lfoswi & 0x20) != 0) { // break fmvs_no_lfo;
+            if ((pw.partWk[r.di & 0xffff].lfoswi & 0x20) != 0) { // break fmvs_no_lfo;
 
-                r.bl = pw.partWk[r.di]._volmask; // mov bl,_volmask[di]
+                r.bl = pw.partWk[r.di & 0xffff]._volmask; // mov bl,_volmask[di]
                 r.bl &= r.ch; // bh=SLOT for setting the volume LFO xxxx0000b
                 r.bh |= r.bl;
-                r.setAx(pw.partWk[r.di]._lfodat); // ax = Volume LFO fluctuation value (sub)
+                r.setAx(pw.partWk[r.di & 0xffff]._lfodat); // ax = Volume LFO fluctuation value (sub)
                 fmlfo_sub();
             }
         }
 //fmvs_no_lfo:
         r.dh = 0x4c - 1;
         r.dh += pw.partb; // dh=FM Port Address
-        r.al = (byte) pw.vol_tbl[r.incSi()]; // lodsb
+        r.al = (byte) pw.vol_tbl[r.incSi() & 0xffff]; // lodsb
         r.bh = r.rol(r.bh, 1);
         if (r.carry) { // break fmvm_01;
-            r.dl = pw.partWk[r.di].slot4;
+            r.dl = pw.partWk[r.di & 0xffff].slot4;
             volset_slot();
         }
 //fmvm_01:
         r.dh -= 8;
-        r.al = (byte) pw.vol_tbl[r.incSi()]; // lodsb
+        r.al = (byte) pw.vol_tbl[r.incSi() & 0xffff]; // lodsb
         r.bh = r.rol(r.bh, 1);
         if (r.carry) { // break fmvm_02;
-            r.dl = pw.partWk[r.di].slot3;
+            r.dl = pw.partWk[r.di & 0xffff].slot3;
             volset_slot();
         }
 //fmvm_02:
         r.dh += 4;
-        r.al = (byte) pw.vol_tbl[r.incSi()]; // lodsb
+        r.al = (byte) pw.vol_tbl[r.incSi() & 0xffff]; // lodsb
         r.bh = r.rol(r.bh, 1);
         if (r.carry) { // break fmvm_03;
-            r.dl = pw.partWk[r.di].slot2;
+            r.dl = pw.partWk[r.di & 0xffff].slot2;
             volset_slot();
         }
 //fmvm_03:
         r.bh = r.rol(r.bh, 1);
         if (r.carry) { // break fmvm_04;
             r.dh -= 8;
-            r.al = (byte) pw.vol_tbl[r.incSi()]; // lodsb
-            r.dl = pw.partWk[r.di].slot1;
+            r.al = (byte) pw.vol_tbl[r.incSi() & 0xffff]; // lodsb
+            r.dl = pw.partWk[r.di & 0xffff].slot1;
             volset_slot();
         }
 //fmvm_04:
@@ -6176,21 +6166,21 @@ od_non_ch3: // ↑
 //fmlfo_loop:
         do {
             r.carry = (r.bl & 0x80) != 0;
-            r.bl = (byte) ((r.bl << 1) | (r.bl >> 7));
+            r.bl = (byte) (((r.bl & 0xff) << 1) | ((r.bl & 0xff) >>> 7));
             if (r.carry) { // break fml_exit;
                 if ((r.al & 0x80) == 0) { // break fmls_minus;
-                    r.carry = (pw.vol_tbl[r.getSi()] < r.al);
-                    pw.vol_tbl[r.getSi()] -= r.al;
+                    r.carry = pw.vol_tbl[r.getSi() & 0xffff] < (r.al & 0xff);
+                    pw.vol_tbl[r.getSi() & 0xffff] -= (r.al & 0xff);
                     if (r.carry) { // break fml_exit;
-                        pw.vol_tbl[r.getSi()] = 0;
+                        pw.vol_tbl[r.getSi() & 0xffff] = 0;
                     }
 //                    break fml_exit;
                 } else {
 //fmls_minus:
-                    r.carry = (pw.vol_tbl[r.getSi()] < r.al);
-                    pw.vol_tbl[r.getSi()] -= r.al;
+                    r.carry = pw.vol_tbl[r.getSi() & 0xffff] < (r.al & 0xff);
+                    pw.vol_tbl[r.getSi() & 0xffff] -= (r.al & 0xff);
                     if (!r.carry) { // break fml_exit;
-                        pw.vol_tbl[r.getSi()] = 0xff;
+                        pw.vol_tbl[r.getSi() & 0xffff] = 0xff;
                     }
                 }
             }
@@ -6207,24 +6197,24 @@ od_non_ch3: // ↑
      * PSG volume set
      */
     private void volsetp() {
-        if (pw.partWk[r.di].envf == 3) {
+        if (pw.partWk[r.di & 0xffff].envf == 3) {
 //            break volsetp_ret;
             return;
         }
-        if (pw.partWk[r.di].envf == (byte) 0xff) { // -1 // break vsp_00;
-            if (pw.partWk[r.di].eenv_count == 0) { // break vsp_00;
+        if (pw.partWk[r.di & 0xffff].envf == (byte) 0xff) { // -1 // break vsp_00;
+            if (pw.partWk[r.di & 0xffff].eenv_count == 0) { // break vsp_00;
 //volsetp_ret:
                 return;
             }
         }
 //vsp_00:
-        r.al = pw.partWk[r.di].volpush;
+        r.al = pw.partWk[r.di & 0xffff].volpush;
         if (r.al != 0) { // break vsp_01a;
             r.al--;
 //            break vsp_01;
         } else {
 //vsp_01a:
-            r.al = pw.partWk[r.di].volume;
+            r.al = pw.partWk[r.di & 0xffff].volume;
         }
 //vsp_01:
         r.dl = r.al;
@@ -6234,7 +6224,7 @@ od_non_ch3: // ↑
         r.al = pw.ssg_voldown;
         if (r.al != 0) { // break psg_fade_calc;
             r.al = (byte) -r.al;
-            r.setAx((short) (r.al * r.dl));
+            r.setAx((short) ((r.al & 0xff) * (r.dl & 0xff)));
             r.dl = r.ah;
         }
         //
@@ -6244,7 +6234,7 @@ od_non_ch3: // ↑
         r.al = pw.fadeout_volume;
         if (r.al != 0) { // break psg_env_calc;
             r.al = (byte) -r.al;
-            r.setAx((short) (r.al * r.dl));
+            r.setAx((short) ((r.al & 0xff) * (r.dl & 0xff)));
             r.dl = r.ah;
         }
         //
@@ -6253,25 +6243,25 @@ od_non_ch3: // ↑
 //psg_env_calc:
 pv_out: // ↑
         if (r.dl != 0) { // Volume 0? // break pv_out;
-            if (pw.partWk[r.di].envf == (byte) 0xff) { // -1 // break normal_pvset;
+            if (pw.partWk[r.di & 0xffff].envf == (byte) 0xff) { // -1 // break normal_pvset;
                 r.al = r.dl; // Extended volume = dl * (eenv_vol + 1) / 16
-                r.dl = pw.partWk[r.di].eenv_volume;
+                r.dl = pw.partWk[r.di & 0xffff].eenv_volume;
                 if (r.dl == 0) {
 //                    break pv_min;
 //pv_min:
                     r.dl = 0;
 
                     if (r.dl == 0) break pv_out; // When it reaches 0, the volume LFO is not applied.
-                    if (r.dl >= 16) { // break pv1;
+                    if ((r.dl & 0xff) >= 16) { // break pv1;
                         r.dl = 15;
                     }
                 } else {
                     r.dl++;
-                    r.setAx((short) (r.al * r.dl));
+                    r.setAx((short) ((r.al & 0xff) * (r.dl & 0xff)));
                     r.dl = r.al;
-                    r.dl >>= 3;
-                    r.carry = ((r.dl % 2) != 0);
-                    r.dl >>= 1;
+                    r.dl = (byte) ((r.dl & 0xff) >>> 3);
+                    r.carry = ((r.dl & 0xff) % 2) != 0;
+                    r.dl = (byte) ((r.dl & 0xff) >>> 1);
                     if (r.carry) { // break pv1;
                         r.dl++;
                     }
@@ -6279,14 +6269,14 @@ pv_out: // ↑
                 }
             } else {
 //normal_pvset:
-                r.dl += pw.partWk[r.di].eenv_volume; // .penv;
+                r.dl += pw.partWk[r.di & 0xffff].eenv_volume; // .penv;
                 if ((r.dl & 0x80) != 0) { // break pv0;
 //pv_min:
                     r.dl = 0;
                 }
 //pv0:
                 if (r.dl == 0) break pv_out; // When it reaches 0, the volume LFO is not applied.
-                if (r.dl >= 16) { // break pv1;
+                if ((r.dl & 0xff) >= 16) { // break pv1;
                     r.dl = 15;
                 }
             }
@@ -6294,14 +6284,14 @@ pv_out: // ↑
             // Volume LFO Calculation
             //
 //pv1:
-            if ((pw.partWk[r.di].lfoswi & 0x22) != 0) { // break pv_out;
+            if ((pw.partWk[r.di & 0xffff].lfoswi & 0x22) != 0) { // break pv_out;
                 r.setAx((short) 0);
-                if ((pw.partWk[r.di].lfoswi & 0x2) != 0) { // break pv_nolfo1;
-                    r.setAx(pw.partWk[r.di].lfodat);
+                if ((pw.partWk[r.di & 0xffff].lfoswi & 0x2) != 0) { // break pv_nolfo1;
+                    r.setAx(pw.partWk[r.di & 0xffff].lfodat);
                 }
 //pv_nolfo1:
-                if ((pw.partWk[r.di].lfoswi & 0x20) != 0) { // break pv_nolfo2;
-                    r.andAx(pw.partWk[r.di]._lfodat);
+                if ((pw.partWk[r.di & 0xffff].lfoswi & 0x20) != 0) { // break pv_nolfo2;
+                    r.andAx(pw.partWk[r.di & 0xffff]._lfodat);
                 }
 //pv_nolfo2:
                 r.dh = 0;
@@ -6311,7 +6301,7 @@ pv_out: // ↑
 //                    break pv_out;
                 } else {
 //pv10:
-                    if (r.getDx() >= 16) { // break pv_out;
+                    if ((r.getDx() & 0xffff) >= 16) { // break pv_out;
                         r.dl = 15;
                     }
                 }
@@ -6331,7 +6321,7 @@ pv_out: // ↑
      * FM KeyOn
      */
     private void keyon() {
-        if (pw.partWk[r.di].onkai == (byte) 0xff) { //-1 // break ko1;
+        if (pw.partWk[r.di & 0xffff].onkai == (byte) 0xff) { //-1 // break ko1;
 //keyon_ret:;
             return; // when a rest
         }
@@ -6349,13 +6339,13 @@ ura_keyon: // ↑
             }
 
             r.addBx((short) 0); // offset omote_key1
-            r.al = pw.fmKeyOnDataTbl[r.getBx()];
-            r.al |= pw.partWk[r.di].slotmask;
-            if (pw.partWk[r.di].sdelay_c != 0) { // break no_sdm;
-                r.al &= pw.partWk[r.di].sdelay_m;
+            r.al = pw.fmKeyOnDataTbl[r.getBx() & 0xffff];
+            r.al |= pw.partWk[r.di & 0xffff].slotmask;
+            if (pw.partWk[r.di & 0xffff].sdelay_c != 0) { // break no_sdm;
+                r.al &= pw.partWk[r.di & 0xffff].sdelay_m;
             }
 //no_sdm:
-            pw.fmKeyOnDataTbl[r.getBx()] = r.al;
+            pw.fmKeyOnDataTbl[r.getBx() & 0xffff] = r.al;
             r.dl |= r.al;
             opnset44();
             return;
@@ -6363,13 +6353,13 @@ ura_keyon: // ↑
 //ura_keyon:
         if (pw.board2 != 0) {
             r.addBx((short) 3); // offset ura_key1
-            r.al = pw.fmKeyOnDataTbl[r.getBx()];
-            r.al |= pw.partWk[r.di].slotmask;
-            if (pw.partWk[r.di].sdelay_c != 0) { // break no_sdm2;
-                r.al &= pw.partWk[r.di].sdelay_m;
+            r.al = pw.fmKeyOnDataTbl[r.getBx() & 0xffff];
+            r.al |= pw.partWk[r.di & 0xffff].slotmask;
+            if (pw.partWk[r.di & 0xffff].sdelay_c != 0) { // break no_sdm2;
+                r.al &= pw.partWk[r.di & 0xffff].sdelay_m;
             }
 //no_sdm2:
-            pw.fmKeyOnDataTbl[r.getBx()] = r.al;
+            pw.fmKeyOnDataTbl[r.getBx() & 0xffff] = r.al;
             r.dl |= r.al;
             r.dl |= 0b0000_0100; // Ura Port
             opnset44();
@@ -6380,7 +6370,7 @@ ura_keyon: // ↑
      * PSG Key On
      */
     private void keyonp() {
-        if (pw.partWk[r.di].onkai == (byte) 0xff) { // -1 // break ko1p;
+        if (pw.partWk[r.di & 0xffff].onkai == (byte) 0xff) { // -1 // break ko1p;
             return; // when a rest
         }
 //ko1p:
@@ -6388,7 +6378,7 @@ ura_keyon: // ↑
         //    cli
         psgmsk(); // AL=07h AH = Maskdata
         r.al |= r.ah;
-        r.ah &= pw.partWk[r.di].psgpat;
+        r.ah &= pw.partWk[r.di & 0xffff].psgpat;
         r.ah = (byte) ~r.ah;
         r.al &= r.ah;
         r.dh = 7;
@@ -6411,8 +6401,8 @@ ura_keyon: // ↑
 
     /**
      * Prepare KEYON/OFF for PSG 07h port (read 07H and calculate the mask value)
-     * OUTPUT...al<- 07h Read Data
-     *      ah<- Mask Data
+     * @output al <- 07h Read Data
+     * @output ah <- Mask Data
      */
     private void psgmsk() {
         r.cl = pw.partb;
@@ -6437,11 +6427,10 @@ ura_keyon: // ↑
      * don't Break AL
      */
     private void keyoff() {
-        if (pw.partWk[r.di].onkai != (byte) 0xff) {
+        if (pw.partWk[r.di & 0xffff].onkai != (byte) 0xff) {
             kof1();
-            return;
         }
-        return; // when a rest
+        // when a rest
     }
 
     private void kof1() {
@@ -6460,11 +6449,11 @@ ura_keyoff: // ↑
 
             r.addBx((short) 0); // offset omote_key1 KUMA: Position to fmKeyOnDataTbl
 
-            r.cl = pw.partWk[r.di].slotmask;
+            r.cl = pw.partWk[r.di & 0xffff].slotmask;
             r.cl = (byte) ~r.cl;
-            r.cl &= pw.fmKeyOnDataTbl[r.getBx()];
+            r.cl &= pw.fmKeyOnDataTbl[r.getBx() & 0xffff];
 
-            pw.fmKeyOnDataTbl[r.getBx()] = r.cl;
+            pw.fmKeyOnDataTbl[r.getBx() & 0xffff] = r.cl;
             r.dl |= r.cl;
             opnset44();
             return;
@@ -6473,11 +6462,11 @@ ura_keyoff: // ↑
         if (pw.board2 != 0) {
             r.addBx((short) 3); // offset ura_key1 KUMA: Position in fmKeyOnDataTbl (reverse is +3)
 
-            r.cl = pw.partWk[r.di].slotmask;
+            r.cl = pw.partWk[r.di & 0xffff].slotmask;
             r.cl = (byte) ~r.cl;
-            r.cl &= pw.fmKeyOnDataTbl[r.getBx()];
+            r.cl &= pw.fmKeyOnDataTbl[r.getBx() & 0xffff];
 
-            pw.fmKeyOnDataTbl[r.getBx()] = r.cl;
+            pw.fmKeyOnDataTbl[r.getBx() & 0xffff] = r.cl;
             r.dl |= r.cl;
             r.dl |= 0b0100; // FM Ura Port
             opnset44();
@@ -6485,37 +6474,37 @@ ura_keyoff: // ↑
     }
 
     public void keyoffp() {
-        if (pw.partWk[r.di].onkai != (byte) 0xff) {
+        if (pw.partWk[r.di & 0xffff].onkai != (byte) 0xff) {
             kofp1();
+        } else {
+            // when a rest
         }
-        // when a rest
     }
 
     private void kofp1() {
-        if (pw.partWk[r.di].envf != (byte) 0xff) { //  break kofp1_ext;
-            pw.partWk[r.di].envf = 2;
-            return;
-        }
+        if (pw.partWk[r.di & 0xffff].envf != (byte) 0xff) { //  break kofp1_ext;
+            pw.partWk[r.di & 0xffff].envf = 2;
+        } else {
 //kofp1_ext:
-        pw.partWk[r.di].eenv_count = 4;
+            pw.partWk[r.di & 0xffff].eenv_count = 4;
+        }
     }
 
     /**
      * Setting the tone
-     *  INPUTS -- [PARTB]
-     *   -- dl[TONE_NUMBER]
-     *   -- di[PART_DATA_ADDRESS]
+     * @input dl [PARTB] [TONE_NUMBER]
+     * @input di [PARTB] [PART_DATA_ADDRESS]
      */
     private void neiroset() {
         toneadr_calc();
         silence_fmpart();
         if (!r.carry) {
             neiroset_main();
-            return;
+        } else {
+            // When neiromask=0 (only TL work is set)
+            r.addBx((short) 4);
+            neiroset_tl();
         }
-        // When neiromask=0 (only TL work is set)
-        r.addBx((short) 4);
-        neiroset_tl();
     }
 
     //
@@ -6528,12 +6517,12 @@ ura_keyoff: // ↑
     private void neiroset_main() {
         r.dh = (byte) (0xb0 - 1);
         r.dh += pw.partb;
-        if (pw.inst != null && r.getBx() + 24 < pw.inst.length) r.dl = (byte) pw.inst[r.getBx() + 24].dat;
+        if (pw.inst != null && (r.getBx() & 0xffff) + 24 < pw.inst.length) r.dl = (byte) pw.inst[(r.getBx() & 0xffff) + 24].dat;
         else r.dl = 0;
 
         if (pw.af_check != 0) { // Is ALG/FB not set? // break no_af;
 
-            r.dl = pw.partWk[r.di].alg_fb;
+            r.dl = pw.partWk[r.di & 0xffff].alg_fb;
         }
 //no_af:
 nss_notfm3: // ↑
@@ -6543,7 +6532,7 @@ nss_notfm3: // ↑
                 if (pw.fmsel != 0)
                     break nss_notfm3;
             } else {
-                if (r.di == pw.part_e)
+                if ((r.di & 0xffff) == pw.part_e)
                     break nss_notfm3;
             }
 
@@ -6553,7 +6542,7 @@ nss_notfm3: // ↑
 //                break nss_notfm3;
             } else {
 //set_fm3_alg_fb:
-                if ((pw.partWk[r.di].slotmask & 0x10) == 0) { // If you are not using slot 1 // break nss_notslot1;
+                if ((pw.partWk[r.di & 0xffff].slotmask & 0x10) == 0) { // If you are not using slot 1 // break nss_notslot1;
 
                     r.al = pw.fm3_alg_fb;
                     r.al &= 0b0011_1000; // fb uses previous value
@@ -6566,7 +6555,7 @@ nss_notfm3: // ↑
         }
 //nss_notfm3:
         opnset();
-        pw.partWk[r.di].alg_fb = r.dl;
+        pw.partWk[r.di & 0xffff].alg_fb = r.dl;
         r.dl &= 7; // dl=algo
 
         check_carrier();
@@ -6580,19 +6569,19 @@ nss_notfm3: // ↑
         r.bh = 0;
         r.bl = r.dl;
         r.addBx((short) 0); // offset carrier_table
-        r.al = (byte) pw.carrier_table[r.getBx()];
-        if ((pw.partWk[r.di].volmask & 0xf) == 0) { // break not_set_volmask; // Do not set if Volmask value is non-zero
-            pw.partWk[r.di].volmask = r.al;
+        r.al = (byte) pw.carrier_table[r.getBx() & 0xffff];
+        if ((pw.partWk[r.di & 0xffff].volmask & 0xf) == 0) { // break not_set_volmask; // Do not set if Volmask value is non-zero
+            pw.partWk[r.di & 0xffff].volmask = r.al;
         }
 //not_set_volmask:
-        if ((pw.partWk[r.di]._volmask & 0xf) == 0) { // break not_set_volmask2;
-            pw.partWk[r.di]._volmask = r.al;
+        if ((pw.partWk[r.di & 0xffff]._volmask & 0xf) == 0) { // break not_set_volmask2;
+            pw.partWk[r.di & 0xffff]._volmask = r.al;
         }
 //not_set_volmask2:
-        pw.partWk[r.di].carrier = r.al;
-        r.ah = (byte) pw.carrier_table[r.getBx() + 8]; // Slot 2/3 reversal data (not completed)
+        pw.partWk[r.di & 0xffff].carrier = r.al;
+        r.ah = (byte) pw.carrier_table[(r.getBx() & 0xffff) + 8]; // Slot 2/3 reversal data (not completed)
         r.setBx(r.stack.pop());
-        r.al = pw.partWk[r.di].neiromask;
+        r.al = pw.partWk[r.di & 0xffff].neiromask;
         r.ah &= r.al; // AH=mask for TL / AL=mask for others
 
         //
@@ -6603,11 +6592,11 @@ nss_notfm3: // ↑
         r.setCx((short) 4); // DT / ML
 //ns01:
         do {
-            if (pw.inst != null && r.getBx() < pw.inst.length) r.dl = (byte) pw.inst[r.getBx()].dat;
+            if (pw.inst != null && (r.getBx() & 0xffff) < pw.inst.length) r.dl = (byte) pw.inst[r.getBx() & 0xffff].dat;
             else r.dl = 0;
             r.incBx();
             r.carry = ((r.al & 0x80) != 0);
-            r.al = (byte) ((r.al << 1) | ((r.al & 0x80) >> 7));
+            r.al = (byte) (((r.al & 0xff) << 1) | ((r.al & 0x80) >>> 7));
             if (r.carry) { // break ns_ns;
                 opnset();
             }
@@ -6618,11 +6607,11 @@ nss_notfm3: // ↑
         r.setCx((short) 4); // TL
 //ns01b:
         do {
-            if (pw.inst != null && r.getBx() < pw.inst.length) r.dl = (byte) pw.inst[r.getBx()].dat;
+            if (pw.inst != null && (r.getBx() & 0xffff) < pw.inst.length) r.dl = (byte) pw.inst[r.getBx() & 0xffff].dat;
             else r.dl = 0;
             r.incBx();
             r.carry = ((r.al & 0x80) != 0);
-            r.al = (byte) ((r.al << 1) | ((r.al & 0x80) >> 7));
+            r.al = (byte) (((r.al & 0xff) << 1) | ((r.al & 0x80) >>> 7));
             if (r.carry) { // break ns_nsb;
                 opnset();
             }
@@ -6634,11 +6623,11 @@ nss_notfm3: // ↑
         r.setCx((short) 16); // rest
 //ns01c:
         do {
-            if (pw.inst != null && r.getBx() < pw.inst.length) r.dl = (byte) pw.inst[r.getBx()].dat;
+            if (pw.inst != null && (r.getBx() & 0xffff) < pw.inst.length) r.dl = (byte) pw.inst[r.getBx() & 0xffff].dat;
             else r.dl = 0;
             r.incBx();
             r.carry = ((r.al & 0x80) != 0);
-            r.al = (byte) ((r.al << 1) | ((r.al & 0x80) >> 7));
+            r.al = (byte) (((r.al & 0xff) << 1) | ((r.al & 0x80) >>> 7));
             if (r.carry) { // break ns_nsc;
                 opnset();
             }
@@ -6661,11 +6650,11 @@ nss_notfm3: // ↑
         r.setSi(r.getBx());
         //r.di += pw.slot1;
 
-        if (pw.inst != null && r.getSi() + 3 < pw.inst.length) {
-            pw.partWk[r.di].slot1 = (byte) pw.inst[r.getSi() + 0].dat;
-            pw.partWk[r.di].slot3 = (byte) pw.inst[r.getSi() + 1].dat;
-            pw.partWk[r.di].slot2 = (byte) pw.inst[r.getSi() + 2].dat;
-            pw.partWk[r.di].slot4 = (byte) pw.inst[r.getSi() + 3].dat;
+        if (pw.inst != null && (r.getSi() & 0xffff) + 3 < pw.inst.length) {
+            pw.partWk[r.di & 0xffff].slot1 = (byte) pw.inst[(r.getSi() & 0xffff) + 0].dat;
+            pw.partWk[r.di & 0xffff].slot3 = (byte) pw.inst[(r.getSi() & 0xffff) + 1].dat;
+            pw.partWk[r.di & 0xffff].slot2 = (byte) pw.inst[(r.getSi() & 0xffff) + 2].dat;
+            pw.partWk[r.di & 0xffff].slot4 = (byte) pw.inst[(r.getSi() & 0xffff) + 3].dat;
         }
 
         r.di = r.stack.pop();
@@ -6674,13 +6663,13 @@ nss_notfm3: // ↑
 
     /**
      * Calculate TONE DATA START ADDRESS
-     *  input dl  tone_number
-     *  output bx  address
+     * @input dl tone_number
+     * @output bx  address
      */
     private void toneadr_calc() {
         if (pw.prg_flg == 0) { // break prgdat_get;
 
-            if (r.di != pw.part_e) { // break prgdat_get;
+            if ((r.di & 0xffff) != pw.part_e) { // break prgdat_get;
 
                 r.setBx((short) pw.tondat);
 
@@ -6697,19 +6686,19 @@ nss_notfm3: // ↑
         }
 //prgdat_get:
         r.setBx((short) pw.prgdat_adr);
-        if (r.di == pw.part_e) { // break gpd_loop;
+        if ((r.di & 0xffff) == pw.part_e) { // break gpd_loop;
 
             r.setBx(pw.prgdat_adr2); // For FM sound effects
         }
 //gpd_loop:
         while (true) {
             pw.inst = pw.md;
-            if (r.getBx() >= pw.inst.length) {
+            if ((r.getBx() & 0xffff) >= pw.inst.length) {
                 throw new PmdException("The tone number you are looking for could not be found.");
             }
-            if (pw.inst[r.getBx()].dat == r.dl)
+            if (pw.inst[r.getBx() & 0xffff].dat == (r.dl & 0xff))
                 break; // gpd_exit;
-            r.andBx((short) 26);
+            r.addBx((short) 26);
 //            break gpd_loop;
         }
 //gpd_exit:
@@ -6721,7 +6710,7 @@ nss_notfm3: // ↑
      * cy=1 ... All slots are neiromask
      */
     private void silence_fmpart() {
-        r.al = pw.partWk[r.di].neiromask;
+        r.al = pw.partWk[r.di & 0xffff].neiromask;
         if (r.al != 0) { // break sfm_exit;
 
             r.stack.push(r.getDx());
@@ -6732,7 +6721,7 @@ nss_notfm3: // ↑
 //ns00c:
             do {
                 r.carry = ((r.al & 0x80) != 0);
-                r.al = (byte) ((r.al << 1) | ((r.al & 0x80) >> 7));
+                r.al = (byte) (((r.al & 0xff) << 1) | ((r.al & 0x80) >>> 7));
                 if (r.carry) { // break ns00d;
                     opnset();
                     r.dh += 0x40;
@@ -6758,26 +6747,26 @@ nss_notfm3: // ↑
 
     /**
      * LFO Processing
-     *  Don't Break cl
-     *  output cy = 1    There has been a change
+     * Don't Break cl
+     * @output cy = 1 There has been a change
      */
     public void lfo() {
         //lfop:;
-        if (pw.partWk[r.di].delay != 0) { // break lfo1;
-            pw.partWk[r.di].delay--; // cy=0
+        if (pw.partWk[r.di & 0xffff].delay != 0) { // break lfo1;
+            pw.partWk[r.di & 0xffff].delay--; // cy=0
 //lfo_ret:
             return;
         }
 //lfo1:
-        if ((pw.partWk[r.di].extendmode & 2) != 0) { // Should I match it with TimerA? // break lfo_normal; // If not, process lfo unconditionally
-            r.ch = pw.TimerAtime;
+        if ((pw.partWk[r.di & 0xffff].extendmode & 2) != 0) { // Should I match it with TimerA? // break lfo_normal; // If not, process lfo unconditionally
+            r.ch = pw.timerATime;
             r.ch -= pw.lastTimerAtime;
             if (r.ch == 0) {
 //                break lfo_ret; // If it is the same as the previous value, do nothing. cy = 0
                 return; // <<
             }
 
-            r.setAx(pw.partWk[r.di].lfodat);
+            r.setAx(pw.partWk[r.di & 0xffff].lfodat);
             r.stack.push(r.getAx());
 
 //lfo_loop:
@@ -6789,14 +6778,14 @@ nss_notfm3: // ↑
 //            break lfo_check;
         } else {
 //lfo_normal:
-            r.setAx(pw.partWk[r.di].lfodat);
+            r.setAx(pw.partWk[r.di & 0xffff].lfodat);
             r.stack.push(r.getAx());
             lfo_main();
         }
 //lfo_check:
         r.setAx(r.stack.pop());
 
-        if (r.getAx() == pw.partWk[r.di].lfodat) { // break lfo_stc_ret;
+        if (r.getAx() == pw.partWk[r.di & 0xffff].lfodat) { // break lfo_stc_ret;
             return; // c=0
         }
 //lfo_stc_ret:
@@ -6808,9 +6797,9 @@ nss_notfm3: // ↑
     }
 
     private void lfo_main() {
-        if (pw.partWk[r.di].speed != 1) { // break lfo2;
-            if (pw.partWk[r.di].speed != (byte) 0xff) { // -1 // break lfom_ret;
-                pw.partWk[r.di].speed--;
+        if (pw.partWk[r.di & 0xffff].speed != 1) { // break lfo2;
+            if (pw.partWk[r.di & 0xffff].speed != (byte) 0xff) { // -1 // break lfom_ret;
+                pw.partWk[r.di & 0xffff].speed--;
             }
 //lfom_ret:
             return;
@@ -6824,9 +6813,9 @@ not_sankaku: // ↑
                 {
 lfo20: // ↑
                     {
-                        r.al = pw.partWk[r.di].speed2;
-                        pw.partWk[r.di].speed = r.al;
-                        r.bl = pw.partWk[r.di].lfo_wave;
+                        r.al = pw.partWk[r.di & 0xffff].speed2;
+                        pw.partWk[r.di & 0xffff].speed = r.al;
+                        r.bl = pw.partWk[r.di & 0xffff].lfo_wave;
                         if (r.bl != 0) { // break lfo_sankaku;
                             if (r.bl != 4) { // break lfo_sankaku;
                                 if (r.bl != 2) { // break lfo_kukei;
@@ -6835,45 +6824,54 @@ lfo20: // ↑
                                     if (r.bl != 5)
                                         break not_sankaku;
                                     // Triangle wave lfowave = 0,4,5
-                                    r.al = pw.partWk[r.di].step;
+                                    r.al = pw.partWk[r.di & 0xffff].step;
                                     r.ah = r.al;
                                     if ((r.ah & 0x80) != 0) { // break lfo2ns;
                                         r.ah = (byte) -r.ah;
                                     }
 //lfo2ns:
-                                    r.setAx((short) (r.al * r.ah)); // When lfowave=5 1step = step×｜step｜
+                                    r.setAx((short) (/* signed */ r.al * (r.ah & 0xff))); // When lfowave=5 1step = step×｜step｜
                                     break lfo20;
+                                } else {
+//lfo_kukei: dup
+                                    // Square wave lfowave = 2
+                                    r.al = pw.partWk[r.di & 0xffff].step;
+                                    r.setAx((short) (/* signed */ r.al * /* signed */ pw.partWk[r.di & 0xffff].time));
+                                    pw.partWk[r.di & 0xffff].lfodat = r.getAx();
+                                    md_inc();
+                                    pw.partWk[r.di & 0xffff].step = (byte) -pw.partWk[r.di & 0xffff].step;
+                                    return;
                                 }
                             }
                         }
 //lfo_sankaku:
-                        r.al = pw.partWk[r.di].step;
-                        r.setAx(r.al); // cbw
+                        r.al = pw.partWk[r.di & 0xffff].step;
+                        r.setAx(/* signed */ r.al); // cbw
                     }
 //lfo20:
-                    pw.partWk[r.di].lfodat += r.getAx();
-                    if (pw.partWk[r.di].lfodat == 0) { // break lfo21;
+                    pw.partWk[r.di & 0xffff].lfodat += r.getAx();
+                    if (pw.partWk[r.di & 0xffff].lfodat == 0) { // break lfo21;
                         md_inc();
                     }
 //lfo21:
-                    r.al = pw.partWk[r.di].time;
+                    r.al = pw.partWk[r.di & 0xffff].time;
                     if (r.al != (byte) 255) { // break lfo3;
                         r.al--;
                         if (r.al == 0) { // break lfo3;
-                            r.al = pw.partWk[r.di].time2;
+                            r.al = pw.partWk[r.di & 0xffff].time2;
                             if (r.bl != 4) { // break lfo22;
                                 r.al += r.al; // lfowave=0,5: Double the time when inverted
                             }
 //lfo22:
-                            pw.partWk[r.di].time = r.al;
-                            r.al = pw.partWk[r.di].step;
+                            pw.partWk[r.di & 0xffff].time = r.al;
+                            r.al = pw.partWk[r.di & 0xffff].step;
                             r.al = (byte) -r.al;
-                            pw.partWk[r.di].step = r.al;
+                            pw.partWk[r.di & 0xffff].step = r.al;
                             return;
                         }
                     }
 //lfo3:
-                    pw.partWk[r.di].time = r.al;
+                    pw.partWk[r.di & 0xffff].time = r.al;
                     return;
                 }
 //not_sankaku:
@@ -6881,57 +6879,57 @@ lfo20: // ↑
                 if (r.bl != 0)
                     break not_nokogiri;
                 // sawtooth lfowave = 1,6
-                r.al = pw.partWk[r.di].step;
-                r.setAx(r.al); // cbw
-                pw.partWk[r.di].lfodat += r.getAx();
-                r.al = pw.partWk[r.di].time;
+                r.al = pw.partWk[r.di & 0xffff].step;
+                r.setAx(/* signed */ r.al); // cbw
+                pw.partWk[r.di & 0xffff].lfodat += r.getAx();
+                r.al = pw.partWk[r.di & 0xffff].time;
                 if (r.al != (byte) 0xff) { // -1 // break nk_lfo3;
                     r.al--;
                     if (r.al == 0) { // break nk_lfo3;
-                        pw.partWk[r.di].lfodat = (short) -pw.partWk[r.di].lfodat;
+                        pw.partWk[r.di & 0xffff].lfodat = (short) -pw.partWk[r.di & 0xffff].lfodat;
                         md_inc();
 
-                        r.al = pw.partWk[r.di].time2;
+                        r.al = pw.partWk[r.di & 0xffff].time2;
                         r.al += r.al;
                     }
                 }
 //nk_lfo3:
-                pw.partWk[r.di].time = r.al;
+                pw.partWk[r.di & 0xffff].time = r.al;
                 return;
             }
 //lfo_oneshot:
             // one shot lfowave = 6
-            r.al = pw.partWk[r.di].time;
+            r.al = pw.partWk[r.di & 0xffff].time;
             if (r.al != 0) { // break lfoone_ret;
                 if (r.al != (byte) 0xff) { // -1 // break lfoone_nodec;
                     r.al--;
-                    pw.partWk[r.di].time = r.al;
+                    pw.partWk[r.di & 0xffff].time = r.al;
                 }
 //lfoone_nodec:
-                r.al = pw.partWk[r.di].step;
-                r.setAx(r.al); // cbw
-                pw.partWk[r.di].lfodat += r.getAx();
+                r.al = pw.partWk[r.di & 0xffff].step;
+                r.setAx(/* signed */ r.al); // cbw
+                pw.partWk[r.di & 0xffff].lfodat += r.getAx();
             }
 //lfoone_ret:
             return;
 
-//lfo_kukei:
+//lfo_kukei: // dup ↑
             // Square wave lfowave = 2
-//            r.al = pw.partWk[r.di].step; // TODO unreachable
-//            r.setAx((short) ((byte) r.al * (byte) pw.partWk[r.di].time));
-//            pw.partWk[r.di].lfodat = r.getAx();
+//            r.al = pw.partWk[r.di & 0xffff].step;
+//            r.setAx((short) ((byte) r.al * (byte) pw.partWk[r.di & 0xffff].time));
+//            pw.partWk[r.di & 0xffff].lfodat = r.getAx();
 //            md_inc();
-//            pw.partWk[r.di].step = (byte) -pw.partWk[r.di].step;
+//            pw.partWk[r.di & 0xffff].step = (byte) -pw.partWk[r.di & 0xffff].step;
 //            return;
         }
 //not_nokogiri:
         // Random wave lfowave = 3
-        r.al = pw.partWk[r.di].step;
+        r.al = pw.partWk[r.di & 0xffff].step;
         if ((r.al & 0x80) != 0) { // break ns_plus;
             r.al = (byte) -r.al;
         }
 //ns_plus:
-        r.setAx((short) (r.al * pw.partWk[r.di].time));
+        r.setAx((short) ((r.al & 0xff) * (pw.partWk[r.di & 0xffff].time & 0xff)));
         r.stack.push(r.getAx());
         r.stack.push(r.getCx());
         r.addAx(r.getAx());
@@ -6939,7 +6937,7 @@ lfo20: // ↑
         r.setCx(r.stack.pop());
         r.setBx(r.stack.pop());
         r.subAx(r.getBx());
-        pw.partWk[r.di].lfodat = r.getAx();
+        pw.partWk[r.di & 0xffff].lfodat = r.getAx();
 
         md_inc();
     }
@@ -6948,56 +6946,56 @@ lfo20: // ↑
      * Change STEP value according to MD command value
      */
     private void md_inc() {
-        pw.partWk[r.di].mdspd--;
-        if (pw.partWk[r.di].mdspd != 0) {
+        pw.partWk[r.di & 0xffff].mdspd--;
+        if (pw.partWk[r.di & 0xffff].mdspd != 0) {
 //            break md_exit;
             return;
         }
-        r.al = pw.partWk[r.di].mdspd2;
-        pw.partWk[r.di].mdspd = r.al;
-        r.al = pw.partWk[r.di].mdc;
+        r.al = pw.partWk[r.di & 0xffff].mdspd2;
+        pw.partWk[r.di & 0xffff].mdspd = r.al;
+        r.al = pw.partWk[r.di & 0xffff].mdc;
         if (r.al == 0) {
 //            break md_exit; // count =0
             return;
         }
         if ((r.al & 0x80) == 0) { // break mdi21; // count > 127 (255)
             r.al--;
-            pw.partWk[r.di].mdc = r.al;
+            pw.partWk[r.di & 0xffff].mdc = r.al;
         }
 //mdi21:
-        r.al = pw.partWk[r.di].step;
+        r.al = pw.partWk[r.di & 0xffff].step;
         if ((r.al & 0x80) != 0) { // break mdi22;
             r.al = (byte) -r.al;
-            r.al += pw.partWk[r.di].mdepth;
+            r.al += pw.partWk[r.di & 0xffff].mdepth;
             if ((r.al & 0x80) == 0) { // break mdi21_ov;
                 r.al = (byte) -r.al;
 //mdi21_s:
-                pw.partWk[r.di].step = r.al;
+                pw.partWk[r.di & 0xffff].step = r.al;
 
 //md_exit:
                 return;
             }
 //mdi21_ov:
             r.al = 0;
-            if ((pw.partWk[r.di].mdepth & 0x80) == 0) { // break mdi21_s;
+            if ((pw.partWk[r.di & 0xffff].mdepth & 0x80) == 0) { // break mdi21_s;
                 r.al = (byte) 0x81; // -127;
             }
 //            break mdi21_s;
-            pw.partWk[r.di].step = r.al; // <<
+            pw.partWk[r.di & 0xffff].step = r.al; // <<
             return; // <<
         }
 //mdi22:
-        r.al += pw.partWk[r.di].mdepth;
+        r.al += pw.partWk[r.di & 0xffff].mdepth;
         if ((r.al & 0x80) != 0) { // break mdi22_ov;
 //mdi22_ov:
             r.al = 0;
-            if ((pw.partWk[r.di].mdepth & 0x80) == 0) { // break mdi22_s;
+            if ((pw.partWk[r.di & 0xffff].mdepth & 0x80) == 0) { // break mdi22_s;
                 r.al = 0x7f;
             }
 //            break mdi22_s;
         }
 //mdi22_s:
-        pw.partWk[r.di].step = r.al; // ↓
+        pw.partWk[r.di & 0xffff].step = r.al; // ↓
     }
 
     /**
@@ -7009,15 +7007,15 @@ lfo20: // ↑
         r.setCx(r.getAx());
         r.setAx((short) 259);
 
-        r.setAx((short) (r.getAx() * pw.seed));
-        r.andAx((short) 3);
+        r.setAx((short) ((r.getAx() & 0xffff) * (pw.seed & 0xffff)));
+        r.addAx((short) 3);
         r.andAx((short) 32767); // 0x7fff
 
         pw.seed = r.getAx();
-        int ans = (r.getAx() * r.getCx());
+        int ans = (r.getAx() & 0xffff) * (r.getCx() & 0xffff);
         r.setCx((short) 32767);
-        r.setAx((short) (ans / r.getCx()));
-        r.setDx((short) (ans % r.getCx()));
+        r.setAx((short) (ans / (r.getCx() & 0xffff)));
+        r.setDx((short) (ans % (r.getCx() & 0xffff)));
     }
 
     //
@@ -7031,15 +7029,15 @@ lfo20: // ↑
         r.ah = r.al; // Do not INIT when it's a rest.
         r.ah &= 0xf;
         if (r.ah == 0xc) { // break lip_00;
-            r.al = pw.partWk[r.di].onkai_def;
+            r.al = pw.partWk[r.di & 0xffff].onkai_def;
             r.ah = r.al;
             r.ah &= 0xf;
         }
 //lip_00:
-        pw.partWk[r.di].onkai_def = r.al;
+        pw.partWk[r.di & 0xffff].onkai_def = r.al;
 
         if (r.ah != 0xf) { // 4.8r Fixes // break lfo_exitp;
-            pw.partWk[r.di].porta_num = 0; // Portamento is initialized
+            pw.partWk[r.di & 0xffff].porta_num = 0; // Portamento is initialized
 
             if ((pw.tieflag & 1) == 0) { // It will not be INITed even if there is an '&' in front.
                 seinit();
@@ -7059,55 +7057,55 @@ lfo20: // ↑
      * Software envelope initialization
      */
     private void seinit() {
-        if (pw.partWk[r.di].envf != (byte) 0xff) { // break extenv_init;
+        if (pw.partWk[r.di & 0xffff].envf != (byte) 0xff) { // break extenv_init;
 
-            pw.partWk[r.di].envf = 0;
-            pw.partWk[r.di].eenv_volume = 0; // .penv
+            pw.partWk[r.di & 0xffff].envf = 0;
+            pw.partWk[r.di & 0xffff].eenv_volume = 0; // .penv
 
-            r.ah = pw.partWk[r.di].eenv_arc; // .patb
-            pw.partWk[r.di].eenv_ar = r.ah; // .pat
+            r.ah = pw.partWk[r.di & 0xffff].eenv_arc; // .patb
+            pw.partWk[r.di & 0xffff].eenv_ar = r.ah; // .pat
             if (r.ah == 0) { // break lfin2;
-                pw.partWk[r.di].envf = 1; // ATTACK=0 ... Immediate Decay
-                r.ah = pw.partWk[r.di].eenv_dr; // .pv2
-                pw.partWk[r.di].eenv_volume = r.ah; // .penv
+                pw.partWk[r.di & 0xffff].envf = 1; // ATTACK=0 ... Immediate Decay
+                r.ah = pw.partWk[r.di & 0xffff].eenv_dr; // .pv2
+                pw.partWk[r.di & 0xffff].eenv_volume = r.ah; // .penv
             }
 //lfin2:
-            r.ah = pw.partWk[r.di].eenv_src; // .pr1b
-            pw.partWk[r.di].eenv_sr = r.ah; // .pr1
-            r.ah = pw.partWk[r.di].eenv_rrc; // .pr2b
-            pw.partWk[r.di].eenv_rr = r.ah; // .pr2
+            r.ah = pw.partWk[r.di & 0xffff].eenv_src; // .pr1b
+            pw.partWk[r.di & 0xffff].eenv_sr = r.ah; // .pr1
+            r.ah = pw.partWk[r.di & 0xffff].eenv_rrc; // .pr2b
+            pw.partWk[r.di & 0xffff].eenv_rr = r.ah; // .pr2
             lfin1();
             return;
         }
         // For extended ssg_envelope
 //extenv_init:
-        r.ah = pw.partWk[r.di].eenv_ar;
+        r.ah = pw.partWk[r.di & 0xffff].eenv_ar;
         r.ah -= 16;
-        pw.partWk[r.di].eenv_arc = r.ah;
-        r.ah = pw.partWk[r.di].eenv_dr;
+        pw.partWk[r.di & 0xffff].eenv_arc = r.ah;
+        r.ah = pw.partWk[r.di & 0xffff].eenv_dr;
         r.ah -= 16;
         if ((r.ah & 0x80) != 0) { // break eei_dr_notx;
             r.ah += r.ah;
         }
 //eei_dr_notx:
-        pw.partWk[r.di].eenv_drc = r.ah;
+        pw.partWk[r.di & 0xffff].eenv_drc = r.ah;
 
-        r.ah = pw.partWk[r.di].eenv_sr;
+        r.ah = pw.partWk[r.di & 0xffff].eenv_sr;
         r.ah -= 16;
         if ((r.ah & 0x80) != 0) { // break eei_sr_notx;
             r.ah += r.ah;
         }
 //eei_sr_notx:
-        pw.partWk[r.di].eenv_src = r.ah;
+        pw.partWk[r.di & 0xffff].eenv_src = r.ah;
 
-        r.ah = pw.partWk[r.di].eenv_rr;
+        r.ah = pw.partWk[r.di & 0xffff].eenv_rr;
         r.ah += r.ah;
         r.ah -= 16;
-        pw.partWk[r.di].eenv_rrc = r.ah;
+        pw.partWk[r.di & 0xffff].eenv_rrc = r.ah;
 
-        r.ah = pw.partWk[r.di].eenv_al;
-        pw.partWk[r.di].eenv_volume = r.ah;
-        pw.partWk[r.di].eenv_count = 1;
+        r.ah = pw.partWk[r.di & 0xffff].eenv_al;
+        pw.partWk[r.di & 0xffff].eenv_volume = r.ah;
+        pw.partWk[r.di & 0xffff].eenv_count = 1;
 
         r.stack.push(r.getAx());
         ext_ssgenv_main(); // The first time
@@ -7123,18 +7121,18 @@ lfo20: // ↑
         r.ah = r.al; // Do not INIT when it's a rest.
         r.ah &= 0xf;
         if (r.ah == 0xc) { // break li_00;
-            r.al = pw.partWk[r.di].onkai_def;
+            r.al = pw.partWk[r.di & 0xffff].onkai_def;
             r.ah = r.al;
             r.ah &= 0xf;
         }
 //li_00:
-        pw.partWk[r.di].onkai_def = r.al;
+        pw.partWk[r.di & 0xffff].onkai_def = r.al;
 
         if (r.ah == 0xf) {
             lfo_exit();
             return;
         }
-        pw.partWk[r.di].porta_num = 0; // Portamento is initialized
+        pw.partWk[r.di & 0xffff].porta_num = 0; // Portamento is initialized
 
         if ((pw.tieflag & 1) == 0) { // It will not be INITed even if there is an '&' in front.
             lfin1();
@@ -7144,14 +7142,14 @@ lfo20: // ↑
     }
 
     private void lfo_exit() {
-        if ((pw.partWk[r.di].lfoswi & 3) != 0) { // Is the LFO in use? // break le_no_one_lfo1; // If preceded by '&' -> LFO process once
+        if ((pw.partWk[r.di & 0xffff].lfoswi & 3) != 0) { // Is the LFO in use? // break le_no_one_lfo1; // If preceded by '&' -> LFO process once
 
             r.stack.push(r.getAx());
             lfo();
             r.setAx(r.stack.pop());
         }
 //le_no_one_lfo1:
-        if ((pw.partWk[r.di].lfoswi & 0x30) != 0) { // Is the LFO in use? // break le_no_one_lfo2; // If preceded by '&' -> LFO process once
+        if ((pw.partWk[r.di & 0xffff].lfoswi & 0x30) != 0) { // Is the LFO in use? // break le_no_one_lfo2; // If preceded by '&' -> LFO process once
 
             r.stack.push(r.getAx());
             //    pushf
@@ -7170,21 +7168,21 @@ lfo20: // ↑
      */
     private void lfin1() {
         if (pw.board2 != 0) {
-            r.ah = pw.partWk[r.di].hldelay;
-            pw.partWk[r.di].hldelay_c = r.ah;
+            r.ah = pw.partWk[r.di & 0xffff].hldelay;
+            pw.partWk[r.di & 0xffff].hldelay_c = r.ah;
             if (r.ah != 0) { // break non_hldelay;
                 r.dh = pw.partb; //    mov dh,[partb]
                 r.dh += (byte) (0xb4 - 1);
-                r.dl = pw.partWk[r.di].fmpan;
+                r.dl = pw.partWk[r.di & 0xffff].fmpan;
                 r.dl &= (byte) 0xc0; // HLFO = OFF
                 opnset();
             }
 //non_hldelay:
         }
 
-        r.ah = pw.partWk[r.di].sdelay;
-        pw.partWk[r.di].sdelay_c = r.ah;
-        r.cl = pw.partWk[r.di].lfoswi;
+        r.ah = pw.partWk[r.di & 0xffff].sdelay;
+        pw.partWk[r.di & 0xffff].sdelay_c = r.ah;
+        r.cl = pw.partWk[r.di & 0xffff].lfoswi;
         if ((r.cl & 3) != 0) { // break li_lfo1_exit; // LFO not used
             if ((r.cl & 4) == 0) { // Keyon asynchronous? break li_lfo1_next;
                 lfoinit_main();
@@ -7222,32 +7220,32 @@ lfo20: // ↑
     }
 
     private Supplier<Object> lfoinit_main() {
-        pw.partWk[r.di].lfodat = 0;
-        r.dl = pw.partWk[r.di].delay2; //    mov dx, word ptr delay2[di]
-        r.dh = pw.partWk[r.di].speed2;
-        pw.partWk[r.di].delay = r.dl;
-        pw.partWk[r.di].speed = r.dh;
-        r.dl = pw.partWk[r.di].step2; //    mov dx, word ptr step2[di]
-        r.dh = pw.partWk[r.di].time2;
-        pw.partWk[r.di].step = r.dl;
-        pw.partWk[r.di].time = r.dh;
+        pw.partWk[r.di & 0xffff].lfodat = 0;
+        r.dl = pw.partWk[r.di & 0xffff].delay2; //    mov dx, word ptr delay2[di]
+        r.dh = pw.partWk[r.di & 0xffff].speed2;
+        pw.partWk[r.di & 0xffff].delay = r.dl;
+        pw.partWk[r.di & 0xffff].speed = r.dh;
+        r.dl = pw.partWk[r.di & 0xffff].step2; //    mov dx, word ptr step2[di]
+        r.dh = pw.partWk[r.di & 0xffff].time2;
+        pw.partWk[r.di & 0xffff].step = r.dl;
+        pw.partWk[r.di & 0xffff].time = r.dh;
 
-        r.dl = pw.partWk[r.di].mdc2;
-        pw.partWk[r.di].mdc = r.dl;
+        r.dl = pw.partWk[r.di & 0xffff].mdc2;
+        pw.partWk[r.di & 0xffff].mdc = r.dl;
 
-        if (pw.partWk[r.di].lfo_wave == 2) { // Square wave or
+        if (pw.partWk[r.di & 0xffff].lfo_wave == 2) { // Square wave or
 //            break lim_first;
 //lim_first:
-            pw.partWk[r.di].speed = 1; // Apply the LFO immediately after the delay
+            pw.partWk[r.di & 0xffff].speed = 1; // Apply the LFO immediately after the delay
             return null;
         }
-        if (pw.partWk[r.di].lfo_wave != 3) { // In the case of random waves
+        if (pw.partWk[r.di & 0xffff].lfo_wave != 3) { // In the case of random waves
 //            break lim_nofirst;
 //lim_nofirst:
-            pw.partWk[r.di].speed++; // Otherwise, the speed value immediately after the delay is increased by +1.
+            pw.partWk[r.di & 0xffff].speed++; // Otherwise, the speed value immediately after the delay is increased by +1.
             return null;
         }
-        pw.partWk[r.di].speed = 1; // Apply the LFO immediately after the delay
+        pw.partWk[r.di & 0xffff].speed = 1; // Apply the LFO immediately after the delay
         return null;
     }
 
@@ -7255,13 +7253,13 @@ lfo20: // ↑
      * PSG/PCM software envelope
      */
     public void soft_env() {
-        if ((pw.partWk[r.di].extendmode & 4) == 0) // sync it with TimerA?
+        if ((pw.partWk[r.di & 0xffff].extendmode & 4) == 0) // sync it with TimerA?
         {
             soft_env_main(); // If not, unconditionally process senv
             return;
         }
 
-        r.ch = pw.TimerAtime;
+        r.ch = pw.timerATime;
         r.ch -= pw.lastTimerAtime;
         if (r.ch != 0) { // break senv_ret; // If it is the same as the previous value, do nothing. cy = 0
             r.cl = 0;
@@ -7281,63 +7279,63 @@ lfo20: // ↑
     }
 
     private void soft_env_main() {
-        if (pw.partWk[r.di].envf == (byte) 0xff) { // -1
+        if (pw.partWk[r.di & 0xffff].envf == (byte) 0xff) { // -1
             ext_ssgenv_main();
             return;
         }
 
-        r.dl = pw.partWk[r.di].eenv_volume; // .penv;
+        r.dl = pw.partWk[r.di & 0xffff].eenv_volume; // .penv;
         soft_env_sub();
         r.carry = false;
-        if (r.dl != pw.partWk[r.di].eenv_volume) { // .penv // break sem_ret; // cy=0
+        if (r.dl != pw.partWk[r.di & 0xffff].eenv_volume) { // .penv // break sem_ret; // cy=0
             r.carry = true;
         }
 //sem_ret:
     }
 
     private void soft_env_sub() {
-        if (pw.partWk[r.di].envf == 0) { // -1 // break se1;
+        if (pw.partWk[r.di & 0xffff].envf == 0) { // -1 // break se1;
 
             //
             // Attack
             //
-            pw.partWk[r.di].eenv_ar--; // .pat--;
-            if (pw.partWk[r.di].eenv_ar != 0) {
+            pw.partWk[r.di & 0xffff].eenv_ar--; // .pat--;
+            if (pw.partWk[r.di & 0xffff].eenv_ar != 0) {
 //                break se2;
                 return;
             }
 
-            pw.partWk[r.di].envf = 1;
-            r.al = pw.partWk[r.di].eenv_dr; // pv2[di]
-            pw.partWk[r.di].eenv_volume = r.al; // penv[di]
+            pw.partWk[r.di & 0xffff].envf = 1;
+            r.al = pw.partWk[r.di & 0xffff].eenv_dr; // pv2[di]
+            pw.partWk[r.di & 0xffff].eenv_volume = r.al; // penv[di]
             r.carry = true;
             return;
         }
 //se1:
-        if (pw.partWk[r.di].envf != 2) { // break se3;
+        if (pw.partWk[r.di & 0xffff].envf != 2) { // break se3;
 
             //
             // Decay
             //
-            if (pw.partWk[r.di].eenv_sr == 0) {
+            if (pw.partWk[r.di & 0xffff].eenv_sr == 0) {
 //                break se2; // When DR=0, there is no attenuation.
                 return;
             }
-            pw.partWk[r.di].eenv_sr--;
-            if (pw.partWk[r.di].eenv_sr != 0) {
+            pw.partWk[r.di & 0xffff].eenv_sr--;
+            if (pw.partWk[r.di & 0xffff].eenv_sr != 0) {
 //                break se2;
                 return;
             }
 
-            r.al = pw.partWk[r.di].eenv_src; // pr1b[di]
-            pw.partWk[r.di].eenv_sr = r.al; // pr1[di]
-            pw.partWk[r.di].eenv_volume--; // penv[di]
+            r.al = pw.partWk[r.di & 0xffff].eenv_src; // pr1b[di]
+            pw.partWk[r.di & 0xffff].eenv_sr = r.al; // pr1[di]
+            pw.partWk[r.di & 0xffff].eenv_volume--; // penv[di]
 
 //se4:
-            if (pw.partWk[r.di].eenv_volume < (byte) 0xf1) { // -15 // break se2;
-                if (pw.partWk[r.di].eenv_volume >= 15) { // break se2;
+            if ((pw.partWk[r.di & 0xffff].eenv_volume & 0xff) < 0xf1) { // -15 // break se2;
+                if ((pw.partWk[r.di & 0xffff].eenv_volume & 0xff) >= 15) { // break se2;
 //se5:
-                    pw.partWk[r.di].eenv_volume = (byte) 0xf1; // mov penv[di],-15
+                    pw.partWk[r.di & 0xffff].eenv_volume = (byte) 0xf1; // mov penv[di],-15
                 }
             }
 //se2:
@@ -7347,39 +7345,39 @@ lfo20: // ↑
         // Release
         //
 //se3:
-        if (pw.partWk[r.di].eenv_rr == 0) { // pr2
+        if (pw.partWk[r.di & 0xffff].eenv_rr == 0) { // pr2
 //            break se5; // When RR=0, the sound is muted immediately.
-            pw.partWk[r.di].eenv_volume = (byte) 0xf1; // mov penv[di],-15
+            pw.partWk[r.di & 0xffff].eenv_volume = (byte) 0xf1; // mov penv[di],-15
             return;
         }
-        pw.partWk[r.di].eenv_rr--; // pr2[di]
-        if (pw.partWk[r.di].eenv_rr != 0) {
+        pw.partWk[r.di & 0xffff].eenv_rr--; // pr2[di]
+        if (pw.partWk[r.di & 0xffff].eenv_rr != 0) {
 //            break se2;
             return;
         }
-        r.al = pw.partWk[r.di].eenv_rrc; // pr2b[di]
-        pw.partWk[r.di].eenv_rr = r.al; // pr2[di]
-        pw.partWk[r.di].eenv_volume--; // penv[di]
+        r.al = pw.partWk[r.di & 0xffff].eenv_rrc; // pr2b[di]
+        pw.partWk[r.di & 0xffff].eenv_rr = r.al; // pr2[di]
+        pw.partWk[r.di & 0xffff].eenv_volume--; // penv[di]
 //        break se4;
-        if (pw.partWk[r.di].eenv_volume < (byte) 0xf1) { // -15 // break se2;
-            if (pw.partWk[r.di].eenv_volume >= 15) { // break se2;
-                pw.partWk[r.di].eenv_volume = (byte) 0xf1; // mov penv[di],-15
+        if ((pw.partWk[r.di & 0xffff].eenv_volume & 0xff) < 0xf1) { // -15 // break se2;
+            if ((pw.partWk[r.di & 0xffff].eenv_volume & 0xff) >= 15) { // break se2;
+                pw.partWk[r.di & 0xffff].eenv_volume = (byte) 0xf1; // mov penv[di],-15
             }
         }
     }
 
     // Extended version
     private void ext_ssgenv_main() {
-        r.ah = pw.partWk[r.di].eenv_count;
+        r.ah = pw.partWk[r.di & 0xffff].eenv_count;
         if (r.ah == 0) { // break esm_main2;
 //esm_ret:
             r.carry = false;
             return; // cy=0
         }
 //esm_main2:
-        r.dl = pw.partWk[r.di].eenv_volume;
+        r.dl = pw.partWk[r.di & 0xffff].eenv_volume;
         esm_sub();
-        if (r.dl == pw.partWk[r.di].eenv_volume) {
+        if (r.dl == pw.partWk[r.di & 0xffff].eenv_volume) {
             r.carry = false;
 //            break esm_ret; // cy=0
             return;
@@ -7394,29 +7392,29 @@ lfo20: // ↑
             //
             // Attack Rate
             //
-            r.al = pw.partWk[r.di].eenv_arc;
+            r.al = pw.partWk[r.di & 0xffff].eenv_arc;
             r.al--;
             if ((r.al & 0x80) == 0) { // break arc_count_check; // If it is less than 0, check the count.
                 r.al++;
-                pw.partWk[r.di].eenv_volume += r.al;
-                if (pw.partWk[r.di].eenv_volume < 15) { // break esm_ar_next;
-                    r.ah = pw.partWk[r.di].eenv_ar;
+                pw.partWk[r.di & 0xffff].eenv_volume += r.al;
+                if ((pw.partWk[r.di & 0xffff].eenv_volume & 0xff) < 15) { // break esm_ar_next;
+                    r.ah = pw.partWk[r.di & 0xffff].eenv_ar;
                     r.ah -= 16;
-                    pw.partWk[r.di].eenv_arc = r.ah;
+                    pw.partWk[r.di & 0xffff].eenv_arc = r.ah;
                     return;
                 }
 //esm_ar_next:
-                pw.partWk[r.di].eenv_volume = 15;
-                pw.partWk[r.di].eenv_count++;
-                if (pw.partWk[r.di].eenv_sl != 15) // If SL=0, go to SR immediately
+                pw.partWk[r.di & 0xffff].eenv_volume = 15;
+                pw.partWk[r.di & 0xffff].eenv_count++;
+                if (pw.partWk[r.di & 0xffff].eenv_sl != 15) // If SL=0, go to SR immediately
                     return; // break esm_ret;
-                pw.partWk[r.di].eenv_count++;
+                pw.partWk[r.di & 0xffff].eenv_count++;
                 return;
             }
 //arc_count_check:
-            if (pw.partWk[r.di].eenv_ar == 0) // AR=0?
+            if (pw.partWk[r.di & 0xffff].eenv_ar == 0) // AR=0?
                 return; // break esm_ret;
-            pw.partWk[r.di].eenv_arc++;
+            pw.partWk[r.di & 0xffff].eenv_arc++;
             return;
         }
 //esm_dr_check:
@@ -7425,34 +7423,34 @@ lfo20: // ↑
             //
             // Decay Rate
             //
-            r.al = pw.partWk[r.di].eenv_drc;
+            r.al = pw.partWk[r.di & 0xffff].eenv_drc;
             r.al--;
             if ((r.al & 0x80) == 0) { // break drc_count_check; // If it is less than 0, check the count.
                 r.al++;
-                r.carry = pw.partWk[r.di].eenv_volume < r.al;
-                pw.partWk[r.di].eenv_volume -= r.al;
-                r.al = pw.partWk[r.di].eenv_sl;
+                r.carry = (pw.partWk[r.di & 0xffff].eenv_volume & 0xff) < (r.al & 0xff);
+                pw.partWk[r.di & 0xffff].eenv_volume -= r.al;
+                r.al = pw.partWk[r.di & 0xffff].eenv_sl;
                 if (!r.carry) { // break dr_slset;
-                    if (pw.partWk[r.di].eenv_volume >= r.al) { // break dr_slset;
-                        r.ah = pw.partWk[r.di].eenv_dr;
+                    if ((pw.partWk[r.di & 0xffff].eenv_volume & 0xff) >= (r.al & 0xff)) { // break dr_slset;
+                        r.ah = pw.partWk[r.di & 0xffff].eenv_dr;
                         r.ah -= 16;
                         if ((r.ah & 0x80) != 0) { // break esm_dr_notx;
                             r.ah += r.ah;
                         }
 //esm_dr_notx:
-                        pw.partWk[r.di].eenv_drc = r.ah;
+                        pw.partWk[r.di & 0xffff].eenv_drc = r.ah;
                         return;
                     }
                 }
 //dr_slset:
-                pw.partWk[r.di].eenv_volume = r.al;
-                pw.partWk[r.di].eenv_count++;
+                pw.partWk[r.di & 0xffff].eenv_volume = r.al;
+                pw.partWk[r.di & 0xffff].eenv_count++;
                 return;
             }
 //drc_count_check:
-            if (pw.partWk[r.di].eenv_dr == 0) // DR=0?
+            if (pw.partWk[r.di & 0xffff].eenv_dr == 0) // DR=0?
                 return; // break esm_ret;
-            pw.partWk[r.di].eenv_drc++;
+            pw.partWk[r.di & 0xffff].eenv_drc++;
             return;
         }
 //esm_sr_check:
@@ -7461,55 +7459,55 @@ lfo20: // ↑
             //
             // Sustain Rate
             //
-            r.al = pw.partWk[r.di].eenv_src;
+            r.al = pw.partWk[r.di & 0xffff].eenv_src;
             r.al--;
             if ((r.al & 0x80) == 0) { // break src_count_check; // If it is less than 0, check the count.
                 r.al++;
-                r.carry = pw.partWk[r.di].eenv_volume < r.al;
-                pw.partWk[r.di].eenv_volume -= r.al;
+                r.carry = (pw.partWk[r.di & 0xffff].eenv_volume & 0xff) < (r.al & 0xff);
+                pw.partWk[r.di & 0xffff].eenv_volume -= r.al;
                 if (r.carry) { // break esm_sr_exit;
-                    pw.partWk[r.di].eenv_volume = 0;
+                    pw.partWk[r.di & 0xffff].eenv_volume = 0;
                 }
 //esm_sr_exit:
-                r.ah = pw.partWk[r.di].eenv_sr;
+                r.ah = pw.partWk[r.di & 0xffff].eenv_sr;
                 r.ah -= 16;
                 if ((r.ah & 0x80) != 0) { // break esm_sr_notx;
                     r.ah += r.ah;
                 }
 //esm_sr_notx:
-                pw.partWk[r.di].eenv_src = r.ah;
+                pw.partWk[r.di & 0xffff].eenv_src = r.ah;
                 return;
             }
 //src_count_check:
-            if (pw.partWk[r.di].eenv_sr == 0) // SR=0?
+            if (pw.partWk[r.di & 0xffff].eenv_sr == 0) // SR=0?
                 return; // break esm_ret;
-            pw.partWk[r.di].eenv_src++;
+            pw.partWk[r.di & 0xffff].eenv_src++;
             return;
         }
 //esm_rr:
         //
         // Release Rate
         //
-        r.al = pw.partWk[r.di].eenv_rrc;
+        r.al = pw.partWk[r.di & 0xffff].eenv_rrc;
         r.al--;
         if ((r.al & 0x80) == 0) { // break rrc_count_check; // If it is less than 0, check the count.
             r.al++;
-            r.carry = pw.partWk[r.di].eenv_volume < r.al;
-            pw.partWk[r.di].eenv_volume -= r.al;
+            r.carry = (pw.partWk[r.di & 0xffff].eenv_volume & 0xff) < (r.al & 0xff);
+            pw.partWk[r.di & 0xffff].eenv_volume -= r.al;
             if (r.carry) { // break esm_rr_exit;
-                pw.partWk[r.di].eenv_volume = 0;
+                pw.partWk[r.di & 0xffff].eenv_volume = 0;
             }
 //esm_rr_exit:
-            r.ah = pw.partWk[r.di].eenv_rr;
+            r.ah = pw.partWk[r.di & 0xffff].eenv_rr;
             r.ah += r.ah;
             r.ah -= 16;
-            pw.partWk[r.di].eenv_rrc = r.ah;
+            pw.partWk[r.di & 0xffff].eenv_rrc = r.ah;
             return;
         }
 //rrc_count_check:
-        if (pw.partWk[r.di].eenv_rr == 0) // RR=0?
+        if (pw.partWk[r.di & 0xffff].eenv_rr == 0) // RR=0?
             return; // break esm_ret;
-        pw.partWk[r.di].eenv_rrc++;
+        pw.partWk[r.di & 0xffff].eenv_rrc++;
     }
 
     /**
@@ -7618,25 +7616,25 @@ lfo20: // ↑
             if (pw.board2 != 0) {
                 if (r.ah != 1) {
 //                    break opi_nef;
-                    bxTbl = pw.fmoff_nef; // <<
+                    bxTbl = PW.fmoff_nef; // <<
                     r.setBx((short) 0); // offset fmoff_nef // <<
                 }
             } else {
 
-                bxTbl = pw.fmoff_ef;
+                bxTbl = PW.fmoff_ef;
                 r.setBx((short) 0); // offset fmoff_ef
 //            break opi_ef;
             }
         } else {
 //opi_nef:
-            bxTbl = pw.fmoff_nef;
+            bxTbl = PW.fmoff_nef;
             r.setBx((short) 0); // offset fmoff_nef
         }
 //opi_ef:
 
 //opi0:
         while (true) {
-            r.dh = bxTbl[r.getBx()];
+            r.dh = bxTbl[r.getBx() & 0xffff];
             r.incBx();
             if (r.dh == (byte) 0xff) break; // opi1b;
 
@@ -7661,7 +7659,7 @@ lfo20: // ↑
         r.setCx((short) 3);
         if (pw.board2 == 0) {
             if (pw.fm_effec_flag == 1) { // break opi1;
-            r.decCx();
+                r.decCx();
             }
         }
 
@@ -7670,7 +7668,7 @@ lfo20: // ↑
             opnset44();
             r.dl++;
             r.decCx();
-        } while (r.getCx() > 0);
+        } while ((r.getCx() & 0xffff) > 0);
 
         if (pw.board2 != 0) {
             r.setDx((short) 0x2804); // FM KEYOFF[URA]
@@ -7683,7 +7681,7 @@ lfo20: // ↑
                 opnset44();
                 r.dl++;
                 r.decCx();
-            } while (r.getCx() > 0);
+            } while ((r.getCx() & 0xffff) > 0);
         }
 
         if (pw.effon == 0) { // break psg_ef;
@@ -7744,7 +7742,7 @@ pcm_ef: // ↑
                         ppz8em.apply(cd); // .StopPCM(r.al); // ppz keyoff
                         r.setAx(r.stack.pop());
                         r.al++;
-                    } while (r.al < 8); // break ppz_off_loop;
+                    } while ((r.al & 0xff) < 8); // break ppz_off_loop;
                 }
 //_not_ppz8:
             }
@@ -7856,7 +7854,7 @@ pcm_ef: // ↑
         pc98.outPort(r.getDx(), r.al);
         _waitP(); // ; PSG Read Wait
         r.setDx((short) pw.fm1_port2);
-        r.al = pc98.InPort(r.getDx());
+        r.al = pc98.inPort(r.getDx() & 0xffff);
         r.setDx(r.stack.pop());
     }
 
@@ -7866,30 +7864,30 @@ pcm_ef: // ↑
     private void int60_start() {
         // TimerA/B re-entry check
 
-        if ((reint_chk[r.ah] & 1) != 0) {
-            if (pw.TimerBflag != 0) {
+        if ((reint_chk[r.ah & 0xff] & 1) != 0) {
+            if (pw.timerBFlag != 0) {
                 int60_error();
                 return;
             }
         }
-        if ((reint_chk[r.ah] & 2) != 0) {
-            if (pw.TimerAflag != 0) {
+        if ((reint_chk[r.ah & 0xff] & 2) != 0) {
+            if (pw.timerAFlag != 0) {
                 int60_error();
                 return;
             }
         }
-        if ((reint_chk[r.ah] & 4) != 0) {
+        if ((reint_chk[r.ah & 0xff] & 4) != 0) {
             if (pw.int60flag != 1) {
                 int60_error();
                 return;
             }
         }
 
-        if (r.ah != 0xf) int60_jumptable[r.ah].run();
+        if (r.ah != 0xf) int60_jumptable[r.ah & 0xff].run();
         else {
             // KUMA: Note) It is necessary to avoid accessing the sound source from external threads.
             // KUMA: If it is absolutely necessary, please stop this thread first.
-            if (pw.board2 != 0) int60_jumptable[r.ah].run();
+            if (pw.board2 != 0) int60_jumptable[r.ah & 0xff].run();
                 else nothing();
         }
 
@@ -7897,11 +7895,10 @@ pcm_ef: // ↑
         r.ah = pw.ah_push;
         r.setDx(pw.dx_push);
         int60_exit();
-        return;
     }
 
     // Code for reentrancy check / bit0=TimerBint 1=TimerAint 2=INT60
-    private byte[] reint_chk = {
+    private static final byte[] reint_chk = {
             4, 4, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 7, 7, 0, 5,
             0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 5, 5, 7, 0, 7, 0,
             0, 0
@@ -7909,7 +7906,7 @@ pcm_ef: // ↑
 
     private Runnable[] int60_jumptable;
 
-    private void Set_int60_jumptable() {
+    private void set_int60_jumptable() {
         int60_jumptable = new Runnable[] {
                 this::mstart_f, // 0
                 this::mstop_f, // 1
@@ -8008,17 +8005,17 @@ getmemo_errret: // ↑
             {
                 r.al = (byte) al;
                 r.setSi((short) pw.mmlbuf);
-                if (pw.md[r.getSi()].dat != 0x1a)
+                if (pw.md[r.getSi() & 0xffff].dat != 0x1a)
                     break getmemo_errret; // File with no tone = Unable to obtain memo address
                 r.addSi((short) 0x18);
-                r.setSi((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+                r.setSi((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
                 r.addSi((short) pw.mmlbuf);
                 r.subSi((short) 4);
-                r.setBx((short) (pw.md[r.getSi() + 2].dat + pw.md[r.getSi() + 3].dat * 0x100)); // bh=0feh,bl=ver
+                r.setBx((short) (pw.md[(r.getSi() + 2) & 0xffff].dat + pw.md[(r.getSi() + 3) & 0xffff].dat * 0x100)); // bh=0feh,bl=ver
                 if (r.bl != 0x40) { // For Ver4.0 & 00H // break getmemo_exec;
                     if (r.bh != (byte) 0xfe)
                         break getmemo_errret; // 0feh for version 4.1 and later
-                    if (r.bl < 0x41)
+                    if ((r.bl & 0xff) < 0x41)
                         break getmemo_errret; // If MC version is 4.1 or earlier, Error
                 }
 //getmemo_exec:
@@ -8026,16 +8023,16 @@ getmemo_errret: // ↑
                     r.al++; // Then add +1 to al (0FFH #PPSFile)
                 }
 //getmemo_oldver41:
-                if (r.bl >= 0x48) { // Is it version 4.8 or later? // break getmemo_oldver47;
+                if ((r.bl & 0xff) >= 0x48) { // Is it version 4.8 or later? // break getmemo_oldver47;
                     r.al++; // Then add +1 to al (0FEH for #PPZFile)
                 }
 //getmemo_oldver47:
-                r.setSi((short) (pw.md[r.getSi()].dat + pw.md[r.getSi() + 1].dat * 0x100));
+                r.setSi((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
                 r.addSi((short) pw.mmlbuf);
                 r.al++;
 //getmemo_loop:
                 do {
-                    r.setDx((short) (pw.md[r.getSi() + 0].dat + pw.md[r.getSi() + 1].dat * 0x100));
+                    r.setDx((short) (pw.md[(r.getSi() + 0) & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
                     if (r.getDx() == 0)
                         break getmemo_errret;
                     r.addSi((short) 2);
@@ -8071,7 +8068,7 @@ getmemo_errret: // ↑
         r.setDx(pw.mask_adr);
         //pushf
         //cli
-        r.al = pc98.InPort(r.getDx());
+        r.al = pc98.inPort(r.getDx() & 0xffff);
         r.al |= pw.mask_data;
         pc98.outPort(r.getDx(), r.al); // Disable FM interrupt
         //popf
@@ -8081,7 +8078,7 @@ getmemo_errret: // ↑
         r.setDx(pw.mask_adr);
         //pushf
         //cli
-        r.al = pc98.InPort(r.getDx());
+        r.al = pc98.inPort(r.getDx() & 0xffff);
         r.al &= pw.mask_data2;
         pc98.outPort(r.getDx(), r.al); // Enable FM interrupt
         //    popf
@@ -8090,7 +8087,7 @@ getmemo_errret: // ↑
     private void ff_music_main() {
         if (pw.status2 != (byte) 255) { // break ffm_exit2;
             pw.skip_flag = 1;
-            if (r.getDx() < pw.syousetu) { // cmp dx,[syousetu] // break ffm_main;
+            if ((r.getDx() & 0xffff) < (pw.syousetu & 0xffff)) { // cmp dx,[syousetu] // break ffm_main;
                 pw.skip_flag = 2;
                 r.stack.push(r.getDx());
                 if (pw.effon == 1) { // break ff_no_ssg_dr;
@@ -8144,7 +8141,7 @@ getmemo_errret: // ↑
                     pw.skip_flag = 0; // <<
                     return;
                 }
-            } while (r.bp >= pw.syousetu); // break ffm_loop;
+            } while ((r.bp & 0xffff) >= (pw.syousetu & 0xffff)); // break ffm_loop;
             r.bp = r.stack.pop();
             r.setAx(r.stack.pop());
             pw.fadeout_volume = r.ah;
@@ -8184,7 +8181,7 @@ getmemo_errret: // ↑
 //maskon_loop:
         do {
             if (pw.ppz != 0) {
-                r.al = (byte) pw.part_table[r.incSi()];
+                r.al = (byte) pw.part_table[r.incSi() & 0xffff];
                 if (r.al == (byte) 0xff) { // -1 // break monl_main;
                     r.addSi((short) 6); // skip Rhythm & Effects(for PPZ parts)
                 }
@@ -8193,11 +8190,11 @@ getmemo_errret: // ↑
                 r.incSi();
             }
 
-            r.al = (byte) pw.part_table[r.incSi()]; //    lodsw; ah=sound source al = partb
-            r.ah = (byte) pw.part_table[r.incSi()];
+            r.al = (byte) pw.part_table[r.incSi() & 0xffff]; //    lodsw; ah=sound source al = partb
+            r.ah = (byte) pw.part_table[r.incSi() & 0xffff];
 
-            pw.partWk[r.di].partmask |= (byte) 0x80;
-            if (pw.partWk[r.di].partmask == (byte) 0x80) { // break maskon_next; // It was already masked elsewhere
+            pw.partWk[r.di & 0xffff].partmask |= (byte) 0x80;
+            if (pw.partWk[r.di & 0xffff].partmask == (byte) 0x80) { // break maskon_next; // It was already masked elsewhere
 
                 r.stack.push(r.getCx());
                 r.stack.push(r.di);
@@ -8223,7 +8220,7 @@ getmemo_errret: // ↑
 //maskoff_loop:
         do {
             if (pw.ppz != 0) {
-                r.al = (byte) pw.part_table[r.incSi()];
+                r.al = (byte) pw.part_table[r.incSi() & 0xffff];
                 if (r.al == (byte) 0xff) { // -1 // break moffl_main;
                     r.addSi((short) 6); // skip Rhythm & Effects(for PPZ parts)
                 }
@@ -8232,11 +8229,11 @@ getmemo_errret: // ↑
                 r.incSi();
             }
 
-            r.al = (byte) pw.part_table[r.incSi()]; //    lodsw; ah=sound source al = partb
-            r.ah = (byte) pw.part_table[r.incSi()];
+            r.al = (byte) pw.part_table[r.incSi() & 0xffff]; //    lodsw; ah=sound source al = partb
+            r.ah = (byte) pw.part_table[r.incSi() & 0xffff];
 
-            pw.partWk[r.di].partmask &= 0x7f;
-            if (pw.partWk[r.di].partmask == 0) { // break maskoff_next; // Still masked elsewhere
+            pw.partWk[r.di & 0xffff].partmask &= 0x7f;
+            if (pw.partWk[r.di & 0xffff].partmask == 0) { // break maskoff_next; // Still masked elsewhere
 
                 r.stack.push(r.getCx());
                 r.stack.push(r.di);
@@ -8259,9 +8256,9 @@ getmemo_errret: // ↑
         r.ah = r.al;
         r.ah &= 0x7f;
         if (pw.ppz != 0) {
-            r.carry = (r.ah < 16 + 8);
+            r.carry = ((r.ah & 0xff) < 16 + 8);
         } else {
-            r.carry = (r.ah < 16);
+            r.carry = ((r.ah & 0xff) < 16);
         }
         if (!r.carry) return; // break pm_ret;
         if ((r.al & 0x80) != 0) {
@@ -8273,21 +8270,21 @@ getmemo_errret: // ↑
         r.bl += r.bl;
         r.bl += r.al;
         r.setBx((short) 0); // offset part_table
-        r.dl = (byte) pw.part_table[r.getBx()]; // dl<- Part Number
+        r.dl = (byte) pw.part_table[r.getBx() & 0xffff]; // dl<- Part Number
         if ((r.dl & 0x80) != 0) {
             rhythm_mask();
             return;
         }
         r.incBx();
-        r.al = (byte) pw.part_table[r.getBx() + 0]; // AH=sound source AL = partb
-        r.ah = (byte) pw.part_table[r.getBx() + 1];
+        r.al = (byte) pw.part_table[(r.getBx() & 0xffff) + 0]; // AH=sound source AL = partb
+        r.ah = (byte) pw.part_table[(r.getBx() & 0xffff) + 1];
         r.bh = 0;
         r.bl = r.dl;
         //r.bx += r.bx;
         r.setBx((short) 0); // offset part_data_table
-        r.di = (short) pw.part_data_table[r.getBx()];
-        r.dl = pw.partWk[r.di].partmask;
-        pw.partWk[r.di].partmask |= 1;
+        r.di = (short) pw.part_data_table[r.getBx() & 0xffff];
+        r.dl = pw.partWk[r.di & 0xffff].partmask;
+        pw.partWk[r.di & 0xffff].partmask |= 1;
         if (r.dl != 0)
             return; // break pm_ret; // ; It was already masked
         if (pw.play_flag == 0)
@@ -8350,7 +8347,7 @@ pm_fm2: // ↑
                         }
                     }
 //pm_drums:
-                    if (pw.psgefcnum >= 11) {
+                    if ((pw.psgefcnum & 0xff) >= 11) {
 //                        break pm_ssg_ret;
                         return;
                     }
@@ -8377,7 +8374,7 @@ pm_fm2: // ↑
                     if (pw.ademu != 0) {
                         if (pw.adpcm_emulate == 1) { // break pmpcm_noadpcm;
                             r.setAx((short) 0x0207);
-                            ChipDatum cd = new ChipDatum(0x02, r.al, 0);
+                            ChipDatum cd = new ChipDatum(0x02, r.al & 0xff, 0);
                             ppz8em.apply(cd); // .StopPCM(r.al); // PPZ8 ch7 stop sound
                         }
 //pmpcm_noadpcm:
@@ -8409,7 +8406,7 @@ pm_fm2: // ↑
 //pmppz_exec:
             }
             r.ah = 2;
-            ChipDatum cd = new ChipDatum(0x02, r.al, 0);
+            ChipDatum cd = new ChipDatum(0x02, r.al & 0xff, 0);
             ppz8em.apply(cd); // .StopPCM(r.al); // ; ppz stop(al= partb)
 //pmppz_noexec:
         }
@@ -8432,23 +8429,23 @@ pm_fm2: // ↑
         r.bl += r.bl;
         r.bl += r.ah;
         r.addBx((short) 0); // offset part_table
-        r.dl = (byte) pw.part_table[r.getBx()]; // dl<- Part number
+        r.dl = (byte) pw.part_table[r.getBx() & 0xffff]; // dl<- Part number
         if ((r.dl & 0x80) != 0) {
             rhythm_on();
             return;
         }
         r.incBx();
-        r.al = (byte) pw.part_table[r.getBx() + 0]; // AH=sound source AL = partb
-        r.ah = (byte) pw.part_table[r.getBx() + 1];
+        r.al = (byte) pw.part_table[(r.getBx() + 0) & 0xffff]; // AH=sound source AL = partb
+        r.ah = (byte) pw.part_table[(r.getBx() + 1) & 0xffff];
         r.bh = 0;
         r.bl = r.dl;
         //r.bx += r.bx;
         r.addBx((short) 0); // offset part_data_table
-        r.di = (short) pw.part_data_table[r.getBx()];
-        if (pw.partWk[r.di].partmask == 0)
+        r.di = (short) pw.part_data_table[r.getBx() & 0xffff];
+        if (pw.partWk[r.di & 0xffff].partmask == 0)
             return; // break po_ret; // ; Not masked
-        pw.partWk[r.di].partmask &= (byte) 0xfe;
-        if (pw.partWk[r.di].partmask != 0)
+        pw.partWk[r.di & 0xffff].partmask &= (byte) 0xfe;
+        if (pw.partWk[r.di & 0xffff].partmask != 0)
             return; // break po_ret; // Still masked by sound effects
         if (pw.play_flag == 0)
             return; // break po_ret; // The song has stopped
@@ -8470,14 +8467,14 @@ pm_fm2: // ↑
             }
         } else {
 //po_fm1:
-            r.dl = pw.partWk[r.di].voicenum;
+            r.dl = pw.partWk[r.di & 0xffff].voicenum;
             //pushf
             //cli
             pw.partb = r.al;
             if (pw.board2 != 0) {
                 sel44();
             }
-            if (pw.partWk[r.di].address != 0) { // break pof1_not_set;
+            if (pw.partWk[r.di & 0xffff].address != 0) { // break pof1_not_set;
                 neiro_reset();
             }
 //pof1_not_set:
@@ -8486,12 +8483,12 @@ pm_fm2: // ↑
         }
 //po_fm2:
         if (pw.board2 != 0) {
-            r.dl = pw.partWk[r.di].voicenum;
+            r.dl = pw.partWk[r.di & 0xffff].voicenum;
             //pushf
             //cli
             pw.partb = r.al;
             sel46();
-            if (pw.partWk[r.di].address != 0) { // break pof2_not_set;
+            if (pw.partWk[r.di & 0xffff].address != 0) { // break pof2_not_set;
                 neiro_reset();
             }
 //pof2_not_set:
@@ -8507,7 +8504,7 @@ pm_fm2: // ↑
      * When there is no board
      */
     private void int60_start_not_board() {
-        n_int60_jumptable[r.ah].run();
+        n_int60_jumptable[r.ah & 0xff].run();
 
         r.al = pw.al_push;
         r.ah = pw.ah_push;
@@ -8517,7 +8514,7 @@ pm_fm2: // ↑
 
     private Runnable[] n_int60_jumptable;
 
-    private void Set_n_int60_jumptable() {
+    private void set_n_int60_jumptable() {
         n_int60_jumptable = new Runnable[] {
 //                 nothing // 0
 //                ,nothing // 1
@@ -8593,35 +8590,35 @@ pm_fm2: // ↑
         pw.partb = 3;
         if (pw.board2 == 0) {
             r.di = (short) pw.part3; // offset part3
-            pw.partWk[r.di].partmask |= 2; // Part Mask
+            pw.partWk[r.di & 0xffff].partmask |= 2; // Part Mask
             r.di = (short) pw.part3b; // offset part3b
-            pw.partWk[r.di].partmask |= 2; // Part Mask
+            pw.partWk[r.di & 0xffff].partmask |= 2; // Part Mask
             r.di = (short) pw.part3c; // offset part3c
-            pw.partWk[r.di].partmask |= 2; // Part Mask
+            pw.partWk[r.di & 0xffff].partmask |= 2; // Part Mask
             r.di = (short) pw.part3d; // offset part3d
-            pw.partWk[r.di].partmask |= 2; // Part Mask
+            pw.partWk[r.di & 0xffff].partmask |= 2; // Part Mask
         } else {
             r.di = (short) pw.part6; // offset part6
-            pw.partWk[r.di].partmask |= 2; // Part Mask
+            pw.partWk[r.di & 0xffff].partmask |= 2; // Part Mask
         }
         r.bh = 0;
         r.bl = pw.fm_effec_num; // bx = effect no.
         r.di = (short) pw.part_e; // offset part_e
         r.al = 0;
-        pw.partWk[r.di].Clear(); // PartData Initialization
+        pw.partWk[r.di & 0xffff].clear(); // PartData Initialization
         r.addBx(r.getBx());
         r.addBx((short) pw.efcdat);
-        r.setAx((short) (pw.md[r.getBx()].dat + pw.md[r.getBx() + 1].dat * 0x100));
+        r.setAx((short) (pw.md[r.getBx() & 0xffff].dat + pw.md[(r.getBx() + 1) & 0xffff].dat * 0x100));
         r.addAx((short) pw.efcdat);
         r.di = (short) pw.part_e;
-        pw.partWk[r.di].address = r.getAx(); // Set of addresses
-        pw.partWk[r.di].leng = 1; // One more count to start playing
-        pw.partWk[r.di].volume = 108; // FM VOLUME DEFAULT= 108
-        pw.partWk[r.di].slotmask = (byte) 0xf0; // FM SLOTMASK
-        pw.partWk[r.di].neiromask = (byte) 0xff; // FM Neiro MASK
+        pw.partWk[r.di & 0xffff].address = r.getAx(); // Set of addresses
+        pw.partWk[r.di & 0xffff].leng = 1; // One more count to start playing
+        pw.partWk[r.di & 0xffff].volume = 108; // FM VOLUME DEFAULT= 108
+        pw.partWk[r.di & 0xffff].slotmask = (byte) 0xf0; // FM SLOTMASK
+        pw.partWk[r.di & 0xffff].neiromask = (byte) 0xff; // FM Neiro MASK
         if (pw.board2 != 0) {
             r.dl = (byte) 0xc0;
-            pw.partWk[r.di].fmpan = r.dl; // FM PAN = Middle
+            pw.partWk[r.di & 0xffff].fmpan = r.dl; // FM PAN = Middle
             r.dh = (byte) 0xb6;
             sel46(); // Even if mmain comes here, it will remain sel46
             opnset();
@@ -8655,24 +8652,24 @@ pm_fm2: // ↑
 
                 if (pw.board2 != 0) {
                     r.di = (short) pw.part6;
-                    r.dl = pw.partWk[r.di].voicenum;
+                    r.dl = pw.partWk[r.di & 0xffff].voicenum;
                     neiro_reset();
                 } else {
                     r.di = (short) pw.part3;
-                    r.dl = pw.partWk[r.di].voicenum;
+                    r.dl = pw.partWk[r.di & 0xffff].voicenum;
                     neiro_reset();
 
                     r.di = (short) pw.part3b;
-                    r.dl = pw.partWk[r.di].voicenum;
+                    r.dl = pw.partWk[r.di & 0xffff].voicenum;
                     neiro_reset();
 
                     r.di = (short) pw.part3c;
-                    r.dl = pw.partWk[r.di].voicenum;
+                    r.dl = pw.partWk[r.di & 0xffff].voicenum;
                     neiro_reset();
 
 
                     r.di = (short) pw.part3d;
-                    r.dl = pw.partWk[r.di].voicenum;
+                    r.dl = pw.partWk[r.di & 0xffff].voicenum;
                     neiro_reset();
 
                     r.al = pw.ch3mode_push;
@@ -8693,7 +8690,7 @@ pm_fm2: // ↑
      *  *Make sure the timer has gone off before flying.
      *   The only pushed registers are ax/dx/ds.
      */
-    private void FM_Timer_main() {
+    private void fm_Timer_main() {
         //push cx
         //
         // Timer Reset
@@ -8705,7 +8702,7 @@ pm_fm2: // ↑
         pc98.outPort(r.getDx(), r.al);
         _wait();
         r.ah = pw.ch3mode; // ah = value to output at 27h
-        r.al = (byte) pw.timer.getStatReg(); // pc98.InPort(r.dx); // rdychk ;al = status
+        r.al = (byte) pw.timer.getStatReg(); // pc98.inPort(r.dx); // rdychk ;al = status
         byte a = r.ah;
         r.ah = r.al;
         r.al = a; // ah = status / value to be output to al=27h
@@ -8730,7 +8727,7 @@ pm_fm2: // ↑
         r.ah--; // Timer A?
         if (r.ah == 0) { // break TimerA_int; // Process Timer A
 //TimerA_int:
-            TimerA_main();
+            timerA_main();
 //exit_Timer:
             return;
         }
@@ -8738,13 +8735,13 @@ pm_fm2: // ↑
         r.ah--; // Timer B?
         if (r.ah == 0) { // break TimerB_int; // Process Timer B
 //TimerB_int:
-            TimerB_main();
+            timerB_main();
 //exit_Timer:
             return;
         }
 
-        TimerB_main(); // same time
-        TimerA_main();
+        timerB_main(); // same time
+        timerA_main();
 
         //    cli
     }
@@ -8752,13 +8749,13 @@ pm_fm2: // ↑
     /**
      * TimerB processing [Main]
      */
-    private void TimerB_main() {
+    private void timerB_main() {
         if (pw.sync != 0) return;
         opnint_sub();
     }
 
     private void opnint_sub() {
-        pw.TimerBflag = 1;
+        pw.timerBFlag = 1;
         if (pw.music_flag != 0) { // break not_mstop;
             if ((pw.music_flag & 1) != 0) { // break not_mstart;
                 mstart();
@@ -8773,12 +8770,12 @@ pm_fm2: // ↑
             mmain();
             settempo_b();
             syousetu_count();
-            r.al = pw.TimerAtime;
+            r.al = pw.timerATime;
             pw.lastTimerAtime = r.al;
         }
 //not_play:
-        pw.TimerBflag = 0;
-        if ((pw.intfook_flag & 1) != 0) { // break TimerB_nojump;
+        pw.timerBFlag = 0;
+        if ((pw.intHook_flag & 1) != 0) { // break TimerB_nojump;
             //    call dword ptr[fmint_ofs]
         }
 //TimerB_nojump:
@@ -8787,10 +8784,10 @@ pm_fm2: // ↑
     /**
      * TimerA processing [Main]
      */
-    private void TimerA_main() {
-        pw.TimerAflag = 1;
-        pw.TimerAtime++;
-        r.al = pw.TimerAtime;
+    private void timerA_main() {
+        pw.timerAFlag = 1;
+        pw.timerATime++;
+        r.al = pw.timerATime;
         r.al &= 7;
         if (r.al == 0) { // break not_fade;
             fadeout(); // Fadeout processing
@@ -8820,11 +8817,11 @@ vtc000: // ↑
             if (pw.play_flag == 0)
                 break vtc000;
             if (pw.va != 0) {
-                r.al = pc98.InPort(8);
+                r.al = pc98.inPort(8);
                 r.ah = pw.esc_sp_key;
                 if ((r.ah & r.al) != 0)
                     break vtc000;
-                r.al = pc98.InPort(9);
+                r.al = pc98.inPort(9);
                 if ((r.al & 0b1000_0000) != 0)
                     break vtc000;
             } else {
@@ -8843,8 +8840,8 @@ vtc000: // ↑
             pw.fadeout_flag = 0; // Stopped with CTRL+ESC = Treated as external
         }
 //vtc000:
-        pw.TimerAflag = 0;
-        if ((pw.intfook_flag & 2) != 0) { // break TimerA_nojump;
+        pw.timerAFlag = 0;
+        if ((pw.intHook_flag & 2) != 0) { // break TimerA_nojump;
 
             //TBD
             //pw.efcint_ofs(); //dword ptr[efcint_ofs]
@@ -8883,9 +8880,9 @@ vtc000: // ↑
     }
 
     private void stb_ff() {
-        if (r.dl == pw.TimerB_speed) return;
+        if (r.dl == pw.timerB_speed) return;
 
-        pw.TimerB_speed = r.dl;
+        pw.timerB_speed = r.dl;
         r.dh = 0x26;
         opnset44();
 //stb_ret:
@@ -8900,9 +8897,9 @@ vtc000: // ↑
         if (r.carry) { // break rew_ret;
             r.setDx(pw.syousetu);
             r.al = pw.syousetu_lng;
-            r.al = (byte) (r.al >> 1);
-            r.al = (byte) (r.al >> 1);
-            if (pw.opncount >= r.al) {
+            r.al = (byte) (/* signed */ r.al >> 1);
+            r.al = (byte) (/* signed */ r.al >> 1);
+            if ((pw.opncount & 0xff) >= r.al) {
                 ff_music_main();
                 return;
             }
@@ -8927,7 +8924,7 @@ vtc000: // ↑
         if (pw.key_check == 0) // cy=0
             return;
         //cgr_main:
-        r.carry = pc98.GetGraphKey();
+        r.carry = pc98.getGraphKey();
     }
 
     private void comstart() {
@@ -8982,7 +8979,8 @@ vtc000: // ↑
         r.di = (short) pw.part1; // offset part1
         r.setCx((short) pw.max_part1);
         do {
-            pw.partWk[r.di++].Clear();
+            pw.partWk[r.di & 0xffff].clear();
+            r.di++;
             r.decCx();
         } while (r.getCx() != 0);
 
@@ -9038,19 +9036,19 @@ vtc000: // ↑
         //
 
         r.setAx((short) 1); // offset dataarea+1
-        pw.mmlbuf = r.getAx();
+        pw.mmlbuf = r.getAx() & 0xffff;
         r.decAx();
 
         r.bh = pw.mmldat_lng;
         r.bl = 0;
         r.slBx(2);
         r.addAx(r.getBx());
-        pw.tondat = r.getAx();
+        pw.tondat = r.getAx() & 0xffff;
         r.bh = pw.voicedat_lng;
         r.bl = 0;
         r.slBx(2);
         r.addAx(r.getBx());
-        pw.efcdat = r.getAx();
+        pw.efcdat = r.getAx() & 0xffff;
         pw.efcdat = -1; // No sound effects used
 
         Random rnd = new Random();
@@ -9060,11 +9058,11 @@ vtc000: // ↑
         // Initialize sound effects / FMINT / EFCINT
         //
         r.setAx((short) 0);
-        pw.fmint_seg = r.getAx();
-        pw.fmint_ofs = r.getAx();
-        pw.efcint_seg = r.getAx();
-        pw.efcint_ofs = r.getAx();
-        pw.intfook_flag = r.al;
+        pw.fmint_seg = r.getAx() & 0xffff;
+        pw.fmint_ofs = r.getAx() & 0xffff;
+        pw.efcint_seg = r.getAx() & 0xffff;
+        pw.efcint_ofs = r.getAx() & 0xffff;
+        pw.intHook_flag = r.al;
         pw.skip_flag = r.al;
         pw.effon = r.al;
         pw.fm_effec_flag = r.al;
@@ -9119,7 +9117,7 @@ opninit_next: // ↑
 opninit_exec: // ↑
                         {
                             do {
-                                r.al = pc98.InPort(r.getDx());
+                                r.al = pc98.inPort(r.getDx() & 0xffff);
                                 r.ah &= r.al;
                                 if ((r.ah & 0x80) == 0)
                                     break opninit_exec;
@@ -9139,7 +9137,7 @@ opninit_exec: // ↑
                             r.decCx();
                         } while (r.getCx() != 0);
                         r.addDx((short) 2);
-                        r.al = pc98.InPort(r.getDx());
+                        r.al = pc98.inPort(r.getDx() & 0xffff);
 
                         //popf
 
@@ -9175,7 +9173,7 @@ opninit_exec: // ↑
             //r.es = r.ax;
             //r.bx = pw.vector;
             r.setBx((short) 0); // les bx, es:[bx]
-            pw.int5ofs = r.getBx();
+            pw.int5ofs = r.getBx() & 0xffff;
             pw.int5seg = 0; // r.es;
 
             //
@@ -9195,7 +9193,7 @@ opninit_exec: // ↑
         r.setAx((short) 0);
         //r.es = r.ax;
         //r.bx = es:[pmdvector*4];
-        pw.int60ofs = r.getBx();
+        pw.int60ofs = r.getBx() & 0xffff;
         pw.int60seg = 0; // r.es;
 
         //
@@ -9266,23 +9264,23 @@ ppschk_exit: // ↑
             if (!r.carry) { // break ppzchk_end;
                 pw.ppz_call_seg = 1;
                 r.setAx((short) 0x410);
-                ChipDatum cd = new ChipDatum(0x04, r.al, 0);
+                ChipDatum cd = new ChipDatum(0x04, r.al & 0xff, 0);
                 ppz8em.apply(cd); // .ReadStatus(r.al); // int ppz_vec
                 r.ah = (byte) pw.int_level;
                 r.ah += 8;
                 if (r.al == r.ah) { // break ppzchk_next;
                     //push es
                     r.setAx((short) 0x409);
-                    cd = new ChipDatum(0x04, r.al, 0);
+                    cd = new ChipDatum(0x04, r.al & 0xff, 0);
                     ppz8em.apply(cd); // .ReadStatus(r.al); // int ppz_vec
                     r.setAx((short) 0); // r.es;
                     // pop es
-                    pw.ppz_call_ofs = r.getBx();
-                    pw.ppz_call_seg = r.getAx();
+                    pw.ppz_call_ofs = r.getBx() & 0xffff;
+                    pw.ppz_call_seg = r.getAx() & 0xffff;
                 }
 //ppzchk_next:
                 r.setAx((short) 0x1901);
-                cd = new ChipDatum(0x19, 0, r.al);
+                cd = new ChipDatum(0x19, 0, r.al & 0xff);
                 ppz8em.apply(cd); // .SetReleaseFlag(r.al); // int ppz_vec; Do not release resident
                 if (pw.message_flag == 0) {
                     mask_eoi_set();
@@ -9329,7 +9327,8 @@ ppschk_exit: // ↑
             r.setCx((short) pw.max_part1); // max_part1*type qq
             r.al = 0;
             do {
-                pw.partWk[r.di++].Clear();
+                pw.partWk[r.di & 0xffff].clear();
+                r.di++;
                 r.decCx();
             } while (r.getCx() != 0); // Partwork All Reset
 
@@ -9346,7 +9345,7 @@ ppschk_exit: // ↑
             r.al = (byte) pw.int_level;
             intset();
             if (pw.va != 0) {
-                r.al = pc98.InPort(0x32);
+                r.al = pc98.inPort(0x32);
                 //jmp $+2
                 r.al &= 0x7f;
                 pc98.outPort((short) 0x32, r.al);
@@ -9565,7 +9564,7 @@ ppschk_exit: // ↑
         List<Object> obj = md.args;
         MmlDatum mmd = (MmlDatum) obj.get(0);
 
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
         cd.additionalData = mmd;
         writeDummy(cd);
     }

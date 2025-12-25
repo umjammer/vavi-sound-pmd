@@ -3,7 +3,6 @@ package pmd.console;
 import java.io.OutputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,12 +72,12 @@ class Program {
             compiler.mcArgs = lstMcArg.toArray(String[]::new);
 
             env = new Environment();
-            env.AddEnv("arranger");
-            env.AddEnv("composer");
-            env.AddEnv("user");
-            env.AddEnv("mcopt");
-            env.AddEnv("pmd");
-            compiler.env = env.GetEnv();
+            env.addEnv("arranger");
+            env.addEnv("composer");
+            env.addEnv("user");
+            env.addEnv("mcopt");
+            env.addEnv("pmd");
+            compiler.env = env.getEnv();
 
             // Get various file names
             int s = 0;
@@ -111,7 +110,7 @@ class Program {
                 // The default is the source file name with the extension changed to .M.
                 String destFileName = "";
                 if (srcFile != null && !srcFile.isEmpty()) {
-                    destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), String.format("%s.M", Path.getFileNameWithoutExtension(srcFile)));
+                    destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), "%s.M".formatted(Path.getFileNameWithoutExtension(srcFile)));
                 }
 
                 // Get Filename from Tag
@@ -125,7 +124,7 @@ class Program {
                 Tuple<String, String>[] tags = compiler.getTags(srcText, Program::appendFileReaderCallback);
                 if (tags != null && tags.length > 0) {
                     for (Tuple<String, String> tag : tags) {
-                        logger.log(Level.TRACE, String.format("%s\t: %s", tag.getItem1(), tag.getItem2()));
+                        logger.log(Level.TRACE, "%s\t: %s".formatted(tag.getItem1(), tag.getItem2()));
                         // Get the output file name
                         if (tag.getItem1().toUpperCase().indexOf("#FI") != 0) continue; // Because mc is judged up to three characters
                         outFileName = tag.getItem2();
@@ -136,16 +135,12 @@ class Program {
                 if (outFileName != null && !outFileName.isEmpty()) {
                     if (outFileName.charAt(0) != '.') {
                         // When specifying a file name
-                        destFileName = Path.combine(
-                                Path.getDirectoryName(Path.getFullPath(srcFile))
-                                , outFileName);
+                        destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), outFileName);
                     } else {
                         // When specifying the extension only
                         destFileName = Path.combine(
-                                Path.getDirectoryName(Path.getFullPath(srcFile))
-                                , "%s%s".formatted(
-                                        Path.getFileNameWithoutExtension(srcFile)
-                                        , outFileName));
+                                Path.getDirectoryName(Path.getFullPath(srcFile)), "%s%s".formatted(
+                                        Path.getFileNameWithoutExtension(srcFile), outFileName));
                     }
                 }
 
@@ -175,7 +170,7 @@ class Program {
                 }
             } else {
 
-                String destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), String.format("%s.xml", Path.getFileNameWithoutExtension(srcFile)));
+                String destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), "%s.xml".formatted(Path.getFileNameWithoutExtension(srcFile)));
                 if (desFile != null) {
                     destFileName = desFile;
                 }
@@ -206,7 +201,7 @@ class Program {
         String fn;
         fn = Path.combine(Path.getDirectoryName(srcFile), arg);
 
-        String[] envPaths = env.GetEnvVal("pmd");
+        String[] envPaths = env.getEnvVal("pmd");
         if (envPaths != null) {
             int i = 0;
             while (!File.exists(fn) && i < envPaths.length) {

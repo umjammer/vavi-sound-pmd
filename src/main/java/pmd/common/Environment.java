@@ -7,30 +7,30 @@ import java.util.List;
 
 public class Environment {
 
-    private List<String> envs = null;
+    private final List<String> envs;
 
     public Environment() {
         envs = new ArrayList<>();
     }
 
-    public void AddEnv(String envname) {
-        var env = System.getenv(envname);
+    public void addEnv(String envName) {
+        var env = System.getenv(envName);
         if (env != null && !env.isEmpty()) {
-            envs.add(String.format("%s=%s", envname, env));
+            envs.add("%s=%s".formatted(envName, env));
         }
     }
 
-    public String[] GetEnv() {
+    public String[] getEnv() {
         return envs.toArray(String[]::new);
     }
 
-    public String[] GetEnvVal(String envname) {
+    public String[] getEnvVal(String envName) {
         if (envs == null) return null;
 
         for (String item : envs) {
             String[] kv = item.split("=");
             if (kv.length != 2) continue;
-            if (!kv[0].equalsIgnoreCase(envname)) continue;
+            if (!kv[0].equalsIgnoreCase(envName)) continue;
 
             String[] vals = kv[1].split(";");
             return vals;

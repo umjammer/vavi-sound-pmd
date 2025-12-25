@@ -8,10 +8,10 @@ import musicDriverInterface.MmlDatum;
 
 public class EFCDRV {
 
-    private PMD pmd;
-    private PW pw;
-    private X86Register r;
-    private Function<ChipDatum, Integer> ppsdrv;
+    private final PMD pmd;
+    private final PW pw;
+    private final X86Register r;
+    private final Function<ChipDatum, Integer> ppsdrv;
 
     public EFCDRV(PMD pmd, PW pw, X86Register r, Function<ChipDatum, Integer> ppsdrv) {
         this.pmd = pmd;
@@ -21,7 +21,7 @@ public class EFCDRV {
     }
 
     public void effgo() {
-        if (pw.ppsdrv_flag != 0) { //break effgo2;
+        if (pw.ppsdrv_flag != 0) { // break effgo2;
             r.al |= (byte) 0x80;
             r.zero = pw.last_shot_data == r.al;
             pw.last_shot_data = r.al;
@@ -60,10 +60,10 @@ public class EFCDRV {
             if ((r.al & 0x80) != 0) { // break eg_nonppsdrv;
 
                 // ppsdrv
-                if (pw.effon >= 2) return; // break effret; // ; Do not vocalize during normal sound effect playback
+                if ((pw.effon & 0xff) >= 2) return; // break effret; // ; Do not vocalize during normal sound effect playback
 
                 r.setBx((short) pw.part9); // PSG 3ch
-                pw.partWk[r.getBx()].partmask |= 2; // Part Mask
+                pw.partWk[r.getBx() & 0xffff].partmask |= 2; // Part Mask
                 pw.effon = 1; // Priority 1 (ppsdrv)
                 pw.psgefcnum = r.al; // Tone number setting (80H~)
 
@@ -71,15 +71,15 @@ public class EFCDRV {
                 r.ah = pw.hosei_flag;
                 r.ah = r.ror(r.ah, 1);
                 if (r.carry) { // break not_tone_hosei;
-                    r.setBx(pw.partWk[r.di].detune);
+                    r.setBx(pw.partWk[r.di & 0xffff].detune);
                     r.bh = r.bl; // BH = Lower 8 bits of Detune
                     r.bl = 15;
                 }
 //not_tone_hosei:
                 r.ah = r.ror(r.ah, 1);
                 if (r.carry) { // break not_volume_hosei;
-                    r.ah = pw.partWk[r.di].volume;
-                    if (r.ah < 15) { // break fade_hosei;
+                    r.ah = pw.partWk[r.di & 0xffff].volume;
+                    if ((r.ah & 0xff) < 15) { // break fade_hosei;
                         r.bl = r.ah; // BL = volume value(0 to 15)
                     }
 //fade_hosei:
@@ -88,7 +88,7 @@ public class EFCDRV {
                         r.stack.push(r.getAx());
                         r.al = r.bl;
                         r.ah = (byte) -r.ah;
-                        r.setAx((short) (r.al * r.ah));
+                        r.setAx((short) ((r.al & 0xff) * (r.ah & 0xff)));
                         r.bl = r.ah;
                         r.setAx(r.stack.pop());
                     }
@@ -99,7 +99,7 @@ public class EFCDRV {
                     r.ah = 1; // command
                     r.al &= 0x7f; // num?
 
-                    ChipDatum cd = new ChipDatum(-1, -1, -1);
+                    ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
                     cd.additionalData = pw.cmd;
                     pmd.WriteOPNARegister.accept(cd);
                     if (pw.cmd != null && pw.cmd.args != null && pw.cmd.args.size() > 2 && pw.cmd.args.get(2) instanceof MmlDatum[]) {
@@ -108,7 +108,7 @@ public class EFCDRV {
                         }
                     }
 
-                    cd = new ChipDatum(0x01, ((r.al & 0xff) << 8) | (r.bh & 0xff), r.bl);
+                    cd = new ChipDatum(0x01, ((r.al & 0xff) << 8) | (r.bh & 0xff), r.bl & 0xff);
                     ppsdrv.apply(cd); // .Play(r.al, r.bh, r.bl); // ppsdrv keyon
                 }
 //ppsdrm_ret:
@@ -125,7 +125,7 @@ public class EFCDRV {
         //r.bx += 0; // offset efftbl
 
         r.al = pw.effon;
-        if (r.al > pw.efftbl.get(r.getBx()).getItem1()) // cmp al,[bx]; Priority
+        if ((r.al & 0xff) > pw.efftbl.get(r.getBx() & 0xffff).getItem1()) // cmp al,[bx]; Priority
             return; // break eg_ret;
 
         if (pw.ppsdrv_flag != 0) { // break eok_nonppsdrv;
@@ -135,7 +135,7 @@ public class EFCDRV {
         }
 //eok_nonppsdrv:
 
-        ChipDatum cd = new ChipDatum(-1, -1, -1);
+        ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
         cd.additionalData = pw.cmd;
         pmd.WriteOPNARegister.accept(cd);
         if (pw.cmd != null && pw.cmd.args != null && pw.cmd.args.size() > 2 && pw.cmd.args.get(2) instanceof MmlDatum[]) {
@@ -145,12 +145,12 @@ public class EFCDRV {
         }
 
         r.setSi((short) 0); // pw.efftbl[r.bx].getItem2();
-        r.setSi((short) (r.getSi() + 0)); // offset efftbl
-        pw.crtEfcDat = pw.efftbl.get(r.getBx()).getItem2();
-        r.al = (byte) (int) pw.efftbl.get(r.getBx()).getItem1(); // AL = Priority
+        r.setSi((short) ((r.getSi() & 0xffff) + 0)); // offset efftbl
+        pw.crtEfcDat = pw.efftbl.get(r.getBx() & 0xffff).getItem2();
+        r.al = (byte) (int) pw.efftbl.get(r.getBx() & 0xffff).getItem1(); // AL = Priority
         r.stack.push(r.getAx());
         r.setBx((short) pw.part9); // PSG 3ch
-        pw.partWk[r.getBx()].partmask |= 2; // Part Mask
+        pw.partWk[r.getBx() & 0xffff].partmask |= 2; // Part Mask
         efffor(); // Pronounce the first sound
         r.setAx(r.stack.pop());
         pw.effon = r.al; // Set Priority (start of pronunciation)
@@ -175,7 +175,7 @@ public class EFCDRV {
     }
 
     private void efffor() {
-        r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff);
+        r.al = (byte) (pw.crtEfcDat[r.incSi() & 0xffff].dat & 0xff);
         if (r.al == (byte) 0xff) { // -1
             effend();
             return;
@@ -192,13 +192,13 @@ public class EFCDRV {
         //popf
         r.ch = r.dl;
         pw.eswthz = r.getCx();
-        r.dl = (byte) (pw.crtEfcDat[r.getSi()].dat & 0xff);
+        r.dl = (byte) (pw.crtEfcDat[r.getSi() & 0xffff].dat & 0xff);
         pw.eswnhz = r.dl;
         r.dh = 6;
         efsnd(); // noise
         pw.psnoi_last = r.dl;
 
-        r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff); // data
+        r.al = (byte) (pw.crtEfcDat[r.incSi() & 0xffff].dat & 0xff); // data
         r.dl = r.al;
         r.dl = r.rol(r.dl, 1);
         r.dl = r.rol(r.dl, 1);
@@ -218,20 +218,20 @@ public class EFCDRV {
         efsnd();
         efsnd(); // Envelope Pattern
 
-        r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff);
+        r.al = (byte) (pw.crtEfcDat[r.incSi() & 0xffff].dat & 0xff);
 
-        r.setAx(r.al); //    cbw
+        r.setAx(/* signed */ r.al); //    cbw
         pw.eswtst = r.getAx(); // Sweep increment (TONE)
-        r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff);
+        r.al = (byte) (pw.crtEfcDat[r.incSi() & 0xffff].dat & 0xff);
         pw.eswnst = r.al; // Sweep Increment (NOISE)
         r.al &= 15;
         pw.eswnct = r.al; // Sweep Count (NOISE)
         pw.effadr = r.getSi();
-        //effret:;
+//effret:
     }
 
     private void efsnd() {
-        r.al = (byte) (pw.crtEfcDat[r.incSi()].dat & 0xff);
+        r.al = (byte) (pw.crtEfcDat[r.incSi() & 0xffff].dat & 0xff);
         r.dl = r.al;
         pmd.opnset44();
         r.dh++;
@@ -268,7 +268,7 @@ public class EFCDRV {
     // Normal processing
     private void effsweep() {
         r.setAx(pw.eswthz); // Sweep Frequency
-        r.setAx((short) (r.getAx() + pw.eswtst));
+        r.setAx((short) ((r.getAx() & 0xffff) + (pw.eswtst & 0xffff)));
         pw.eswthz = r.getAx(); // Sweep Frequency
         r.dh = 4; // REG
         r.dl = r.al; // DATA
@@ -290,10 +290,10 @@ public class EFCDRV {
         r.al = r.dl;
         r.al &= 15;
         pw.eswnct = r.al;
-        r.dl >>= 1;
-        r.dl >>= 1;
-        r.dl >>= 1;
-        r.dl >>= 1;
+        r.dl = (byte) ((r.dl & 0xff) >>> 1);
+        r.dl = (byte) ((r.dl & 0xff) >>> 1);
+        r.dl = (byte) ((r.dl & 0xff) >>> 1);
+        r.dl = (byte) ((r.dl & 0xff) >>> 1);
         pw.eswnhz += r.dl;
         r.dl = pw.eswnhz;
         r.dh = 6;

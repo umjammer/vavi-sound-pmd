@@ -38,7 +38,7 @@ public class X86Register {
 
     // >>=
     public void srAx(int value) {
-        setAx((short) (getAx() >>> value));
+        setAx((short) ((getAx() & 0xffff) >>> value));
     }
 
     // |=
@@ -60,7 +60,7 @@ public class X86Register {
 
     public void setBx(short value) {
         if (pw != null && pw.checkJumpIndexBX) {
-            if (value == pw.jumpIndex)
+            if ((value & 0xffff) == pw.jumpIndex)
                 pw.jumpIndex = -1;
         }
 
@@ -86,7 +86,7 @@ public class X86Register {
 
     // >>=
     public void srBx(int value) {
-        setBx((short) (getBx() >>> value));
+        setBx((short) ((getBx() & 0xffff) >>> value));
     }
 
     // <<=
@@ -162,9 +162,13 @@ public class X86Register {
         subDx((short) 1);
     }
 
+    public void andDx(short value) {
+        setDx((short) (getDx() & value));
+    }
+
     // >>=
     public void srDx(int value) {
-        setDx((short) (getDx() >>> value));
+        setDx((short) ((getDx() & 0xffff) >>> value));
     }
 
     short di;
@@ -181,7 +185,7 @@ public class X86Register {
 
     public void setSi(short value) {
         if (pw != null && pw.checkJumpIndexSI) {
-            if (value == pw.jumpIndex)
+            if ((value & 0xffff) == pw.jumpIndex)
                 pw.jumpIndex = -1;
         }
         _si = value;
@@ -195,6 +199,7 @@ public class X86Register {
         setSi((short) (_si - value));
     }
 
+    /** get and inc */
     public short incSi() {
         try {
             return _si;
@@ -203,6 +208,7 @@ public class X86Register {
         }
     }
 
+    /** get and dec */
     public short decSi() {
         try {
             return _si;
@@ -237,7 +243,7 @@ public class X86Register {
 
     public final Deque<Short> stack = new LinkedList<>();
 
-    public final Object lockobj = new Object();
+    public final Object lockObj = new Object();
 
     private static final int[] bitMask = new int[] {0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff};
 
@@ -257,10 +263,9 @@ public class X86Register {
 
     public byte rcl(byte r, int n) {
         n &= 7;
-        byte ans = (byte) (
-                ((r & 0xff) << n)
-                        | ((carry ? 1 : 0) << n)
-                        | (n < 2 ? 0 : ((r & 0xff) >> (9 - n)))
+        byte ans = (byte) (((r & 0xff) << n) |
+                        ((carry ? 1 : 0) << n) |
+                        (n < 2 ? 0 : ((r & 0xff) >> (9 - n)))
         ); // & bitMask[n]));
         carry = ((r & (0x100 >> n)) != 0);
         return ans;
@@ -268,10 +273,9 @@ public class X86Register {
 
     public byte rcr(byte r, int n) {
         n &= 7;
-        byte ans = (byte) (
-                (n < 2 ? 0 : ((r & 0xff) << (9 - n)))
-                        | ((carry ? 0x100 : 0) >> n)
-                        | ((r & 0xff) >> n)
+        byte ans = (byte) ((n < 2 ? 0 : ((r & 0xff) << (9 - n))) |
+                ((carry ? 0x100 : 0) >> n) |
+                ((r & 0xff) >> n)
         ); // & bitMask[n]));
         carry = ((r & (0x100 >> n)) != 0);
         return ans;

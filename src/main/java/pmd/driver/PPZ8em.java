@@ -13,13 +13,13 @@ import static java.lang.System.getLogger;
 //
 // ppz8l.cpp / ppz8l.h Created with reference to (by C60)
 //
-public class _PPZ8em {
+public class PPZ8em {
 
-    private static final Logger logger = getLogger(_PPZ8em.class.getName());
+    private static final Logger logger = getLogger(PPZ8em.class.getName());
 
     public byte[][] pcmData = new byte[2][];
-    private boolean[] isPVI = new boolean[2];
-    private PPZChannelWork[] chWk = {
+    private final boolean[] isPVI = new boolean[2];
+    private final PPZChannelWork[] chWk = {
             new PPZChannelWork(), new PPZChannelWork(), new PPZChannelWork(), new PPZChannelWork(),
             new PPZChannelWork(), new PPZChannelWork(), new PPZChannelWork(), new PPZChannelWork()
     };
@@ -27,24 +27,24 @@ public class _PPZ8em {
     public int ptr = 0;
     private boolean interrupt = false;
     private byte adpcmEmu;
-    private short[][] VolumeTable = {
+    private final short[][] VolumeTable = {
             new short[256], new short[256], new short[256], new short[256],
             new short[256], new short[256], new short[256], new short[256],
             new short[256], new short[256], new short[256], new short[256],
             new short[256], new short[256], new short[256], new short[256]
     };
-    private double SamplingRate = 44100.0;
-    private int PCM_VOLUME = 0;
+    private double samplingRate = 44100.0;
+    private int pcmVolume = 0;
     private int volume = 0;
 
-    public _PPZ8em(int SamplingRate /* = 44100 */) {
-        this.SamplingRate = SamplingRate;
+    public PPZ8em(int samplingRate /* = 44100 */) {
+        this.samplingRate = samplingRate;
     }
 
     /**
      * 0x00 Initialization
      */
-    public void Initialize() {
+    public void initialize() {
         bank = 0;
         ptr = 0;
         interrupt = false;
@@ -58,20 +58,20 @@ public class _PPZ8em {
             chWk[i]._loopStartOffset = -1;
             chWk[i]._loopEndOffset = -1;
         }
-        PCM_VOLUME = 0;
+        pcmVolume = 0;
         volume = 0;
-        SetAllVolume(12);
+        setAllVolume(12);
     }
 
-    private void MakeVolumeTable(int vol) {
+    private void makeVolumeTable(int vol) {
         int i, j;
         double temp;
 
         volume = vol;
-        int AVolume = (int) (0x1000 * Math.pow(10.0, vol / 40.0));
+        int aVolume = (int) (0x1000 * Math.pow(10.0, vol / 40.0));
 
         for (i = 0; i < 16; i++) {
-            temp = Math.pow(2.0, (i + PCM_VOLUME) / 2.0) * AVolume / 0x18000;
+            temp = Math.pow(2.0, (i + pcmVolume) / 2.0) * aVolume / 0x18000;
             for (j = 0; j < 256; j++) {
                 VolumeTable[i][j] = (short) (Math.max(Math.min((j - 128) * temp, Short.MAX_VALUE), Short.MIN_VALUE));
             }
@@ -84,10 +84,8 @@ public class _PPZ8em {
      * @param al PCM Channel (0-7)
      * @param dx PCM tone number
      */
-    public void PlayPCM(byte al, short dx) {
-//#if DEBUG
-        logger.log(Level.TRACE, String.format("ppz8em: PlayPCM: ch:%d @:%d", al, dx));
-//#endif
+    public void playPCM(byte al, short dx) {
+        logger.log(Level.TRACE, "ppz8em: PlayPCM: ch:%d @:%d".formatted(al, dx & 0xffff));
 
         int bank = (dx & 0x8000) != 0 ? 1 : 0;
         int num = dx & 0x7fff;
@@ -95,42 +93,38 @@ public class _PPZ8em {
         chWk[al].num = num;
 
         if (pcmData[bank] != null) {
-            chWk[al].ptr = (pcmData[bank][num * 0x12 + 32] & 0xff)
-                    + (pcmData[bank][num * 0x12 + 1 + 32] & 0xff) * 0x100
-                    + (pcmData[bank][num * 0x12 + 2 + 32] & 0xff) * 0x10000
-                    + (pcmData[bank][num * 0x12 + 3 + 32] & 0xff) * 0x1000000
-                    + 0x20 + 0x12 * 128;
+            chWk[al].ptr = (pcmData[bank][num * 0x12 + 32] & 0xff) +
+                    (pcmData[bank][num * 0x12 + 1 + 32] & 0xff) * 0x100 +
+                    (pcmData[bank][num * 0x12 + 2 + 32] & 0xff) * 0x10000 +
+                    (pcmData[bank][num * 0x12 + 3 + 32] & 0xff) * 0x1000000 +
+                    0x20 + 0x12 * 128;
             if (chWk[al].ptr >= pcmData[bank].length) {
                 chWk[al].ptr = pcmData[bank].length - 1;
             }
-            chWk[al].end = chWk[al].ptr
-                    + (pcmData[bank][num * 0x12 + 4 + 32] & 0xff)
-                    + (pcmData[bank][num * 0x12 + 5 + 32] & 0xff) * 0x100
-                    + (pcmData[bank][num * 0x12 + 6 + 32] & 0xff) * 0x1_0000
-                    + (pcmData[bank][num * 0x12 + 7 + 32] & 0xff) * 0x10_00000
-            ;
+            chWk[al].end = chWk[al].ptr +
+                    (pcmData[bank][num * 0x12 + 4 + 32] & 0xff) +
+                    (pcmData[bank][num * 0x12 + 5 + 32] & 0xff) * 0x100 +
+                    (pcmData[bank][num * 0x12 + 6 + 32] & 0xff) * 0x1_0000 +
+                    (pcmData[bank][num * 0x12 + 7 + 32] & 0xff) * 0x10_00000;
             if (chWk[al].end >= pcmData[bank].length) {
                 chWk[al].end = pcmData[bank].length - 1;
             }
 
-
             chWk[al].loopStartOffset = chWk[al]._loopStartOffset;
             if (chWk[al]._loopStartOffset == -1) {
-                chWk[al].loopStartOffset = 0
-                        + (pcmData[bank][num * 0x12 + 8 + 32] & 0xff)
-                        + (pcmData[bank][num * 0x12 + 9 + 32] & 0xff) * 0x100
-                        + (pcmData[bank][num * 0x12 + 10 + 32] & 0xff) * 0x1_0000
-                        + (pcmData[bank][num * 0x12 + 11 + 32] & 0xff) * 0x100_0000
-                ;
+                chWk[al].loopStartOffset = 0 +
+                        (pcmData[bank][num * 0x12 + 8 + 32] & 0xff) +
+                        (pcmData[bank][num * 0x12 + 9 + 32] & 0xff) * 0x100 +
+                        (pcmData[bank][num * 0x12 + 10 + 32] & 0xff) * 0x1_0000 +
+                        (pcmData[bank][num * 0x12 + 11 + 32] & 0xff) * 0x100_0000;
             }
             chWk[al].loopEndOffset = chWk[al]._loopEndOffset;
             if (chWk[al]._loopEndOffset == -1) {
-                chWk[al].loopEndOffset = 0
-                        + (pcmData[bank][num * 0x12 + 12 + 32] & 0xff)
-                        + (pcmData[bank][num * 0x12 + 13 + 32] & 0xff) * 0x100
-                        + (pcmData[bank][num * 0x12 + 14 + 32] & 0xff) * 0x1_0000
-                        + (pcmData[bank][num * 0x12 + 15 + 32]  & 0xff)* 0x100_0000
-                ;
+                chWk[al].loopEndOffset = 0 +
+                        (pcmData[bank][num * 0x12 + 12 + 32] & 0xff) +
+                        (pcmData[bank][num * 0x12 + 13 + 32] & 0xff) * 0x100 +
+                        (pcmData[bank][num * 0x12 + 14 + 32] & 0xff) * 0x1_0000 +
+                        (pcmData[bank][num * 0x12 + 15 + 32] & 0xff) * 0x100_0000;
             }
             if (chWk[al].loopStartOffset == 0xffff && chWk[al].loopEndOffset == 0xffff) {
                 chWk[al].loopStartOffset = -1;
@@ -138,10 +132,9 @@ public class _PPZ8em {
             }
 
             // Seems unnecessary?
-            //chWk[al].srcFrequency = (short)(chWk[al].ptr
-            //    + pcmData[bank][num * 0x12 + 16 + 32]
-            //    + pcmData[bank][num * 0x12 + 17 + 32] * 0x100
-            //    );
+            //chWk[al].srcFrequency = (short)(chWk[al].ptr +
+            //    pcmData[bank][num * 0x12 + 16 + 32] +
+            //    pcmData[bank][num * 0x12 + 17 + 32] * 0x100);
 
             //chWk[al].frequency = chWk[al]._frequency;
             chWk[al].srcFrequency = chWk[al]._srcFrequency;
@@ -156,8 +149,8 @@ public class _PPZ8em {
      *
      * @param al PCM Channel (0-7)
      */
-    public void StopPCM(byte al) {
-        logger.log(Level.TRACE, String.format("ppz8em: StopPCM: ch:%d", al));
+    public void stopPCM(byte al) {
+        logger.log(Level.TRACE, "ppz8em: StopPCM: ch:%d".formatted(al));
 
         chWk[al].playing = false;
     }
@@ -170,8 +163,8 @@ public class _PPZ8em {
      * @param pcmData File Contents
      * <returns></returns>
      */
-    public int LoadPcm(byte bank, byte mode, byte[] pcmData) {
-        logger.log(Level.TRACE, String.format("ppz8em: LoadPCM: bank:%d mode:%d", bank, mode));
+    public int loadPcm(byte bank, byte mode, byte[] pcmData) {
+        logger.log(Level.TRACE, "ppz8em: LoadPCM: bank:%d mode:%d".formatted(bank & 0xff, mode & 0xff));
 
         bank &= 1;
         mode &= 1;
@@ -179,16 +172,16 @@ public class _PPZ8em {
         this.pcmData[bank] = null;
 
         if (mode == 0) // PVI Format
-            ret = CheckPVI(pcmData);
+            ret = checkPVI(pcmData);
         else // PZI format
-            ret = CheckPZI(pcmData);
+            ret = checkPZI(pcmData);
 
         if (ret == 0) {
             this.pcmData[bank] = new byte[pcmData.length];
             System.arraycopy(pcmData, 0, this.pcmData[bank], 0, pcmData.length);
             isPVI[bank] = mode == 0;
             if (isPVI[bank]) {
-                ret = ConvertPviAdpcmToPziPcm(bank);
+                ret = convertPviAdpcmToPziPcm(bank);
             }
         }
 
@@ -200,7 +193,7 @@ public class _PPZ8em {
      *
      * @param al 
      */
-    public void ReadStatus(byte al) {
+    public void readStatus(byte al) {
         switch (al) {
             case 0xd:
                 logger.log(Level.TRACE, "ppz8em: ReadStatus: PCM0 table address");
@@ -223,8 +216,8 @@ public class _PPZ8em {
      * @param al PCM Channel (0-7)
      * @param dx Volume (0-15 / 0-255)
      */
-    public void SetVolume(byte al, short dx) {
-        logger.log(Level.TRACE, "ppz8em: SetVolume: Ch:%d vol:%d".formatted(al, dx));
+    public void setVolume(byte al, short dx) {
+        logger.log(Level.TRACE, "ppz8em: SetVolume: Ch:%d vol:%d".formatted(al & 0xff, dx & 0xffff));
 
         chWk[al].volume = dx;
     }
@@ -236,8 +229,8 @@ public class _PPZ8em {
      * @param dx PCM Pitch Frequency DX
      * @param cx PCM pitch frequency CX
      */
-    public void SetFrequency(byte al, short dx, short cx) {
-        logger.log(Level.TRACE, "ppz8em: SetFrequency: 0x%08x".formatted(dx * 0x1_0000 + cx));
+    public void setFrequency(byte al, short dx, short cx) {
+        logger.log(Level.TRACE, "ppz8em: SetFrequency: 0x%08x".formatted((dx & 0xffff) * 0x1_0000 + (cx & 0xffff)));
 
         chWk[al].frequency = (dx & 0xffff) * 0x1_0000 + (cx & 0xffff);
     }
@@ -251,7 +244,7 @@ public class _PPZ8em {
      * @param lpEdOfsDI Loop End Offset DI
      * @param lpEdOfsSI Loop End Offset SI
      */
-    public void SetLoopPoint(byte al, short lpStOfsDX, short lpStOfsCX, short lpEdOfsDI, short lpEdOfsSI) {
+    public void setLoopPoint(byte al, short lpStOfsDX, short lpStOfsCX, short lpEdOfsDI, short lpEdOfsSI) {
         logger.log(Level.TRACE, "ppz8em: SetLoopPoint: St:0x%08x Ed:0x%08x".formatted(
                 (lpStOfsDX & 0xffff) * 0x1_0000 + (lpStOfsCX & 0xffff), (lpEdOfsDI & 0xffff) * 0x1_0000 + (lpEdOfsSI & 0xffff)));
 
@@ -268,7 +261,7 @@ public class _PPZ8em {
     /**
      * 0x12 Stop PCM interrupts
      */
-    public void StopInterrupt() {
+    public void stopInterrupt() {
         logger.log(Level.TRACE, "ppz8em: StopInterrupt");
 
         interrupt = true;
@@ -280,12 +273,12 @@ public class _PPZ8em {
      * @param al PCM Channel (0-7)
      * @param dx PAN(0~9)
      */
-    public void SetPan(byte al, short dx) {
+    public void setPan(byte al, short dx) {
         logger.log(Level.TRACE, "ppz8em: SetPan: %d".formatted(dx));
 
         chWk[al].pan = dx;
-        chWk[al].panL = (chWk[al].pan < 6 ? 1.0 : (0.25 * (9 - chWk[al].pan)));
-        chWk[al].panR = (chWk[al].pan > 4 ? 1.0 : (0.25 * chWk[al].pan));
+        chWk[al].panL = ((chWk[al].pan & 0xffff) < 6 ? 1.0 : (0.25 * (9 - (chWk[al].pan & 0xffff))));
+        chWk[al].panR = ((chWk[al].pan & 0xffff) > 4 ? 1.0 : (0.25 * (chWk[al].pan & 0xffff)));
     }
 
     /**
@@ -294,30 +287,30 @@ public class _PPZ8em {
      * @param al PCM Channel (0-7)
      * @param dx Original Frequency
      */
-    public void SetSrcFrequency(byte al, short dx) {
+    public void setSrcFrequency(byte al, short dx) {
         logger.log(Level.TRACE, "ppz8em: SetSrcFrequency: %d".formatted(dx));
 
-        chWk[al]._srcFrequency = dx;
+        chWk[al]._srcFrequency = dx & 0xffff;
     }
 
     /**
      * 0x16 Overall Volume
      */
-    public void SetAllVolume(int vol) {
+    public void setAllVolume(int vol) {
         logger.log(Level.TRACE, "ppz8em: SetAllVolume: %d".formatted(vol));
 
-        if (vol < 16 && vol != PCM_VOLUME) {
-            PCM_VOLUME = vol;
-            MakeVolumeTable(volume);
+        if (vol < 16 && vol != pcmVolume) {
+            pcmVolume = vol;
+            makeVolumeTable(volume);
         }
     }
 
     //
     // For volume adjustment
     //
-    public void SetVolume(int vol) {
+    public void setVolume(int vol) {
         if (vol != volume) {
-            MakeVolumeTable(vol);
+            makeVolumeTable(vol);
         }
     }
 
@@ -326,7 +319,7 @@ public class _PPZ8em {
      *
      * @param al 0: Do not emulate ADPCM on channel 7. 1: Emulate.
      */
-    public void SetAdpcmEmu(byte al) {
+    public void setAdpcmEmu(byte al) {
         logger.log(Level.TRACE, "ppz8em: SetAdpcmEmu: %d".formatted(al));
 
         adpcmEmu = al;
@@ -337,11 +330,11 @@ public class _PPZ8em {
      *
      * @param v 0: Permitted to cancel resident mode 1: Prohibited to cancel resident mode
      */
-    public void SetReleaseFlag(int v) {
+    public void setReleaseFlag(int v) {
         // Do nothing
     }
 
-    private int CheckPZI(byte[] pcmData) {
+    private int checkPZI(byte[] pcmData) {
         if (pcmData == null)
             return 5;
         if (!(pcmData[0] == 'P' && pcmData[1] == 'Z' && pcmData[2] == 'I'))
@@ -350,7 +343,7 @@ public class _PPZ8em {
         return 0;
     }
 
-    private int CheckPVI(byte[] pcmData) {
+    private int checkPVI(byte[] pcmData) {
         if (pcmData == null)
             return 5;
         if (!(pcmData[0] == 'P' && pcmData[1] == 'V' && pcmData[2] == 'I'))
@@ -359,7 +352,7 @@ public class _PPZ8em {
         return 0;
     }
 
-    public void Update(short[] emuRenderBuf) {
+    public void update(short[] emuRenderBuf) {
         if (interrupt) return;
 
         int l = 0, r = 0;
@@ -373,10 +366,10 @@ public class _PPZ8em {
                 //* chWk[i].panL);
             }
 
-            int n = chWk[i].ptr >= pcmData[chWk[i].bank].length ? 0x80 : pcmData[chWk[i].bank][chWk[i].ptr];
+            int n = chWk[i].ptr >= pcmData[chWk[i].bank].length ? 0x80 : pcmData[chWk[i].bank][chWk[i].ptr] & 0xff;
             l += (int) (VolumeTable[chWk[i].volume][n] * chWk[i].panL);
             r += (int) (VolumeTable[chWk[i].volume][n] * chWk[i].panR);
-            chWk[i].delta += ((long) chWk[i].srcFrequency * (long) chWk[i].frequency / (long) 0x8000) / SamplingRate;
+            chWk[i].delta += ((long) chWk[i].srcFrequency * ((long) chWk[i].frequency & 0xffff_ffffL) / (long) 0x8000) / samplingRate;
             chWk[i].ptr += (int) chWk[i].delta;
             chWk[i].delta -= (int) chWk[i].delta;
 
@@ -393,7 +386,7 @@ public class _PPZ8em {
         emuRenderBuf[1] = (short) Math.max(Math.min(emuRenderBuf[1] + r, Short.MAX_VALUE), Short.MIN_VALUE);
     }
 
-    private int ConvertPviAdpcmToPziPcm(byte bank) {
+    private int convertPviAdpcmToPziPcm(byte bank) {
         int[] table1 = {
                 1, 3, 5, 7, 9, 11, 13, 15,
                 -1, -3, -5, -7, -9, -11, -13, -15,
@@ -419,20 +412,20 @@ public class _PPZ8em {
         long size2 = 0;
         for (int i = 0; i < instCount; i++) {
             int startaddress = ((pcmData[bank][i * 4 + 0x10] & 0xff) + (pcmData[bank][i * 4 + 0x11] & 0xff) * 0x100) << (5 + 1);
-            int size = (((pcmData[bank][i * 4 + 0x12] & 0xff) + (pcmData[bank][i * 4 + 0x13] & 0xff) * 0x100)
-                    - ((pcmData[bank][i * 4 + 0x10] & 0xff) + (pcmData[bank][i * 4 + 0x11] & 0xff) * 0x100) + 1)
-                    << (5 + 1); // endAdr - startAdr
+            int size = (((pcmData[bank][i * 4 + 0x12] & 0xff) + (pcmData[bank][i * 4 + 0x13] & 0xff) * 0x100) -
+                    ((pcmData[bank][i * 4 + 0x10] & 0xff) + (pcmData[bank][i * 4 + 0x11] & 0xff) * 0x100) + 1) <<
+                    (5 + 1); // endAdr - startAdr
             size2 += size;
             short rate = 16000;   // 16kHz
 
             o.add((byte) startaddress);
-            o.add((byte) (startaddress >> 8));
-            o.add((byte) (startaddress >> 16));
+            o.add((byte) (startaddress >>> 8));
+            o.add((byte) (startaddress >>> 16));
             o.add((byte) (startaddress >>> 24));
             o.add((byte) size);
-            o.add((byte) (size >> 8));
-            o.add((byte) (size >> 16));
-            o.add((byte) (size >> 24));
+            o.add((byte) (size >>> 8));
+            o.add((byte) (size >>> 16));
+            o.add((byte) (size >>> 24));
             o.add((byte) 0xff);
             o.add((byte) 0xff);
             o.add((byte) 0);
@@ -473,12 +466,12 @@ public class _PPZ8em {
             int X_N = 0x80; // Xn (For ADPCM>PCM conversion)
             int DELTA_N = 127; // DELTA_N(For ADPCM>PCM conversion)
 
-            int size = (((pcmData[bank][i * 4 + 0x12] & 0xff) + (pcmData[bank][i * 4 + 0x13] & 0xff) * 0x100)
-                    - ((pcmData[bank][i * 4 + 0x10] & 0xff) + (pcmData[bank][i * 4 + 0x11] & 0xff) * 0x100) + 1)
-                    << (5 + 1); // endAdr - startAdr
+            int size = (((pcmData[bank][i * 4 + 0x12] & 0xff) + (pcmData[bank][i * 4 + 0x13] & 0xff) * 0x100) -
+                    ((pcmData[bank][i * 4 + 0x10] & 0xff) + (pcmData[bank][i * 4 + 0x11] & 0xff) * 0x100) + 1) <<
+                    (5 + 1); // endAdr - startAdr
 
             for (int j = 0; j < size / 2; j++) {
-                byte psrc = pcmData[bank][psrcPtr++];
+                int psrc = pcmData[bank][psrcPtr++] & 0xff;
 
                 int n = X_N + table1[(psrc >> 4) & 0x0f] * DELTA_N / 8;
                 //logger.log(Level.TRACE, n);

@@ -151,7 +151,7 @@ class Program {
         srcFile = args[mIndex];
 
         if (!File.exists(args[mIndex])) {
-            logger.log(Level.ERROR, String.format("File [%d] not found", args[mIndex]));
+            logger.log(Level.ERROR, "File [%d] not found".formatted(args[mIndex]));
             return;
         }
 
@@ -233,10 +233,10 @@ class Program {
 //            ppsdrv = new PPSDRV(SamplingRate);
 
             Environment env = new Environment();
-            env.AddEnv("pmd");
-            env.AddEnv("pmdopt");
-            envPmd = env.GetEnvVal("pmd");
-            envPmdOpt = env.GetEnvVal("pmdopt");
+            env.addEnv("pmd");
+            env.addEnv("pmdopt");
+            envPmd = env.getEnvVal("pmd");
+            envPmdOpt = env.getEnvVal("pmdopt");
 
             List<String> opt = new ArrayList<>((envPmdOpt == null) ? (new ArrayList<>()) : List.of(envPmdOpt));
             opt.addAll(Arrays.asList(args).subList(fnIndex, args.length));
@@ -270,15 +270,15 @@ class Program {
             logger.log(Level.INFO, "");
 
             ((Driver) drv).init(
-                    srcFile
-                    , Program::writeOPNA
-                    , Program::waitSendOPNA
-                    , dop
-                    , pop.toArray(String[]::new)
-                    , Program::appendFileReaderCallback
-                    , Program::writePPZ8
-                    , Program::writePPSDRV
-                    , Program::writeP86
+                    srcFile,
+                    Program::writeOPNA,
+                    Program::waitSendOPNA,
+                    dop,
+                    pop.toArray(String[]::new),
+                    Program::appendFileReaderCallback,
+                    Program::writePPZ8,
+                    Program::writePPSDRV,
+                    Program::writeP86
             );
 
             // When AUTO is specified, the configuration will change, so the volume will be set after receiving the configuration information.
@@ -297,7 +297,7 @@ class Program {
             if (tags != null) {
                 for (Tuple<String, String> tag : tags) {
                     if (Objects.equals(tag.getItem1(), "")) continue;
-                    writeLine2(Level.INFO, String.format("%-16s : %s", tag.getItem1(), tag.getItem2()), 16 + 3);
+                    writeLine2(Level.INFO, "%-16s : %s".formatted(tag.getItem1(), tag.getItem2()), 16 + 3);
                 }
             }
 
@@ -454,7 +454,7 @@ class Program {
             String[] mes = msg.split("\r\n");
             logger.log(level, mes[0]);
             for (int i = 1; i < mes.length; i++) {
-                logger.log(level, String.format("%s%s", " ".repeat(wrapPos), mes[i]));
+                logger.log(level, "%s%s".formatted(" ".repeat(wrapPos), mes[i]));
             }
         }
     }
@@ -961,16 +961,13 @@ class Program {
         if (dat != null && dat.additionalData != null) {
             MmlDatum md = (MmlDatum) dat.additionalData;
             if (md.linePos != null) {
-                logger.log(Level.TRACE, String.format("! r%d c%d"
-                        , md.linePos.row
-                        , md.linePos.col
-                ));
+                logger.log(Level.TRACE, "! r%d c%d".formatted(md.linePos.row, md.linePos.col));
             }
         }
 
 //#if DEBUG
         //if (dat.address == 0x29)
-        //logger.log(Level.INFO, String.format("FM P%d Out:Adr[{0:x02}] val[{1:x02}]", (int)dat.address, (int)dat.data, dat.port));
+        //logger.log(Level.INFO, "FM P%d Out:Adr[{0:x02}] val[{1:x02}]".formatted((int)dat.address, (int)dat.data, dat.port));
 //#endif
 
         switch (device) {

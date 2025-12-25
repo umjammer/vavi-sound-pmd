@@ -155,7 +155,7 @@ public class Lc {
         do {
             MmlDatum al;
             do {
-                logger.log(Level.TRACE, String.format("si:%d", work.si));
+                logger.log(Level.TRACE, "si:%d".formatted(work.si));
 
                 al = (work.si < m_seg.m_buf.size() ? m_seg.m_buf.get(work.si++) : new MmlDatum(0x80));
                 if (al.dat == 0x80) return enmPart_ends.part_ends;
@@ -493,7 +493,7 @@ rpart_end:
             max_all = all_length; // ax | dx * 0x10000;
         }
 //not_over_all:
-        msg += String.format("%d", ax);
+        msg += "%d".formatted(ax);
         tc = ax;
 
         if (loop_flag == 1) { // break pe_loop;
@@ -524,7 +524,7 @@ rpart_end:
                 max_loop = n;
             }
 //not_over_loop:
-            msg += String.format("%d", n);
+            msg += "%d".formatted(n);
             lc = n;
         }
 //pe_00:
@@ -555,99 +555,99 @@ rpart_end:
 
     private void setJumpTable() {
         jumptable = new Runnable[] {
-                this::jump1 // 0ffh
-                 , this::jump1
-                 , this::jump1
-                 , this::_tempo
-                 , this::jump0
-                 , this::jump2
-                 , this::loop_start
-                 , this::loop_end // 0f8h
-                 , this::loop_exit
-                 , this::loop_set
-                 , this::jump1
-                 , this::jump0
-                 , this::jump0
-                 , this::jump4
-                 , this::jump1
-                 , this::jump4 // 0f0h
-                 , this::jump2
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1 // 0e8h
-                 , this::jump1
-                 , this::jump1
-                 , this::jump2
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1 // 0e0h
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::porta
-                 , this::jump1
-                 , this::jump1 // 0d8h
-                 , this::jump1
-                 , this::jump2
-                 , this::jump2
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1 // 0d0h
-                 , this::jump1
-                 , this::jump6
-                 , this::jump5
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump3 // 0c8h
-                 , this::jump3
-                 , this::jump6
-                 , this::jump1
-                 , this::jump1
-                 , this::jump2
-                 , this::jump1
-                 , this::jump0
-                 , this::special_0c0h // 0c0h
-                 , this::jump4
-                 , this::jump1
-                 , this::jump2
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump2 // 0b8h
-                 , this::jump1
-                 , this::jump1
-                 , this::jump2
-                 , this::jump16 // 0b4h
-                 , this::jump1 // 0b3h
-                 , this::jump1 // 0b2h
-                 , this::jump1 // 0b1h
+                this::jump1,  // 0ffh
+                this::jump1,
+                this::jump1,
+                this::_tempo,
+                this::jump0,
+                this::jump2,
+                this::loop_start,
+                this::loop_end,  // 0f8h
+                this::loop_exit,
+                this::loop_set,
+                this::jump1,
+                this::jump0,
+                this::jump0,
+                this::jump4,
+                this::jump1,
+                this::jump4,  // 0f0h
+                this::jump2,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,  // 0e8h
+                this::jump1,
+                this::jump1,
+                this::jump2,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,  // 0e0h
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::porta,
+                this::jump1,
+                this::jump1,  // 0d8h
+                this::jump1,
+                this::jump2,
+                this::jump2,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,  // 0d0h
+                this::jump1,
+                this::jump6,
+                this::jump5,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump3,  // 0c8h
+                this::jump3,
+                this::jump6,
+                this::jump1,
+                this::jump1,
+                this::jump2,
+                this::jump1,
+                this::jump0,
+                this::special_0c0h,  // 0c0h
+                this::jump4,
+                this::jump1,
+                this::jump2,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump2,  // 0b8h
+                this::jump1,
+                this::jump1,
+                this::jump2,
+                this::jump16,  // 0b4h
+                this::jump1,  // 0b3h
+                this::jump1,  // 0b2h
+                this::jump1  // 0b1h
         };
 
         jumptable_0c0h = new Runnable[] {
-                this::jump1  // 0ffh
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1 // 0f8h
-                 , this::jump1
-                 , this::jump1
-                 , this::jump1
+                this::jump1,  // 0ffh
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,
+                this::jump1,  // 0f8h
+                this::jump1,
+                this::jump1,
+                this::jump1
         };
     }
 

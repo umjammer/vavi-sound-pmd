@@ -1,13 +1,13 @@
 [![Release](https://jitpack.io/v/umjammer/vavi-sound-pmd.svg)](https://jitpack.io/#umjammer/vavi-sound-pmd)
 [![Java CI](https://github.com/umjammer/vavi-sound-pmd/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/vavi-sound-pmd/actions/workflows/maven.yml)
 [![CodeQL](https://github.com/umjammer/vavi-sound-pmd/actions/workflows/codeql.yml/badge.svg)](https://github.com/umjammer/vavi-sound-pmd/actions/workflows/codeql.yml)
-![Java](https://img.shields.io/badge/Java-17-b07219)
+![Java](https://img.shields.io/badge/Java-21-b07219)
 
 # vavi-sound-pmd
 
 <img alt="duke sings pmd" src="https://github.com/user-attachments/assets/c72c44f7-ae8b-4501-be07-fcf247ca9dd3" width="100"/>
 
-Java version of PMD.
+🎷 Java version of PMD.
 
 this is a fork of [PMDDotNET](https://github.com/kuma4649/PMDDotNET)
 
@@ -17,12 +17,36 @@ this is a fork of [PMDDotNET](https://github.com/kuma4649/PMDDotNET)
 
 ## Usage
 
+currently this project has no good player, use [vavi-sound-mdplayer](https://github.com/umjammer/vavi-sound-mdplayer) instead
+
 ## References
 
 * https://github.com/gzaffin/pmdmini
+* https://ftpmirror.infania.net/sites/modland/incoming/laboratory/FMPMD/
+* https://mml-guide.readthedocs.io/pmd/pcm/ (for original)
+* https://github.com/gameblabla/pc98sndpmdtools
+* https://www.exotica.org.uk/mediawiki/index.php?title=Special:Modland&title=Special%3AModland&md=search&mod=&aut=&for=pmd&forx=1&col=&siz=&ins=&pg=26# (data)
+
+### Original
+
+```
+ C:\PMD> pmdb2
+ C:\PMD> pmdpcm /c
+ C:\PMD> pmp foo.m
+```
+
+### Lesson
+
+ - captured method::reference might cause instantiation  
 
 ## TODO
-
+ 
+ * ~~status~~
+   * ~~loop ok~~
+   * ~~rhythm ok~~
+   * ~~base ng~~
+ * compiler
+ * pcm
 
 ---
 

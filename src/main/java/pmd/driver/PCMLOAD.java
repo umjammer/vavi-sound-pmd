@@ -2,7 +2,6 @@ package pmd.driver;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -21,22 +20,22 @@ public class PCMLOAD {
 
     private static final Logger logger = getLogger(PCMLOAD.class.getName());
 
-    private X86Register r;
-    private PW pw;
-    private PMD pmd;
-    private Pc98 pc98;
-    private Function<ChipDatum, Integer> ppz8em;
-    private Function<ChipDatum, Integer> ppsdrv;
-    private Function<ChipDatum, Integer> p86em;
+    private final X86Register r;
+    private final PW pw;
+    private final PMD pmd;
+    private final Pc98 pc98;
+    private final Function<ChipDatum, Integer> ppz8em;
+    private final Function<ChipDatum, Integer> ppsdrv;
+    private final Function<ChipDatum, Integer> p86em;
     private Function<String, Stream> appendFileReaderCallback = null;
     public byte[][] ppzPcmData = new byte[2][];
     public byte[][] p86PcmData = new byte[2][];
 
-    public PCMLOAD(PMD pmd, PW pw, X86Register r, Pc98 pc98
-            , Function<ChipDatum, Integer> ppz8em
-            , Function<ChipDatum, Integer> ppsdrv
-            , Function<ChipDatum, Integer> p86em
-            , Function<String, Stream> appendFileReaderCallback) {
+    public PCMLOAD(PMD pmd, PW pw, X86Register r, Pc98 pc98,
+                   Function<ChipDatum, Integer> ppz8em,
+                   Function<ChipDatum, Integer> ppsdrv,
+                   Function<ChipDatum, Integer> p86em,
+                   Function<String, Stream> appendFileReaderCallback) {
         this.pmd = pmd;
         this.pw = pw;
         this.r = r;
@@ -47,9 +46,9 @@ public class PCMLOAD {
         this.appendFileReaderCallback = appendFileReaderCallback;
     }
 
-    private byte[] GetPCMDataFromFile(String fnPcm) {
+    private byte[] getPCMDataFromFile(String fnPcm) {
         try (Stream pd = appendFileReaderCallback != null ? appendFileReaderCallback.apply(fnPcm) : null) {
-            return ReadAllBytes(pd);
+            return readAllBytes(pd);
         } catch (Exception e) {
             return null;
         }
@@ -58,7 +57,7 @@ public class PCMLOAD {
     /**
      * Read binary from a stream in bulk
      */
-    private byte[] ReadAllBytes(Stream stream) {
+    private byte[] readAllBytes(Stream stream) {
         if (stream == null) return null;
 
         var buf = new byte[8192];
@@ -74,7 +73,6 @@ public class PCMLOAD {
         }
     }
 
-    //
     //
     // Importing PPZ (PVI/PZI) files
     //
@@ -148,21 +146,21 @@ public class PCMLOAD {
         else if (ext.equals(".PVI")) r.ch = 0;
 
         r.carry = (pw.ppz_bank & 1) != 0;
-        pw.ppz_bank >>= 1;
+        pw.ppz_bank = (byte) ((pw.ppz_bank & 0xff) >>> 1);
         if (r.carry) { // break p8_load_skip; // load skip
 
             // PVI/PZI Import
 //p8_load_main:
-            byte[] pcmData = GetPCMDataFromFile(pw.filename_ofs);
-            ppzPcmData[r.cl] = pcmData;
-            ChipDatum cd = new ChipDatum(0x03, r.cl, r.ch, 0, ppzPcmData); // pcmData); // LoadPCM
+            byte[] pcmData = getPCMDataFromFile(pw.filename_ofs);
+            ppzPcmData[r.cl & 0xff] = pcmData;
+            ChipDatum cd = new ChipDatum(0x03, r.cl & 0xff, r.ch & 0xff, 0, ppzPcmData); // pcmData); // LoadPCM
             int ret = ppz8em.apply(cd);
 
             if (ret != 0) { // break p8_load_exit; // KUMA: Loaded
                 if (ret == 2) { // break p8_load_exit; // file not found or If the format is different
 
                     r.ch ^= 1; // The other form
-                    cd = new ChipDatum(0x03, r.cl, r.ch, 0, ppzPcmData); // pcmData); // LoadPCM
+                    cd = new ChipDatum(0x03, r.cl & 0xff, r.ch & 0xff, 0, ppzPcmData); // pcmData); // LoadPCM
                     ret = ppz8em.apply(cd); // Try pcm load
                 }
             }
@@ -228,7 +226,7 @@ public class PCMLOAD {
         r.setDx((short) 0); // offset ppzbank_mes
         //ppz_error_main2(String.format(pw.ppzbank_mes, r.al));
         r.setDx(r.stack.pop());
-        ppz_error_main2(String.format(pw.ppzbank_mes, r.al) + msg);
+        ppz_error_main2(String.format(pw.ppzbank_mes, (char) (r.al & 0xff)) + msg);
     }
 
     private void ppz_error_main2(String msg) {
@@ -362,11 +360,11 @@ public class PCMLOAD {
         byte[] pcmData;
 
         fn = Path.changeExtension(pw.filename_ofs, ".PPS"); // Change the extension to "PPS"
-        pcmData = GetPCMDataFromFile(fn);
+        pcmData = getPCMDataFromFile(fn);
 
         if (pcmData == null || pcmData.length < 1) {
             fn = pw.filename_ofs; // specification
-            pcmData = GetPCMDataFromFile(fn); // Try reading by specifying MML
+            pcmData = getPCMDataFromFile(fn); // Try reading by specifying MML
 
             if (pcmData == null || pcmData.length < 1) {
                 logger.log(Level.ERROR, "Failed to load PPS file [%s].".formatted(pw.filename_ofs));
@@ -426,18 +424,18 @@ public class PCMLOAD {
         byte[] pcmData;
 
         fn = Path.changeExtension(pw.filename_ofs, ".PPC"); // Change the extension to "PPC"
-        pcmData = GetPCMDataFromFile(fn);
+        pcmData = getPCMDataFromFile(fn);
 
         if (pcmData == null || pcmData.length < 1) {
             fn = pw.filename_ofs; // specification
-            pcmData = GetPCMDataFromFile(fn); // Try reading by specifying MML
+            pcmData = getPCMDataFromFile(fn); // Try reading by specifying MML
 
             if (pcmData == null || pcmData.length < 1) {
                 fn = Path.changeExtension(pw.filename_ofs, ".PVI"); // Change the extension to "PVI"
-                pcmData = GetPCMDataFromFile(fn);
+                pcmData = getPCMDataFromFile(fn);
                 if (pcmData == null || pcmData.length < 1) {
                     fn = Path.changeExtension(pw.filename_ofs, ".P86"); // Change the extension to "P86"
-                    pcmData = GetPCMDataFromFile(fn);
+                    pcmData = getPCMDataFromFile(fn);
                     if (pcmData == null || pcmData.length < 1) {
                         allload_exit2();
                         return;
@@ -453,8 +451,7 @@ public class PCMLOAD {
         }
 
         if (pcmData[0] == 'P' && pcmData[1] == 'V' && pcmData[2] == 'I' && pcmData[3] == '2') {
-            if (pcmData[10] == 2) // RAM Type 8bit
-            {
+            if (pcmData[10] == 2) { // RAM Type 8bit
                 pvi_load(pcmData);
                 return;
             }
@@ -468,8 +465,7 @@ public class PCMLOAD {
             return;
         }
 
-        if (pcmData.length < 4 * 256 + 2 + 30) // KUMA: Less than 0x420
-        {
+        if (pcmData.length < 4 * 256 + 2 + 30) { // KUMA: Less than 0x420
             allload_exit3_close();
             return;
         }
@@ -527,7 +523,7 @@ public class PCMLOAD {
         }
 
         r.setBx((short) 30); // pw.pcmwork_ofs; // cs:[pcmwork_ofs]
-        r.setAx((short) ((pcmData[r.getBx()] & 0xff) + (pcmData[r.getBx() + 1] & 0xff) * 0x100)); // ds:[bx] ;AX=PCM Next Start Address
+        r.setAx((short) ((pcmData[r.getBx() & 0xffff] & 0xff) + ((pcmData[(r.getBx() & 0xffff) + 1] & 0xff) * 0x100))); // ds:[bx] ;AX=PCM Next Start Address
         r.subAx((short) 0x26); // Converted into the amount of data to be actually transferred
 
         pw.pcmload_pcmstart = 0x26;
@@ -535,13 +531,13 @@ public class PCMLOAD {
 
         int pcmdata_ofs = 4 * 256 + 2 + 30;
 //allload_loop:
-        while (r.getAx() >= 0x401) { // break allload_last;
+        while ((r.getAx() & 0xffff) >= 0x401) { // break allload_last;
             r.subAx((short) 0x400);
             r.bp = r.getAx(); // Push
             r.setCx((short) 0x8000);
 
-            pw.pcmDt = new byte[r.getCx()];
-            for (int i = 0; i < r.getCx(); i++) {
+            pw.pcmDt = new byte[r.getCx() & 0xffff];
+            for (int i = 0; i < (r.getCx() & 0xffff); i++) {
                 pw.pcmDt[i] = pcmData[pcmdata_ofs++];
             }
             // jc allload_exit5_close
@@ -561,8 +557,8 @@ public class PCMLOAD {
             pw.pcmload_pcmstop = r.getAx();
             r.setDx(pw.pcmdata_ofs); // cs:[pcmdata_ofs]
             r.setCx((short) 0x8000);
-            pw.pcmDt = new byte[r.getCx()];
-            for (int i = 0; i < r.getCx(); i++) {
+            pw.pcmDt = new byte[r.getCx() & 0xffff];
+            for (int i = 0; i < (r.getCx() & 0xffff); i++) {
                 if (pcmdata_ofs < pcmData.length)
                     pw.pcmDt[i] = pcmData[pcmdata_ofs++];
                 else
@@ -575,7 +571,7 @@ public class PCMLOAD {
             r.addBx(r.getBx());
             r.addBx(r.getBx());
             r.addBx(r.getBx());
-            r.carry = (r.getAx() < r.getBx());
+            r.carry = (r.getAx() & 0xffff) < (r.getBx() & 0xffff);
             //pushf
             pcmstore(); // PCM Store
             // popf
@@ -609,16 +605,16 @@ public class PCMLOAD {
         for (int i = 0; i < 128; i++) {
             short st = (short) (((pcmData[i * 4 + 0x10] & 0xff) + (pcmData[i * 4 + 0x11] & 0xff) * 0x100) + 0x26);
             short ed = (short) (((pcmData[i * 4 + 0x12] & 0xff) + (pcmData[i * 4 + 0x13] & 0xff) * 0x100) + 0x26);
-            if (max < st) max = st;
-            if (max < ed) max = ed;
+            if ((max & 0xffff) < (st & 0xffff)) max = st;
+            if ((max & 0xffff) < (ed & 0xffff)) max = ed;
             o.add((byte) st);
-            o.add((byte) (st >> 8));
+            o.add((byte) (st >>> 8));
             o.add((byte) ed);
-            o.add((byte) (ed >> 8));
+            o.add((byte) (ed >>> 8));
         }
         max++;
         o.set(0x1e, (byte) max);
-        o.set(0x1f, (byte) (max >> 8));
+        o.set(0x1f, (byte) (max >>> 8));
         for (int i = 0; i < 128 * 4; i++) o.add((byte) 0);
         for (int i = 0x210; i < pcmData.length; i++) {
             o.add(pcmData[i]);
@@ -649,16 +645,16 @@ public class PCMLOAD {
         byte[] pcmData;
 
         fn = Path.changeExtension(pw.filename_ofs, ".P86"); // Change the extension to "P86"
-        pcmData = GetPCMDataFromFile(fn);
+        pcmData = getPCMDataFromFile(fn);
 
         if (pcmData == null || pcmData.length < 1) {
 
             fn = pw.filename_ofs; // specification
-            pcmData = GetPCMDataFromFile(fn); // Try reading by specifying MML
+            pcmData = getPCMDataFromFile(fn); // Try reading by specifying MML
 
             if (pcmData == null || pcmData.length < 1) {
                 fn = Path.changeExtension(pw.filename_ofs, ".PPC"); // Change the extension to "PPC"
-                pcmData = GetPCMDataFromFile(fn);
+                pcmData = getPCMDataFromFile(fn);
                 if (pcmData == null || pcmData.length < 1) {
 //                    break p86load_error;
 //p86load_error:
@@ -788,11 +784,11 @@ public class PCMLOAD {
         r.setCx((short) 128); // Number of bytes
 
         while (r.getCx() != 0) {
-            if (r.getSi() < fnba.length) {
-                pw.pcmWk[r.di] = fnba[r.getSi()];
+            if ((r.getSi() & 0xffff) < fnba.length) {
+                pw.pcmWk[r.di & 0xffff] = fnba[r.getSi() & 0xffff];
                 r.incSi();
             } else {
-                pw.pcmWk[r.di] = 0; // Fill the rest with 0
+                pw.pcmWk[r.di & 0xffff] = 0; // Fill the rest with 0
             }
             r.di++;
             r.decCx();
@@ -931,8 +927,8 @@ public class PCMLOAD {
 
 //o4600x:
         do {
-            r.al = pc98.InPort(r.getDx());
-        } while ((r.al & 0x80) == 0); // break o4600x;
+            r.al = pc98.inPort(r.getDx() & 0xffff);
+        } while ((r.al & 0x80) != 0); // break o4600x;
         r.al = 8; // PCMDAT reg.
         pc98.outPort(r.getDx(), r.al);
         r.stack.push(r.getCx());
@@ -947,14 +943,14 @@ public class PCMLOAD {
 
 //fast_store_loop:
         do {
-            r.al = pw.pcmDt[r.incSi()];
+            r.al = pw.pcmDt[r.incSi() & 0xffff];
             pc98.outPort(r.getDx(), r.al); // OUT data
             b = r.getBx();
             r.setBx(r.getDx());
             r.setDx(b);
 
 //o4601x:
-            r.al = pc98.InPort(r.getDx());
+            r.al = pc98.inPort(r.getDx() & 0xffff);
             //if ((r.al & 8) == 0) // BRDY check
             //break o4601x;
 
@@ -962,8 +958,8 @@ public class PCMLOAD {
             r.setBx(r.getDx());
             r.setDx(b);
 
-            r.incCx();
-        } while (r.getCx() == 0); // break fast_store_loop;
+            r.decCx();
+        } while (r.getCx() != 0); // break fast_store_loop;
 
         sti_sub();
 
@@ -986,7 +982,7 @@ public class PCMLOAD {
         r.stack.push(r.getDx());
         //cli
         r.setDx(pw.mmask_port);
-        r.al = pc98.InPort(r.getDx());
+        r.al = pc98.inPort(r.getDx() & 0xffff);
         pw.mmask_push = r.al;
         r.al |= (byte) 0b1110_1111; // Only RS remains unchanged
         pc98.outPort(r.getDx(), r.al);
@@ -1023,9 +1019,9 @@ public class PCMLOAD {
         r.setDx(pw.port46);
 //o4600:
         do {
-            r.al = pc98.InPort(r.getDx());
+            r.al = pc98.inPort(r.getDx() & 0xffff);
             r.al |= r.al;
-        } while ((r.al & 0x80) == 0); // break o4600;
+        } while ((r.al & 0x80) != 0); // break o4600;
         r.al = r.bh;
         //cli
         pc98.outPort(r.getDx(), r.al);
@@ -1065,8 +1061,7 @@ public class PCMLOAD {
         r.al = pw.adpcm_wait; // [bx]
         pw.pcmload_adpcm_wait = r.al; // get adpcm_wait
         pw.mmask_port = 0x02; // master_mask(98)
-        if (pw.va != 0) // cmp word ptr ds:[84h],"AV"
-        {
+        if (pw.va != 0) { // cmp word ptr ds:[84h],"AV"
             pw.mmask_port = 0x18a; // master_mask(VA)
         }
 
@@ -1078,7 +1073,7 @@ public class PCMLOAD {
             pw.pcm_access = 1;
             pw.pcmflag = 0; // Addition (sound effect measures)
             pw.pcm_effec_num = (byte) 255;
-            pw.partWk[r.di].partmask &= (byte) 0xfd; // clear bit1
+            pw.partWk[r.di & 0xffff].partmask &= (byte) 0xfd; // clear bit1
             r.carry = true; // cf=1
         }
 //kcr_exit:
