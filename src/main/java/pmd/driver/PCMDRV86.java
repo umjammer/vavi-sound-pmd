@@ -1421,7 +1421,7 @@ public class PCMDRV86 {
      *  cy=1 ... Transfer end
      */
     private void add_address() {
-        pw.addsizew += (r.getBx() & 0xffff); // bx=addsize2
+        pw.addsizew = (short) ((pw.addsizew & 0xffff) + (r.getBx() & 0xffff)); // bx=addsize2
         //pushf
         r.al = r.ah;
         r.ah = 0; // ax=addsize1
