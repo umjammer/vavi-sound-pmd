@@ -5217,7 +5217,7 @@ reloop: // ↑
 //                break rhst_ret2;
                 } else {
 //rhst_00:
-                    r.addBx((short) 0); // offset rshot_bd
+                    r.setBx((short) 0); // offset rshot_bd
                     rflag_inc(true);
                     pw.rshot_dat |= r.dl;
                 }
