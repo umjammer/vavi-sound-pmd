@@ -5240,7 +5240,7 @@ reloop: // ↑
 //ri_loop:
         do {
             r.al = r.ror(r.al, 1);
-            if (r.carry) { // break ri_not;
+            if (!r.carry) { // break ri_not;
                 if (isShot) pw.rshot[r.getBx() & 0xffff]++;
                 else pw.rdump[r.getBx() & 0xffff]++;
             }
