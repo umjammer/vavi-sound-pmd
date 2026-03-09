@@ -536,7 +536,7 @@ public class PCMDRV {
 
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
+        MmlDatum md = new MmlDatum(0xff, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
         cd.additionalData = md;
         pmd.writeDummy(cd);
 
@@ -619,7 +619,7 @@ public class PCMDRV {
 
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
-        cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos,
+        cd.additionalData = new MmlDatum(0xff, MMLType.Instrument, pw.cmd.linePos,
                 0xff, (int) pw.partWk[r.di & 0xffff].voicenum);
         pmd.writeDummy(cd);
 

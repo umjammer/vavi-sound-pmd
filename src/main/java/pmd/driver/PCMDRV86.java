@@ -622,7 +622,7 @@ public class PCMDRV86 {
 
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
+        MmlDatum md = new MmlDatum(0xff, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
         cd.additionalData = md;
         pmd.writeDummy(cd);
 

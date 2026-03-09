@@ -639,7 +639,7 @@ pmpz_ret: // ↑
     private Supplier<Object> pansetz_main() {
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
-        cd.additionalData = new MmlDatum(-1, MMLType.Pan, pw.cmd.linePos, r.al & 0xff);
+        cd.additionalData = new MmlDatum(0xff, MMLType.Pan, pw.cmd.linePos, r.al & 0xff);
         pmd.writeDummy(cd);
 
         pw.partWk[r.di & 0xffff].fmpan = r.al;
@@ -711,9 +711,9 @@ pmpz_ret: // ↑
         }
         pw.partWk[r.di & 0xffff].voicenum = r.al;
 
-        //For IDEs
+        // For IDEs
         cd = new ChipDatum(-1, 0xff, 0xff);
-        cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos, 0xff, pw.partWk[r.di & 0xffff].voicenum & 0xff);
+        cd.additionalData = new MmlDatum(0xff, MMLType.Instrument, pw.cmd.linePos, 0xff, pw.partWk[r.di & 0xffff].voicenum & 0xff);
         pmd.writeDummy(cd);
 
 //ppz_neiro_reset:
