@@ -1370,7 +1370,7 @@ public class PW {
             dop.usePPZ = ppz1File != null && !ppz1File.isEmpty() || ppz2File != null && !ppz2File.isEmpty();
             dop.isNRM = false;
             dop.isSPB = true;
-            if (dop.PPCHeader.equals("PCM")) dop.isSPB = false;
+            if (dop.ppcHeader.equals("PCM")) dop.isSPB = false;
         }
 
         board = 1;
@@ -1495,7 +1495,7 @@ public class PW {
         return ret.toArray(MmlDatum[]::new);
     }
 
-    //EFFECT.INC
+    // EFFECT.INC
     public final List<Tuple<Integer, MmlDatum[]>> efftbl;
 
 //#region Sound effect data

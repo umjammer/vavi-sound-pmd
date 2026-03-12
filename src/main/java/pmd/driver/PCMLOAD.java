@@ -47,6 +47,7 @@ public class PCMLOAD {
     }
 
     private byte[] getPCMDataFromFile(String fnPcm) {
+logger.log(Level.DEBUG, "pcm: " + fnPcm);
         try (Stream pd = appendFileReaderCallback != null ? appendFileReaderCallback.apply(fnPcm) : null) {
             return readAllBytes(pd);
         } catch (Exception e) {
@@ -73,20 +74,20 @@ public class PCMLOAD {
         }
     }
 
-    //
-    // Importing PPZ (PVI/PZI) files
-    //
-    //  input DS:AX filename(128byte)
-    // CL Bank to read (1=first, 2=second, 3=both)
-    // output cy = 1    Not Loaded
-    // AX=1 File read failure
-    //    AX=2 The data format is different
-    //    AX=3 Cannot allocate memory
-    //    AX=4 EMS handle mapping not possible
-    //    AX=5 PPZ8 is not resident
-    //    CL PCM number where the error occurred (0 or 1)
-    //  break ax,cx
-    //
+    /**
+     * Importing PPZ (PVI/PZI) files
+     *
+     *  input DS:AX filename(128byte)
+     * CL Bank to read (1=first, 2=second, 3=both)
+     * output cy = 1    Not Loaded
+     * AX=1 File read failure
+     *    AX=2 The data format is different
+     *    AX=3 Cannot allocate memory
+     *    AX=4 EMS handle mapping not possible
+     *    AX=5 PPZ8 is not resident
+     *    CL PCM number where the error occurred (0 or 1)
+     *  break ax,cx
+     */
     public void ppz_load(String ppz1File, String ppz2File) {
         r.stack.push(r.getBx());
         r.stack.push(r.getDx());
@@ -110,9 +111,9 @@ public class PCMLOAD {
         r.setBx(r.stack.pop());
     }
 
-    //
-    // PPZ8 loading main
-    //
+    /**
+     * PPZ8 loading main
+     */
     private void ppz_load_main(String ppz1File, String ppz2File) {
         ppz8_check();
         pw.ppz_bank = (byte) ((ppz1File == null || ppz1File.isEmpty() ? 0 : 1) | (ppz2File == null || ppz2File.isEmpty() ? 0 : 2));
@@ -176,7 +177,7 @@ public class PCMLOAD {
         r.setAx((short) 0);
     }
 
-    // Error Handling
+    /** Error Handling */
     private void ppz_load_error() {
         r.incAx();
         if (pw.message != 0) {
@@ -184,35 +185,35 @@ public class PCMLOAD {
             r.setDx((short) 0); // offset exit1z_mes
             r.decBx();
             if (r.getBx() == 0) {
-                ppz_error_main(pw.exit1z_mes);
+                ppz_error_main(PW.exit1z_mes);
                 return;
             }
             r.setDx((short) 0); // offset exit2z_mes
             r.decBx();
             if (r.getBx() == 0) {
-                ppz_error_main(pw.exit2z_mes);
+                ppz_error_main(PW.exit2z_mes);
                 return;
             }
             r.setDx((short) 0); // offset exit3z_mes
             r.decBx();
             if (r.getBx() == 0) {
-                ppz_error_main(pw.exit3z_mes);
+                ppz_error_main(PW.exit3z_mes);
                 return;
             }
             r.setDx((short) 0); // offset exit4z_mes
             r.decBx();
             if (r.getBx() == 0) {
-                ppz_error_main(pw.exit4z_mes);
+                ppz_error_main(PW.exit4z_mes);
                 return;
             }
             r.setDx((short) 0); // offset exit5z_mes
             r.decBx();
             if (r.getBx() == 0) {
-                ppz_error_main(pw.exit5z_mes);
+                ppz_error_main(PW.exit5z_mes);
                 return;
             }
             r.setDx((short) 0); // offset exit6z_mes
-            ppz_error_main2(pw.exit6z_mes);
+            ppz_error_main2(PW.exit6z_mes);
         }
 
         r.carry = true;
@@ -226,61 +227,62 @@ public class PCMLOAD {
         r.setDx((short) 0); // offset ppzbank_mes
         //ppz_error_main2(String.format(pw.ppzbank_mes, r.al));
         r.setDx(r.stack.pop());
-        ppz_error_main2(String.format(pw.ppzbank_mes, (char) (r.al & 0xff)) + msg);
+        ppz_error_main2(String.format(PW.ppzbank_mes, (char) (r.al & 0xff)) + msg);
     }
 
     private void ppz_error_main2(String msg) {
         logger.log(Level.ERROR, msg);
     }
 
-    // PPZ8 resident check
+    /** PPZ8 resident check */
     private void ppz8_check() {
         r.carry = pw.ppz == 0;
     }
 
-    //
-    // Importing PCM (PPC/P86) files
-    //  If P86DRV.COM is resident, then read .P86; otherwise, read .PPC.
-    //  If PMDPPZE is resident, PVI will be unconditionally loaded into PPZ8.
-    //
-    //  input DS:AX filename(128byte)
-    // ES:DI pcm_work(32KB, Not necessary for P86)
-    // output cy = 1    Not Loaded
-    // For PMDB2/PMD86
-    //    AX=1 SPB/ADPCM-RAM or PMDB2 is missing
-    //     No 86B/P86DRV or PMD86
-    // AX=2 File Missing
-    //    AX=3 The file is not PMD PCM data.
-    //    AX=4 SPB/It was the same as what was already loaded
-    //     86B/Capacity OVER
-    //    AX=5 Unable to read file
-    //    AX=6 PCM memory was being accessed
-    //   For PMDPPZE
-    //    AX=1 File read failure
-    //    AX=2 The data format is different
-    //    AX=3 Cannot allocate memory
-    //    AX=4 EMS handle mapping not possible
-    //    AX=5 PPZ8 is not resident
-    //
-    // .PPC format:
-    // WORK=PCMWORK in PMD, DATA=WORK at the beginning of PCMRAM, FILE=PCMFILE
-    //      123456789012345678901234567890
-    //  DATA/FILE only "ADPCM DATA for PMD ver.4.4- "30bytes
-    //  WORK/DATA/FILE  1Word Next START Address
-    //     2Word*256 START/STOP
-    //  WORK/DATA only 128bytes FILENAME
-    // DATA only  32 bytes reserved
-    //
-    //  PCMRAM_Work  =00000H～00025H
-    //  PCMRAM_Main_data =00026H～01FFFH
-    //
-    // .P86 format:
-    //  "PCM86 DATA",0ah,0 12 byte
-    //  P86DRV version 1  byte
-    //  Overall size 3  byte
-    //  Tone table start(3),size(3) * 256 (1536) bytes
-    //  Tone data variable
-    //
+    /**
+     * Importing PCM (PPC/P86) files
+     *  If P86DRV.COM is resident, then read .P86; otherwise, read .PPC.
+     *  If PMDPPZE is resident, PVI will be unconditionally loaded into PPZ8.
+     * <pre>
+     *  input DS:AX filename(128byte)
+     * ES:DI pcm_work(32KB, Not necessary for P86)
+     * output cy = 1    Not Loaded
+     * For PMDB2/PMD86
+     *    AX=1 SPB/ADPCM-RAM or PMDB2 is missing
+     *     No 86B/P86DRV or PMD86
+     * AX=2 File Missing
+     *    AX=3 The file is not PMD PCM data.
+     *    AX=4 SPB/It was the same as what was already loaded
+     *     86B/Capacity OVER
+     *    AX=5 Unable to read file
+     *    AX=6 PCM memory was being accessed
+     *   For PMDPPZE
+     *    AX=1 File read failure
+     *    AX=2 The data format is different
+     *    AX=3 Cannot allocate memory
+     *    AX=4 EMS handle mapping not possible
+     *    AX=5 PPZ8 is not resident
+     *
+     * .PPC format:
+     * WORK=PCMWORK in PMD, DATA=WORK at the beginning of PCMRAM, FILE=PCMFILE
+     *      123456789012345678901234567890
+     *  DATA/FILE only "ADPCM DATA for PMD ver.4.4- "30bytes
+     *  WORK/DATA/FILE  1Word Next START Address
+     *     2Word*256 START/STOP
+     *  WORK/DATA only 128bytes FILENAME
+     * DATA only  32 bytes reserved
+     *
+     *  PCMRAM_Work  =00000H～00025H
+     *  PCMRAM_Main_data =00026H～01FFFH
+     *
+     * .P86 format:
+     *  "PCM86 DATA",0ah,0 12 byte
+     *  P86DRV version 1  byte
+     *  Overall size 3  byte
+     *  Tone table start(3),size(3) * 256 (1536) bytes
+     *  Tone data variable
+     *  </pre>
+     */
     public void pcm_all_load(String ppcFile) {
         //cld
         //r.stack.push(r.ds);
@@ -349,12 +351,13 @@ public class PCMLOAD {
         //r.ds = r.stack.pop();
     }
 
-    //
-    // pps load
-    //  in cs:[filename_ofs/seg] Filename
-    //   cs:[pcmdata_ofs/seg] PPSData location
-    //   cs:[pcmdata_size] PPSData Capacity
-    //
+    /**
+     * pps load
+     *  in
+     *   cs:[filename_ofs/seg] Filename
+     *   cs:[pcmdata_ofs/seg] PPSData location
+     *   cs:[pcmdata_size] PPSData Capacity
+     */
     private void pps_load_main() {
         String fn;
         byte[] pcmData;
@@ -377,13 +380,13 @@ public class PCMLOAD {
         }
     }
 
-    //
-    // .PPC/.P86 Bulk load
-    //  in cs:[filename_ofs/seg] Filename
-    //   cs:[pcmdata_ofs/seg]
-    //  PCMData loadarea
-    // cs:[pcmwork_ofs/seg] PCMwork in PMD
-    //
+    /**
+     * .PPC/.P86 Bulk load
+     *  in
+     *   cs:[filename_ofs/seg] Filename
+     *   cs:[pcmdata_ofs/seg]PCMData loadarea
+     *   cs:[pcmwork_ofs/seg] PCMwork in PMD
+     */
     private void all_load() {
         //
         // Determine whether .P86 or .PPC is being read
@@ -473,9 +476,9 @@ public class PCMLOAD {
         ppc_load_main(pcmData);
     }
 
-    //
-    // Write Filename to PMD work
-    //
+    /**
+     * Write Filename to PMD work
+     */
     private void ppc_load_main(byte[] pcmData) {
         write_filename_to_pmdwork();
 
@@ -489,8 +492,8 @@ public class PCMLOAD {
             //
             // Comparing PMD work and PCMRAM headers
             //
-            //TBD
 
+            //TBD
         }
         //
         // Write the PMD work to the PCMRAM head
@@ -519,7 +522,7 @@ public class PCMLOAD {
         //
         if (pw.message != 0) {
             //r.ds = r.cs;
-            logger.log(Level.INFO, pw.allload_mes); // "PCM definition in progress" display
+            logger.log(Level.INFO, PW.allload_mes); // "PCM definition in progress" display
         }
 
         r.setBx((short) 30); // pw.pcmwork_ofs; // cs:[pcmwork_ofs]
@@ -586,9 +589,9 @@ public class PCMLOAD {
         r.setAx((short) 0);
     }
 
-    //
-    // .PVI loading
-    //
+    /**
+     * .PVI loading
+     */
     private void pvi_load(byte[] pcmData) {
         // 
         // Read the rest of the header/tone table
@@ -623,10 +626,10 @@ public class PCMLOAD {
         ppc_load_main(ByteUtil.toByteArray(o));
     }
 
-    //
-    // P86 data bulk load
-    //  in cs:[filename_ofs/seg] Filename
-    //
+    /**
+     * P86 data bulk load
+     *  in cs:[filename_ofs/seg] Filename
+     */
     private void p86_load() {
         //
         // P86drv check
@@ -673,12 +676,13 @@ public class PCMLOAD {
     //
     // Error Return
     //
+
     private void allload_exit1() {
         if (pw.message != 0) {
             r.setDx((short) 0); //    mov dx,offset exit1_mes
         }
         r.setAx((short) 1); // PCM cannot be defined.
-        error_exec(pw.exit1_mes);
+        error_exec(PW.exit1_mes);
     }
 
     private void allload_exit2() {
@@ -686,7 +690,7 @@ public class PCMLOAD {
             r.setDx((short) 0); //    mov dx,offset exit2_mes
         }
         r.setAx((short) 2); // No PCM file
-        error_exec(pw.exit2_mes);
+        error_exec(PW.exit2_mes);
     }
 
     private void allload_exit3_close() {
@@ -698,7 +702,7 @@ public class PCMLOAD {
             r.setDx((short) 0); //    mov dx,offset exit3_mes
         }
         r.setAx((short) 3); // File is not a PMD PCM
-        error_exec(pw.exit3_mes);
+        error_exec(PW.exit3_mes);
     }
 
     private void allload_exit6_close() {
@@ -710,7 +714,7 @@ public class PCMLOAD {
             r.setDx((short) 0); //    mov dx,offset exit6_mes
         }
         r.setAx((short) 6); // PCM memory access
-        error_exec(pw.exit6_mes);
+        error_exec(PW.exit6_mes);
     }
 
     private void error_exec(String msg) {
@@ -727,10 +731,10 @@ public class PCMLOAD {
         r.carry = true;
     }
 
-    //
-    // PMDB2 & ADPCM Check
-    //  output cy PMDB2 or ADPCM not available
-    //
+    /**
+     * PMDB2 & ADPCM Check
+     *  output cy PMDB2 or ADPCM not available
+     */
     private void check_pmdb2() {
         //
         // PMDB2 & ADPCM installation check
@@ -751,17 +755,17 @@ public class PCMLOAD {
         r.carry = true;
     }
 
-    //
-    // P86DRV resident check
-    //  output cy  P86DRV is missing
-    //
+    /**
+     * P86DRV resident check
+     *  output cy  P86DRV is missing
+     */
     private void check_p86drv() {
         r.carry = !pw.useP86DRV;
     }
 
-    //
-    // Filename capitalization and pathname avoidance processing
-    //
+    /**
+     * Filename capitalization and pathname avoidance processing
+     */
     private void filename_set() {
         //
         // Convert filename from lowercase to uppercase (with SHIFTJIS avoidance)
@@ -774,9 +778,9 @@ public class PCMLOAD {
         pw.filename_ofs2 = Path.getFileName(pw.filename_ofs);
     }
 
-    //
-    // Write Filename to PMD work
-    //
+    /**
+     * Write Filename to PMD work
+     */
     private void write_filename_to_pmdwork() {
         r.setSi((short) 0);
         byte[] fnba = pw.filename_ofs2.getBytes(charset);
@@ -795,14 +799,14 @@ public class PCMLOAD {
         }
     }
 
-    //
-    // Send data from main memory to PCM memory (x8, high/low speed selectable version)
-    //
-    // INPUTS..cs:[pcmstart] to Start Address
-    //  .. cs:[pcmstop] to Stop  Address
-    //  .. cs:[pcmdata_ofs/seg]
-    //        to PCMData_Buffer
-    //
+    /**
+     * Send data from main memory to PCM memory (x8, high/low speed selectable version)
+     *
+     * INPUTS
+     *  cs:[pcmstart] to Start Address
+     *  cs:[pcmstop] to Stop  Address
+     *  cs:[pcmdata_ofs/seg] to PCMData_Buffer
+     */
     private void pcmstore() {
         key_check_reset();
 
@@ -973,10 +977,10 @@ public class PCMLOAD {
         key_check_set();
     }
 
-    //
-    // Disable interrupts for anything other than RS-232C
-    // ((To prevent the address of the FM sound source LSI from being changed)
-    //
+    /**
+     * Disable interrupts for anything other than RS-232C
+     * ((To prevent the address of the FM sound source LSI from being changed)
+     */
     private void cli_sub() {
         r.stack.push(r.getAx());
         r.stack.push(r.getDx());
@@ -991,9 +995,9 @@ public class PCMLOAD {
         r.setAx(r.stack.pop());
     }
 
-    //
-    // Revert the interrupts disabled in the subroutine above
-    //
+    /**
+     * Revert the interrupts disabled in the subroutine above
+     */
     private void sti_sub() {
         r.stack.push(r.getAx());
         r.stack.push(r.getDx());
@@ -1006,12 +1010,12 @@ public class PCMLOAD {
         r.setAx(r.stack.pop());
     }
 
-    //
-    // Write data to OPNA back port
-    //
-    // Inputs..dh to Register
-    //  .. dl to Data
-    //
+    /**
+     * Write data to OPNA back port
+     *
+     * Inputs..dh to Register
+     *  .. dl to Data
+     */
     private void out46() {
         r.stack.push(r.getDx());
         r.stack.push(r.getBx());
@@ -1039,11 +1043,11 @@ public class PCMLOAD {
         r.setDx(r.stack.pop());
     }
 
-    //
-    // Disable PMD ESC/GRPH input
-    // Read other necessary data from pmd segment
-    //  out cy acccess flag on
-    //
+    /**
+     * Disable PMD ESC/GRPH input
+     * Read other necessary data from pmd segment
+     *  out cy acccess flag on
+     */
     private void key_check_reset() {
         //r.stack.push(r.ds);
         r.stack.push(r.getAx());
@@ -1086,10 +1090,10 @@ public class PCMLOAD {
         //r.ds = r.stack.pop();
     }
 
-    //
-    // Resetting the PMD ESC/GRPH input
-    // PCM memory access flag off
-    //
+    /**
+     * Resetting the PMD ESC/GRPH input
+     * PCM memory access flag off
+     */
     private void key_check_set() {
         //r.stack.push(r.ds);
         r.stack.push(r.getAx());
