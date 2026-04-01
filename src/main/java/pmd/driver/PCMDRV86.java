@@ -1141,11 +1141,11 @@ public class PCMDRV86 {
         //r.bx += r.ax;
         //r.bx += 0; // offset pcm_tune_data
         //logger.log(Level.TRACE, "bx:%d".formatted(r.bx));
-        r.al = (byte) (int) pw.pcm_tune_data86[r.getBx() & 0xffff].getItem1();
+        r.al = (byte) (int) PW.pcm_tune_data86[r.getBx() & 0xffff].getItem1();
         r.orAx(0xff00);
         pw.partWk[r.di & 0xffff].fnum = r.getAx(); // ax = 0ff00h + addsize1
         //r.bx++;
-        r.setAx((short) (int) pw.pcm_tune_data86[r.getBx() & 0xffff].getItem2()); // ax = addsize2
+        r.setAx((short) (int) PW.pcm_tune_data86[r.getBx() & 0xffff].getItem2()); // ax = addsize2
         pw.partWk[r.di & 0xffff].fnum2 = r.getAx();
         //logger.log(Level.TRACE, "fnum:%x fnum2:%x".formatted(pw.partWk[r.di & 0xffff].fnum, pw.partWk[r.di & 0xffff].fnum2));
     }

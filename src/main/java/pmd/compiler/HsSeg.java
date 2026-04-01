@@ -6,9 +6,9 @@ import musicDriverInterface.LinePos;
 
 public class HsSeg {
 
-    public int hs_length = 32;
-    public byte[] hsbuf2 = new byte[2 * 256];
-    public byte[] hsbuf3 = new byte[32 * 256]; // hs_length * 256];
+    public static final int hs_length = 32;
+    public final byte[] hsbuf2 = new byte[2 * 256];
+    public final byte[] hsbuf3 = new byte[32 * 256]; // hs_length * 256];
     public int hsbuf_end; // label   byte
     public byte[] currentBuf;
 

@@ -632,7 +632,7 @@ pmpz_ret: // ↑
         r.bh = 0;
         r.bl = r.al;
         r.addBx((short) 0); // offset ppzpandata
-        r.al = (byte) pw.ppzpandata[r.getBx() & 0xffff];
+        r.al = (byte) PW.ppzpandata[r.getBx() & 0xffff];
         return this::pansetz_main;
     }
 
@@ -1028,7 +1028,7 @@ zv_out: // ↑
         r.al &= 0xf;
         r.cl = r.al; // cl=octarb
         //r.bx += r.bx;
-        r.setAx((short) pw.ppz_tune_data[r.getBx() & 0xffff]); // o5 standard
+        r.setAx((short) PW.ppz_tune_data[r.getBx() & 0xffff]); // o5 standard
         r.setDx((short) 0);
         r.cl -= 4;
         if ((r.cl & 0x80) != 0) { // break ppz_over_o5;

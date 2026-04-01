@@ -21,7 +21,7 @@ public class CompileResult {
         Match_WithoutMemo
     }
 
-    public CompileStatus status;
+    public final CompileStatus status;
 
     public CompileResult.CompileStatus getStatus() {
         return status;

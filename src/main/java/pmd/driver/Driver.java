@@ -254,24 +254,29 @@ getmemo_errret:
         GD3Tag gd3tag = new GD3Tag();
         gd3tag.items.clear();
         for (Tuple<String, String> ttag : lstTag) {
-            if (ttag.getItem1().equals("title")) {
-                if (gd3tag.items.containsKey(Tag.Title)) gd3tag.items.remove(Tag.Title);
-                gd3tag.items.put(Tag.Title, new String[] {ttag.getItem2()});
-                if (gd3tag.items.containsKey(Tag.TitleJ)) gd3tag.items.remove(Tag.TitleJ);
-                gd3tag.items.put(Tag.TitleJ, new String[] {ttag.getItem2()});
-            } else if (ttag.getItem1().equals("composer")) {
-                if (gd3tag.items.containsKey(Tag.Composer)) gd3tag.items.remove(Tag.Composer);
-                gd3tag.items.put(Tag.Composer, new String[] {ttag.getItem2()});
-                if (gd3tag.items.containsKey(Tag.ComposerJ)) gd3tag.items.remove(Tag.ComposerJ);
-                gd3tag.items.put(Tag.ComposerJ, new String[] {ttag.getItem2()});
-            } else if (ttag.getItem1().equals("arranger")) {
-                if (gd3tag.items.containsKey(Tag.Arranger)) gd3tag.items.remove(Tag.Arranger);
-                gd3tag.items.put(Tag.Arranger, new String[] {ttag.getItem2()});
-                if (gd3tag.items.containsKey(Tag.ArrangerJ)) gd3tag.items.remove(Tag.ArrangerJ);
-                gd3tag.items.put(Tag.ArrangerJ, new String[] {ttag.getItem2()});
-            } else if (ttag.getItem1().equals("memo")) {
-                if (gd3tag.items.containsKey(Tag.Memo)) gd3tag.items.remove(Tag.Memo);
-                gd3tag.items.put(Tag.Memo, new String[] {ttag.getItem2()});
+            switch (ttag.getItem1()) {
+                case "title" -> {
+                    if (gd3tag.items.containsKey(Tag.Title)) gd3tag.items.remove(Tag.Title);
+                    gd3tag.items.put(Tag.Title, new String[] {ttag.getItem2()});
+                    if (gd3tag.items.containsKey(Tag.TitleJ)) gd3tag.items.remove(Tag.TitleJ);
+                    gd3tag.items.put(Tag.TitleJ, new String[] {ttag.getItem2()});
+                }
+                case "composer" -> {
+                    if (gd3tag.items.containsKey(Tag.Composer)) gd3tag.items.remove(Tag.Composer);
+                    gd3tag.items.put(Tag.Composer, new String[] {ttag.getItem2()});
+                    if (gd3tag.items.containsKey(Tag.ComposerJ)) gd3tag.items.remove(Tag.ComposerJ);
+                    gd3tag.items.put(Tag.ComposerJ, new String[] {ttag.getItem2()});
+                }
+                case "arranger" -> {
+                    if (gd3tag.items.containsKey(Tag.Arranger)) gd3tag.items.remove(Tag.Arranger);
+                    gd3tag.items.put(Tag.Arranger, new String[] {ttag.getItem2()});
+                    if (gd3tag.items.containsKey(Tag.ArrangerJ)) gd3tag.items.remove(Tag.ArrangerJ);
+                    gd3tag.items.put(Tag.ArrangerJ, new String[] {ttag.getItem2()});
+                }
+                case "memo" -> {
+                    if (gd3tag.items.containsKey(Tag.Memo)) gd3tag.items.remove(Tag.Memo);
+                    gd3tag.items.put(Tag.Memo, new String[] {ttag.getItem2()});
+                }
             }
         }
         return gd3tag;
@@ -288,8 +293,8 @@ getmemo_errret:
 //    }
 
 //    public void Init(Action<ChipDatum> opnaWrite, Action<long, int> opnaWaitSend, MmlDatum[] srcBuf, Object additionalOption) {
-        Consumer<ChipDatum> opnaWrite = chipsAction.get(0)::writeRegister;
-        BiConsumer<Long, Integer> opnaWaitSend = chipsAction.get(0)::waitSend;
+        Consumer<ChipDatum> opnaWrite = chipsAction.getFirst()::writeRegister;
+        BiConsumer<Long, Integer> opnaWaitSend = chipsAction.getFirst()::waitSend;
 
         Object[] option = additionalOption;
 

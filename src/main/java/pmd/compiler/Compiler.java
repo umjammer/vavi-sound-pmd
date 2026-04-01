@@ -4,7 +4,6 @@ import java.awt.Point;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -31,7 +30,7 @@ public class Compiler implements ICompiler {
 
     private static final Logger logger = getLogger(Compiler.class.getName());
 
-    ResourceBundle rb = ResourceBundle.getBundle("lang/message");
+    final ResourceBundle rb = ResourceBundle.getBundle("lang/message");
 
     // Input data
 
@@ -250,7 +249,7 @@ public class Compiler implements ICompiler {
                 if (k == null || k.isEmpty()) continue;
                 if (v == null || v.isEmpty()) continue;
 
-                Tuple<String, String> keyVal = new Tuple<String, String>(k, v);
+                Tuple<String, String> keyVal = new Tuple<>(k, v);
                 tags.add(keyVal);
             }
         } catch (Exception e) {
@@ -306,13 +305,13 @@ public class Compiler implements ICompiler {
     /**
      * Read binary from a stream in bulk
      */
-    private byte[] readAllBytes(Stream stream) {
+    private static byte[] readAllBytes(Stream stream) {
         try (var ms = readAllBytesToMemoryStream(stream)) {
             return ms != null ? ms.toArray() : null;
         }
     }
 
-    private MemoryStream readAllBytesToMemoryStream(Stream stream) {
+    private static MemoryStream readAllBytesToMemoryStream(Stream stream) {
         if (stream == null) return null;
 
         var buf = new byte[8192];

@@ -983,7 +983,7 @@ mv_min:
 //fnm00:
         r.cl = r.al; // cl=5-octarb
         //r.bx += r.bx;
-        r.setAx((short) pw.pcm_tune_data[r.getBx() & 0xffff]);
+        r.setAx((short) PW.pcm_tune_data[r.getBx() & 0xffff]);
         if ((r.ch & 0xff) >= 6) { // o7 or higher? // break pts01m;
             r.ch = 0x50;
             if ((r.getAx() & 0x8000) == 0) { // break pts00m;

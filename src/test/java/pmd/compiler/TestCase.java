@@ -60,7 +60,7 @@ Debug.println(compiler.getMemo_writeAddress());
         testMain(null);
     }
 
-    private void testMain(String[] options) throws Exception {
+    private static void testMain(String[] options) throws Exception {
         var service = new PMDCompileTestService();
 
         var mmlFilesDir = getMMLDir();

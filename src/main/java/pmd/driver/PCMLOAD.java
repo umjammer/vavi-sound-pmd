@@ -28,8 +28,8 @@ public class PCMLOAD {
     private final Function<ChipDatum, Integer> ppsdrv;
     private final Function<ChipDatum, Integer> p86em;
     private Function<String, Stream> appendFileReaderCallback = null;
-    public byte[][] ppzPcmData = new byte[2][];
-    public byte[][] p86PcmData = new byte[2][];
+    public final byte[][] ppzPcmData = new byte[2][];
+    public final byte[][] p86PcmData = new byte[2][];
 
     public PCMLOAD(PMD pmd, PW pw, X86Register r, Pc98 pc98,
                    Function<ChipDatum, Integer> ppz8em,
@@ -58,7 +58,7 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
     /**
      * Read binary from a stream in bulk
      */
-    private byte[] readAllBytes(Stream stream) {
+    private static byte[] readAllBytes(Stream stream) {
         if (stream == null) return null;
 
         var buf = new byte[8192];
@@ -230,7 +230,7 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
         ppz_error_main2(String.format(PW.ppzbank_mes, (char) (r.al & 0xff)) + msg);
     }
 
-    private void ppz_error_main2(String msg) {
+    private static void ppz_error_main2(String msg) {
         logger.log(Level.ERROR, msg);
     }
 
@@ -505,12 +505,8 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
         r.setCx((short) (30 / 2)); // Write "ADPCM..." header
 
         pw.pcmDt = new byte[4 * 256 + 128 + 2 + 30];
-        for (int i = 0; i < (4 * 256 + 128 + 2 + 30); i++) {
-            pw.pcmDt[i] = pcmData[i];
-        }
-        for (int i = 0; i < (4 * 256 + 128); i++) {
-            pw.pcmWk[i] = pcmData[i + 32];
-        }
+        System.arraycopy(pcmData, 0, pw.pcmDt, 0, 4 * 256 + 128 + 2 + 30);
+        System.arraycopy(pcmData, 32, pw.pcmWk, 0, 4 * 256 + 128);
 
         pw.pcmload_pcmstart = 0;
         pw.pcmload_pcmstop = 0x25;
