@@ -1,7 +1,7 @@
 package pmd.compiler;
 
 import musicDriverInterface.CompilerInfo;
-import musicDriverInterface.MMLType;
+import musicDriverInterface.MmlDatum.MMLType;
 
 
 public class Work {

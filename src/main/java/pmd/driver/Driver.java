@@ -21,10 +21,10 @@ import dotnet4j.io.Stream;
 import dotnet4j.util.compat.Tuple;
 import musicDriverInterface.ChipAction;
 import musicDriverInterface.ChipDatum;
-import musicDriverInterface.GD3Tag;
+import musicDriverInterface.MetaData;
 import musicDriverInterface.IDriver;
+import musicDriverInterface.MetaData.Tag;
 import musicDriverInterface.MmlDatum;
-import musicDriverInterface.Tag;
 import pmd.common.Common;
 import vavi.util.ByteUtil;
 import vavi.util.serdes.Serdes;
@@ -246,40 +246,32 @@ getmemo_errret:
      * Get GD3 tag (general song information)
      */
     @Override
-    public GD3Tag getGD3TagInfo(byte[] srcBuf) {
+    public MetaData getGD3TagInfo(byte[] srcBuf) {
         List<MmlDatum> sc = new ArrayList<>();
         for (byte b : srcBuf) sc.add(new MmlDatum(b & 0xff));
         this.srcBuf = sc.toArray(MmlDatum[]::new);
         List<Tuple<String, String>> lstTag = getTags();
-        GD3Tag gd3tag = new GD3Tag();
-        gd3tag.items.clear();
+        MetaData metaData = new MetaData();
         for (Tuple<String, String> ttag : lstTag) {
             switch (ttag.getItem1()) {
                 case "title" -> {
-                    if (gd3tag.items.containsKey(Tag.Title)) gd3tag.items.remove(Tag.Title);
-                    gd3tag.items.put(Tag.Title, new String[] {ttag.getItem2()});
-                    if (gd3tag.items.containsKey(Tag.TitleJ)) gd3tag.items.remove(Tag.TitleJ);
-                    gd3tag.items.put(Tag.TitleJ, new String[] {ttag.getItem2()});
+                    metaData.set(Tag.Title, ttag.getItem2());
+                    metaData.set(Tag.TitleJ, ttag.getItem2());
                 }
                 case "composer" -> {
-                    if (gd3tag.items.containsKey(Tag.Composer)) gd3tag.items.remove(Tag.Composer);
-                    gd3tag.items.put(Tag.Composer, new String[] {ttag.getItem2()});
-                    if (gd3tag.items.containsKey(Tag.ComposerJ)) gd3tag.items.remove(Tag.ComposerJ);
-                    gd3tag.items.put(Tag.ComposerJ, new String[] {ttag.getItem2()});
+                    metaData.set(Tag.Composer, ttag.getItem2());
+                    metaData.set(Tag.ComposerJ, ttag.getItem2());
                 }
                 case "arranger" -> {
-                    if (gd3tag.items.containsKey(Tag.Arranger)) gd3tag.items.remove(Tag.Arranger);
-                    gd3tag.items.put(Tag.Arranger, new String[] {ttag.getItem2()});
-                    if (gd3tag.items.containsKey(Tag.ArrangerJ)) gd3tag.items.remove(Tag.ArrangerJ);
-                    gd3tag.items.put(Tag.ArrangerJ, new String[] {ttag.getItem2()});
+                    metaData.set(Tag.Arranger, ttag.getItem2());
+                    metaData.set(Tag.ArrangerJ, ttag.getItem2());
                 }
                 case "memo" -> {
-                    if (gd3tag.items.containsKey(Tag.Memo)) gd3tag.items.remove(Tag.Memo);
-                    gd3tag.items.put(Tag.Memo, new String[] {ttag.getItem2()});
+                    metaData.set(Tag.Memo, ttag.getItem2());
                 }
             }
         }
-        return gd3tag;
+        return metaData;
     }
 
     @Override

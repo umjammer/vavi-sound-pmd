@@ -17,10 +17,10 @@ import dotnet4j.io.StreamReader;
 import dotnet4j.util.compat.Tuple;
 import dotnet4j.util.compat.Tuple3;
 import musicDriverInterface.CompilerInfo;
-import musicDriverInterface.GD3Tag;
+import musicDriverInterface.MetaData;
 import musicDriverInterface.ICompiler;
+import musicDriverInterface.MetaData.Tag;
 import musicDriverInterface.MmlDatum;
-import musicDriverInterface.Tag;
 
 import static java.lang.System.getLogger;
 import static pmd.common.Common.charset;
@@ -327,35 +327,26 @@ public class Compiler implements ICompiler {
     }
 
     @Override
-    public GD3Tag getGD3TagInfo(byte[] srcBuf) {
+    public MetaData getGD3TagInfo(byte[] srcBuf) {
         String text = new String(srcBuf, charset);
         Tuple<String, String>[] tags = getTags(text, appendFileReaderCallback);
-        GD3Tag gd3tag = new GD3Tag();
-        gd3tag.items.clear();
+        MetaData metaData = new MetaData();
         for (Tuple<String, String> ttag : tags) {
             if (ttag.getItem1().toLowerCase().trim().equals("#title")) {
-                if (gd3tag.items.containsKey(Tag.Title)) gd3tag.items.remove(Tag.Title);
-                gd3tag.items.put(Tag.Title, new String[] {ttag.getItem2()});
-                if (gd3tag.items.containsKey(Tag.TitleJ)) gd3tag.items.remove(Tag.TitleJ);
-                gd3tag.items.put(Tag.TitleJ, new String[] {ttag.getItem2()});
+                metaData.set(Tag.Title, ttag.getItem2());
+                metaData.set(Tag.TitleJ, ttag.getItem2());
             } else if (ttag.getItem1().toLowerCase().trim().equals("#composer")) {
-                if (gd3tag.items.containsKey(Tag.Composer)) gd3tag.items.remove(Tag.Composer);
-                gd3tag.items.put(Tag.Composer, new String[] {ttag.getItem2()});
-                if (gd3tag.items.containsKey(Tag.ComposerJ)) gd3tag.items.remove(Tag.ComposerJ);
-                gd3tag.items.put(Tag.ComposerJ, new String[] {ttag.getItem2()});
+                metaData.set(Tag.Composer, ttag.getItem2());
+                metaData.set(Tag.ComposerJ, ttag.getItem2());
             } else if (ttag.getItem1().toLowerCase().trim().equals("#arranger")) {
-                if (gd3tag.items.containsKey(Tag.Arranger)) gd3tag.items.remove(Tag.Arranger);
-                gd3tag.items.put(Tag.Arranger, new String[] {ttag.getItem2()});
-                if (gd3tag.items.containsKey(Tag.ArrangerJ)) gd3tag.items.remove(Tag.ArrangerJ);
-                gd3tag.items.put(Tag.ArrangerJ, new String[] {ttag.getItem2()});
+                metaData.set(Tag.Arranger, ttag.getItem2());
+                metaData.set(Tag.ArrangerJ, ttag.getItem2());
             } else if (ttag.getItem1().toLowerCase().trim().equals("#memo")) {
-                if (gd3tag.items.containsKey(Tag.Memo)) gd3tag.items.remove(Tag.Memo);
-                gd3tag.items.put(Tag.Memo, new String[] {ttag.getItem2()});
+                metaData.set(Tag.Memo, ttag.getItem2());
             } else if (ttag.getItem1().toLowerCase().trim().contains("#fi")) {
-                if (gd3tag.items.containsKey(Tag.SongObjFilename)) gd3tag.items.remove(Tag.SongObjFilename);
-                gd3tag.items.put(Tag.SongObjFilename, new String[] {ttag.getItem2()});
+                metaData.set(Tag.SongObjFilename, ttag.getItem2());
             }
         }
-        return gd3tag;
+        return metaData;
     }
 }

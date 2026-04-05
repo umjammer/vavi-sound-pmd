@@ -4,8 +4,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import musicDriverInterface.ChipDatum;
-import musicDriverInterface.MMLType;
 import musicDriverInterface.MmlDatum;
+import musicDriverInterface.MmlDatum.MMLType;
 
 
 public class PCMDRV86 {
