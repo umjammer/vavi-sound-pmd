@@ -327,7 +327,7 @@ public class Compiler implements ICompiler {
     }
 
     @Override
-    public MetaData getGD3TagInfo(byte[] srcBuf) {
+    public MetaData getMetaData(byte[] srcBuf) {
         String text = new String(srcBuf, charset);
         Tuple<String, String>[] tags = getTags(text, appendFileReaderCallback);
         MetaData metaData = new MetaData();

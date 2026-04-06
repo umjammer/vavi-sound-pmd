@@ -246,7 +246,7 @@ getmemo_errret:
      * Get GD3 tag (general song information)
      */
     @Override
-    public MetaData getGD3TagInfo(byte[] srcBuf) {
+    public MetaData getMetaData(byte[] srcBuf) {
         List<MmlDatum> sc = new ArrayList<>();
         for (byte b : srcBuf) sc.add(new MmlDatum(b & 0xff));
         this.srcBuf = sc.toArray(MmlDatum[]::new);
