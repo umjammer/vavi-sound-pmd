@@ -21,10 +21,10 @@ import dotnet4j.io.Stream;
 import dotnet4j.util.compat.Tuple;
 import musicDriverInterface.ChipAction;
 import musicDriverInterface.ChipDatum;
-import musicDriverInterface.GD3Tag;
+import musicDriverInterface.MetaData;
 import musicDriverInterface.IDriver;
+import musicDriverInterface.MetaData.Tag;
 import musicDriverInterface.MmlDatum;
-import musicDriverInterface.Tag;
 import pmd.common.Common;
 import vavi.util.ByteUtil;
 import vavi.util.serdes.Serdes;
@@ -40,13 +40,13 @@ public class Driver implements IDriver {
     private PW work = null;
     private int renderingFreq = 44100;
     private int opnaMasterClock = 7987200;
-    private Consumer<ChipDatum> WriteOPNA;
-    private Function<ChipDatum, Integer> WritePPZ8;
-    private Function<ChipDatum, Integer> WritePPSDRV;
-    private Function<ChipDatum, Integer> WriteP86;
-    private BiConsumer<Long, Integer> WaitSendOPNA;
+    private Consumer<ChipDatum> writeOPNA;
+    private Function<ChipDatum, Integer> writePPZ8;
+    private Function<ChipDatum, Integer> writePPSDRV;
+    private Function<ChipDatum, Integer> writeP86;
+    private BiConsumer<Long, Integer> waitSendOPNA;
     private final Object lockObjWriteReg = new Object();
-    static MmlDatum[] srcBuf = null;
+    MmlDatum[] srcBuf = null;
     public Exception renderingException = null;
 
     public Driver() {
@@ -223,7 +223,7 @@ getmemo_errret:
         }
     }
 
-    private static String getNRDString(/* ref */ short[] index) {
+    private String getNRDString(/* ref */ short[] index) {
         if (srcBuf == null || srcBuf.length < 1 || (index[0] & 0xffff) >= srcBuf.length) return "";
 
         try {
@@ -246,35 +246,32 @@ getmemo_errret:
      * Get GD3 tag (general song information)
      */
     @Override
-    public GD3Tag getGD3TagInfo(byte[] srcBuf) {
+    public MetaData getMetaData(byte[] srcBuf) {
         List<MmlDatum> sc = new ArrayList<>();
         for (byte b : srcBuf) sc.add(new MmlDatum(b & 0xff));
-        Driver.srcBuf = sc.toArray(MmlDatum[]::new);
+        this.srcBuf = sc.toArray(MmlDatum[]::new);
         List<Tuple<String, String>> lstTag = getTags();
-        GD3Tag gd3tag = new GD3Tag();
-        gd3tag.items.clear();
+        MetaData metaData = new MetaData();
         for (Tuple<String, String> ttag : lstTag) {
-            if (ttag.getItem1().equals("title")) {
-                if (gd3tag.items.containsKey(Tag.Title)) gd3tag.items.remove(Tag.Title);
-                gd3tag.items.put(Tag.Title, new String[] {ttag.getItem2()});
-                if (gd3tag.items.containsKey(Tag.TitleJ)) gd3tag.items.remove(Tag.TitleJ);
-                gd3tag.items.put(Tag.TitleJ, new String[] {ttag.getItem2()});
-            } else if (ttag.getItem1().equals("composer")) {
-                if (gd3tag.items.containsKey(Tag.Composer)) gd3tag.items.remove(Tag.Composer);
-                gd3tag.items.put(Tag.Composer, new String[] {ttag.getItem2()});
-                if (gd3tag.items.containsKey(Tag.ComposerJ)) gd3tag.items.remove(Tag.ComposerJ);
-                gd3tag.items.put(Tag.ComposerJ, new String[] {ttag.getItem2()});
-            } else if (ttag.getItem1().equals("arranger")) {
-                if (gd3tag.items.containsKey(Tag.Arranger)) gd3tag.items.remove(Tag.Arranger);
-                gd3tag.items.put(Tag.Arranger, new String[] {ttag.getItem2()});
-                if (gd3tag.items.containsKey(Tag.ArrangerJ)) gd3tag.items.remove(Tag.ArrangerJ);
-                gd3tag.items.put(Tag.ArrangerJ, new String[] {ttag.getItem2()});
-            } else if (ttag.getItem1().equals("memo")) {
-                if (gd3tag.items.containsKey(Tag.Memo)) gd3tag.items.remove(Tag.Memo);
-                gd3tag.items.put(Tag.Memo, new String[] {ttag.getItem2()});
+            switch (ttag.getItem1()) {
+                case "title" -> {
+                    metaData.set(Tag.Title, ttag.getItem2());
+                    metaData.set(Tag.TitleJ, ttag.getItem2());
+                }
+                case "composer" -> {
+                    metaData.set(Tag.Composer, ttag.getItem2());
+                    metaData.set(Tag.ComposerJ, ttag.getItem2());
+                }
+                case "arranger" -> {
+                    metaData.set(Tag.Arranger, ttag.getItem2());
+                    metaData.set(Tag.ArrangerJ, ttag.getItem2());
+                }
+                case "memo" -> {
+                    metaData.set(Tag.Memo, ttag.getItem2());
+                }
             }
         }
-        return gd3tag;
+        return metaData;
     }
 
     @Override
@@ -283,15 +280,15 @@ getmemo_errret:
     }
 
     @Override
-    public void init(List<ChipAction> chipsAction, MmlDatum[] srcBuf, Function<String, Stream> appendFileReaderCallback_, Object... addtionalOption) {
+    public void init(List<ChipAction> chipsAction, MmlDatum[] srcBuf, Function<String, Stream> appendFileReaderCallback_, Object... additionalOption) {
 //      throw new UnsupportedOperationException();
 //    }
 
-//    public void Init(Action<ChipDatum> opnaWrite, Action<long, int> opnaWaitSend, MmlDatum[] srcBuf, Object addtionalOption) {
-        Consumer<ChipDatum> opnaWrite = chipsAction.get(0)::writeRegister;
-        BiConsumer<Long, Integer> opnaWaitSend = chipsAction.get(0)::waitSend;
+//    public void Init(Action<ChipDatum> opnaWrite, Action<long, int> opnaWaitSend, MmlDatum[] srcBuf, Object additionalOption) {
+        Consumer<ChipDatum> opnaWrite = chipsAction.getFirst()::writeRegister;
+        BiConsumer<Long, Integer> opnaWaitSend = chipsAction.getFirst()::waitSend;
 
-        Object[] option = addtionalOption;
+        Object[] option = additionalOption;
 
         Object[] pdnos = (Object[]) option[0];
         PMDOption pdno = new PMDOption() {{
@@ -306,9 +303,10 @@ getmemo_errret:
             envPmd = (String[]) pdnos[8];
             envPmdOpt = (String[]) pdnos[9];
             srcFile = (String) pdnos[10];
-            PPCHeader = (String) pdnos[11];
+            ppcHeader = (String) pdnos[11];
             jumpIndex = -1;
         }};
+logger.log(Level.DEBUG, pdno);
 
         Function<String, Stream> appendFileReaderCallback =
                 (pdnos.length < 13 || pdnos[12] == null)
@@ -402,17 +400,17 @@ getmemo_errret:
             Function<ChipDatum, Integer> p86Write) {
         if (srcBuf == null || srcBuf.length < 1) return;
 
-        Driver.srcBuf = srcBuf;
+        this.srcBuf = srcBuf;
 
-        WriteOPNA = opnaWrite;
-        WaitSendOPNA = opnaWaitSend;
-        WritePPZ8 = ppz8Write;
-        WritePPSDRV = ppsdrvWrite;
-        WriteP86 = p86Write;
+        writeOPNA = opnaWrite;
+        waitSendOPNA = opnaWaitSend;
+        writePPZ8 = ppz8Write;
+        writePPSDRV = ppsdrvWrite;
+        writeP86 = p86Write;
 
         work = new PW();
         getTags();
-        additionalPMDDotNETOption.PPCHeader = CheckPPC(appendFileReaderCallback);
+        additionalPMDDotNETOption.ppcHeader = checkPPC(appendFileReaderCallback);
 
         work.setOption(additionalPMDDotNETOption, additionalPMDOption);
         work.timer = new OPNATimer(44100, 7987200);
@@ -425,9 +423,9 @@ getmemo_errret:
                 this::writeRegister,
                 work,
                 appendFileReaderCallback,
-                WritePPZ8,
-                WritePPSDRV,
-                WriteP86
+                writePPZ8,
+                writePPSDRV,
+                writeP86
         );
 
         if (pmd.pw.ppcFile != null && !pmd.pw.ppcFile.isEmpty()) pmd.pcmload.pcm_all_load(pmd.pw.ppcFile);
@@ -437,7 +435,7 @@ getmemo_errret:
 
     }
 
-    private String CheckPPC(Function<String, Stream> appendFileReaderCallback) {
+    private String checkPPC(Function<String, Stream> appendFileReaderCallback) {
         if (work.ppcFile == null || work.ppcFile.isEmpty()) {
             return "";
         }
@@ -538,11 +536,11 @@ getmemo_errret:
             if (reg.port == 0) {
                 if (work != null) work.timer.WriteReg((byte) reg.address, (byte) reg.data);
             }
-            WriteOPNA.accept(reg);
+            writeOPNA.accept(reg);
         }
     }
 
-    //public int GetNowLoopCounter() {
+    //public int getNowLoopCounter() {
     //    //throw new UnsupportedOperationException();
     //    return 0;
     //}

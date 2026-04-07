@@ -19,7 +19,7 @@ public class MSeg {
 //        public byte mbuf_end;
 //#else
     public byte m_start; // b
-    public AutoExtendList<MmlDatum> m_buf = new AutoExtendList<>(MmlDatum.class); // [63 * 1024 - 2];
+    public final AutoExtendList<MmlDatum> m_buf = new AutoExtendList<>(MmlDatum.class); // [63 * 1024 - 2];
     public byte mbuf_end;
     public List<Tuple<Integer, MmlDatum>> dummy = new ArrayList<>();
 

@@ -13,9 +13,9 @@ public class Lc {
 
     private static final Logger logger = getLogger(Lc.class.getName());
 
-    private Work work;
-    private MSeg m_seg;
-    private Mc mc;
+    private final Work work;
+    private final MSeg m_seg;
+    private final Mc mc;
 
     public Lc(Mc mc, Work work, MSeg m_seg) {
         this.mc = mc;
@@ -48,38 +48,19 @@ public class Lc {
         //Files.write(Path.of("c:\\temp\\debug"), dst.ToArray());
 
         do {
-            switch (ret) {
-                case calc_start:
-                    ret = calc_start(al);
-                    break;
-                case part_loop:
-                    ret = part_loop();
-                    break;
-                case part_loop2:
-                    ret = part_loop2();
-                    break;
-                case check_j:
-                    ret = check_j();
-                    break;
-                case com_loop:
-                    ret = com_loop();
-                    break;
-                case part_ends:
-                    ret = part_ends();
-                    break;
-                case partk_start:
-                    ret = partk_start();
-                    break;
-                case kcom_loop:
-                    ret = kcom_loop();
-                    break;
-                case kpart_end:
-                    ret = kpart_end();
-                    break;
-                case kl_00:
-                    ret = kl_00();
-                    break;
-            }
+            ret = switch (ret) {
+                case calc_start -> calc_start(al);
+                case part_loop -> part_loop();
+                case part_loop2 -> part_loop2();
+                case check_j -> check_j();
+                case com_loop -> com_loop();
+                case part_ends -> part_ends();
+                case partk_start -> partk_start();
+                case kcom_loop -> kcom_loop();
+                case kpart_end -> kpart_end();
+                case kl_00 -> kl_00();
+                default -> ret;
+            };
         } while (ret != enmPart_ends.exit);
     }
 

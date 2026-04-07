@@ -50,7 +50,7 @@ class Program {
     private static final Logger logger = getLogger(Program.class.getName());
 
     static class KeyboardHook {
-        static AtomicBoolean typed = new AtomicBoolean();
+        static final AtomicBoolean typed = new AtomicBoolean();
         static {
             try {
                 GlobalScreen.registerNativeHook();
@@ -102,7 +102,7 @@ class Program {
     private static final int samplingBuffer = 1024;
     private static short[] frames = new short[samplingBuffer * 4];
     private static MDSound mds = null;
-    private static short[] emuRenderBuf = new short[2];
+    private static final short[] emuRenderBuf = new short[2];
     private static IDriver drv = null;
     private static final int opnaMasterClock = 7987200;
     private static int device = 0;
@@ -533,7 +533,7 @@ class Program {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
-            userPPSFREQ = Math.min(Math.max(n, 2000), 192000);
+            userPPSFREQ = Math.clamp(n, 2000, 192000);
         } catch (NumberFormatException e) {
         }
     }
@@ -542,7 +542,7 @@ class Program {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
-            ppsdrvWait = Math.min(Math.max(n, -1), 100);
+            ppsdrvWait = Math.clamp(n, -1, 100);
         } catch (NumberFormatException e) {
         }
     }
@@ -559,7 +559,7 @@ class Program {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
-            VolumeR = new int[] {Math.min(Math.max(n, 0), 127)};
+            VolumeR = new int[] {Math.clamp(n, 0, 127)};
         } catch (NumberFormatException e) {
         }
     }
@@ -574,7 +574,7 @@ class Program {
         for (int i = 0; i < prm.length; i++) {
             try {
                 VolumeV[i] = Integer.parseInt(prm[i]);
-                VolumeV[i] = Math.min(Math.max(VolumeV[i], -191), 20);
+                VolumeV[i] = Math.clamp(VolumeV[i], -191, 20);
             } catch (NumberFormatException e) {
             }
         }
@@ -582,33 +582,38 @@ class Program {
 
     private static void optionSetBoard(String v) {
         if (v == null || v.isEmpty()) return;
-        if (v.equals("AUTO")) {
-            isAUTO = true;
-        } else if (v.equals("NRM") || v.equals("OPN") || v.equals("2203") || v.equals("26")) {
-            isAUTO = false;
-            isNRM = true;
-            isVA = false;
-            isSPB = false;
-        } else if (v.equals("86") || v.equals("86B")) {
-            isAUTO = false;
-            isNRM = false;
-            isVA = false;
-            isSPB = false;
-        } else if (v.equals("SPB") || v.equals("OPNA") || v.equals("2608")) {
-            isAUTO = false;
-            isNRM = false;
-            isVA = false;
-            isSPB = true;
-        } else if (v.equals("VA_NRM")) {
-            isAUTO = false;
-            isNRM = true;
-            isVA = true;
-            isSPB = false;
-        } else if (v.equals("VA_86")) {
-            isAUTO = false;
-            isNRM = false;
-            isVA = true;
-            isSPB = false;
+        switch (v) {
+            case "AUTO" -> isAUTO = true;
+            case "NRM", "OPN", "2203", "26" -> {
+                isAUTO = false;
+                isNRM = true;
+                isVA = false;
+                isSPB = false;
+            }
+            case "86", "86B" -> {
+                isAUTO = false;
+                isNRM = false;
+                isVA = false;
+                isSPB = false;
+            }
+            case "SPB", "OPNA", "2608" -> {
+                isAUTO = false;
+                isNRM = false;
+                isVA = false;
+                isSPB = true;
+            }
+            case "VA_NRM" -> {
+                isAUTO = false;
+                isNRM = true;
+                isVA = true;
+                isSPB = false;
+            }
+            case "VA_86" -> {
+                isAUTO = false;
+                isNRM = false;
+                isVA = true;
+                isSPB = false;
+            }
         }
     }
 

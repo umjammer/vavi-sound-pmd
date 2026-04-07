@@ -1,13 +1,13 @@
 package pmd.compiler;
 
 import musicDriverInterface.CompilerInfo;
-import musicDriverInterface.MMLType;
+import musicDriverInterface.MmlDatum.MMLType;
 
 
 public class Work {
 
-    public CompilerInfo compilerInfo = new CompilerInfo();
-    public byte[] ppzfile_buf = new byte[128 * 8];
+    public final CompilerInfo compilerInfo = new CompilerInfo();
+    public final byte[] ppzfile_buf = new byte[128 * 8];
 
     int si;
 

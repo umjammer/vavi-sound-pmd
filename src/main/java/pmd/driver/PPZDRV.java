@@ -6,8 +6,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import musicDriverInterface.ChipDatum;
-import musicDriverInterface.MMLType;
 import musicDriverInterface.MmlDatum;
+import musicDriverInterface.MmlDatum.MMLType;
 
 import static java.lang.System.getLogger;
 
@@ -632,14 +632,14 @@ pmpz_ret: // ↑
         r.bh = 0;
         r.bl = r.al;
         r.addBx((short) 0); // offset ppzpandata
-        r.al = (byte) pw.ppzpandata[r.getBx() & 0xffff];
+        r.al = (byte) PW.ppzpandata[r.getBx() & 0xffff];
         return this::pansetz_main;
     }
 
     private Supplier<Object> pansetz_main() {
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
-        cd.additionalData = new MmlDatum(-1, MMLType.Pan, pw.cmd.linePos, r.al & 0xff);
+        cd.additionalData = new MmlDatum(0xff, MMLType.Pan, pw.cmd.linePos, r.al & 0xff);
         pmd.writeDummy(cd);
 
         pw.partWk[r.di & 0xffff].fmpan = r.al;
@@ -711,9 +711,9 @@ pmpz_ret: // ↑
         }
         pw.partWk[r.di & 0xffff].voicenum = r.al;
 
-        //For IDEs
+        // For IDEs
         cd = new ChipDatum(-1, 0xff, 0xff);
-        cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos, 0xff, pw.partWk[r.di & 0xffff].voicenum & 0xff);
+        cd.additionalData = new MmlDatum(0xff, MMLType.Instrument, pw.cmd.linePos, 0xff, pw.partWk[r.di & 0xffff].voicenum & 0xff);
         pmd.writeDummy(cd);
 
 //ppz_neiro_reset:
@@ -1028,7 +1028,7 @@ zv_out: // ↑
         r.al &= 0xf;
         r.cl = r.al; // cl=octarb
         //r.bx += r.bx;
-        r.setAx((short) pw.ppz_tune_data[r.getBx() & 0xffff]); // o5 standard
+        r.setAx((short) PW.ppz_tune_data[r.getBx() & 0xffff]); // o5 standard
         r.setDx((short) 0);
         r.cl -= 4;
         if ((r.cl & 0x80) != 0) { // break ppz_over_o5;

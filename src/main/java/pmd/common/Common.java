@@ -11,7 +11,7 @@ import musicDriverInterface.MmlDatum;
 
 public class Common {
 
-    public static Charset charset = Charset.forName("cp932");
+    public static final Charset charset = Charset.forName("cp932");
 
     public static short getLe16(MmlDatum[] md, int adr) {
         return (short) (md[adr].dat + md[adr + 1].dat * 0x100);

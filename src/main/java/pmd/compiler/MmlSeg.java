@@ -12,12 +12,12 @@ public class MmlSeg {
     /**
      * //	Work Area
      */
-    public String warning_mes = "Warning ";
-    public String not_ff_mes = ": The tone file name is not specified.";
-    public String ff_readerr_mes = ": Cannot load tone file.";
-    public String not_pmd_mes = ": PMD is not resident.";
-    public String loop_err_mes = " : The loop termination symbol ] is missing.";
-    public String mcopt_err_mes = ": The environment variable MCOPT is incorrectly written.";
+    public static final String warning_mes = "Warning ";
+    public static final String not_ff_mes = ": The tone file name is not specified.";
+    public final String ff_readerr_mes = ": Cannot load tone file.";
+    public final String not_pmd_mes = ": PMD is not resident.";
+    public static final String loop_err_mes = " : The loop termination symbol ] is missing.";
+    public static final String mcopt_err_mes = ": The environment variable MCOPT is incorrectly written.";
 
     //#if efc
 //		public String usames = "Usage:  EFC [/option] filename[.EML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
@@ -33,7 +33,7 @@ public class MmlSeg {
 //				+ Mc.cr + Mc.lf + Mc.cr + Mc.lf + Mc.eof;
 //#else
 //#if !hyouka
-    public String usames = "Usage:  MC" +
+    public static final String usames = "Usage:  MC" +
             " [/option] filename[.MML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf +
             "Option: " +
             "/V  Compile with Tonedatas & Messages & Filenames" + Mc.cr + Mc.lf +
@@ -49,7 +49,7 @@ public class MmlSeg {
             "        /C  Calculate & Put Total Length of Parts" + Mc.cr + Mc.lf
             //+ Mc.eof
             ;
-    public String titmes = " .MML file --> .M file Compiler" +
+    public static final String titmes = " .MML file --> .M file Compiler" +
             " ver " + Mc.ver + Mc.cr + Mc.lf +
             "		Programmed by M.Kajihara(KAJA) " + Mc.date +
             Mc.cr + Mc.lf
@@ -75,7 +75,7 @@ public class MmlSeg {
 //#endif
 //#endif
 
-    public String finmes = "Compile Completed.";
+    public static final String finmes = "Compile Completed.";
     public String mes_crlf = "" + Mc.cr + Mc.lf + Mc.eof;
 
     public String mes_title = Mc.cr + Mc.lf + " Start playing." + Mc.cr + Mc.lf + Mc.cr + Mc.lf +
@@ -88,10 +88,10 @@ public class MmlSeg {
     public String mes_ppsfile = "PPSFile  : " + Mc.eof;
     public String mes_pcmfile = "PCMFile  : " + Mc.eof;
 
-    public String user_txt = "USER=";
-    public String composer_txt = "COMPOSER=";
-    public String arranger_txt = "ARRANGER=";
-    public String mcopt_txt = "MCOPT=";
+    public static final String user_txt = "USER=";
+    public static final String composer_txt = "COMPOSER=";
+    public static final String arranger_txt = "ARRANGER=";
+    public static final String mcopt_txt = "MCOPT=";
 
 //#if !tempo_old_flag
     public int tempo = 0;
@@ -175,7 +175,7 @@ public class MmlSeg {
     public int pcm_vol_ext = 0; // b
 
     // PSG tone patterns
-    public int[][] psgenvdat = {
+    public final int[][] psgenvdat = {
             {0, 0, 0, 0},     // @0 Standard
             {2, 255, 0, 1},   // @1 Synth 1
             {2, 254, 0, 1},   // @2 Synth 2
@@ -187,13 +187,13 @@ public class MmlSeg {
             {1, 2, 0, 1},     // @8 Brass 1
             {1, 2, 24, 1}     // @9 Brass 2
     };
-    public int psgenvdat_max = 9;
-    public int max_part = 11;
-    public int fm = 0;
+    public static final int psgenvdat_max = 9;
+    public static final int max_part = 11;
+    public static final int fm = 0;
     public int fm2 = 1;
-    public int psg = 2;
-    public int pcm = 3;
-    public int pcm_ex = 4;
+    public static final int psg = 2;
+    public static final int pcm = 3;
+    public static final int pcm_ex = 4;
 
 //#else
 
@@ -201,9 +201,9 @@ public class MmlSeg {
 
 //#endif
 
-    public int pcmpart = 10;
-    public int rhythm2 = 11;
-    public int rhythm = 18;
+    public static final int pcmpart = 10;
+    public static final int rhythm2 = 11;
+    public static final int rhythm = 18;
 
     public int part = 0; // b
     public int ongen = 0; // b
@@ -262,7 +262,7 @@ public class MmlSeg {
     public int fm3_partchr2 = 0; // b	0
     public int fm3_partchr3 = 0; // b	0
     public int fm3_ofsadr = 0; // w	0
-    public char[] pcm_partchr = {
+    public final char[] pcm_partchr = {
             (char) 0,
             (char) 0,
             (char) 0,
@@ -307,13 +307,13 @@ public class MmlSeg {
     public int mml_endadr; // w
 
     public int loopnest = 32; // MAX 32 NEST
-    public byte[] loptbl = new byte[32 * 2]; // loopnest * 2];
-    public byte[] lextbl = new byte[32 * 2]; // loopnest * 2];
+    public final byte[] loptbl = new byte[32 * 2]; // loopnest * 2];
+    public final byte[] lextbl = new byte[32 * 2]; // loopnest * 2];
 
     // Broken Chord Work
     public int bunsan_start; // w Start Offset
     public byte bunsan_count; // b Number of notes
-    public byte[] bunsan_work = new byte[16]; // Scale x16
+    public final byte[] bunsan_work = new byte[16]; // Scale x16
     public byte bunsan_length; // b Overall length
     public byte bunsan_1cnt; // b The duration of one note
     public byte bunsan_tieflag; // b Tie Flag
@@ -326,11 +326,11 @@ public class MmlSeg {
     public int prgbuf_length = 26;
     public byte newprg_num; // b
     public byte alg_fb; // b
-    public byte[][] slot = {new byte[6], new byte[6], new byte[6], new byte[6]}; // b
+    public final byte[][] slot = {new byte[6], new byte[6], new byte[6], new byte[6]}; // b
     public String prg_name = null; // b
 
-    public byte[] oplbuf = new byte[16]; // b
-    public byte[] prg_num = new byte[256]; // b
+    public final byte[] oplbuf = new byte[16]; // b
+    public final byte[] prg_num = new byte[256]; // b
 
     public String mml_filename; // b
     public String mml_filename2 = ""; // For include
@@ -340,7 +340,7 @@ public class MmlSeg {
     public int title_adr; // w
     public int composer_adr; // w
     public int arranger_adr; // w
-    public int[] memo_adr = new int[129]; // w
+    public final int[] memo_adr = new int[129]; // w
     public String composer_seg = null; // w
     public String arranger_seg = null; // w
     //public String composer_adr; // w
@@ -349,16 +349,16 @@ public class MmlSeg {
     public String mml_buf = null; // 61*1024-1 dup(?); max 61k(.mml file)
     public byte mmlbuf_end; // b
 
-    public Stack<Integer> hscomSI = new Stack<>();
+    public final Stack<Integer> hscomSI = new Stack<>();
     byte ontei;
     int stPos;
     int chipCh;
 
-    public List<String> includeFileHistory = new ArrayList<>();
+    public final List<String> includeFileHistory = new ArrayList<>();
     public int includeFileHistoryPos;
     public Object currentDocument;
     public String currentMMLFile;
-    public Stack<String> includeFileHistoryStack = new Stack<>();
+    public final Stack<String> includeFileHistoryStack = new Stack<>();
 
     private Stack<LinePos> macroStack = new Stack<>();
 

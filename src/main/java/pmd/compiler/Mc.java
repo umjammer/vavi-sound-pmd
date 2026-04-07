@@ -4,6 +4,7 @@ import java.awt.Point;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Stack;
@@ -12,8 +13,8 @@ import java.util.function.Supplier;
 import dotnet4j.io.Path;
 import dotnet4j.util.compat.Tuple;
 import musicDriverInterface.LinePos;
-import musicDriverInterface.MMLType;
 import musicDriverInterface.MmlDatum;
+import musicDriverInterface.MmlDatum.MMLType;
 import pmd.common.PmdDosExitException;
 import pmd.common.PmdDosExitException.PmdErrorExitException;
 import pmd.common.PmdException;
@@ -28,17 +29,16 @@ public class Mc {
 
     private static final Logger logger = getLogger(Mc.class.getName());
 
-    ResourceBundle rb = ResourceBundle.getBundle("lang/message");
+    final ResourceBundle rb = ResourceBundle.getBundle("lang/message");
 
-    private Compiler compiler;
-    private String[] args;
-    private Work work;
-    private Lc lc;
-    private MSeg m_seg;
-    private FNumDatSeg fnumdat_seg = null;
+    private final Compiler compiler;
+    private final String[] args;
+    private final Work work;
+    private final Lc lc;
+    private final MSeg m_seg;
     private HsSeg hs_seg = null;
-    public MmlSeg mml_seg;
-    public VoiceSeg voice_seg;
+    public final MmlSeg mml_seg;
+    public final VoiceSeg voice_seg;
 
     // DotNET specific parameters
     public byte[] outVoiceBuf = null; // Buffer for tone output (file name is v_filename)
@@ -200,22 +200,20 @@ public class Mc {
         voiceTrancer(ffBuf);
         setupComTbl();
         setupRcomtbl();
-        fnumdat_seg = new FNumDatSeg();
         hs_seg = new HsSeg();
     }
 
     private void voiceTrancer(byte[] ffBuf) {
         voice_seg.voice_buf = new byte[8192];
         if (ffBuf == null || ffBuf.length < 1) return;
-        for (int i = 0; i < ffBuf.length; i++)
-            voice_seg.voice_buf[i] = ffBuf[i];
+        System.arraycopy(ffBuf, 0, voice_seg.voice_buf, 0, ffBuf.length);
     }
 
     /**
      * compile start
      */
     public MmlDatum[] compile_start() {
-        print_mes(mml_seg.titmes);
+        print_mes(MmlSeg.titmes);
 
         if (args == null || args.length == 0) {
             usage();
@@ -253,7 +251,7 @@ public class Mc {
         // Formatting the .M file data (add m_start to the beginning so that m_buf becomes the actual output data)
         List<MmlDatum> dst = new ArrayList<>();
         dst.add(new MmlDatum(m_seg.m_start & 0xff));
-        for (int i = 0; i < m_seg.m_buf.size(); i++) dst.add(m_seg.m_buf.get(i));
+        dst.addAll(m_seg.m_buf);
         for (int i = 0; i < dst.size(); i++) m_seg.m_buf.set(i, dst.get(i));
 
         // Compilation complete (just display a message)
@@ -571,7 +569,7 @@ public class Mc {
         mml_seg.pmd_flg = 0;
         if (voice_seg.voice_buf == null) {
             voice_seg.voice_buf = new byte[8192];
-            for (int i = 0; i < voice_seg.voice_buf.length; i++) voice_seg.voice_buf[i] = 0;
+            Arrays.fill(voice_seg.voice_buf, (byte) 0);
         }
     }
 
@@ -589,9 +587,7 @@ public class Mc {
      * Initializing the tone table
      */
     private void clear_voicetable() {
-        for (int i = 0; i < mml_seg.prg_num.length; i++) {
-            mml_seg.prg_num[i] = 0;
-        }
+        Arrays.fill(mml_seg.prg_num, (byte) 0);
     }
 
     /**
@@ -610,12 +606,8 @@ public class Mc {
      */
     private void InitVariableBuffer() {
 
-        for (int i = 0; i < hs_seg.hsbuf2.length; i++) {
-            hs_seg.hsbuf2[i] = 0;
-        }
-        for (int i = 0; i < hs_seg.hsbuf3.length; i++) {
-            hs_seg.hsbuf3[i] = 0;
-        }
+        Arrays.fill(hs_seg.hsbuf2, (byte) 0);
+        Arrays.fill(hs_seg.hsbuf3, (byte) 0);
 
         for (int i = 0; i < 128 * 8; i++) {
             work.ppzfile_buf[mml_seg.ppzfile_adr + i] = 0;
@@ -2209,7 +2201,7 @@ fm3_check:
         //   mov[composer_seg],0
     }
 
-    private String GetString(String buf, int index) {
+    private static String getString(String buf, int index) {
         String ret = buf.substring(index);
         if (ret.indexOf((char) 0x1a) >= 0) return ret = ret.substring(0, ret.indexOf((char) 0x1a));
         if (ret.indexOf((char) 0x0a) >= 0) return ret = ret.substring(0, ret.indexOf((char) 0x0a));
@@ -2364,12 +2356,14 @@ fm3_check:
                 if (al_b < ((byte) '9' + 1)) break;
                 al = String.valueOf(Character.toUpperCase((char) al_b)); // Lowercase to uppercase conversion
 
-                if (al.equals("F")) bh |= 0x01;
-                else if (al.equals("S")) bh |= 0x02;
-                else if (al.equals("P")) bh |= 0x04;
-                else if (al.equals("R")) bh |= 0x08;
-                else if (al.equals("Z")) bh |= 0x10;
-                else error('#', 1, work.si);
+                switch (al) {
+                    case "F" -> bh |= 0x01;
+                    case "S" -> bh |= 0x02;
+                    case "P" -> bh |= 0x04;
+                    case "R" -> bh |= 0x08;
+                    case "Z" -> bh |= 0x10;
+                    default -> error('#', 1, work.si);
+                }
             } while (true);
 
 //vd_noppz:
@@ -2746,7 +2740,7 @@ fm3_check:
     /**
      * Check if the al character is a part in use
      */
-    private boolean partcheck(char al) {
+    private static boolean partcheck(char al) {
         if (al < 'L') {
             return true;
         }
@@ -3079,10 +3073,10 @@ hsset_loop:
             int bx_p = work.bx;
             get_param();
             work.bx = bx_p;
-            work.al &= mml_seg.oplprg_table[work.bx + 1]; // max
-            byte cl = mml_seg.oplprg_table[work.bx + 2]; // rot
+            work.al &= MmlSeg.oplprg_table[work.bx + 1]; // max
+            byte cl = MmlSeg.oplprg_table[work.bx + 2]; // rot
             for (int i = 0; i < cl; i++) work.al = (byte) (((work.al & 0xff) << 1) | ((work.al & 0x80) != 0 ? 1 : 0));
-            mml_seg.oplbuf[work.di + mml_seg.oplprg_table[work.bx]] |= work.al; // setting
+            mml_seg.oplbuf[work.di + MmlSeg.oplprg_table[work.bx]] |= work.al; // setting
 
             work.bx += 3;
             cx--;
@@ -3547,8 +3541,8 @@ notend: // ↑
      * Command Table
      */
 
-    private int ou00 = 11;
-    private int od00 = 12;
+    private static final int ou00 = 11;
+    private static final int od00 = 12;
     private Tuple<String, Supplier<enmPass2JumpTable>>[] comtbl;
 
     private void setupComTbl() {
@@ -6048,7 +6042,7 @@ prs200: // ↑
         return false;
     }
 
-    private boolean hexcal8(/* ref */ byte[] al_b) {
+    private static boolean hexcal8(/* ref */ byte[] al_b) {
         try {
             al_b[0] = Byte.parseByte(String.valueOf((char) al_b[0]));
             return true;
@@ -6597,7 +6591,7 @@ prs200: // ↑
 //#endif
         work.bx = (byte) work.bx;
         work.bx += 0; // offset fmvol
-        work.bx = mml_seg.fmvol[work.bx];
+        work.bx = MmlSeg.fmvol[work.bx];
 
         return enmPass2JumpTable.vset;
     }
@@ -8899,7 +8893,7 @@ cl_exit:
      * @param col Position where the value begins
      * @return true: i got you
      */
-    private boolean search_env(String siSearchEnv, String[] esKankyoseg, /* out */ int[] index, /* out */ int[] col) {
+    private static boolean search_env(String siSearchEnv, String[] esKankyoseg, /* out */ int[] index, /* out */ int[] col) {
         index[0] = -1;
         col[0] = -1;
         if (siSearchEnv == null) return false;
@@ -8930,5 +8924,5 @@ cl_exit:
         error_exit(1);
     }
 
-    private String[] kankyo_seg;
+    private final String[] kankyo_seg;
 }

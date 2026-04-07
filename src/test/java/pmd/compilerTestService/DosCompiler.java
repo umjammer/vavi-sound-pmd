@@ -3,6 +3,7 @@ package pmd.compilerTestService;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 
 public class DosCompiler {
@@ -68,7 +69,7 @@ public class DosCompiler {
                     }
                 }
 
-                var log = stdout.equals(stderr) ?
+                var log = Arrays.equals(stdout, stderr) ?
                         stdout :
                         "stdout:%s%sstderr:%s".formatted(System.lineSeparator(), stdout, stderr);
 

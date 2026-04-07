@@ -17,7 +17,7 @@ public class PPZ8em {
 
     private static final Logger logger = getLogger(PPZ8em.class.getName());
 
-    public byte[][] pcmData = new byte[2][];
+    public final byte[][] pcmData = new byte[2][];
     private final boolean[] isPVI = new boolean[2];
     private final PPZChannelWork[] chWk = {
             new PPZChannelWork(), new PPZChannelWork(), new PPZChannelWork(), new PPZChannelWork(),
@@ -73,7 +73,7 @@ public class PPZ8em {
         for (i = 0; i < 16; i++) {
             temp = Math.pow(2.0, (i + pcmVolume) / 2.0) * aVolume / 0x18000;
             for (j = 0; j < 256; j++) {
-                VolumeTable[i][j] = (short) (Math.max(Math.min((j - 128) * temp, Short.MAX_VALUE), Short.MIN_VALUE));
+                VolumeTable[i][j] = (short) (Math.clamp((j - 128) * temp, Short.MIN_VALUE, Short.MAX_VALUE));
             }
         }
     }
@@ -334,7 +334,7 @@ public class PPZ8em {
         // Do nothing
     }
 
-    private int checkPZI(byte[] pcmData) {
+    private static int checkPZI(byte[] pcmData) {
         if (pcmData == null)
             return 5;
         if (!(pcmData[0] == 'P' && pcmData[1] == 'Z' && pcmData[2] == 'I'))
@@ -343,7 +343,7 @@ public class PPZ8em {
         return 0;
     }
 
-    private int checkPVI(byte[] pcmData) {
+    private static int checkPVI(byte[] pcmData) {
         if (pcmData == null)
             return 5;
         if (!(pcmData[0] == 'P' && pcmData[1] == 'V' && pcmData[2] == 'I'))
@@ -382,8 +382,8 @@ public class PPZ8em {
             }
         }
 
-        emuRenderBuf[0] = (short) Math.max(Math.min(emuRenderBuf[0] + l, Short.MAX_VALUE), Short.MIN_VALUE);
-        emuRenderBuf[1] = (short) Math.max(Math.min(emuRenderBuf[1] + r, Short.MAX_VALUE), Short.MIN_VALUE);
+        emuRenderBuf[0] = (short) Math.clamp(emuRenderBuf[0] + l, Short.MIN_VALUE, Short.MAX_VALUE);
+        emuRenderBuf[1] = (short) Math.clamp(emuRenderBuf[1] + r, Short.MIN_VALUE, Short.MAX_VALUE);
     }
 
     private int convertPviAdpcmToPziPcm(byte bank) {
@@ -475,22 +475,22 @@ public class PPZ8em {
 
                 int n = X_N + table1[(psrc >> 4) & 0x0f] * DELTA_N / 8;
                 //logger.log(Level.TRACE, n);
-                X_N = Math.max(Math.min(n, 32767), -32768);
+                X_N = Math.clamp(n, -32768, 32767);
 
                 n = DELTA_N * table2[(psrc >> 4) & 0x0f] / 64;
                 //logger.log(Level.TRACE, n);
-                DELTA_N = Math.max(Math.min(n, 24576), 127);
+                DELTA_N = Math.clamp(n, 127, 24576);
 
                 o.add((byte) (X_N / (32768 / 128) + 128));
 
 
                 n = X_N + table1[psrc & 0x0f] * DELTA_N / 8;
                 //logger.log(Level.TRACE, n);
-                X_N = Math.max(Math.min(n, 32767), -32768);
+                X_N = Math.clamp(n, -32768, 32767);
 
                 n = DELTA_N * table2[psrc & 0x0f] / 64;
                 //logger.log(Level.TRACE, n);
-                DELTA_N = Math.max(Math.min(n, 24576), 127);
+                DELTA_N = Math.clamp(n, 127, 24576);
 
                 o.add((byte) (X_N / (32768 / 128) + 128));
             }

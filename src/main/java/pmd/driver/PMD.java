@@ -11,8 +11,8 @@ import java.util.function.Supplier;
 import dotnet4j.io.Stream;
 import musicDriverInterface.ChipDatum;
 import musicDriverInterface.LinePos;
-import musicDriverInterface.MMLType;
 import musicDriverInterface.MmlDatum;
+import musicDriverInterface.MmlDatum.MMLType;
 import pmd.common.Common;
 import pmd.common.PmdDosExitException;
 import pmd.common.PmdDosExitException.PmdErrorExitException;
@@ -33,7 +33,7 @@ public class PMD {
 
     private static final Logger logger = getLogger(PMD.class.getName());
 
-    public PW pw;
+    public final PW pw;
     private final X86Register r;
     private final Pc98 pc98;
     private final PPZDRV ppzdrv;
@@ -43,8 +43,8 @@ public class PMD {
     private final Function<ChipDatum, Integer> ppz8em;
     private final Function<ChipDatum, Integer> ppsdrv;
     private final Function<ChipDatum, Integer> p86em;
-    public PCMLOAD pcmload;
-    public Consumer<ChipDatum> WriteOPNARegister;
+    public final PCMLOAD pcmload;
+    public final Consumer<ChipDatum> WriteOPNARegister;
 
     public PMD(
             MmlDatum[] mmlData,
@@ -2141,7 +2141,7 @@ rolop:
             r.incBx();
             opnset44();
             r.dh = 0x10;
-            r.dl = pw.rhydat[r.getBx() & 0xffff];
+            r.dl = PW.rhydat[r.getBx() & 0xffff];
             r.dl &= pw.rhythmmask;
             if (r.dl == 0)
                 return; // break rsb200;
@@ -3628,7 +3628,7 @@ sm_notfm3: // ↑
             r.bh = 0;
             r.bl &= 7;
             r.addBx((short) 0); // offset carrier_table
-            r.al = (byte) pw.carrier_table[r.getBx() & 0xffff];
+            r.al = (byte) PW.carrier_table[r.getBx() & 0xffff];
             pw.partWk[r.di & 0xffff].carrier = r.al;
         }
 //sm_set:
@@ -5217,7 +5217,7 @@ reloop: // ↑
 //                break rhst_ret2;
                 } else {
 //rhst_00:
-                    r.addBx((short) 0); // offset rshot_bd
+                    r.setBx((short) 0); // offset rshot_bd
                     rflag_inc(true);
                     pw.rshot_dat |= r.dl;
                 }
@@ -5240,7 +5240,7 @@ reloop: // ↑
 //ri_loop:
         do {
             r.al = r.ror(r.al, 1);
-            if (r.carry) { // break ri_not;
+            if (!r.carry) { // break ri_not;
                 if (isShot) pw.rshot[r.getBx() & 0xffff]++;
                 else pw.rdump[r.getBx() & 0xffff]++;
             }
@@ -6569,7 +6569,7 @@ nss_notfm3: // ↑
         r.bh = 0;
         r.bl = r.dl;
         r.addBx((short) 0); // offset carrier_table
-        r.al = (byte) pw.carrier_table[r.getBx() & 0xffff];
+        r.al = (byte) PW.carrier_table[r.getBx() & 0xffff];
         if ((pw.partWk[r.di & 0xffff].volmask & 0xf) == 0) { // break not_set_volmask; // Do not set if Volmask value is non-zero
             pw.partWk[r.di & 0xffff].volmask = r.al;
         }
@@ -6579,7 +6579,7 @@ nss_notfm3: // ↑
         }
 //not_set_volmask2:
         pw.partWk[r.di & 0xffff].carrier = r.al;
-        r.ah = (byte) pw.carrier_table[(r.getBx() & 0xffff) + 8]; // Slot 2/3 reversal data (not completed)
+        r.ah = (byte) PW.carrier_table[(r.getBx() & 0xffff) + 8]; // Slot 2/3 reversal data (not completed)
         r.setBx(r.stack.pop());
         r.al = pw.partWk[r.di & 0xffff].neiromask;
         r.ah &= r.al; // AH=mask for TL / AL=mask for others
@@ -8932,7 +8932,7 @@ vtc000: // ↑
         // PMD Command Start
         //
 
-        print_mes(pw.mes_title); // Title Display
+        print_mes(PW.mes_title); // Title Display
 
         //
         // PMD Resident CHECK
@@ -9254,7 +9254,7 @@ ppschk_exit: // ↑
 //ppschk_exit:
         if (pw.message_flag != 0) { // break ppschk_end;
             if (pw.ppsdrv_flag == 1) { // break ppschk_end;
-                print_mes(pw.mes_ppsdrv);
+                print_mes(PW.mes_ppsdrv);
             }
         }
 //ppschk_end:
@@ -9286,7 +9286,7 @@ ppschk_exit: // ↑
                     mask_eoi_set();
                     return;
                 }
-                print_mes(pw.mes_ppz8);
+                print_mes(PW.mes_ppz8);
             }
 //ppzchk_end:
         }
@@ -9489,8 +9489,8 @@ ppschk_exit: // ↑
      */
     private void set_option(String[] pmdOption) {
         if (pmdOption == null) return;
-        for (int i = 0; i < pmdOption.length; i++) {
-            String op = pmdOption[i].toUpperCase();
+        for (String s : pmdOption) {
+            String op = s.toUpperCase();
             if (op == null || op.isEmpty()) continue;
             if (op.isEmpty() || (op.charAt(0) != '/' && op.charAt(0) != '-')) continue;
 
@@ -9516,7 +9516,9 @@ ppschk_exit: // ↑
                     int n = 0;
                     try {
                         n = Integer.parseInt(op.substring(1));
-                    } catch (NumberFormatException e) { pw.ff_tempo = (byte) 250; }
+                    } catch (NumberFormatException e) {
+                        pw.ff_tempo = (byte) 250;
+                    }
                     pw.ff_tempo = (byte) n;
                     break;
                 case 'K':
@@ -9562,7 +9564,7 @@ ppschk_exit: // ↑
         //logger.log(Level.TRACE, "%d", md);
 
         List<Object> obj = md.args;
-        MmlDatum mmd = (MmlDatum) obj.get(0);
+        MmlDatum mmd = (MmlDatum) obj.getFirst();
 
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
         cd.additionalData = mmd;

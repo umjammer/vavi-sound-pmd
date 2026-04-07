@@ -53,7 +53,7 @@ public class PW {
         return crtEfcDat;
     }
 
-    public byte[] pcmWk = new byte[4 * 256 + 2 + 128];
+    public final byte[] pcmWk = new byte[4 * 256 + 2 + 128];
     public byte[] pcmDt;
 
     Supplier<Object>[] currentCommandTable;
@@ -74,14 +74,14 @@ public class PW {
     public String ppz2File = "";
 
     public static final String ver = "4.8s";
-    public int vers = 0x48;
-    public char verc = 's';
+    public static final int vers = 0x48;
+    public static final char verc = 's';
     public static final String date = "Jan.22nd 2020";
 
-    public int mdata_def = 16;
-    public int voice_def = 8;
-    public int effect_def = 4;
-    public int key_def = 1;
+    public static final int mdata_def = 16;
+    public static final int voice_def = 8;
+    public static final int effect_def = 4;
+    public static final int key_def = 1;
 
     public static final String _myname = "PMD     COM";
 
@@ -137,9 +137,9 @@ public class PW {
     public int _vector = 16;
     public int _int_level = 18;
 
-    public byte com_end_0c0h = (byte) 0xf7;
+    public static final byte com_end_0c0h = (byte) 0xf7;
 
-    public int[] vol_tbl = {0, 0, 0, 0};
+    public final int[] vol_tbl = {0, 0, 0, 0};
 
     public short seed;
 
@@ -254,7 +254,7 @@ public class PW {
     public byte _pcmpan = 0; // PCM sound effect pan
     public byte _pcm_volume = 0; // PCM sound effect volume
     public byte rshot_dat = 0; // Rhythm sound source shot flag
-    public byte[] rdat = new byte[6]; // Rhythm sound source Volume/pan data
+    public final byte[] rdat = new byte[6]; // Rhythm sound source Volume/pan data
     public byte rhyvol = 0b0011_1100; // Rhythm Total Level
     public int kshot_dat = 0; // SSG Rhythm Shot Flag
     public int ssgefcdat = 0; // efftbl  PSG Effect data address
@@ -302,14 +302,14 @@ public class PW {
     public byte mmldat_lng = 0; // Song data buffer size (KB)
     public byte voicedat_lng = 0; // Tone data buffer size (KB)
     public byte effecdat_lng = 0; // Sound effect data buffer size (KB)
-    public int[] rshot = {0, 0, 0, 0, 0, 0}; // Rhythm Sound Source shot inc flags
+    public final int[] rshot = {0, 0, 0, 0, 0, 0}; // Rhythm Sound Source shot inc flags
     //public byte rshot_bd = 0; // Rhythm Sound Source shot inc flag(BD)
     //public byte rshot_sd = 0; // Rhythm Sound Source shot inc flag(SD)
     //public byte rshot_sym = 0; // Rhythm Sound Source shot inc flag(CYM)
     //public byte rshot_hh = 0; // Rhythm Sound Source shot inc flag(HH)
     //public byte rshot_tom = 0; // Rhythm Sound Source shot inc flag(TOM)
     //public byte rshot_rim = 0; // Rhythm Sound Source shot inc flag(RIM)
-    public int[] rdump = {0, 0, 0, 0, 0, 0}; // Rhythm Sound Source dump inc flags
+    public final int[] rdump = {0, 0, 0, 0, 0, 0}; // Rhythm Sound Source dump inc flags
     //public byte rdump_bd = 0; // Rhythm Sound Source dump inc flag(BD)
     //public byte rdump_sd = 0; // Rhythm Sound Source dump inc flag(SD)
     //public byte rdump_sym = 0; // Rhythm Sound Source dump inc flag(CYM)
@@ -332,7 +332,7 @@ public class PW {
 
 
     public MmlDatum[] rd = null;
-    public MmlDatum[] rdDmy = new MmlDatum[] {new MmlDatum(0xff)};
+    public final MmlDatum[] rdDmy = new MmlDatum[] {new MmlDatum(0xff)};
 
     // Playing Data Area
 
@@ -662,7 +662,7 @@ public class PW {
     /**
      * Datas
      */
-    public int trans_size = 256;// Number of bytes transferred at one time
+    public static final int trans_size = 256;// Number of bytes transferred at one time
     public byte play86_flag; // Pronounced? flag
     public byte trans_flag; // db 0 ; Is there any data left to transfer? Flag
     public short start_ofs; // dw 0 ; PCM data address during sounding (lower offset)
@@ -688,7 +688,7 @@ public class PW {
     public byte release_flag1; //   db 0 ; Flag to release or not
     public byte release_flag2; //   db 0 ; Flag of whether it has been released
     public byte pcm86_pan_flag = 0; // b 0 ; Pan data 1 (bit0 = left / bit1 = right / bit2 = reverse)
-    public byte com_end = (byte) 0xb1;
+    public static final byte com_end = (byte) 0xb1;
     public byte pcm86_pan_dat; // db 0 ; Pan data 2 (volume value of the side that lowers the volume)
 
     // Forwarding table by pan_flag
@@ -1370,7 +1370,7 @@ public class PW {
             dop.usePPZ = ppz1File != null && !ppz1File.isEmpty() || ppz2File != null && !ppz2File.isEmpty();
             dop.isNRM = false;
             dop.isSPB = true;
-            if (dop.PPCHeader.equals("PCM")) dop.isSPB = false;
+            if (dop.ppcHeader.equals("PCM")) dop.isSPB = false;
         }
 
         board = 1;
@@ -1495,7 +1495,7 @@ public class PW {
         return ret.toArray(MmlDatum[]::new);
     }
 
-    //EFFECT.INC
+    // EFFECT.INC
     public final List<Tuple<Integer, MmlDatum[]>> efftbl;
 
 //#region Sound effect data

@@ -4,7 +4,6 @@ import java.awt.Point;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -18,10 +17,10 @@ import dotnet4j.io.StreamReader;
 import dotnet4j.util.compat.Tuple;
 import dotnet4j.util.compat.Tuple3;
 import musicDriverInterface.CompilerInfo;
-import musicDriverInterface.GD3Tag;
+import musicDriverInterface.MetaData;
 import musicDriverInterface.ICompiler;
+import musicDriverInterface.MetaData.Tag;
 import musicDriverInterface.MmlDatum;
-import musicDriverInterface.Tag;
 
 import static java.lang.System.getLogger;
 import static pmd.common.Common.charset;
@@ -31,7 +30,7 @@ public class Compiler implements ICompiler {
 
     private static final Logger logger = getLogger(Compiler.class.getName());
 
-    ResourceBundle rb = ResourceBundle.getBundle("lang/message");
+    final ResourceBundle rb = ResourceBundle.getBundle("lang/message");
 
     // Input data
 
@@ -250,7 +249,7 @@ public class Compiler implements ICompiler {
                 if (k == null || k.isEmpty()) continue;
                 if (v == null || v.isEmpty()) continue;
 
-                Tuple<String, String> keyVal = new Tuple<String, String>(k, v);
+                Tuple<String, String> keyVal = new Tuple<>(k, v);
                 tags.add(keyVal);
             }
         } catch (Exception e) {
@@ -306,13 +305,13 @@ public class Compiler implements ICompiler {
     /**
      * Read binary from a stream in bulk
      */
-    private byte[] readAllBytes(Stream stream) {
+    private static byte[] readAllBytes(Stream stream) {
         try (var ms = readAllBytesToMemoryStream(stream)) {
             return ms != null ? ms.toArray() : null;
         }
     }
 
-    private MemoryStream readAllBytesToMemoryStream(Stream stream) {
+    private static MemoryStream readAllBytesToMemoryStream(Stream stream) {
         if (stream == null) return null;
 
         var buf = new byte[8192];
@@ -328,35 +327,26 @@ public class Compiler implements ICompiler {
     }
 
     @Override
-    public GD3Tag getGD3TagInfo(byte[] srcBuf) {
+    public MetaData getMetaData(byte[] srcBuf) {
         String text = new String(srcBuf, charset);
         Tuple<String, String>[] tags = getTags(text, appendFileReaderCallback);
-        GD3Tag gd3tag = new GD3Tag();
-        gd3tag.items.clear();
+        MetaData metaData = new MetaData();
         for (Tuple<String, String> ttag : tags) {
             if (ttag.getItem1().toLowerCase().trim().equals("#title")) {
-                if (gd3tag.items.containsKey(Tag.Title)) gd3tag.items.remove(Tag.Title);
-                gd3tag.items.put(Tag.Title, new String[] {ttag.getItem2()});
-                if (gd3tag.items.containsKey(Tag.TitleJ)) gd3tag.items.remove(Tag.TitleJ);
-                gd3tag.items.put(Tag.TitleJ, new String[] {ttag.getItem2()});
+                metaData.set(Tag.Title, ttag.getItem2());
+                metaData.set(Tag.TitleJ, ttag.getItem2());
             } else if (ttag.getItem1().toLowerCase().trim().equals("#composer")) {
-                if (gd3tag.items.containsKey(Tag.Composer)) gd3tag.items.remove(Tag.Composer);
-                gd3tag.items.put(Tag.Composer, new String[] {ttag.getItem2()});
-                if (gd3tag.items.containsKey(Tag.ComposerJ)) gd3tag.items.remove(Tag.ComposerJ);
-                gd3tag.items.put(Tag.ComposerJ, new String[] {ttag.getItem2()});
+                metaData.set(Tag.Composer, ttag.getItem2());
+                metaData.set(Tag.ComposerJ, ttag.getItem2());
             } else if (ttag.getItem1().toLowerCase().trim().equals("#arranger")) {
-                if (gd3tag.items.containsKey(Tag.Arranger)) gd3tag.items.remove(Tag.Arranger);
-                gd3tag.items.put(Tag.Arranger, new String[] {ttag.getItem2()});
-                if (gd3tag.items.containsKey(Tag.ArrangerJ)) gd3tag.items.remove(Tag.ArrangerJ);
-                gd3tag.items.put(Tag.ArrangerJ, new String[] {ttag.getItem2()});
+                metaData.set(Tag.Arranger, ttag.getItem2());
+                metaData.set(Tag.ArrangerJ, ttag.getItem2());
             } else if (ttag.getItem1().toLowerCase().trim().equals("#memo")) {
-                if (gd3tag.items.containsKey(Tag.Memo)) gd3tag.items.remove(Tag.Memo);
-                gd3tag.items.put(Tag.Memo, new String[] {ttag.getItem2()});
+                metaData.set(Tag.Memo, ttag.getItem2());
             } else if (ttag.getItem1().toLowerCase().trim().contains("#fi")) {
-                if (gd3tag.items.containsKey(Tag.SongObjFilename)) gd3tag.items.remove(Tag.SongObjFilename);
-                gd3tag.items.put(Tag.SongObjFilename, new String[] {ttag.getItem2()});
+                metaData.set(Tag.SongObjFilename, ttag.getItem2());
             }
         }
-        return gd3tag;
+        return metaData;
     }
 }

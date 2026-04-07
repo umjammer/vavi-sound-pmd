@@ -5,8 +5,8 @@ import java.lang.System.Logger.Level;
 import java.util.function.Supplier;
 
 import musicDriverInterface.ChipDatum;
-import musicDriverInterface.MMLType;
 import musicDriverInterface.MmlDatum;
+import musicDriverInterface.MmlDatum.MMLType;
 
 import static java.lang.System.getLogger;
 
@@ -536,7 +536,7 @@ public class PCMDRV {
 
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
-        MmlDatum md = new MmlDatum(-1, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
+        MmlDatum md = new MmlDatum(0xff, MMLType.Volume, pw.cmd.linePos, r.al & 0xff);
         cd.additionalData = md;
         pmd.writeDummy(cd);
 
@@ -619,7 +619,7 @@ public class PCMDRV {
 
         // For IDEs
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
-        cd.additionalData = new MmlDatum(-1, MMLType.Instrument, pw.cmd.linePos,
+        cd.additionalData = new MmlDatum(0xff, MMLType.Instrument, pw.cmd.linePos,
                 0xff, (int) pw.partWk[r.di & 0xffff].voicenum);
         pmd.writeDummy(cd);
 
@@ -983,7 +983,7 @@ mv_min:
 //fnm00:
         r.cl = r.al; // cl=5-octarb
         //r.bx += r.bx;
-        r.setAx((short) pw.pcm_tune_data[r.getBx() & 0xffff]);
+        r.setAx((short) PW.pcm_tune_data[r.getBx() & 0xffff]);
         if ((r.ch & 0xff) >= 6) { // o7 or higher? // break pts01m;
             r.ch = 0x50;
             if ((r.getAx() & 0x8000) == 0) { // break pts00m;

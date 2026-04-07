@@ -1,7 +1,7 @@
 [![Release](https://jitpack.io/v/umjammer/vavi-sound-pmd.svg)](https://jitpack.io/#umjammer/vavi-sound-pmd)
 [![Java CI](https://github.com/umjammer/vavi-sound-pmd/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/vavi-sound-pmd/actions/workflows/maven.yml)
 [![CodeQL](https://github.com/umjammer/vavi-sound-pmd/actions/workflows/codeql.yml/badge.svg)](https://github.com/umjammer/vavi-sound-pmd/actions/workflows/codeql.yml)
-![Java](https://img.shields.io/badge/Java-21-b07219)
+![Java](https://img.shields.io/badge/Java-25-b07219)
 
 # vavi-sound-pmd
 
@@ -39,6 +39,22 @@ currently this project has no good player, use [vavi-sound-mdplayer](https://git
 
  - captured method::reference might cause instantiation  
 
+### File Types
+
+| name | type | status | desxription                                                                     |
+|------|------|:------:|---------------------------------------------------------------------------------|
+| M    | SEQ  |   ✅️   | for OPN/YM2203 (focused) songs                                                  |
+| M2   | SEQ  |   ✅️   | for OPNA/YM2608 only songs                                                      |
+| MZ   | SEQ  |   ✅️   | for songs using PMDPPZ                                                          |
+| M86  | SEQ  |        | for songs using PMD86                                                           |
+| P86  | PCM  |        | uses the PC-98's 86 soundboard's PCM as an alternative to the ADPCM (✅️ plugin) |
+| PPC  | PCM  |  ✅️?   | ADPCM for PMDB2                                                                 |
+| PZI  | PCM  |  ✅️?   | PVI                                                                             |
+
+- ADPCM ... using OPNA's internal ADPCM channel
+- PPZ8 ... uses the PC-98's 86 soundboard's PCM to generate up to 8 PCM channels (✅️ plugin)
+- PPS ... uses SSG channel 3 to generate up to 2 PCM channels for PDR, PPSDRV (✅️ plugin)
+
 ## TODO
  
  * ~~status~~
@@ -47,6 +63,7 @@ currently this project has no good player, use [vavi-sound-mdplayer](https://git
    * ~~base ng~~
  * compiler
  * pcm
+ * environment variables
 
 ---
 
