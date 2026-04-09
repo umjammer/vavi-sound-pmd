@@ -159,6 +159,9 @@ public class Driver implements IDriver {
             }
         }
 
+logger.log(Level.INFO, "ppc: " + work.ppcFile);
+logger.log(Level.INFO, "pps: " + work.ppsFile);
+logger.log(Level.INFO, "ppz: " + work.ppz1File);
         return tags;
     }
 
@@ -266,9 +269,7 @@ getmemo_errret:
                     metaData.set(Tag.Arranger, ttag.getItem2());
                     metaData.set(Tag.ArrangerJ, ttag.getItem2());
                 }
-                case "memo" -> {
-                    metaData.set(Tag.Memo, ttag.getItem2());
-                }
+                case "memo" -> metaData.set(Tag.Memo, ttag.getItem2());
             }
         }
         return metaData;

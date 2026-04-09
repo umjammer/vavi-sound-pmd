@@ -2199,7 +2199,7 @@ rolop:
 //            return null;
 //        }
 
-        if ((r.al & 0xff) < (pw.com_end & 0xff)) {
+        if ((r.al & 0xff) < (PW.com_end & 0xff)) {
             return out_of_commands();
         }
 
@@ -2591,7 +2591,7 @@ rolop:
      * Additional special instructions for 0c0h
      */
     public Supplier<Object> special_0c0h() {
-        if ((r.al & 0xff) < (pw.com_end_0c0h & 0xff)) {
+        if ((r.al & 0xff) < (PW.com_end_0c0h & 0xff)) {
             return this::out_of_commands;
         }
 
@@ -7972,8 +7972,8 @@ pcm_ef: // ↑
         } else {
             pw.al_push = 0;
         }
-        r.ah = (byte) pw.vers;
-        r.al = (byte) pw.verc;
+        r.ah = (byte) PW.vers;
+        r.al = (byte) PW.verc;
         pw.ah_push = r.ah;
         pw.dx_push = r.getAx();
     }
@@ -8951,10 +8951,10 @@ vtc000: // ↑
         //
         r.setAx((short) 0);
 
-        pw.mmldat_lng = (byte) pw.mdata_def; // Default 16K
-        pw.voicedat_lng = (byte) pw.voice_def; // Default 8K
-        pw.effecdat_lng = (byte) pw.effect_def; // Default 4K
-        pw.key_check = (byte) pw.key_def; // Keycheck ON
+        pw.mmldat_lng = (byte) PW.mdata_def; // Default 16K
+        pw.voicedat_lng = (byte) PW.voice_def; // Default 8K
+        pw.effecdat_lng = (byte) PW.effect_def; // Default 4K
+        pw.key_check = (byte) PW.key_def; // Keycheck ON
 
         pw.fm_voldown = (byte) pw.fmvd_init; // FM_VOLDOWN
         pw._fm_voldown = (byte) pw.fmvd_init; // FM_VOLDOWN
