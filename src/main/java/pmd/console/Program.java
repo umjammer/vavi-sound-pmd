@@ -42,7 +42,7 @@ class Program {
     private static boolean isXml = false;
     private static Environment env = null;
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         int fnIndex = AnalyzeOption(args);
 
         if (args == null || args.length - fnIndex < 1) {

@@ -506,12 +506,12 @@ public class Mc {
 
         String envVal = "";
         int[] index = new int[1], col = new int[1];
-        boolean cry = search_env(mml_seg.mcopt_txt, kankyo_seg, /* out */ index, /* out */ col);
+        boolean cry = search_env(MmlSeg.mcopt_txt, kankyo_seg, /* out */ index, /* out */ col);
         if (cry) {
             envVal = kankyo_seg[index[0]].substring(col[0]);
             if (get_option(envVal)) {
-                print_mes(mml_seg.warning_mes);
-                print_mes(mml_seg.mcopt_err_mes);
+                print_mes(MmlSeg.warning_mes);
+                print_mes(MmlSeg.mcopt_err_mes);
             }
         }
 
@@ -620,7 +620,7 @@ public class Mc {
     private void SetFromEnvironment() {
         // "USER=" search
         int[] index = new int[1], col = new int[1];
-        if (search_env(mml_seg.user_txt, kankyo_seg, /* out */ index, /* out */ col)) {
+        if (search_env(MmlSeg.user_txt, kankyo_seg, /* out */ index, /* out */ col)) {
             mml_seg.composer_adr = 0;
             mml_seg.composer_seg = kankyo_seg[index[0]].substring(col[0]);
             mml_seg.arranger_adr = 0;
@@ -628,13 +628,13 @@ public class Mc {
         }
 
         //"COMPOSER=" search
-        if (search_env(mml_seg.composer_txt, kankyo_seg, /* out */ index, /* out */ col)) {
+        if (search_env(MmlSeg.composer_txt, kankyo_seg, /* out */ index, /* out */ col)) {
             mml_seg.composer_adr = 0;
             mml_seg.composer_seg = kankyo_seg[index[0]].substring(col[0]);
         }
 
         //"ARRANGER=" search
-        if (search_env(mml_seg.arranger_txt, kankyo_seg, /* out */ index, /* out */ col)) {
+        if (search_env(MmlSeg.arranger_txt, kankyo_seg, /* out */ index, /* out */ col)) {
             mml_seg.arranger_adr = 0;
             mml_seg.arranger_seg = kankyo_seg[index[0]].substring(col[0]);
         }
@@ -720,7 +720,7 @@ public class Mc {
         m_seg.m_start = (byte) (mml_seg.opl_flg * 2 | mml_seg.x68_flg); // Sound source flag set
 //#endif
 
-        work.di = (mml_seg.max_part + 1) * 2; // KUMA: ? -> I understand it with ver48s lol
+        work.di = (MmlSeg.max_part + 1) * 2; // KUMA: ? -> I understand it with ver48s lol
         work.di += 0; // offset m_buf
         if ((mml_seg.prg_flg & 1) != 0) {
             work.di += 2;
@@ -749,9 +749,9 @@ public class Mc {
             // For OPM/OPL
             //
             if (mml_seg.part != 10) {
-                mml_seg.ongen = mml_seg.fm;
+                mml_seg.ongen = MmlSeg.fm;
             } else {
-                mml_seg.ongen = mml_seg.pcm;
+                mml_seg.ongen = MmlSeg.pcm;
             }
         } else {
             //
@@ -814,7 +814,7 @@ public class Mc {
             }
         }
 
-        if (mml_seg.part == mml_seg.pcmpart) {
+        if (mml_seg.part == MmlSeg.pcmpart) {
             if (mml_seg.pcm_partchr[0] != 0) {
 
                 al = (byte) 0xb4; // PCM extension part specification (partJ)
@@ -919,7 +919,7 @@ public class Mc {
         al = (byte) (mml_seg.opl_flg | mml_seg.x68_flg);
         if (al == 0) { // OPM/OPL=DX/EX rejected
             if (mml_seg.ext_detune != 0) {
-                if (mml_seg.ongen == mml_seg.psg) {
+                if (mml_seg.ongen == MmlSeg.psg) {
                     // PSG only
                     ah = (byte) 0x01;
                     al = (byte) 0xcc;
@@ -929,8 +929,8 @@ public class Mc {
             }
 
             if (mml_seg.ext_env != 0) {
-                if (mml_seg.ongen >= mml_seg.psg) { // FM rejected
-                    if (mml_seg.part != mml_seg.rhythm2) { // Rhythm rejected
+                if (mml_seg.ongen >= MmlSeg.psg) { // FM rejected
+                    if (mml_seg.part != MmlSeg.rhythm2) { // Rhythm rejected
                         ah = 0x01;
                         al = (byte) 0xc9;
                         m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // Extend Envelope Set(Part Head)
@@ -941,7 +941,7 @@ public class Mc {
         }
 
         if (mml_seg.ext_lfo != 0) {
-            if (mml_seg.part != mml_seg.rhythm2) { // Rhythm rejected
+            if (mml_seg.part != MmlSeg.rhythm2) { // Rhythm rejected
                 ah = 0x01;
                 al = (byte) 0xca;
                 m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // Extend LFO Set(Part Head)
@@ -958,7 +958,7 @@ public class Mc {
 
         if (mml_seg.towns_flg != 1) { // TOWNS is 4.6f @@@@
             if (mml_seg.adpcm_flag != 255) {
-                if (mml_seg.part == mml_seg.pcmpart) { // PCM only
+                if (mml_seg.part == MmlSeg.pcmpart) { // PCM only
                     ah = (byte) 0xf7;
                     al = (byte) 0xc0;
                     m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // ADPCM set(Part Head)
@@ -971,7 +971,7 @@ public class Mc {
         }
 
         if (mml_seg.transpose != 0) {
-            if (mml_seg.part != mml_seg.rhythm2) { //Rhythm rejected
+            if (mml_seg.part != MmlSeg.rhythm2) { //Rhythm rejected
                 ah = (byte) (mml_seg.transpose & 0xff);
                 al = (byte) 0xb2;
                 m_seg.m_buf.set(work.di++, new MmlDatum(al & 0xff)); // Master Transpose(Part Head)
@@ -1087,9 +1087,9 @@ public class Mc {
     private enmPass2JumpTable check_lopcnt() {
         while (mml_seg.lopcnt != 0) { // break loop_ok;
 
-            print_mes(mml_seg.warning_mes);
+            print_mes(MmlSeg.warning_mes);
             put_part();
-            print_mes(mml_seg.loop_err_mes);
+            print_mes(MmlSeg.loop_err_mes);
 
             m_seg.m_buf.set(work.di, new MmlDatum(0xf8));
             work.di++;
@@ -1132,13 +1132,13 @@ public class Mc {
 //#if efc
 //        if (MmlSeg.part < MmlSeg.max_part + 2) break cmloop;
 //#else
-        if (mml_seg.part < mml_seg.max_part + 1) return enmPass2JumpTable.cmloop;
+        if (mml_seg.part < MmlSeg.max_part + 1) return enmPass2JumpTable.cmloop;
 //#endif
 
 //#if efc
 //        break vdat_set;
 //#else
-        if (mml_seg.part == mml_seg.max_part + 1) { // break fm3_check;
+        if (mml_seg.part == MmlSeg.max_part + 1) { // break fm3_check;
             byte al = (byte) (mml_seg.maxprg & 0xff);
             if (mml_seg.towns_flg == 1) {
                 al = 0; // TOWNS has no R part
@@ -1181,7 +1181,7 @@ fm3_check:
             mml_seg.fm3_ofsadr = bx;
             al -= (byte) (char) ('A' - 1);
             mml_seg.part = al;
-            mml_seg.ongen = mml_seg.fm;
+            mml_seg.ongen = MmlSeg.fm;
             return enmPass2JumpTable.cmloop2;
         }
         //
@@ -1211,7 +1211,7 @@ fm3_check:
                     mml_seg.pcm_ofsadr = bx;
                     al -= (byte) (char) ('A' - 1);
                     mml_seg.part = al;
-                    mml_seg.ongen = mml_seg.pcm_ex;
+                    mml_seg.ongen = MmlSeg.pcm_ex;
                     return enmPass2JumpTable.cmloop2;
                 }
             }
@@ -1226,9 +1226,9 @@ fm3_check:
         //
 
         int bx = 0; // offset m_buf
-        bx += 2 * mml_seg.max_part;
-        mml_seg.part = mml_seg.rhythm;
-        mml_seg.ongen = mml_seg.pcm;
+        bx += 2 * MmlSeg.max_part;
+        mml_seg.part = MmlSeg.rhythm;
+        mml_seg.ongen = MmlSeg.pcm;
         int dx = work.di;
         dx -= 0; // offset m_buf
         m_seg.m_buf.set(bx + 0, new MmlDatum(dx & 0x00ff));
@@ -1432,7 +1432,7 @@ fm3_check:
         vdat_setAddress = work.di;
 
         work.si = 0; // offset m_buf
-        work.si += 2 * (mml_seg.max_part + 1); // KUMA:? -> Understand with v48s
+        work.si += 2 * (MmlSeg.max_part + 1); // KUMA:? -> Understand with v48s
         int dx = work.di;
         dx -= 0; // offset m_buf
         m_seg.m_buf.set(work.si, new MmlDatum(dx & 0xff));
@@ -1717,7 +1717,7 @@ fm3_check:
 
         if (mml_seg.ff_flg == 0) {
 //not_ff:     // Move here
-            print_mes(mml_seg.warning_mes + mml_seg.not_ff_mes);
+            print_mes(MmlSeg.warning_mes + MmlSeg.not_ff_mes);
             return null;
         }
 
@@ -1761,7 +1761,7 @@ fm3_check:
      * Compile completed
      */
     private void compile_fin() {
-        print_mes(mml_seg.finmes);
+        print_mes(MmlSeg.finmes);
         // KUMA: The function to call PMD from the compiler and play it back is omitted.
     }
 
@@ -1815,7 +1815,7 @@ fm3_check:
         }
 
         if (voice_seg.voice_buf == null) {
-            print_mes(mml_seg.warning_mes + String.format(rb.getString("E0200"), voice_seg.v_filename)); // MmlSeg.ff_readerr_mes);
+            print_mes(MmlSeg.warning_mes + String.format(rb.getString("E0200"), voice_seg.v_filename)); // MmlSeg.ff_readerr_mes);
         } else {
 //#if !hyouka
             mml_seg.prg_flg |= 1;
@@ -2874,7 +2874,7 @@ hsset3_loop:
                 {
                     do {
                         if ((hs_seg.currentBuf[work.bx] | hs_seg.currentBuf[work.bx + 1]) == 0) break hsset3_loop; // hsset3b;
-                        work.bx += hs_seg.hs_length;
+                        work.bx += HsSeg.hs_length;
                         cx--;
                     } while (cx > 0);
                     error('!', 33, work.si);
@@ -2884,7 +2884,7 @@ hsset3_loop:
                 int di_p = work.di;
 
                 work.di = work.bx + 2; //    lea di,2[bx]
-                cx = hs_seg.hs_length - 2;
+                cx = HsSeg.hs_length - 2;
 hsset3b_loop:
                 {
                     char alc;
@@ -3267,7 +3267,7 @@ hsset_loop:
         int n = mml_seg.mml_buf.indexOf("\r\n", work.si);
         int r = work.si;
         calc_line(/* ref */ r);
-        logger.log(Level.DEBUG, String.format("%d(%d) \t%d",
+        logger.log(Level.DEBUG, String.format("%s(%d) \t%s",
                 mml_seg.mml_filename,
                 mml_seg.line,
                 mml_seg.mml_buf.substring(work.si, n - work.si)));
@@ -3648,7 +3648,7 @@ notend: // ↑
 
         work.al = (byte) 0xb8;
 
-        if (mml_seg.part == mml_seg.rhythm) {
+        if (mml_seg.part == MmlSeg.rhythm) {
             error('O', 17, work.si);
         }
 
@@ -4533,7 +4533,7 @@ notend: // ↑
 
         // mov dx,"S"*256+17
 //#if !efc
-        if (mml_seg.ongen >= mml_seg.psg) { // If not FM, an error occurs.
+        if (mml_seg.ongen >= MmlSeg.psg) { // If not FM, an error occurs.
             error('S', 17, work.si);
         }
 //#endif
@@ -4931,7 +4931,7 @@ sss_notfm2:
 
         m_seg.m_buf.set(work.di - 1, new MmlDatum(0xff));
 
-        if (mml_seg.part == mml_seg.rhythm) { // R?
+        if (mml_seg.part == MmlSeg.rhythm) { // R?
 //lmo_r:
             m_seg.m_buf.set(work.di + 0, new MmlDatum(0x0f)); // rest
             m_seg.m_buf.set(work.di + 1, new MmlDatum(0x00));
@@ -5117,12 +5117,12 @@ sss_notfm2:
     private enmPass2JumpTable otoset() {
 //#if !efc
         if (mml_seg.towns_flg != 1) { // break otoset_towns_chk; // If it's TOWNS, you don't need to check the K part.
-            if (mml_seg.part == mml_seg.rhythm2) {
+            if (mml_seg.part == MmlSeg.rhythm2) {
                 error(work.dx >> 8, 17, work.si); // K part = error
             }
         }
 //otoset_towns_chk:
-        if (mml_seg.part != mml_seg.rhythm)
+        if (mml_seg.part != MmlSeg.rhythm)
             return ots000();
 
         //
@@ -5229,7 +5229,7 @@ sss_notfm2:
         if (mml_seg.pitch != 0) { // break bp6;
 
 //#if !efc
-            if (mml_seg.ongen >= mml_seg.psg) { // break fmpt;
+            if (mml_seg.ongen >= MmlSeg.psg) { // break fmpt;
 
                 work.bx = mml_seg.pitch >> 7; // For PSG/PCM, divide PITCH by 128
                 if ((work.bx & 0x8000) != 0) { // break bp6;
@@ -5323,7 +5323,7 @@ sss_notfm2:
 //#if !efc
 
         if (mml_seg.towns_flg != 1) { // If it's TOWNS, you don't need to check the K part.
-            if (mml_seg.part == mml_seg.rhythm2) {
+            if (mml_seg.part == MmlSeg.rhythm2) {
                 error('r', 17, work.si); // K part = error
             }
         }
@@ -5471,7 +5471,7 @@ sss_notfm2:
                 Math.max(mml_seg.line, 1),
                 Math.max(mml_seg.stPos - mml_seg.linehead + 1, 1),
                 p - mml_seg.stPos,
-                mml_seg.ongen == mml_seg.pcm_ex
+                mml_seg.ongen == MmlSeg.pcm_ex
                 ? "PPZ8"
                 : (mml_seg.chipCh < 6
                 ? "FMOPN"
@@ -5483,7 +5483,7 @@ sss_notfm2:
                 ? "ADPCM"
                 : "Rhythm"
             )))),
-                mml_seg.ongen != mml_seg.pcm_ex ? "YM2608" : "PPZ8",
+                mml_seg.ongen != MmlSeg.pcm_ex ? "YM2608" : "PPZ8",
                 0,
                 0,
                 mml_seg.chipCh - (mml_seg.chipCh < 20 ? 0 : 20)
@@ -5656,14 +5656,14 @@ sss_notfm2:
      */
     private void ongen_sel_vol() {
 //#if !efc
-        if (mml_seg.part != mml_seg.pcmpart) { // break sel_pcm;
-            if (mml_seg.ongen != mml_seg.pcm_ex) { // break sel_pcm;
+        if (mml_seg.part != MmlSeg.pcmpart) { // break sel_pcm;
+            if (mml_seg.ongen != MmlSeg.pcm_ex) { // break sel_pcm;
                 if (mml_seg.towns_flg != 1) {
-                    if (mml_seg.part != mml_seg.rhythm2) { // break sel_pcm;
+                    if (mml_seg.part != MmlSeg.rhythm2) { // break sel_pcm;
                     }
                 } else {
                     //osv_no_towns:;
-                    if (mml_seg.ongen == mml_seg.psg) { // break sel_fm;
+                    if (mml_seg.ongen == MmlSeg.psg) { // break sel_fm;
                         return;
                     }
 //sel_fm:
@@ -5856,7 +5856,7 @@ prs200: // ↑
                     }
 //press_main:
 //#if !efc
-                    if (mml_seg.part == mml_seg.rhythm) break prs3; // Compression possible in rhythm part = Compression unconditionally
+                    if (mml_seg.part == MmlSeg.rhythm) break prs3; // Compression possible in rhythm part = Compression unconditionally
 //#endif
 
 //prs0:
@@ -5901,7 +5901,7 @@ prs200: // ↑
             }
 //restprs:
 //#if !efc
-            if (mml_seg.part != mml_seg.rhythm) { // break prs3;
+            if (mml_seg.part != MmlSeg.rhythm) { // break prs3;
 //#endif
 
                 d = (byte) (m_seg.m_buf.get(work.di - 3).dat & 0xff);
@@ -6088,7 +6088,7 @@ prs200: // ↑
             if (mml_seg.ss_length != 0) error('.', 20, work.si); // Error while using S command
 
 //#if !efc
-            if (mml_seg.part == mml_seg.rhythm) { // break ft1_r;
+            if (mml_seg.part == MmlSeg.rhythm) { // break ft1_r;
 //#endif
 //ft1_r:
                 m_seg.m_buf.set(work.di + 0, new MmlDatum(255)); // Set note length 255 + rest
@@ -6581,13 +6581,13 @@ prs200: // ↑
         }
 
 //#if !efc
-        if (mml_seg.part == mml_seg.pcmpart) return enmPass2JumpTable.vsetm;
-        if (mml_seg.ongen == mml_seg.pcm_ex) return enmPass2JumpTable.vsetm;
+        if (mml_seg.part == MmlSeg.pcmpart) return enmPass2JumpTable.vsetm;
+        if (mml_seg.ongen == MmlSeg.pcm_ex) return enmPass2JumpTable.vsetm;
         if (mml_seg.towns_flg == 1) { // break vsa_no_towns;
-            if (mml_seg.part == mml_seg.rhythm2) return enmPass2JumpTable.vsetm; // Towns' K part is PCM equivalent
+            if (mml_seg.part == MmlSeg.rhythm2) return enmPass2JumpTable.vsetm; // Towns' K part is PCM equivalent
         }
 //vsa_no_towns:
-        if (mml_seg.ongen >= mml_seg.psg) return enmPass2JumpTable.vset;
+        if (mml_seg.ongen >= MmlSeg.psg) return enmPass2JumpTable.vset;
 //#endif
         work.bx = (byte) work.bx;
         work.bx += 0; // offset fmvol
@@ -6613,7 +6613,7 @@ prs200: // ↑
             } else {
 //vset3:
 //#if !efc
-                if (mml_seg.ongen >= mml_seg.psg) { // break vset3f;
+                if (mml_seg.ongen >= MmlSeg.psg) { // break vset3f;
                     work.al = 15;
 //                    break vset4;
 //#endif
@@ -6644,10 +6644,10 @@ prs200: // ↑
 //#if !efc
         work.bx = bx[0];
         work.al = al[0];
-        if (mml_seg.part == mml_seg.pcmpart) return enmPass2JumpTable.vsetm1;
-        if (mml_seg.ongen == mml_seg.pcm_ex) return enmPass2JumpTable.vsetm1;
+        if (mml_seg.part == MmlSeg.pcmpart) return enmPass2JumpTable.vsetm1;
+        if (mml_seg.ongen == MmlSeg.pcm_ex) return enmPass2JumpTable.vsetm1;
         if (mml_seg.towns_flg != 1) return enmPass2JumpTable.vset;
-        if (mml_seg.part == mml_seg.rhythm2) return enmPass2JumpTable.vsetm1; // Towns' K part is PCM equivalent
+        if (mml_seg.part == MmlSeg.rhythm2) return enmPass2JumpTable.vsetm1; // Towns' K part is PCM equivalent
 //#endif
 
         return enmPass2JumpTable.vset;
@@ -6722,10 +6722,10 @@ prs200: // ↑
         mml_seg.volss = /* signed */ dl[0];
         work.dx = (work.dx & 0xff00) | (byte) mml_seg.nowvol;
 //#if !efc
-        if (mml_seg.part == mml_seg.pcmpart) return enmPass2JumpTable.vsetm1;
-        if (mml_seg.ongen == mml_seg.pcm_ex) return enmPass2JumpTable.vsetm1;
+        if (mml_seg.part == MmlSeg.pcmpart) return enmPass2JumpTable.vsetm1;
+        if (mml_seg.ongen == MmlSeg.pcm_ex) return enmPass2JumpTable.vsetm1;
         if (mml_seg.towns_flg != 1) return vset2();
-        if (mml_seg.part == mml_seg.rhythm2) return enmPass2JumpTable.vsetm1; // Towns' K part is PCM equivalent
+        if (mml_seg.part == MmlSeg.rhythm2) return enmPass2JumpTable.vsetm1; // Towns' K part is PCM equivalent
 //#endif
         return vset2();
     }
@@ -6783,8 +6783,8 @@ repeat_check: // ↑
 psgprg: // ↑
             {
 //#if !efc
-                if (mml_seg.part != mml_seg.rhythm) { // break rhyprg;
-                    if (mml_seg.ongen == mml_seg.psg) break psgprg;
+                if (mml_seg.part != MmlSeg.rhythm) { // break rhyprg;
+                    if (mml_seg.ongen == MmlSeg.psg) break psgprg;
 //#endif
                     work.dx = 0xff00 + (work.bx & 0xff);
                     work.bx = (work.bx & 0xff00) | ((work.bx & 0xff) + 1);
@@ -6797,9 +6797,9 @@ psgprg: // ↑
 //#else
                     }
 //nc00:
-                    if (mml_seg.part == mml_seg.pcmpart) break repeat_check;
-                    if (mml_seg.ongen == mml_seg.pcm_ex) break repeat_check;
-                    if (mml_seg.part != mml_seg.rhythm2) {
+                    if (mml_seg.part == MmlSeg.pcmpart) break repeat_check;
+                    if (mml_seg.ongen == MmlSeg.pcm_ex) break repeat_check;
+                    if (mml_seg.part != MmlSeg.rhythm2) {
                         work.ctype = MMLType.Instrument;
                         work.cargs = new Object[] {};
                         return enmPass2JumpTable.parset;
@@ -6825,7 +6825,7 @@ psgprg: // ↑
             }
 //psgprg:
             work.bx = (byte) work.bx;
-            if (work.bx >= mml_seg.psgenvdat_max + 1) work.bx = 0;
+            if (work.bx >= MmlSeg.psgenvdat_max + 1) work.bx = 0;
             //Work.bx *= 4;
             //Work.bx = (byte)Work.bx;
             work.bx += 0; // offset psgenvdat
@@ -6908,7 +6908,7 @@ noset_release: // ↑
      */
     private void set_prg() {
 //#if !efc
-        if (mml_seg.ongen >= mml_seg.psg) return;
+        if (mml_seg.ongen >= MmlSeg.psg) return;
 //#endif
         int bx_p = work.bx;
         work.bx = (byte) work.bx;
@@ -6978,7 +6978,7 @@ noset_release: // ↑
             }
 
 //#if !efc
-            if (mml_seg.part != mml_seg.rhythm) { // break tlo_r; // R
+            if (mml_seg.part != MmlSeg.rhythm) { // break tlo_r; // R
 //#endif
 
                 m_seg.m_buf.set(work.di, new MmlDatum(0xfb));
@@ -7004,7 +7004,7 @@ noset_release: // ↑
 //tie_norm:
         mml_seg.tie_flag = 1;
 //#if !efc
-        if (mml_seg.part == mml_seg.rhythm) // R
+        if (mml_seg.part == MmlSeg.rhythm) // R
         {
             error('&', 32, work.si);
         }
@@ -7031,7 +7031,7 @@ noset_release: // ↑
 
     private enmPass2JumpTable sular() {
 //#if !efc
-        if (mml_seg.part == mml_seg.rhythm) { // R
+        if (mml_seg.part == MmlSeg.rhythm) { // R
             error('&', 32, work.si);
         }
 //#endif
@@ -7111,39 +7111,29 @@ noset_release: // ↑
                 m_seg.m_buf.set(work.di++, new MmlDatum((work.bx & 0xff00) >> 8));
                 return enmPass2JumpTable.olc0;
             }
-            case (byte) 'F' -> {
-//                break vd_fm;
+            case (byte) 'F' -> //                break vd_fm;
                 //
                 // COMMAND "DF"/"DS"/"DP"/"DR" Volume down setting
                 //
-//vd_fm:
-                work.al = (byte) 0xfe;
-//                break vd_main;
-            }
-            case (byte) 'S' -> {
-//                break vd_ssg;
-//vd_ssg:
-                work.al = (byte) 0xfc;
-//                break vd_main;
-            }
-            case (byte) 'P' -> {
-//                break vd_pcm;
-//vd_pcm:
-                work.al = (byte) 0xfa;
-//                break vd_main;
-            }
-            case (byte) 'R' -> {
-//                break vd_rhythm;
-//vd_rhythm:
-                work.al = (byte) 0xf8;
-//                break vd_main;
-            }
-            case (byte) 'Z' -> {
-//                break vd_ppz;
-//vd_ppz:
-                work.al = (byte) 0xf5;
-//                break vd_main;
-            }
+                //vd_fm:
+                //                break vd_main;
+                    work.al = (byte) 0xfe;
+            case (byte) 'S' -> //                break vd_ssg;
+                //vd_ssg:
+                //                break vd_main;
+                    work.al = (byte) 0xfc;
+            case (byte) 'P' -> //                break vd_pcm;
+                //vd_pcm:
+                //                break vd_main;
+                    work.al = (byte) 0xfa;
+            case (byte) 'R' -> //                break vd_rhythm;
+                //vd_rhythm:
+                //                break vd_main;
+                    work.al = (byte) 0xf8;
+            case (byte) 'Z' -> //                break vd_ppz;
+                //vd_ppz:
+                //                break vd_main;
+                    work.al = (byte) 0xf5;
             default -> {
                 work.si--;
                 cy = getnum(/* out */ bx, /* out */ dl);
@@ -7389,7 +7379,7 @@ noset_release: // ↑
 //#if efc
         error('L', 17, work.si);
 //#else
-        if (mml_seg.part == mml_seg.rhythm) {
+        if (mml_seg.part == MmlSeg.rhythm) {
             error('L', 17, work.si); // R
         }
 
@@ -7633,7 +7623,7 @@ voldown4: // ↑
         byte[] dl = new byte[1];
         char ch;
 //#if !efc
-        if (mml_seg.part == mml_seg.rhythm) {
+        if (mml_seg.part == MmlSeg.rhythm) {
             error('M', 17, work.si); // R
         }
 //#endif
@@ -7848,17 +7838,11 @@ voldown4: // ↑
 
                 return enmPass2JumpTable.parset;
             }
-            case (byte) 'B' -> {
-                work.ah = (byte) 0xbf;
-                //break lfoset_main;
-            }
-            case (byte) 'A' -> {
-                work.ah = (byte) 0xf2;
-//            break lfoset_main;
-            }
-            default -> {
-                work.si--;
-            }
+            case (byte) 'B' -> //break lfoset_main;
+                    work.ah = (byte) 0xbf;
+            case (byte) 'A' -> //            break lfoset_main;
+                    work.ah = (byte) 0xf2;
+            default -> work.si--;
         }
 //lfoset_main:
 
@@ -7927,7 +7911,7 @@ voldown4: // ↑
         work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
         work.ah = (byte) 0xf1;
 //#if !efc
-        if (mml_seg.part != mml_seg.rhythm) { // break lfoswitch_noB; // R part
+        if (mml_seg.part != MmlSeg.rhythm) { // break lfoswitch_noB; // R part
 //#endif
             work.ah = (byte) 0xbe;
         }
@@ -7958,7 +7942,7 @@ voldown4: // ↑
 
         work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
 //#if !efc
-        if (mml_seg.part == mml_seg.rhythm) {
+        if (mml_seg.part == MmlSeg.rhythm) {
             error('*', 17, work.si); // R part
         }
 //#endif
@@ -8625,7 +8609,7 @@ hscom3_found: // ↑
                 int si_p = work.si;
 hscom3_next: // ↑
                 if ((hs_seg.currentBuf[work.bx] | hs_seg.currentBuf[work.bx + 1]) != 0) { // break hscom3_next;
-                    cx = hs_seg.hs_length - 2;
+                    cx = HsSeg.hs_length - 2;
                     work.al = 0;
 //hscom3_loop2:
                     char ch;
@@ -8667,7 +8651,7 @@ hscom3_chk: // ↑
                 work.si = si_p;
                 cx = cx_p;
 
-                work.bx += hs_seg.hs_length;
+                work.bx += HsSeg.hs_length;
                 work.di = work.bx + 2;
                 cx--;
             } while (cx > 0);
@@ -8764,7 +8748,7 @@ hscom3_chk: // ↑
         if (mml_seg.hsflag == 0) return;
 
 //#if !efc
-        if (mml_seg.part != mml_seg.rhythm) {
+        if (mml_seg.part != MmlSeg.rhythm) {
             print_mes(ErrSeg.errmes_5);
             return;
         }
@@ -8920,7 +8904,7 @@ cl_exit:
      * usage put & exit
      */
     private void usage() {
-        print_mes(mml_seg.usames);
+        print_mes(MmlSeg.usames);
         error_exit(1);
     }
 

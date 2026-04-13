@@ -1212,12 +1212,12 @@ public class PCMDRV86 {
      * use ax/bx/cx/dx/si/di/bp
      */
     private void pcm_trans2() {
-        r.setCx((short) pw.trans_size); // Bytes to transfer
+        r.setCx((short) PW.trans_size); // Bytes to transfer
         pcm_trans_main();
     }
 
     private void pcm_trans() {
-        r.setCx((short) (pw.trans_size / 2)); // Bytes to transfer
+        r.setCx((short) (PW.trans_size / 2)); // Bytes to transfer
         pcm_trans_main();
     }
 

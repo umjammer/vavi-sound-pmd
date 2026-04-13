@@ -14,8 +14,8 @@ public class MmlSeg {
      */
     public static final String warning_mes = "Warning ";
     public static final String not_ff_mes = ": The tone file name is not specified.";
-    public final String ff_readerr_mes = ": Cannot load tone file.";
-    public final String not_pmd_mes = ": PMD is not resident.";
+    public static final String ff_readerr_mes = ": Cannot load tone file.";
+    public static final String not_pmd_mes = ": PMD is not resident.";
     public static final String loop_err_mes = " : The loop termination symbol ] is missing.";
     public static final String mcopt_err_mes = ": The environment variable MCOPT is incorrectly written.";
 

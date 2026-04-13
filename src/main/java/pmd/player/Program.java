@@ -100,7 +100,7 @@ class Program {
     private static final int SamplingRatePPSGIMIC = 44100;
     private static final int SamplingRatePPSSCCI = 16000;
     private static final int samplingBuffer = 1024;
-    private static short[] frames = new short[samplingBuffer * 4];
+    private static final short[] frames = new short[samplingBuffer * 4];
     private static MDSound mds = null;
     private static final short[] emuRenderBuf = new short[2];
     private static IDriver drv = null;
@@ -119,7 +119,7 @@ class Program {
     private static boolean usePPZ = false;
     private static int[] VolumeV = null;
     private static int[] VolumeR = null;
-    private static boolean isGimicOPNA = false;
+    private static final boolean isGimicOPNA = false;
     private static Ppz8Inst ppz8em = null;
     private static PpsInst ppsdrv = null;
     private static P86Inst p86em = null;
@@ -129,7 +129,7 @@ class Program {
     private static int userPPSFREQ = -1;
     private static int ppsdrvWait = 1;
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         int fnIndex = analyzeOption(args);
         int mIndex = -1;
 
@@ -151,7 +151,7 @@ class Program {
         srcFile = args[mIndex];
 
         if (!File.exists(args[mIndex])) {
-            logger.log(Level.ERROR, "File [%d] not found".formatted(args[mIndex]));
+            logger.log(Level.ERROR, "File [%s] not found".formatted(args[mIndex]));
             return;
         }
 
@@ -228,7 +228,7 @@ class Program {
             chip86.volume = 0;
             chip86.option = null;
 
-            mds = new MDSound(SamplingRate, samplingBuffer, List.of(chip, chipp, chipps, chip86));
+            mds = new MDSound();
 //            ppz8em = new PPZ8em(SamplingRate);
 //            ppsdrv = new PPSDRV(SamplingRate);
 

@@ -963,7 +963,7 @@ public class PW {
     public static final String exit4z_mes = "EMS handle cannot be mapped.";
     public static final String exit5z_mes = "PPZ8 is not resident.";
     public static final String exit6z_mes = "PVI/PZIFile not found."; // KUMA: Added
-    public static final String ppzbank_mes = "PPZ8(%d):";
+    public static final String ppzbank_mes = "PPZ8(%c):";
 //#endif
     public static final String adpcm_header = "ADPCM DATA for  PMD ver.4.4-  "; // ;30 bytes
     public static final String pps_ext = "PPS";
