@@ -159,9 +159,11 @@ public class Driver implements IDriver {
             }
         }
 
-logger.log(Level.INFO, "ppc: " + work.ppcFile);
-logger.log(Level.INFO, "pps: " + work.ppsFile);
-logger.log(Level.INFO, "ppz: " + work.ppz1File);
+if (work != null) {
+ logger.log(Level.INFO, "ppc: " + work.ppcFile);
+ logger.log(Level.INFO, "pps: " + work.ppsFile);
+ logger.log(Level.INFO, "ppz: " + work.ppz1File);
+}
         return tags;
     }
 
