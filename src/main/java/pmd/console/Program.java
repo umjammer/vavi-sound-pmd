@@ -52,7 +52,7 @@ class Program {
 
         try {
 //#if NETCOREAPP
-//                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+//            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 //#endif
 
             compile(args, fnIndex);
@@ -102,8 +102,8 @@ class Program {
             }
 
 //#if DEBUG
-//                compiler.SetCompileSwitch("IDE");
-//                //compiler.SetCompileSwitch("SkipPoint=R17:C18");
+//            compiler.SetCompileSwitch("IDE");
+//            //compiler.SetCompileSwitch("SkipPoint=R17:C18");
 //#endif
 
             if (!isXml) {

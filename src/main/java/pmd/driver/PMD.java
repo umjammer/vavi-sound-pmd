@@ -415,13 +415,13 @@ try {
     private void play_init() {
         r.setSi((short) pw.mmlbuf);
 
-        r.al = (byte) pw.md[(r.getSi() & 0xffff) - 1].dat;
+        r.al = (byte) pw.md[(r.getSi() - 1) & 0xffff].dat;
         pw.x68_flg = r.al;
 
         // 2.6 Additions
         pw.prg_flg = 0;
         if (pw.md[r.getSi() & 0xffff].dat != (pw.max_part2 + 1) * 2) {
-            r.setBx(Common.getLe16(pw.md, (r.getSi() & 0xffff) + (2 * (pw.max_part2 + 1))));
+            r.setBx(Common.getLe16(pw.md, (r.getSi() + (2 * (pw.max_part2 + 1))) & 0xffff));
             r.addBx(r.getSi());
             pw.prgdat_adr = r.getBx() & 0xffff;
             pw.prg_flg = 1;
