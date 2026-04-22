@@ -19,25 +19,27 @@ import vavi.util.Debug;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
-@Disabled
 class TestCase {
+
+//    String mml = "src/test/resources/BRICK.MML";
+    String mml = "tmp/PC-98 Eternal Shrine Maiden.mml";
 
     @Test
     void test1() throws Exception {
         var compiler = new Compiler();
         compiler.init();
 
-        compiler.mcArgs = new String[] {"/v", "src/test/resources/BRICK.MML"};
+        compiler.mcArgs = new String[] {"/v", mml};
 
-        var envs = new ArrayList<String>();
-        envs.add(System.getenv( "ARRANGER"));
-        envs.add(System.getenv("COMPOSER"));
-        envs.add(System.getenv("USER"));
-        envs.add(System.getenv("MCOPT"));
-        compiler.env = envs.toArray(String[]::new);
+        compiler.env = new String[] {
+                System.getProperty("pmd.arranger"),
+                System.getProperty("pmd.composer"),
+                System.getProperty("pmd.user"),
+                System.getProperty("pmd.opt")
+        };
 
         var ms = new MemoryStream();
-        var fs = new FileStream("src/test/resources/BRICK.MML", FileMode.Open, FileAccess.Read, FileShare.Read);
+        var fs = new FileStream(mml, FileMode.Open, FileAccess.Read, FileShare.Read);
         var r = compiler.compile(fs, ms, f -> {
 Debug.println(f);
             return new FileStream("tmp/" + f, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -46,15 +48,19 @@ Debug.println(f);
 
 Debug.println(r);
 Debug.println(compiler.getMemo_writeAddress());
+
+        assertTrue(r);
     }
 
     @Test
+    @Disabled("dos tool not exists")
     @DisplayName("Multiple MML compile tests_V available")
     void test2() throws Exception {
         testMain(new String[] {"/v"});
     }
 
     @Test
+    @Disabled
     @DisplayName("Multiple MML compile test_V None")
     void test3() throws Exception {
         testMain(null);
@@ -80,7 +86,7 @@ Debug.println(compiler.getMemo_writeAddress());
     }
 
     private static Path getToolDir() {
-        return Path.of("opt/homebrew/Cellar/pmdmini/2.0.0/bin");
+        return Path.of("/opt/homebrew/bin");
     }
 
     private static Path getMMLDir() {

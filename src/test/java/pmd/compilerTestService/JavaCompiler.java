@@ -77,13 +77,12 @@ public class JavaCompiler extends DosCompiler {
                     compiler.mcArgs = new String[] {fname.toString()};
                 }
 
-                var envs = new ArrayList<String>();
-
-                addEnv(envs, "ARRANGER");
-                addEnv(envs, "COMPOSER");
-                addEnv(envs, "USER");
-                addEnv(envs, "MCOPT");
-                compiler.env = envs.toArray(String[]::new);
+                compiler.env = new String[] {
+                        System.getProperty("pmd.arranger"),
+                        System.getProperty("pmd.composer"),
+                        System.getProperty("pmd.user"),
+                        System.getProperty("pmd.mcopt")
+                };
 
                 var r = compiler.compile(fs, ms, fnAppendFileReaderCallback);
                 ms.flush();

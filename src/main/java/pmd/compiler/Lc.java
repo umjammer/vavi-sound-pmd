@@ -28,118 +28,119 @@ public class Lc {
      * For calculating sound length include file
      * 	in.al print_flag(0 for hidden)
      */
-    //_print_mes macro   ofs
-    //local   exit
-    //   cmp[print_flag],0
-    //    jz exit
-    //    print_mes ofs
-    //exit:
-    //	endm
     public void lc_proc(byte al) {
-        enmPart_ends ret;
-        ret = enmPart_ends.calc_start;
+        //_print_mes macro   ofs
+        //local   Exit
+        //   cmp[print_flag],0
+        //    jz Exit
+        //    print_mes ofs
+        //Exit:
+        //	endm
 
-        //List<byte> dst = new List<byte>();
-        //dst.add(0);
-        //for (int i = 0; i < MSeg.m_buf.size(); i++) {
-        //    MmlDatum o = MSeg.m_buf.Get(i);
-        //    dst.add((byte)(o == null ? 0xff : o.dat));
-        //}
-        //Files.write(Path.of("c:\\temp\\debug"), dst.ToArray());
+        PartEnds ret;
+        ret = PartEnds.CalcStart;
+
+//List<Byte> dst = new ArrayList<>();
+//dst.add((byte) 0);
+//for (MmlDatum o : m_seg.m_buf) {
+// dst.add(o == null ? (byte) 0xff : (byte) o.dat);
+//}
+//logger.log(Level.INFO, "\n" + StringUtil.getDump(ByteUtil.toByteArray(dst)));
 
         do {
             ret = switch (ret) {
-                case calc_start -> calc_start(al);
-                case part_loop -> part_loop();
-                case part_loop2 -> part_loop2();
-                case check_j -> check_j();
-                case com_loop -> com_loop();
-                case part_ends -> part_ends();
-                case partk_start -> partk_start();
-                case kcom_loop -> kcom_loop();
-                case kpart_end -> kpart_end();
-                case kl_00 -> kl_00();
+                case CalcStart -> calc_start(al);
+                case PartLoop -> part_loop();
+                case PartLoop2 -> part_loop2();
+                case CheckJ -> check_j();
+                case ComLoop -> com_loop();
+                case PartEnds -> part_ends();
+                case PartKStart -> partk_start();
+                case KComLoop -> kcom_loop();
+                case KPartEnd -> kpart_end();
+                case KL00 -> kl_00();
                 default -> ret;
             };
-        } while (ret != enmPart_ends.exit);
+        } while (ret != PartEnds.Exit);
     }
 
     /**
      * Start calculation
      */
-    private enmPart_ends calc_start(byte al) {
-        print_flag = al;
+    private PartEnds calc_start(byte al) {
+        print_flag = al != 0;
         part_chr = 'A';
         work.bp = 0; // offset m_buf
 
-        return enmPart_ends.part_loop;
+        return PartEnds.PartLoop;
     }
 
     /**
      * Looping by Part
      */
-    private enmPart_ends part_loop() {
+    private PartEnds part_loop() {
         work.si = (m_seg.m_buf.get(work.bp).dat & 0xff) + (m_seg.m_buf.get(work.bp + 1).dat & 0xff) * 0x100;
         work.si += 0; // offset m_buf
         work.bp += 2;
 
-        return enmPart_ends.part_loop2;
+        return PartEnds.PartLoop2;
     }
 
-    private enmPart_ends part_loop2() {
+    private PartEnds part_loop2() {
         all_length = 0;
         loop_length = -1;
-        loop_flag = 0;
+        loop_flag = false;
 
         //
         // (For Part A) Check if there is an extended FM3 channel
         //
-        if (part_chr != 'A') return enmPart_ends.check_j;
-        if (m_seg.m_buf.get(work.si).dat != 0xc6) return enmPart_ends.check_j;
+        if (part_chr != 'A') return PartEnds.CheckJ;
+        if (m_seg.m_buf.get(work.si).dat != 0xc6) return PartEnds.CheckJ;
 
         work.si++;
 
         for (int i = 0; i < 3; i++) {
-            byte l = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
-            byte h = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
+            int l = m_seg.m_buf.get(work.si++).dat & 0xff;
+            int h = m_seg.m_buf.get(work.si++).dat & 0xff;
             fm3_adr[i] = (h & 0xff) * 0x100 + (l & 0xff);
         }
 
-        return enmPart_ends.check_j;
+        return PartEnds.CheckJ;
     }
 
     /**
      * (For Part J) Check if there is an extended PCM part
      */
-    private enmPart_ends check_j() {
-        if (part_chr != 'J') return enmPart_ends.com_loop; //jnz com_loop
-        if (m_seg.m_buf.get(work.si).dat != 0xb4) return enmPart_ends.com_loop;
+    private PartEnds check_j() {
+        if (part_chr != 'J') return PartEnds.ComLoop; //jnz ComLoop
+        if (m_seg.m_buf.get(work.si).dat != 0xb4) return PartEnds.ComLoop;
 
         work.si++;
 
         for (int i = 0; i < 8; i++) {
-            byte l = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
-            byte h = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
+            int l = m_seg.m_buf.get(work.si++).dat & 0xff;
+            int h = m_seg.m_buf.get(work.si++).dat & 0xff;
             pcm_adr[i] = h * 0x100 + l;
         }
 
-        return enmPart_ends.com_loop;
+        return PartEnds.ComLoop;
     }
 
     /**
      * Loop through each command
      */
-    private enmPart_ends com_loop() {
+    private PartEnds com_loop() {
 
-        logger.log(Level.DEBUG, "partType:%s partCh:%c partNum:%d".formatted(part_type, part_chr, part_num));
+        logger.log(Level.INFO, "partType:%s partCh:%c partNum:%d".formatted(part_type, part_chr, part_num));
 
         do {
             MmlDatum al;
             do {
-                logger.log(Level.TRACE, "si:%d".formatted(work.si));
+                logger.log(Level.TRACE, "si:%d, %d".formatted(work.si, m_seg.m_buf.size()));
 
                 al = (work.si < m_seg.m_buf.size() ? m_seg.m_buf.get(work.si++) : new MmlDatum(0x80));
-                if (al.dat == 0x80) return enmPart_ends.part_ends;
+logger.log(Level.TRACE, "si:%d, %02x".formatted(work.si, al.dat));
+                if (al.dat == 0x80) return PartEnds.PartEnds;
                 if (al.dat >= 0x80) break;
 
                 al = m_seg.m_buf.get(work.si++);
@@ -148,19 +149,19 @@ public class Lc {
                 all_length += al.dat;
             } while (true);
 
-            //cl_00:;
+//cl_00:
             command_exec((byte) (al.dat & 0xff));
-            if (loop_flag != 0) return enmPart_ends.part_ends;
+            if (loop_flag) return PartEnds.PartEnds;
 
         } while (true);
 
-        //return enmPart_ends.part_ends;
+        //return enmPart_ends.PartEnds;
     }
 
     /**
      * Part-time job finished
      */
-    private enmPart_ends part_ends() {
+    private PartEnds part_ends() {
         print_length();
 
         part_chr++;
@@ -168,13 +169,13 @@ public class Lc {
         if (part_chr == 'G') part_type = "SSG";
         if (part_chr == 'H') part_type = "SSG";
         if (part_chr == 'I') part_type = "SSG";
-        if (part_chr < 'K') return enmPart_ends.part_loop;
+        if (part_chr < 'K') return PartEnds.PartLoop;
 
         int di = work.di;
         work.di = 0; // offset fm3_adr1
         int bx = 0; // offset _fm3_partchr1;in cs
         int cx = 3 + 8;
-//extend_check_loop:;
+//extend_check_loop:
         do {
             work.si = work.di < 3 ? fm3_adr[work.di] : pcm_adr[work.di - 3];
             if (work.si != 0) { // break extend_check_next;
@@ -187,7 +188,7 @@ public class Lc {
                 else pcm_adr[work.di - 3] = 0;
 
                 work.di = di;
-                return enmPart_ends.part_loop2;
+                return PartEnds.PartLoop2;
             }
 //extend_check_next:
             work.di++;
@@ -196,17 +197,17 @@ public class Lc {
         } while (cx > 0);
 
         work.di = di;
-        return enmPart_ends.partk_start;
+        return PartEnds.PartKStart;
     }
 
     /**
      * Part K
      */
-    private enmPart_ends partk_start() {
+    private PartEnds partk_start() {
         part_chr = 'K';
         all_length = 0;
         loop_length = -1;
-        loop_flag = 0;
+        loop_flag = false;
 
         //logger.log(Level.TRACE, "bp:%d", Work.bp);
         work.si = m_seg.m_buf.get(work.bp).dat + (m_seg.m_buf.get(work.bp + 1).dat * 0x100);
@@ -215,73 +216,73 @@ public class Lc {
         work.bx = m_seg.m_buf.get(work.bp).dat + (m_seg.m_buf.get(work.bp + 1).dat * 0x100);
         work.bx += 0; // offset m_buf	; bx= R table First Address
 
-        return enmPart_ends.kcom_loop;
+        return PartEnds.KComLoop;
     }
 
     /**
      * Kpart/Loop per command
      */
-    private enmPart_ends kcom_loop() {
+    private PartEnds kcom_loop() {
         do {
             MmlDatum ald;
             byte al;
             ald = (work.si < m_seg.m_buf.size()) ? m_seg.m_buf.get(work.si++) : (new MmlDatum(0x80));
             al = (byte) (ald.dat & 0xff);
-            if (al == (byte) 0x80) return enmPart_ends.kpart_end;
+            if (al == (byte) 0x80) return PartEnds.KPartEnd;
             if ((al & 0xff) >= 0x80) {
                 work.al = al;
-                return enmPart_ends.kl_00;
+                return PartEnds.KL00;
             }
-            al *= 2;
+            al = (byte) (((al & 0xff) * 2) & 0xff);
 
             //    push    si
             //    push    bx
             int si = work.si;
             int bx = work.bx;
-            work.bx += al;
+            work.bx += al & 0xff;
             work.si = m_seg.m_buf.get(work.bx).dat + (m_seg.m_buf.get(work.bx + 1).dat * 0x100);
-            //logger.log(Level.TRACE, "bx:%d si:%d", Work.bx, Work.si);
+            //logger.log(Level.TRACE, "bx:%d si:%d".formatted(work.bx, work.si));
             work.si += 0; // offset m_buf
             rcom_loop();
             work.bx = bx;
             work.si = si;
 
-            if (loop_flag != 0) return enmPart_ends.kpart_end;
+            if (loop_flag) return PartEnds.KPartEnd;
         } while (true);
     }
 
     /**
      * Kpart/Various special commands
      */
-    private enmPart_ends kl_00() {
+    private PartEnds kl_00() {
         int bx = work.bx;
         command_exec(work.al);
         work.bx = bx;
 
-        if (loop_flag != 0) return enmPart_ends.kpart_end;
-        return enmPart_ends.kcom_loop;
+        if (loop_flag) return PartEnds.KPartEnd;
+        return PartEnds.KComLoop;
     }
 
     /**
      * Kpart/Calculation complete
      */
-    private enmPart_ends kpart_end() {
+    private PartEnds kpart_end() {
         print_length();
-        return enmPart_ends.exit;
+        return PartEnds.Exit;
     }
 
-    private enum enmPart_ends {
-        calc_start,
-        part_loop,
-        part_loop2,
-        check_j,
-        com_loop,
-        part_ends,
-        partk_start,
-        kcom_loop,
-        kpart_end,
-        kl_00,
-        exit
+    private enum PartEnds {
+        CalcStart,
+        PartLoop,
+        PartLoop2,
+        CheckJ,
+        ComLoop,
+        PartEnds,
+        PartKStart,
+        KComLoop,
+        KPartEnd,
+        KL00,
+        Exit
     }
 
     /**
@@ -299,7 +300,7 @@ rpart_end:
                 if ((al.dat & 0x80) != 0) {
                     work.si++;
                 }
-                //rl_01:;
+//rl_01:
                 al = m_seg.m_buf.get(work.si++);
                 all_length += al.dat;
 
@@ -309,7 +310,7 @@ rpart_end:
             //
 //rl_00:
             command_exec((byte) (al.dat & 0xff));
-            if (loop_flag != 0) break rpart_end;
+            if (loop_flag) break rpart_end;
         } while (true);
         //
         // Rpart / Calculation complete
@@ -320,10 +321,11 @@ rpart_end:
      * Various commands
      */
     private void command_exec(byte al) {
+//logger.log(Level.INFO, "%02x, %02x".formatted(al & 0xff, ~al & 0xff));
         al = (byte) ~al;
-        int ax = al;
-        ax += 0; // offset jumptable
-        jumptable[ax].run();
+        int ax = al & 0xff;
+        ax += 0; // offset jumpTable
+        jumpTable[ax].run();
     }
 
     private void jump16() {
@@ -362,8 +364,8 @@ rpart_end:
      * tempo
      */
     private void _tempo() {
-        byte al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
-        if (al >= (byte) 251) {
+        int al = m_seg.m_buf.get(work.si++).dat & 0xff;
+        if (al >= 251) {
             work.si++; // relative
         }
 //tempo_ret:
@@ -375,7 +377,7 @@ rpart_end:
     private void porta() {
         work.si += 2;
 
-        byte al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
+        int al = m_seg.m_buf.get(work.si++).dat & 0xff;
         all_length += al;
     }
 
@@ -390,7 +392,7 @@ rpart_end:
      * '[' command
      */
     private void loop_start() {
-        int ax = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
+        int ax = m_seg.m_buf.get(work.si++).dat & 0xff;
         ax += m_seg.m_buf.get(work.si++).dat * 0x100;
 
         work.bx = ax;
@@ -402,11 +404,11 @@ rpart_end:
      * ']' command
      */
     private void loop_end() {
-        byte al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
+        int al = m_seg.m_buf.get(work.si++).dat & 0xff;
         if (al != 0) { // break loop_fset; // There was an unconditional loop
-            byte ah = al;
-            m_seg.m_buf.set(work.si, new musicDriverInterface.MmlDatum(m_seg.m_buf.get(work.si).dat + 1));
-            al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
+            int ah = al;
+            m_seg.m_buf.set(work.si, new musicDriverInterface.MmlDatum((m_seg.m_buf.get(work.si).dat + 1) & 0xff));
+            al = m_seg.m_buf.get(work.si++).dat & 0xff;
             if (ah == al) { // break reloop;
                 work.si++;
                 work.si++;
@@ -414,28 +416,28 @@ rpart_end:
             }
 //reloop:
 
-            int ax = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
+            int ax = m_seg.m_buf.get(work.si++).dat & 0xff;
             ax += m_seg.m_buf.get(work.si++).dat * 0x100;
             ax += 2; // offset m_buf+2
             work.si = ax;
             return;
         }
 //loop_fset:
-        loop_flag = 1;
+        loop_flag = true;
     }
 
     /**
      * ':' command
      */
     private void loop_exit() {
-        int ax = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
+        int ax = m_seg.m_buf.get(work.si++).dat & 0xff;
         ax += m_seg.m_buf.get(work.si++).dat * 0x100;
         work.bx = ax;
         work.bx += 0; // offset m_buf
-        byte dl = (byte) (m_seg.m_buf.get(work.bx).dat & 0xff);
+        int dl = m_seg.m_buf.get(work.bx).dat & 0xff;
         dl--;
         work.bx++;
-        if (dl != (byte) m_seg.m_buf.get(work.bx).dat) { // break loopexit;
+        if ((dl & 0xff) != (m_seg.m_buf.get(work.bx).dat & 0xff)) { // break loopexit;
             return;
         }
 //loopexit:
@@ -448,10 +450,11 @@ rpart_end:
      */
     private void special_0c0h() {
         byte al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
-        if (al >= 2) { // break spc0_ret;
+        if ((al & 0xff) >= 2) { // break spc0_ret;
+logger.log(Level.INFO, "%02x, %02x".formatted(al & 0xff, ~al & 0xff));
             al = (byte) ~al;
-            al += 0; // offset jumptable_0c0h
-            jumptable_0c0h[al].run();
+            al += 0; // offset jumpTable_0c0h
+            jumpTable_0c0h[al & 0xff].run();
         }
 //spc0_ret:
     }
@@ -477,8 +480,8 @@ rpart_end:
         msg += "%d".formatted(ax);
         tc = ax;
 
-        if (loop_flag == 1) { // break pe_loop;
-            if (print_flag != 0) {
+        if (loop_flag) { // break pe_loop;
+            if (print_flag) {
                 mc.print_mes(loop_mes2);
             }
 
@@ -509,7 +512,7 @@ rpart_end:
             lc = n;
         }
 //pe_00:
-        if (print_flag != 0) {
+        if (print_flag) {
             mc.print_mes(msg);
 
             if (work.compilerInfo.partType == null) work.compilerInfo.partType = new ArrayList<>();
@@ -531,11 +534,11 @@ rpart_end:
 //pe_01:
     }
 
-    private Runnable[] jumptable;
-    private Runnable[] jumptable_0c0h;
+    private Runnable[] jumpTable;
+    private Runnable[] jumpTable_0c0h;
 
     private void setJumpTable() {
-        jumptable = new Runnable[] {
+        jumpTable = new Runnable[] {
                 this::jump1,  // 0ffh
                 this::jump1,
                 this::jump1,
@@ -617,7 +620,7 @@ rpart_end:
                 this::jump1  // 0b1h
         };
 
-        jumptable_0c0h = new Runnable[] {
+        jumpTable_0c0h = new Runnable[] {
                 this::jump1,  // 0ffh
                 this::jump1,
                 this::jump1,
@@ -642,7 +645,7 @@ rpart_end:
     private static final String loop_mes2 = "\t/ Found Infinite Local Loop!";
     //private String _crlf_mes = "\r\n$";
 
-    public byte print_flag = 0;
+    public boolean print_flag = false;
     public int all_length = 0; // new int[2] { 0, 0 };
     public int loop_length = 0; // new int[2] { 0, 0 };
     public int max_all = 0; // new int[2] { 0, 0 };
@@ -651,7 +654,7 @@ rpart_end:
     public final int[] fm3_adr = {0, 0, 0};
     public final int[] pcm_adr = {0, 0, 0, 0, 0, 0, 0, 0};
 
-    public byte loop_flag = 0;
+    public boolean loop_flag = false;
 
     public final char[] _fm3_partchr = {
             (char) 0,

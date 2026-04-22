@@ -36,7 +36,6 @@ import mdsound.instrument.Ym2608Inst;
 import musicDriverInterface.ChipDatum;
 import musicDriverInterface.IDriver;
 import musicDriverInterface.MmlDatum;
-import pmd.common.Environment;
 import pmd.common.PmdException;
 import pmd.driver.Driver;
 import pmd.driver.PMDOption;
@@ -45,6 +44,11 @@ import static java.lang.System.getLogger;
 import static vavi.sound.SoundUtil.volume;
 
 
+/**
+ * system properties
+ * <li>{@code pmd.dir} ... separated by {@code ;}</li>
+ * <li>{@code pmd.opt} ... separated by {@code ;}</li>
+ */
 class Program {
 
     private static final Logger logger = getLogger(Program.class.getName());
@@ -232,13 +236,10 @@ class Program {
 //            ppz8em = new PPZ8em(SamplingRate);
 //            ppsdrv = new PPSDRV(SamplingRate);
 
-            Environment env = new Environment();
-            env.addEnv("pmd");
-            env.addEnv("pmdopt");
-            envPmd = env.getEnvVal("pmd");
-            envPmdOpt = env.getEnvVal("pmdopt");
+            envPmd = System.getProperty("pmd.dir", "").split(";");
+            envPmdOpt = System.getProperty("pmd.opt", "").split(";");
 
-            List<String> opt = new ArrayList<>((envPmdOpt == null) ? (new ArrayList<>()) : List.of(envPmdOpt));
+            List<String> opt = new ArrayList<>(List.of(envPmdOpt));
             opt.addAll(Arrays.asList(args).subList(fnIndex, args.length));
             mIndex += (envPmdOpt == null ? 0 : envPmdOpt.length) - fnIndex;
 

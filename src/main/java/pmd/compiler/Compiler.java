@@ -30,7 +30,7 @@ public class Compiler implements ICompiler {
 
     private static final Logger logger = getLogger(Compiler.class.getName());
 
-    final ResourceBundle rb = ResourceBundle.getBundle("lang/message");
+    final ResourceBundle rb = ResourceBundle.getBundle("pmd/message");
 
     // Input data
 
@@ -193,7 +193,7 @@ public class Compiler implements ICompiler {
 //            logger.log(Level.ERROR, pe.getMessage());
         } catch (Exception e) {
             work.compilerInfo.errorList.add(new Tuple3<>(-1, -1, e.getMessage()));
-            logger.log(Level.ERROR, rb.getString("E0000").formatted(e.getMessage()), e);
+            logger.log(Level.ERROR, e.getMessage(), e);
         }
 
         return null;

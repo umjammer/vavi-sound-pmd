@@ -6,6 +6,8 @@
 
 package pmd;
 
+import java.util.ResourceBundle;
+
 import org.junit.jupiter.api.Test;
 import pmd.driver.X86Register;
 import vavi.util.Debug;
@@ -21,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class TestCase {
 
+    static final ResourceBundle rb = ResourceBundle.getBundle("pmd/message");
+
     @Test
     void test1() throws Exception {
          X86Register r = new X86Register();
@@ -35,5 +39,10 @@ Debug.printf("%02x, %02x", r.ah & 0xff, r.al & 0xff);
          short s3 = r.getSi();
          assertEquals(1, s2);
          assertEquals(2, s3);
+     }
+
+     @Test
+     void test2() throws Exception {
+Debug.println(rb.getString("E01%02d".formatted(7)));
      }
 }

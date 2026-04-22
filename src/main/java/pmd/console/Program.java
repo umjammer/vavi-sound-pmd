@@ -22,7 +22,7 @@ import dotnet4j.io.Stream;
 import dotnet4j.io.StreamReader;
 import dotnet4j.util.compat.Tuple;
 import musicDriverInterface.MmlDatum;
-import pmd.common.Environment;
+import org.apache.tools.ant.types.Environment;
 import pmd.compiler.Compiler;
 import vavi.util.serdes.Serdes;
 
@@ -30,11 +30,15 @@ import static java.lang.System.getLogger;
 import static pmd.common.Common.charset;
 
 
+/**
+ * system properties
+ * <li>{@code pmd.dir} ... separated by {@code ;}</li>
+ */
 class Program {
 
     private static final Logger logger = getLogger(Program.class.getName());
 
-    private static final ResourceBundle rb = ResourceBundle.getBundle("lang/message");
+    private static final ResourceBundle rb = ResourceBundle.getBundle("pmd/message");
 
     private static String srcFile;
     private static String ffFile;
@@ -51,9 +55,6 @@ class Program {
         }
 
         try {
-//#if NETCOREAPP
-//            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-//#endif
 
             compile(args, fnIndex);
 
@@ -71,13 +72,13 @@ class Program {
             compiler.init();
             compiler.mcArgs = lstMcArg.toArray(String[]::new);
 
-            env = new Environment();
-            env.addEnv("arranger");
-            env.addEnv("composer");
-            env.addEnv("user");
-            env.addEnv("mcopt");
-            env.addEnv("pmd");
-            compiler.env = env.getEnv();
+            compiler.env = new String[] {
+                    System.getProperty("pmd.arranger"),
+                    System.getProperty("pmd.composer"),
+                    System.getProperty("pmd.user"),
+                    System.getProperty("pmd.mcopt"),
+                    System.getProperty("pmd")
+            };
 
             // Get various file names
             int s = 0;
@@ -201,8 +202,8 @@ class Program {
         String fn;
         fn = Path.combine(Path.getDirectoryName(srcFile), arg);
 
-        String[] envPaths = env.getEnvVal("pmd");
-        if (envPaths != null) {
+        String[] envPaths = System.getProperty("pmd.dir", "").split(";");
+        if (envPaths.length > 0 && envPaths[0] != null) {
             int i = 0;
             while (!File.exists(fn) && i < envPaths.length) {
                 fn = Path.combine(envPaths[i++], arg);
