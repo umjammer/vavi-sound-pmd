@@ -1,13 +1,17 @@
 package pmd.player;
 
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.SourceDataLine;
@@ -38,7 +42,7 @@ import musicDriverInterface.IDriver;
 import musicDriverInterface.MmlDatum;
 import pmd.common.PmdException;
 import pmd.driver.Driver;
-import pmd.driver.PMDOption;
+import vavi.util.serdes.Serdes;
 
 import static java.lang.System.getLogger;
 import static vavi.sound.SoundUtil.volume;
@@ -49,7 +53,7 @@ import static vavi.sound.SoundUtil.volume;
  * <li>{@code pmd.dir} ... separated by {@code ;}</li>
  * <li>{@code pmd.opt} ... separated by {@code ;}</li>
  */
-class Program {
+public class Program {
 
     private static final Logger logger = getLogger(Program.class.getName());
 
@@ -58,15 +62,15 @@ class Program {
         static {
             try {
                 GlobalScreen.registerNativeHook();
+                GlobalScreen.addNativeKeyListener(new NativeKeyListener() {
+                    @Override
+                    public void nativeKeyTyped(NativeKeyEvent nativeEvent) {
+                        typed.set(true);
+                    }
+                });
             } catch (NativeHookException e) {
-                throw new IllegalStateException("There was a problem registering the native hook.", e);
+                logger.log(Level.WARNING, "There was a problem registering the native hook: " + e.getMessage());
             }
-            GlobalScreen.addNativeKeyListener(new NativeKeyListener() {
-                @Override
-                public void nativeKeyTyped(NativeKeyEvent nativeEvent) {
-                    typed.set(true);
-                }
-            });
         }
         static boolean kbhit() {
             return typed.get();
@@ -79,7 +83,6 @@ class Program {
 
     }
 
-    private static naudioCallBack callBack = null;
     private static Thread trdMain = null;
     private static StopWatch sw = null;
     private static double swFreq = 0;
@@ -133,7 +136,7 @@ class Program {
     private static int userPPSFREQ = -1;
     private static int ppsdrvWait = 1;
 
-    static void main(String[] args) {
+    public static void main(String[] args) {
         int fnIndex = analyzeOption(args);
         int mIndex = -1;
 
@@ -159,22 +162,21 @@ class Program {
             return;
         }
 
-//        rsc = CheckDevice();
+//        rsc = checkDevice();
 
         try {
 
-//            SineWaveProvider16 waveProvider;
             int latency = 1000;
 
             switch (device) {
                 case 0:
-//                    waveProvider = new SineWaveProvider16();
-//                    waveProvider.SetWaveFormat((int) SamplingRate, 2);
-                    callBack = Program::emuCallback;
                     audioOutput = AudioSystem.getSourceDataLine(new AudioFormat(SamplingRate, 16, 2, true, false));
                     audioOutput.open();
-                    volume(audioOutput, Double.parseDouble(System.getProperty("mdm.volume", "0.2")));
-                    audioOutput.start();
+                    volume(audioOutput, Double.parseDouble(System.getProperty("pmd.volume", "0.2")));
+                    trdMain = new Thread(Program::emuPlayback);
+                    trdMain.setPriority(Thread.MAX_PRIORITY);
+                    trdMain.setDaemon(true);
+                    trdMain.setName("trdEmu");
                     break;
                 case 1:
                 case 2:
@@ -197,7 +199,6 @@ class Program {
             chip.option = new Object[] {getApplicationFolder()};
 
             MDSound.Chip chipp = new MDSound.Chip();
-            //type = MDSound.MDSound.enmInstrumentType.PPZ8,
             chipp.id = 0;
             ppz8em = Instrument.getInstrument(Ppz8Inst.class);
             chipp.instrument = ppz8em;
@@ -207,7 +208,6 @@ class Program {
             chipp.option = null;
 
             MDSound.Chip chipps = new MDSound.Chip();
-//                type = MDSound.MDSound.enmInstrumentType.PPSDRV,
             chipps.id = 0;
             ppsdrv = Instrument.getInstrument(PpsInst.class);
             chipps.instrument = ppsdrv;
@@ -233,10 +233,11 @@ class Program {
             chip86.option = null;
 
             mds = new MDSound();
+            mds.init(SamplingRate, 1024, List.of(chip, chipp, chip86));
 //            ppz8em = new PPZ8em(SamplingRate);
 //            ppsdrv = new PPSDRV(SamplingRate);
 
-            envPmd = System.getProperty("pmd.dir", "").split(";");
+            envPmd = System.getProperty("pmd.pmd", "").split(";");
             envPmdOpt = System.getProperty("pmd.opt", "").split(";");
 
             List<String> opt = new ArrayList<>(List.of(envPmdOpt));
@@ -244,20 +245,23 @@ class Program {
             mIndex += (envPmdOpt == null ? 0 : envPmdOpt.length) - fnIndex;
 
             drv = new Driver();
-            PMDOption dop = new PMDOption();
-            dop.isAUTO = isAUTO;
-            dop.isNRM = isNRM;
-            dop.isSPB = isSPB;
-            dop.isVA = isVA;
-            dop.usePPS = usePPS;
-            dop.usePPZ = usePPZ;
-            dop.isLoadADPCM = false;
-            dop.loadADPCMOnly = false;
-//            dop.ppz8em = ppz8em;
-//            dop.ppsdrv = ppsdrv;
-            dop.envPmd = envPmd;
-            dop.srcFile = srcFile;
-            dop.jumpIndex = -1; // -1;
+
+            Object[] dop = {
+                    false,
+                    false,
+                    isAUTO,
+                    isVA,
+                    isNRM,
+                    usePPS,
+                    usePPZ,
+                    isSPB,
+                    envPmd,
+                    envPmd,
+                    srcFile,
+                    "",
+                    (Function<String, Stream>) Program::appendFileReaderCallback
+            };
+
             List<String> pop = new ArrayList<>();
             boolean pmdvolFound = false;
             for (int i = 0; i < opt.size(); i++) {
@@ -268,26 +272,41 @@ class Program {
                     pmdvolFound = true;
             }
 
-            logger.log(Level.INFO, "");
-
-            ((Driver) drv).init(
-                    srcFile,
-                    Program::writeOPNA,
-                    Program::waitSendOPNA,
-                    dop,
-                    pop.toArray(String[]::new),
-                    Program::appendFileReaderCallback,
-                    Program::writePPZ8,
-                    Program::writePPSDRV,
-                    Program::writeP86
-            );
+            if (!Path.getExtension(srcFile).equalsIgnoreCase(".xml")) { // mml
+                byte[] srcBuf = File.readAllBytes(srcFile);
+logger.log(Level.INFO, "size: " + srcBuf.length);
+                List<MmlDatum> buf = new ArrayList<>();
+                for (byte b : srcBuf)
+                    buf.add(new MmlDatum(b & 0xff));
+                drv.init(null,
+                        buf.toArray(MmlDatum[]::new),
+                        null,
+                        dop,
+                        pop.toArray(String[]::new),
+                        (Function<ChipDatum, Integer>) Program::writePPZ8,
+                        (Function<ChipDatum, Integer>) Program::writePPSDRV,
+                        (Function<ChipDatum, Integer>) Program::writeP86,
+                        (Consumer<ChipDatum>) Program::writeOPNA,
+                        (BiConsumer<Long, Integer>) Program::waitSendOPNA);
+            } else { // xml
+                try (InputStream sr = Files.newInputStream(java.nio.file.Path.of(srcFile))) {
+                    MmlDatum[] s = Serdes.Util.deserialize(sr, new MmlDatum[0]); // TODO
+                    drv.init(null,
+                            s,
+                            null,
+                            dop,
+                            pop.toArray(String[]::new),
+                            (Function<ChipDatum, Integer>) Program::writePPZ8,
+                            (Function<ChipDatum, Integer>) Program::writePPSDRV,
+                            (Function<ChipDatum, Integer>) Program::writeP86,
+                            (Consumer<ChipDatum>) Program::writeOPNA,
+                            (BiConsumer<Long, Integer>) Program::waitSendOPNA);
+                } catch (java.io.IOException e) {
+                    throw new dotnet4j.io.IOException(e);
+                }
+            }
 
             // When AUTO is specified, the configuration will change, so the volume will be set after receiving the configuration information.
-            isNRM = dop.isNRM;
-            isSPB = dop.isSPB;
-            isVA = dop.isVA;
-            usePPS = dop.usePPS;
-            usePPZ = dop.usePPZ;
             String[] pmdOptionVol = setVolume();
             // Apply pmdVol if user does not specify D option on command line
             if (!pmdvolFound && pmdOptionVol != null && pmdOptionVol.length > 0) {
@@ -310,8 +329,6 @@ class Program {
 
             switch (device) {
                 case 0:
-                    audioOutput.start();
-                    break;
                 case 1:
                 case 2:
                     trdMain.start();
@@ -356,7 +373,7 @@ class Program {
             if (audioOutput != null) {
                 audioOutput.stop();
                 while (audioOutput.isRunning()) {
-                    try { Thread.sleep(1); } catch (InterruptedException ignore) {}
+                    try { Thread.sleep(1); } catch (InterruptedException _) {}
                 }
                 audioOutput.close();
                 audioOutput = null;
@@ -364,7 +381,7 @@ class Program {
             if (trdMain != null) {
                 trdClosed = true;
                 while (!trdStopped) {
-                    try { Thread.sleep(1); } catch (InterruptedException ignore) {}
+                    try { Thread.sleep(1); } catch (InterruptedException _) {}
                 }
             }
 //            if (nc86ctl != null) {
@@ -433,7 +450,7 @@ class Program {
             if (isGimicOPNA) { //GMC-OPNA
 //                rsc.setSSGVolume((byte) VolumeR[0]);
                 // Take a short break (if you start playing immediately, the sound will skip)
-                try { Thread.sleep(500); } catch (InterruptedException e) {}
+                try { Thread.sleep(500); } catch (InterruptedException _) {}
             }
         }
 
@@ -893,7 +910,7 @@ class Program {
 
     private static int emuCallback(short[] buffer, int offset, int count) {
         try {
-            long bufCnt = count / 2;
+            int bufCnt = count / 2;
 
             for (int i = 0; i < bufCnt; i++) {
                 mds.update(emuRenderBuf, 0, 2, Program::oneFrame);
@@ -902,13 +919,32 @@ class Program {
 
                 buffer[offset + i * 2 + 0] = emuRenderBuf[0];
                 buffer[offset + i * 2 + 1] = emuRenderBuf[1];
-
             }
         } catch (Exception ex) {
             logger.log(Level.ERROR, ex.getMessage(), ex);
         }
 
         return count;
+    }
+
+    private static void emuPlayback() {
+        audioOutput.start();
+        short[] buf = new short[samplingBuffer * 2];
+        byte[] byteBuf = new byte[buf.length * 2];
+        trdStopped = false;
+        try {
+            while (!trdClosed) {
+                emuCallback(buf, 0, buf.length);
+                for (int i = 0; i < buf.length; i++) {
+                    byteBuf[i * 2] = (byte) (buf[i] & 0xff);
+                    byteBuf[i * 2 + 1] = (byte) ((buf[i] >> 8) & 0xff);
+                }
+                audioOutput.write(byteBuf, 0, byteBuf.length);
+            }
+        } catch (Exception e) {
+            logger.log(Level.ERROR, e.getMessage(), e);
+        }
+        trdStopped = true;
     }
 
     private static void realCallback() {

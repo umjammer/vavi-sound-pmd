@@ -102,7 +102,12 @@ public class JavaCompiler extends DosCompiler {
     private static String getOutputFileName(Compiler compiler, String mmlFilePath, Function<String, Stream> fnAppendFileReaderCallback) {
         try (var sourceMML = new FileStream(mmlFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)) {
             try (var sr = new StreamReader(sourceMML, charset)) {
-                var srcText = sr.readToEnd();
+                StringBuilder sb = new StringBuilder();
+                int ch;
+                while ((ch = sr.read()) != -1) {
+                    sb.append((char) ch);
+                }
+                var srcText = sb.toString();
                 var tags = compiler.getTags(srcText, fnAppendFileReaderCallback);
                 if (tags != null) {
                     for (var item : tags) {

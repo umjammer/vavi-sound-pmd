@@ -141,7 +141,12 @@ public class Compiler implements ICompiler {
             ms.seek(0, SeekOrigin.Begin);
 
             try (StreamReader sr = new StreamReader(ms, charset)) {
-                srcBuf = sr.readToEnd();
+                StringBuilder sb = new StringBuilder();
+                int ch;
+                while ((ch = sr.read()) != -1) {
+                    sb.append((char) ch);
+                }
+                srcBuf = sb.toString();
             } catch (IOException e) {
                 throw new dotnet4j.io.IOException(e);
             }
@@ -276,7 +281,12 @@ public class Compiler implements ICompiler {
         }
         String text;
         try (StreamReader sr = new StreamReader(strm, charset)) {
-            text = sr.readToEnd();
+            StringBuilder sb = new StringBuilder();
+            int ch;
+            while ((ch = sr.read()) != -1) {
+                sb.append((char) ch);
+            }
+            text = sb.toString();
         } catch (IOException e) {
             throw new dotnet4j.io.IOException(e);
         }

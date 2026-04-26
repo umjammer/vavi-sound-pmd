@@ -1,10 +1,7 @@
 package pmd.driver;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -21,13 +18,12 @@ import dotnet4j.io.Stream;
 import dotnet4j.util.compat.Tuple;
 import musicDriverInterface.ChipAction;
 import musicDriverInterface.ChipDatum;
-import musicDriverInterface.MetaData;
 import musicDriverInterface.IDriver;
+import musicDriverInterface.MetaData;
 import musicDriverInterface.MetaData.Tag;
 import musicDriverInterface.MmlDatum;
 import pmd.common.Common;
 import vavi.util.ByteUtil;
-import vavi.util.serdes.Serdes;
 
 import static java.lang.System.getLogger;
 
@@ -48,9 +44,6 @@ public class Driver implements IDriver {
     private final Object lockObjWriteReg = new Object();
     MmlDatum[] srcBuf = null;
     public Exception renderingException = null;
-
-    public Driver() {
-    }
 
     @Override
     public void fadeOut() {
@@ -282,14 +275,11 @@ getmemo_errret:
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * @param additionalOption 0: driver options, 1: command line options, 2: ppz8, 3: pps, 4: p86, 5: opna wrote, 6: opna wait send
+     */
     @Override
-    public void init(List<ChipAction> chipsAction, MmlDatum[] srcBuf, Function<String, Stream> appendFileReaderCallback_, Object... additionalOption) {
-//      throw new UnsupportedOperationException();
-//    }
-
-//    public void Init(Action<ChipDatum> opnaWrite, Action<long, int> opnaWaitSend, MmlDatum[] srcBuf, Object additionalOption) {
-        Consumer<ChipDatum> opnaWrite = chipsAction.getFirst()::writeRegister;
-        BiConsumer<Long, Integer> opnaWaitSend = chipsAction.getFirst()::waitSend;
+    public void init(List<ChipAction> chipsAction, MmlDatum[] srcBuf, Function<String, Stream> ignored, Object... additionalOption) {
 
         Object[] option = additionalOption;
 
@@ -313,109 +303,26 @@ logger.log(Level.DEBUG, pdno);
 
         Function<String, Stream> appendFileReaderCallback =
                 (pdnos.length < 13 || pdnos[12] == null)
-                        ? CreateAppendFileReaderCallback(Path.getDirectoryName(pdno.srcFile))
+                        ? createAppendFileReaderCallback(Path.getDirectoryName(pdno.srcFile))
                         : (Function<String, Stream>) pdnos[12];
 
         if (pdnos.length == 14) {
             pdno.jumpIndex = (int) pdnos[13];
         }
 
-        String[] po = (String[]) option[1];
-        Function<ChipDatum, Integer> ppz8Write = (Function<ChipDatum, Integer>) option[2];
-        Function<ChipDatum, Integer> ppsdrvWrite = (Function<ChipDatum, Integer>) option[3];
-        Function<ChipDatum, Integer> p86Write = (Function<ChipDatum, Integer>) option[4];
-        init(srcBuf,
-                opnaWrite, opnaWaitSend,
-                pdno, po,
-                appendFileReaderCallback,
-                ppz8Write,
-                ppsdrvWrite,
-                p86Write);
-
-        pdnos[2] = pdno.isAUTO;
-        pdnos[3] = pdno.isVA;
-        pdnos[4] = pdno.isNRM;
-        pdnos[5] = pdno.usePPS;
-        pdnos[6] = pdno.usePPZ;
-        pdnos[7] = pdno.isSPB;
-    }
-
-    public void init(
-            String fileName,
-            Consumer<ChipDatum> opnaWrite, BiConsumer<Long, Integer> opnaWaitSend,
-            PMDOption additionalPMDDotNETOption, String[] additionalPMDOption,
-            Function<String, Stream> appendFileReaderCallback,
-            Function<ChipDatum, Integer> ppz8Write,
-            Function<ChipDatum, Integer> ppsdrvWrite,
-            Function<ChipDatum, Integer> p86Write) {
-        if (!Path.getExtension(fileName).equalsIgnoreCase(".xml")) {
-            byte[] srcBuf = File.readAllBytes(fileName);
-            if (srcBuf.length < 1) return;
-            init(srcBuf, opnaWrite, opnaWaitSend, additionalPMDDotNETOption, additionalPMDOption,
-                    appendFileReaderCallback != null ? CreateAppendFileReaderCallback(Path.getDirectoryName(fileName)) : null,
-                    ppz8Write,
-                    ppsdrvWrite,
-                    p86Write);
-        } else {
-            try (InputStream sr = Files.newInputStream(java.nio.file.Path.of(fileName))) {
-                MmlDatum[] s = Serdes.Util.deserialize(sr, new MmlDatum[0]); // TODO
-                init(s, opnaWrite, opnaWaitSend, additionalPMDDotNETOption, additionalPMDOption,
-                        appendFileReaderCallback != null ? CreateAppendFileReaderCallback(Path.getDirectoryName(fileName)) : null,
-                        ppz8Write,
-                        ppsdrvWrite,
-                        p86Write);
-            } catch (IOException e) {
-                throw new dotnet4j.io.IOException(e);
-            }
-        }
-    }
-
-    public void resetOption(String[] pmdOption) {
-        pmd.resetOption(pmdOption);
-    }
-
-    public void init(
-            byte[] srcBuf,
-            Consumer<ChipDatum> opnaWrite, BiConsumer<Long, Integer> opnaWaitSend,
-            PMDOption additionalPMDDotNETOption, String[] additionalPMDOption,
-            Function<String, Stream> appendFileReaderCallback,
-            Function<ChipDatum, Integer> ppz8Write,
-            Function<ChipDatum, Integer> ppsdrvWrite,
-            Function<ChipDatum, Integer> p86Write) {
-        if (srcBuf == null || srcBuf.length < 1) return;
-        List<MmlDatum> bl = new ArrayList<>();
-        for (byte b : srcBuf) bl.add(new MmlDatum(b & 0xff));
-        init(bl.toArray(MmlDatum[]::new), opnaWrite, opnaWaitSend, additionalPMDDotNETOption, additionalPMDOption,
-                appendFileReaderCallback,
-                ppz8Write,
-                ppsdrvWrite,
-                p86Write
-        );
-    }
-
-    public void init(
-            MmlDatum[] srcBuf,
-            Consumer<ChipDatum> opnaWrite, BiConsumer<Long, Integer> opnaWaitSend,
-            PMDOption additionalPMDDotNETOption, String[] additionalPMDOption,
-            Function<String, Stream> appendFileReaderCallback,
-            Function<ChipDatum, Integer> ppz8Write,
-            Function<ChipDatum, Integer> ppsdrvWrite,
-            Function<ChipDatum, Integer> p86Write) {
-        if (srcBuf == null || srcBuf.length < 1) return;
-
         this.srcBuf = srcBuf;
 
-        writeOPNA = opnaWrite;
-        waitSendOPNA = opnaWaitSend;
-        writePPZ8 = ppz8Write;
-        writePPSDRV = ppsdrvWrite;
-        writeP86 = p86Write;
+        writeOPNA = (Consumer<ChipDatum>) option[5];
+        waitSendOPNA = (BiConsumer<Long, Integer>) option[6];
+        writePPZ8 = (Function<ChipDatum, Integer>) option[2];
+        writePPSDRV = (Function<ChipDatum, Integer>) option[3];
+        writeP86 = (Function<ChipDatum, Integer>) option[4];
 
         work = new PW();
         getTags();
-        additionalPMDDotNETOption.ppcHeader = checkPPC(appendFileReaderCallback);
+        pdno.ppcHeader = checkPPC(appendFileReaderCallback);
 
-        work.setOption(additionalPMDDotNETOption, additionalPMDOption);
+        work.setOption(pdno, (String[]) option[1]);
         work.timer = new OPNATimer(44100, 7987200);
 
         //PPZ8em ppz8em = additionalPMDDotNETOption.ppz8em;
@@ -436,6 +343,16 @@ logger.log(Level.DEBUG, pdno);
             pmd.pcmload.ppz_load(pmd.pw.ppz1File, pmd.pw.ppz2File);
         if (pmd.pw.ppsFile != null && !pmd.pw.ppsFile.isEmpty()) pmd.pcmload.pps_load(pmd.pw.ppsFile);
 
+        pdnos[2] = pdno.isAUTO;
+        pdnos[3] = pdno.isVA;
+        pdnos[4] = pdno.isNRM;
+        pdnos[5] = pdno.usePPS;
+        pdnos[6] = pdno.usePPZ;
+        pdnos[7] = pdno.isSPB;
+    }
+
+    public void resetOption(String[] pmdOption) {
+        pmd.resetOption(pmdOption);
     }
 
     private String checkPPC(Function<String, Stream> appendFileReaderCallback) {
@@ -543,12 +460,7 @@ logger.log(Level.DEBUG, pdno);
         }
     }
 
-    //public int getNowLoopCounter() {
-    //    //throw new UnsupportedOperationException();
-    //    return 0;
-    //}
-
-    private static Function<String, Stream> CreateAppendFileReaderCallback(String dir) {
+    private static Function<String, Stream> createAppendFileReaderCallback(String dir) {
         return fname -> {
             if (dir != null && !dir.isEmpty()) {
                 var path = Path.combine(dir, fname);

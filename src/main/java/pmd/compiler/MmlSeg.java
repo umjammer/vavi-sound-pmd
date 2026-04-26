@@ -57,24 +57,24 @@ public class MmlSeg {
             " ver " + Mc.ver + cr + lf +
             "		Programmed by M.Kajihara(KAJA) " + Mc.date +
             cr + lf
-            //Mc.cr + Mc.lf +
-            //Mc.eof
+            //cr + lf +
+            //eof
             ;
 //#else
 //    public String usames = "Usage:  MCH"
-//            + " [/option] filename[.MML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
+//            + " [/option] filename[.MML] [filename[.FF]]" + cr + lf + cr + lf
 //            + "Option: "
-//            + "/N  Compile on OPN   Mode(Default)" + Mc.cr + Mc.lf
-//            + "        /L  Compile on OPL   Mode" + Mc.cr + Mc.lf
-//            + "        /A  Not Set ADPCM_File before Play" + Mc.cr + Mc.lf
-//            + "        /O  Not Put Title Messages after Play" + Mc.cr + Mc.lf
-//            + "        /C  Calculate & Put Total Length of Parts" + Mc.cr + Mc.lf
+//            + "/N  Compile on OPN   Mode(Default)" + cr + lf
+//            + "        /L  Compile on OPL   Mode" + cr + lf
+//            + "        /A  Not Set ADPCM_File before Play" + cr + lf
+//            + "        /O  Not Put Title Messages after Play" + cr + lf
+//            + "        /C  Calculate & Put Total Length of Parts" + cr + lf
 //            + Mc.eof;
 //    public String titmes = " .MML file Compiler & Player (MC.EXE evaluation version)"
-//            + " ver " + Mc.ver + Mc.cr + Mc.lf
+//            + " ver " + Mc.ver + cr + lf
 //            + "		Programmed by M.Kajihara(KAJA) " + Mc.date
-//            + Mc.cr + Mc.lf
-//            //+ Mc.cr + Mc.lf + Mc.eof
+//            + cr + lf +
+//            //cr + lf + eof
 //            ;
 //#endif
 //#endif

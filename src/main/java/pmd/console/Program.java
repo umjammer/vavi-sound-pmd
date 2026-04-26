@@ -34,7 +34,7 @@ import static pmd.common.Common.charset;
  * system properties
  * <li>{@code pmd.dir} ... separated by {@code ;}</li>
  */
-class Program {
+public class Program {
 
     private static final Logger logger = getLogger(Program.class.getName());
 
@@ -44,9 +44,9 @@ class Program {
     private static String ffFile;
     private static String desFile;
     private static boolean isXml = false;
-    private static Environment env = null;
+    public static boolean isTest = false;
 
-    static void main(String[] args) {
+    public static void main(String[] args) {
         int fnIndex = AnalyzeOption(args);
 
         if (args == null || args.length - fnIndex < 1) {
@@ -60,6 +60,7 @@ class Program {
 
         } catch (Exception ex) {
             logger.log(Level.ERROR, ex.getMessage(), ex);
+            if (isTest) throw ex;
         }
     }
 
@@ -103,7 +104,7 @@ class Program {
             }
 
 //#if DEBUG
-//            compiler.SetCompileSwitch("IDE");
+            compiler.setCompileSwitch("IDE");
 //            //compiler.SetCompileSwitch("SkipPoint=R17:C18");
 //#endif
 
@@ -111,14 +112,19 @@ class Program {
                 // The default is the source file name with the extension changed to .M.
                 String destFileName = "";
                 if (srcFile != null && !srcFile.isEmpty()) {
-                    destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), "%s.M".formatted(Path.getFileNameWithoutExtension(srcFile)));
+                    destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), "%s.M".formatted(Path.getFileNameWithoutExtension(srcFile))).replace('\\', java.io.File.separatorChar);
                 }
 
                 // Get Filename from Tag
                 String srcText;
                 try (FileStream sourceMML = new FileStream(srcFile, FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     try (StreamReader sr = new StreamReader(sourceMML, charset)) {
-                        srcText = sr.readToEnd();
+                        StringBuilder sb = new StringBuilder();
+                        int ch;
+                        while ((ch = sr.read()) != -1) {
+                            sb.append((char) ch);
+                        }
+                        srcText = sb.toString();
                     }
                 }
                 String outFileName = "";

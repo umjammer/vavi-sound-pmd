@@ -109,7 +109,7 @@ public class Mc {
 
     public void print_mes(String qq) {
         // Display messages on the console
-        String[] a = qq.split("" + cr + lf);
+        String[] a = qq.split("" + cr + lf, -1);
         for (String s : a)
             logger.log(Level.INFO, s);
     }
@@ -189,10 +189,12 @@ public class Mc {
         lc = new Lc(this, work, m_seg);
         mml_seg = new MmlSeg();
         mml_seg.mml_buf = srcBuf;
+logger.log(Level.INFO, "mml_bufB: " + mml_seg.mml_buf.length());
         // If the line ends with EOF, add a newline
         if (srcBuf.length() > 1 && srcBuf.lastIndexOf("\r\n") != srcBuf.length() - 2) {
             mml_seg.mml_buf += "\r\n";
         }
+logger.log(Level.INFO, "mml_bufA: " + mml_seg.mml_buf.length());
         voiceTrancer(ffBuf);
         setupComTbl();
         setupRcomtbl();
@@ -255,7 +257,7 @@ public class Mc {
 
     private Pass2JumpTable jumper(Pass2JumpTable ret) {
 //#if DEBUG
-        logger.log(Level.TRACE, "jp:%s".formatted(ret));
+        logger.log(Level.TRACE, "jp:%s, si:%d, di:%d, %d".formatted(ret, work.si, work.di, m_seg.m_buf.size()));
 //#endif
         switch (ret) {
             //Pass1
@@ -787,7 +789,7 @@ public class Mc {
      */
     private Pass2JumpTable cmloop2() {
         work.si = 0; // offset mml_buf
-        logger.log(Level.TRACE, "chipCh:%d".formatted(mml_seg.chipCh));
+        logger.log(Level.DEBUG, "chipCh:%d".formatted(mml_seg.chipCh));
         cm_init();
 
         byte ah, al;
@@ -1138,9 +1140,9 @@ public class Mc {
             }
 
 //maxprg_towns_chk:
-            mml_seg.kpart_maxprg = al; // Save maxprg of K part
+            mml_seg.kpart_maxprg = al & 0xff; // Save maxprg of K part
             al = (byte) (mml_seg.deflng & 0xff);
-            mml_seg.deflng_k = al; // l Save value
+            mml_seg.deflng_k = al & 0xff; // l Save value
         }
         //
         // Compile FM3 extension parts if available
@@ -1153,30 +1155,30 @@ fm3_check:
             mml_seg.chipCh = 6;
             if (al == 0) { // break fm3c_main;
 
-                al = (byte) (mml_seg.fm3_partchr2 & 0xff);
-                mml_seg.fm3_partchr2 = 0;
-                mml_seg.chipCh = 7;
+            al = (byte) (mml_seg.fm3_partchr2 & 0xff);
+            mml_seg.fm3_partchr2 = 0;
+            mml_seg.chipCh = 7;
                 if (al == 0) { // break fm3c_main;
 
-                    al = (byte) (mml_seg.fm3_partchr3 & 0xff);
-                    mml_seg.fm3_partchr3 = 0;
-                    mml_seg.chipCh = 8;
+            al = (byte) (mml_seg.fm3_partchr3 & 0xff);
+            mml_seg.fm3_partchr3 = 0;
+            mml_seg.chipCh = 8;
                     if (al == 0) break fm3_check; // pcm_check;
                 }
             }
 //fm3c_main:
-            int bx = mml_seg.fm3_ofsadr;
-            int dx = work.di;
-            dx -= 0; // offset m_buf
-            m_seg.m_buf.set(bx + 0, new MmlDatum(dx & 0x00ff));
-            m_seg.m_buf.set(bx + 1, new MmlDatum((dx & 0xff00) >> 8));
-            bx += 2;
-            mml_seg.fm3_ofsadr = bx;
-            al -= (byte) (char) ('A' - 1);
-            mml_seg.part = al;
-            mml_seg.ongen = MmlSeg.fm;
-            return Pass2JumpTable.CmLoop2;
-        }
+                int bx = mml_seg.fm3_ofsadr;
+                int dx = work.di;
+                dx -= 0; // offset m_buf
+                m_seg.m_buf.set(bx + 0, new MmlDatum(dx & 0x00ff));
+                m_seg.m_buf.set(bx + 1, new MmlDatum((dx & 0xff00) >> 8));
+                bx += 2;
+                mml_seg.fm3_ofsadr = bx;
+                al -= (byte) (char) ('A' - 1);
+                mml_seg.part = al & 0xff;
+                mml_seg.ongen = MmlSeg.fm;
+                return Pass2JumpTable.CmLoop2;
+            }
         //
         // Compile the PCM extension part if available
         //
@@ -1203,7 +1205,7 @@ fm3_check:
                     bx += 2;
                     mml_seg.pcm_ofsadr = bx;
                     al -= (byte) (char) ('A' - 1);
-                    mml_seg.part = al;
+                    mml_seg.part = al & 0xff;
                     mml_seg.ongen = MmlSeg.pcm_ex;
                     return Pass2JumpTable.CmLoop2;
                 }
@@ -1241,7 +1243,7 @@ fm3_check:
         work.si = 0; // offset mml_buf
         cm_init();
         byte al = (byte) (mml_seg.deflng_k & 0xff);
-        mml_seg.deflng = al; // l value is quoted from part K
+        mml_seg.deflng = al & 0xff; // l value is quoted from part K
 
         return Pass2JumpTable.RtLoop;
     }
@@ -1327,7 +1329,7 @@ fm3_check:
         }
 //rend:
         work.di = work.bx;
-        //rend2:;
+//rend2:
         if (mml_seg.kpart_maxprg == 0) return Pass2JumpTable.RemSet;
 
         work.dx = 29;
@@ -2461,8 +2463,8 @@ fm3_check:
             error('#', 6, work.si);
         }
 
-        mml_seg.zenlen = al[0];
-        mml_seg.deflng = al[0] / 4;
+        mml_seg.zenlen = al[0] & 0xff;
+        mml_seg.deflng = (al[0] & 0xff) / 4;
     }
 
 //#endif
@@ -2535,7 +2537,7 @@ fm3_check:
             m_seg.m_filename = m_seg.m_filename.substring(0, di);
         }
 
-        //file_name_set_main:;
+//file_name_set_main:
         do {
             m_seg.m_filename += work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a;
 
@@ -2545,7 +2547,7 @@ fm3_check:
 
         } while ((work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a) >= '!');
 
-        //file_name_set_exit:;
+//file_name_set_exit:
         //al = (char)0;
         //    stosb
 //#endif
@@ -2763,12 +2765,12 @@ fm3_check:
                 continue;
             }
 
-            if ((al & 0xff) < ' ') break;
+            if (al < ' ') break;
 
             ret += al;
         } while (true);
 
-        //setstr_exit:;
+//setstr_exit:
         work.si--;
         return ret;
     }
@@ -2784,7 +2786,7 @@ fm3_check:
                 ret += al;
                 continue;
             }
-            if ((al & 0xff) < ' ') break;
+            if (al < ' ') break;
 
             ret += String.valueOf(Character.toUpperCase(al));
         } while (true);
@@ -2806,7 +2808,7 @@ fm3_check:
             al = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
             if (al == (char) 9) break;
             if (al == ' ') break;
-            if ((al & 0xff) < ' ') return true;
+            if (al < ' ') return true;
         } while (work.si < mml_seg.mml_buf.length());
 
         if (work.si == mml_seg.mml_buf.length()) {
@@ -2822,7 +2824,7 @@ fm3_check:
             }
             if (al == (char) 9) continue;
             if (al == ' ') continue;
-            if ((al & 0xff) < ' ') return true;
+            if (al < ' ') return true;
             break;
         } while (work.si < mml_seg.mml_buf.length());
 
@@ -3257,9 +3259,9 @@ hsset_loop:
 
 //#if DEBUG
         int n = mml_seg.mml_buf.indexOf("\r\n", work.si);
-        int r = work.si;
+        int[] r = {work.si};
         calc_line(/* ref */ r);
-        logger.log(Level.TRACE, String.format("%s(%d) \t%s",
+        logger.log(Level.DEBUG, String.format("%s(%d) \t%s",
                 mml_seg.mml_filename,
                 mml_seg.line,
                 mml_seg.mml_buf.substring(work.si, n)));
@@ -3277,13 +3279,12 @@ hsset_loop:
 
 //#endif
 
-        char al = (char) 0;
+        char al;
         do {
             do {
                 mml_seg.lastprg = 0; // For R part
                 al = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
-                if (al == 0xd) // cr
-                {
+                if (al == 0xd) { // cr
 //olc_fin:
                     work.si++;
 //comend:
@@ -3492,9 +3493,9 @@ notend: // ↑
         }
 
         work.bx = 0; // offset comtbl
-        // olc1:
+//olc1:
         do {
-            if (String.valueOf((char) work.al).equals(comtbl[work.bx].getItem1())) {
+            if (String.valueOf((char) (work.al & 0xff)).equals(comtbl[work.bx].getItem1())) {
                 break;
             }
             work.bx++;
@@ -3663,7 +3664,7 @@ notend: // ↑
         if (ch == '+' || ch == '-') { // break tl_slide; // TODO vavi check
 //            if (ch == '-') { // break tl_next;
 //tl_slide:
-            byte d = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
+            byte d = (byte) m_seg.m_buf.get(work.di - 1).dat;
             d |= (byte) 0xf0;
             m_seg.m_buf.set(work.di - 1, new MmlDatum(d & 0xff));
 //tl_next:
@@ -3690,7 +3691,7 @@ notend: // ↑
             error('m', 2, work.si);
         }
 
-        work.dx = 0xc000 + work.al;
+        work.dx = 0xc000 + (work.al & 0xff);
         return Pass2JumpTable.ParSet;
     }
 
@@ -3928,15 +3929,15 @@ notend: // ↑
                 error('}', 13, work.si);
             }
 
-            byte cch = (byte) (m_seg.m_buf.get(work.di - 5).dat & 0xff);
+            byte cch = (byte) m_seg.m_buf.get(work.di - 5).dat;
             if (cch != (byte) 0xda) {
                 error('}', 14, work.si);
             }
-            cch = (byte) (m_seg.m_buf.get(work.di - 4).dat & 0xff);
+            cch = (byte) m_seg.m_buf.get(work.di - 4).dat;
             if (cch == 0x0f) {
                 error('}', 15, work.si);
             }
-            cch = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
+            cch = (byte) m_seg.m_buf.get(work.di - 2).dat;
             if (cch == 0x0f) {
                 error('}', 15, work.si);
             }
@@ -3951,7 +3952,7 @@ notend: // ↑
             dstMd.type = srcMd.type;
             srcMd.linePos = null;
 
-            work.al = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
+            work.al = (byte) m_seg.m_buf.get(work.di - 2).dat;
             m_seg.m_buf.set(work.di - 3, new MmlDatum(work.al & 0xff));
 
             work.di -= 2;
@@ -3979,7 +3980,7 @@ notend: // ↑
                 }
                 lngcal();
                 cy = futen();
-                cch = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
+                cch = (byte) m_seg.m_buf.get(work.di - 1).dat;
                 if ((work.al & 0xff) >= (cch & 0xff)) { // KUMA: If the delay value is longer than the specified note length, an error occurs.
                     error('}', 8, work.si);
                 }
@@ -3992,7 +3993,7 @@ notend: // ↑
                 m_seg.m_buf.set(work.di - 4, new MmlDatum((work.dx & 0xff00) >> 8));
                 m_seg.m_buf.set(work.di - 3, new MmlDatum(work.al & 0xff));
                 m_seg.m_buf.set(work.di - 2, new MmlDatum(0xfb)); // "&"
-                cch = (byte) (m_seg.m_buf.get(work.di + 2).dat & 0xff);
+                cch = (byte) m_seg.m_buf.get(work.di + 2).dat;
                 cch -= work.al;
                 m_seg.m_buf.set(work.di + 2, new MmlDatum(cch));
                 work.di += 3;
@@ -4065,7 +4066,7 @@ notend: // ↑
 
 //bend_loop:
         do {
-            work.al = (byte) (m_seg.m_buf.get(work.bx).dat & 0xff);
+            work.al = (byte) m_seg.m_buf.get(work.bx).dat;
             if ((work.al & 0x80) != 0) error('}', 35, work.si); // Not a scale
 
             mml_seg.bunsan_work[work.bp] = work.al;
@@ -4362,7 +4363,7 @@ notend: // ↑
             if (ch != '+') { // break sw_sweep;
 
                 cy = lngset(/* out */ bx, /* out */ al);
-                work.dx = 0xdc00 + work.al;
+                work.dx = 0xdc00 + (work.al & 0xff);
                 return Pass2JumpTable.ParSet;
             }
         }
@@ -4489,11 +4490,10 @@ notend: // ↑
 //ss_exit_1:
             work.al = (byte) (mml_seg.ss_speed & 0xff);
             if (work.ah != 1) { // break ss_exit_2;
-
-                if (work.al * work.ah > 0xff) {
+                if ((work.al & 0xff) * (work.ah & 0xff) > 0xff) {
                     error('S', 2, work.si);
                 }
-                work.al = (byte) (work.al * work.ah);
+                work.al = (byte) ((work.al & 0xff) * (work.ah & 0xff));
             }
 //ss_exit_2:
             mml_seg.ss_length = work.al;
@@ -4517,7 +4517,7 @@ notend: // ↑
      * "SE" Command [SSGEG specification] → y command conversion
      * SEslot,num
      */
-    private Pass2JumpTable ssgeg_set() {
+    private Mc.Pass2JumpTable ssgeg_set() {
         boolean cy;
         int[] bx = new int[1];
         byte[] al = new byte[1];
@@ -4635,7 +4635,7 @@ sss_notfm2:
     }
 
     private Pass2JumpTable syousetu_lng_set_2() {
-        work.dx = 0xdf00 + work.al;
+        work.dx = 0xdf00 + (work.al & 0xff);
         return Pass2JumpTable.ParSet;
     }
 
@@ -4670,7 +4670,7 @@ sss_notfm2:
 //            break bxset00;
         } else {
 //pmsonly:
-            work.bx = (work.bx & 0xff00) + work.al;
+            work.bx = (work.bx & 0xff00) + (work.al & 0xff);
             work.al = 0;
         }
 //bxset00:
@@ -4749,7 +4749,7 @@ sss_notfm2:
             error('#', 2, work.si);
         }
         work.al |= 0b0000_1000;
-        work.dx = 0xe000 + work.al;
+        work.dx = 0xe000 + (work.al & 0xff);
         return Pass2JumpTable.ParSet;
     }
 
@@ -4761,7 +4761,7 @@ sss_notfm2:
     private Pass2JumpTable hdelay_set2() {
         get_clock();
 
-        work.dx = 0xe400 + work.al;
+        work.dx = 0xe400 + (work.al & 0xff);
         return Pass2JumpTable.ParSet;
     }
 
@@ -4893,7 +4893,7 @@ sss_notfm2:
 
         int cx = work.al; // cx = number of additions
 
-        work.al = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff); // al = the number to be added
+        work.al = (byte) m_seg.m_buf.get(work.di - 1).dat; // al = the number to be added
         work.ah = work.al; // ah = number to be added
 
 //lnml00:
@@ -4932,7 +4932,7 @@ sss_notfm2:
         }
 
         m_seg.m_buf.set(work.di, new MmlDatum(0xfb));
-        byte bl = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
+        byte bl = (byte) m_seg.m_buf.get(work.di - 2).dat;
         m_seg.m_buf.set(work.di + 1, new MmlDatum(bl & 0xff));
         m_seg.m_buf.set(work.di + 2, new MmlDatum(0));
         work.di += 3;
@@ -4965,7 +4965,7 @@ sss_notfm2:
         char ch = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a);
         if (ch == '.') { // break not_futen_rew;
 
-            work.al = (byte) (m_seg.m_buf.get(work.di).dat & 0xff);
+            work.al = (byte) m_seg.m_buf.get(work.di).dat;
             mml_seg.leng = work.al;
 //            break futen_rew;
         } else {
@@ -5018,8 +5018,8 @@ sss_notfm2:
         if (cy) {
             error('-', 8, work.si);
         }
-        byte d = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
-        if (d <= work.al) {
+        byte d = (byte) m_seg.m_buf.get(work.di - 1).dat;
+        if ((d & 0xff) <= (work.al & 0xff)) {
             error('-', 8, work.si);
             // c or z=1
         }
@@ -5324,7 +5324,7 @@ sss_notfm2:
     }
 
     private Pass2JumpTable otoset_x() {
-        work.bx = (work.bx & 0xff00) + work.al;
+        work.bx = (work.bx & 0xff00) + (work.al & 0xff);
 
         mml_seg.ontei = work.al;
 
@@ -5397,7 +5397,7 @@ sss_notfm2:
 
         work.al = (byte) (mml_seg.leng & 0xff);
 
-        LinePos lp = MakeLinePos();
+        LinePos lp = makeLinePos();
         MmlDatum dmy = m_seg.m_buf.get(work.di - 1);
 
         List<Object> args = new ArrayList<>();
@@ -5451,7 +5451,7 @@ sss_notfm2:
         return bp10();
     }
 
-    private LinePos MakeLinePos() {
+    private LinePos makeLinePos() {
         int p = work.si - 1;
         while (mml_seg.mml_buf.charAt(p) == ' ' || mml_seg.mml_buf.charAt(p) == '\t') p--;
         p++;
@@ -5491,7 +5491,7 @@ sss_notfm2:
      */
     private void ge_set() {
         mml_seg.ge_depth = mml_seg.ge_depth2;
-        //ge_loop:;
+//ge_loop:
         do {
             work.al = (byte) (m_seg.m_buf.get(work.di - 1).dat & 0xff);
             if (work.al - (mml_seg.ge_delay & 0xff) <= 0) {
@@ -5524,8 +5524,8 @@ sss_notfm2:
                             d = (byte) (m_seg.m_buf.get(work.di - 3).dat & 0xff);
                             if (work.al == d) { // break no_dec_di;
 
-                                int ax = (byte) (m_seg.m_buf.get(work.di - 2).dat & 0xff);
-                                ax += (byte) m_seg.m_buf.get(work.di - 1).dat * 0x100;
+                                int ax = m_seg.m_buf.get(work.di - 2).dat;
+                                ax += m_seg.m_buf.get(work.di - 1).dat * 0x100;
                                 m_seg.m_buf.set(work.di - 4, new MmlDatum(ax & 0xff));
                                 m_seg.m_buf.set(work.di - 3, new MmlDatum((ax & 0xff00) >> 8));
                                 work.di -= 2;
@@ -5653,21 +5653,21 @@ sss_notfm2:
                     if (mml_seg.part != MmlSeg.rhythm2) { // break sel_pcm;
                     }
                 } else {
-                    //osv_no_towns:;
+//osv_no_towns:
                     if (mml_seg.ongen == MmlSeg.psg) { // break sel_fm;
                         return;
                     }
 //sel_fm:
 
 //#endif
-                    work.al *= 4;
+                    work.al = (byte) ((work.al & 0xff) * 4);
                     return;
                 }
             }
         }
 //#if !efc
 //sel_pcm:
-        work.al *= 16;
+        work.al = (byte) ((work.al & 0xff) * 16);
 //#endif
     }
 
@@ -5691,8 +5691,8 @@ sss_notfm2:
 
         work.di -= 2;
 
-        work.dx = (byte) (m_seg.m_buf.get(work.di + 0).dat & 0xff);
-        work.dx += (byte) m_seg.m_buf.get(work.di + 1).dat * 0x100;
+        work.dx = m_seg.m_buf.get(work.di + 0).dat;
+        work.dx += m_seg.m_buf.get(work.di + 1).dat * 0x100;
 
         work.dx = (((work.dx & 0xff00) >> 8) | (work.dx << 8)) & 0xffff; // Dh=Onkai/Dl=Length
         work.al = (byte) mml_seg.ss_depth;
@@ -5784,7 +5784,7 @@ sss_notfm2:
      * input/output bh to Onkai
      */
     private void one_down() {
-        byte bh = (byte) (work.bx >> 8);
+        byte bh = (byte) ((work.bx & 0xff00) >> 8);
         bh--;
         work.al = bh;
         work.al &= 0xf;
@@ -5806,7 +5806,7 @@ sss_notfm2:
      * input/output bh to Onkai
      */
     private void one_up() {
-        byte bh = (byte) (work.bx >> 8);
+        byte bh = (byte) ((work.bx & 0xff00) >> 8);
         bh++;
         work.al = bh;
         work.al &= 0xf;
@@ -5863,7 +5863,7 @@ prs200: // ↑
                     mml_seg.prsok |= 2; // Processed flag
 
                     d = (byte) (m_seg.m_buf.get(work.di).dat & 0xff);
-                    if ((work.al & 0xff) + d <= 255) {
+                    if ((work.al & 0xff) + (d & 0xff) <= 255) {
                         work.al += d;
                         break prs200;
                     }
@@ -6035,7 +6035,7 @@ prs200: // ↑
 
     private static boolean hexcal8(/* ref */ byte[] al_b) {
         try {
-            al_b[0] = Byte.parseByte(String.valueOf((char) al_b[0]));
+            al_b[0] = Byte.parseByte(String.valueOf((char) al_b[0]), 16);
             return true;
         } catch (NumberFormatException e) {
             return false;
@@ -6051,7 +6051,7 @@ prs200: // ↑
         char ch;
 
         work.al = (byte) mml_seg.leng;
-        int ax = work.al;
+        int ax = work.al & 0xff;
         work.bx = ax;
 //ftloop:
         do {
@@ -6246,17 +6246,16 @@ prs200: // ↑
         cy = lngset(/* out */ bx, /* out */ al);
 
         mml_seg.zenlen = work.al;
-        mml_seg.deflng = (byte) (work.al >> 2);
+        mml_seg.deflng = (byte) ((work.al & 0xff) >>> 2);
         return syousetu_lng_set_2();
     }
 
     /**
      * Getting a specific length from a note duration
-     * INPUTS -- [leng]
-     *       to Duration
-     *  -- [zenlen]
-     *       to Whole note duration
-     * OUTPUTS -- al,[leng]
+     *
+     * @input leng to Duration
+     * @input zenlen to Whole note duration
+     * @outputs al [leng]
      */
     private void lngcal() {
         work.al = (byte) mml_seg.leng;
@@ -6266,9 +6265,9 @@ prs200: // ↑
 
         if (mml_seg.calflg != 0) return;
 
-        //lcl001:;
+//lcl001:
         work.al = (byte) mml_seg.zenlen;
-        int ax = work.al;
+        int ax = work.al & 0xff;
 
         int d = ax / mml_seg.leng;
         if (ax % mml_seg.leng != 0) {
@@ -6289,7 +6288,7 @@ prs200: // ↑
         if (work.ctype == MMLType.Unknown) {
             cmd = new MmlDatum(work.dx & 0xff);
         } else {
-            cmd = new MmlDatum(work.dx & 0xff, work.ctype, MakeLinePos(), work.cargs);
+            cmd = new MmlDatum(work.dx & 0xff, work.ctype, makeLinePos(), work.cargs);
             work.ctype = MMLType.Unknown;
             work.cargs = null;
         }
@@ -6316,7 +6315,7 @@ prs200: // ↑
         int[] bx = new int[1];
         byte[] al = new byte[1];
         boolean cy = lngset(/* out */ bx, /* out */ al);
-        if (cy || al[0] < 18) {
+        if (cy || (al[0] & 0xff) < 18) {
             error('t', 2, work.si);
         }
 
@@ -6348,9 +6347,8 @@ prs200: // ↑
         int[] bx = new int[1];
         byte[] al = new byte[1];
         boolean cy = lngset(/* out */ bx, /* out */ al);
-        //tset:;
-        if (cy || (al[0] & 0xff) >= 251) // 251 to 255 is an error
-        {
+//tset:
+        if (cy || (al[0] & 0xff) >= 251) { // 251 to 255 is an error
             error('T', 2, work.si); // KUMA: t -> T
         }
 
@@ -6387,13 +6385,13 @@ prs200: // ↑
     private void timerb_get(byte al, /* out */ byte[] dl) {
         dl[0] = 0;
         if (tempo_old_flag != 0) {
-            //timerb_get:
+//timerb_get:
             byte bl = al;
 
             int ax = 0x112c;
-            al = (byte) (ax / bl);
-            byte ah = (byte) (ax % bl);
-            dl[0] = (byte) (0x100 - al);
+            al = (byte) (ax / (bl & 0xff));
+            byte ah = (byte) (ax % (bl & 0xff));
+            dl[0] = (byte) (0x100 - (al & 0xff));
 
             if ((ah & 0xff) > 127) {
                 dl[0]--; // Rounding
@@ -6445,12 +6443,12 @@ prs200: // ↑
             work.dx = 'q' * 0x100 + (work.dx & 0xff);
             get_clock();
 
-            //Work.dx = Work.al * 0x100 + (byte)0xfe;
-            //MSeg.m_buf.set(Work.di++, new MmlDatum(Work.dx & 0xff));
-            //MSeg.m_buf.set(Work.di++, new MmlDatum((Work.dx & 0xff00) >> 8)));
+            //work.dx = wrk.al * 0x100 + (byte) 0xfe;
+            //m_seg.m_buf.set(work.di++, new MmlDatum(work.dx & 0xff));
+            //m_seg.m_buf.set(work.di++, new MmlDatum((work.dx & 0xff00) >> 8)));
             work.ctype = MMLType.Gatetime;
-            work.cargs = new Object[] {(int) work.al};
-            work.dx = 0xfe00 + work.al;
+            work.cargs = new Object[] {work.al & 0xff};
+            work.dx = 0xfe00 + (work.al & 0xff);
             parset();
 
             al = work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si) : (char) 0x1a;
@@ -6466,7 +6464,7 @@ prs200: // ↑
 
                 int ax = dx_p;
 
-                byte dh = (byte) (work.dx >> 8);
+                byte dh = (byte) ((work.dx & 0xff00) >> 8);
                 byte ah = (byte) (ax >> 8);
 
                 work.dx = ((dh - ah) & 0xff) * 0x100 + (work.dx & 0xff);
@@ -6484,7 +6482,7 @@ prs200: // ↑
                     byte b = (byte) (work.dx & 0xff);
                     work.dx = ((work.dx & 0xff00) >> 8) + (b & 0xff) * 0x100;
                     work.ctype = MMLType.Gatetime;
-                    work.cargs = new Object[] {(int) work.al};
+                    work.cargs = new Object[] {work.al & 0xff};
                     parset();
                 }
             }
@@ -6496,7 +6494,7 @@ prs200: // ↑
         work.si++;
         work.dx = 'q' * 0x100 + (work.dx & 0xff);
         get_clock();
-        work.dx = 0xb300 + work.al;
+        work.dx = 0xb300 + (work.al & 0xff);
         work.ctype = MMLType.Gatetime;
         work.cargs = new Object[] {work.al & 0xff};
         return Pass2JumpTable.ParSet;
@@ -6543,9 +6541,9 @@ prs200: // ↑
         byte[] al = new byte[1];
         cy = lngset(/* out */ bx, /* out */ al);
         work.al = (byte) ~work.al;
-        work.dx = 0xc400 + work.al;
+        work.dx = 0xc400 + (work.al & 0xff);
         work.ctype = MMLType.Gatetime;
-        work.cargs = new Object[] {(int) work.al};
+        work.cargs = new Object[] {work.al & 0xff};
         return Pass2JumpTable.ParSet;
     }
 
@@ -6665,7 +6663,7 @@ prs200: // ↑
             work.al = (byte) 255;
         }
 //vsetmb:
-        work.bx = (work.bx & 0xff00) + work.al;
+        work.bx = (work.bx & 0xff00) + (work.al & 0xff);
         return Pass2JumpTable.VSetM1;
     }
 
@@ -6710,7 +6708,7 @@ prs200: // ↑
 
         cy = getnum(/* out */ bx, /* out */ dl);
 
-        mml_seg.volss = /* signed */ dl[0];
+        mml_seg.volss = /* signed */ dl[0] & 0xff;
         work.dx = (work.dx & 0xff00) | (byte) mml_seg.nowvol;
 //#if !efc
         if (mml_seg.part == MmlSeg.pcmPart) return Pass2JumpTable.VSetM1;
@@ -6733,7 +6731,7 @@ prs200: // ↑
         byte[] dl = new byte[1];
         cy = getnum(/* out */ bx, /* out */ dl);
 
-        mml_seg.volss2 = dl[0];
+        mml_seg.volss2 = dl[0] & 0xff;
         return Pass2JumpTable.Olc03;
     }
 
@@ -6746,7 +6744,7 @@ prs200: // ↑
         cy = getnum(/* out */ bx, /* out */ dl);
         dl[0] = (byte) -dl[0];
 
-        mml_seg.volss2 = dl[0];
+        mml_seg.volss2 = dl[0] & 0xff;
         return Pass2JumpTable.Olc03;
     }
 
@@ -6798,7 +6796,7 @@ psgprg: // ↑
                     if (mml_seg.towns_flg == 1) break repeat_check; // Towns' K = PCM part
                     if (mml_seg.skip_flag != 0) return Pass2JumpTable.Olc0;
 
-                    MmlDatum cmd = new MmlDatum(work.dx & 0xff, MMLType.Instrument, MakeLinePos());
+                    MmlDatum cmd = new MmlDatum(work.dx & 0xff, MMLType.Instrument, makeLinePos());
                     m_seg.m_buf.set(work.di++, cmd);
 
                     mml_seg.length_check1 = 1; // There was sound duration data.
@@ -6820,7 +6818,7 @@ psgprg: // ↑
             //work.bx *= 4;
             //work.bx = work.bx & 0xff;
             work.bx += 0; // offset psgEnvDat
-            MmlDatum cmd = new MmlDatum(0xf0, MMLType.Instrument, MakeLinePos());
+            MmlDatum cmd = new MmlDatum(0xf0, MMLType.Instrument, makeLinePos());
             m_seg.m_buf.set(work.di++, cmd);
             cx = 4;
             //if (work.bx > 9) {
@@ -7065,7 +7063,7 @@ noset_release: // ↑
                 //
 //detset_2:
                 cy = getnum(/* out */ bx, /* out */ dl);
-                m_seg.m_buf.set(work.di++, new MmlDatum(0xd5, MMLType.Detune, MakeLinePos(), work.bx));
+                m_seg.m_buf.set(work.di++, new MmlDatum(0xd5, MMLType.Detune, makeLinePos(), work.bx));
                 m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
                 m_seg.m_buf.set(work.di++, new MmlDatum((work.bx & 0xff00) >> 8));
                 return Pass2JumpTable.Olc0;
@@ -7096,7 +7094,7 @@ noset_release: // ↑
 //detset_exit:
                 if (mml_seg.bend != 0) return Pass2JumpTable.Olc03;
                 work.al = (byte) 0xfa;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff, MMLType.Detune, MakeLinePos(), work.bx));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff, MMLType.Detune, makeLinePos(), work.bx));
                 m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
                 m_seg.m_buf.set(work.di++, new MmlDatum((work.bx & 0xff00) >> 8));
                 return Pass2JumpTable.Olc0;
@@ -7133,7 +7131,7 @@ noset_release: // ↑
 //detset_exit:
                 if (mml_seg.bend != 0) return Pass2JumpTable.Olc03;
                 work.al = (byte) 0xfa;
-                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff, MMLType.Detune, MakeLinePos(), work.bx));
+                m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff, MMLType.Detune, makeLinePos(), work.bx));
                 m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
                 m_seg.m_buf.set(work.di++, new MmlDatum((work.bx & 0xff00) >> 8));
                 return Pass2JumpTable.Olc0;
@@ -7181,7 +7179,7 @@ noset_release: // ↑
 
         dl[0] = (byte) bx[0];
         if (dh == 0) {
-            work.dx = dl[0];
+            work.dx = dl[0] & 0xff;
             work.bx = bx[0];
             return cy;
         }
@@ -7214,7 +7212,7 @@ noset_release: // ↑
 
         // Write current di - mbuf to loptbl
         mml_seg.loptbl[work.bx + 0] = (byte) work.dx;
-        mml_seg.loptbl[work.bx + 1] = (byte) (work.dx >> 8);
+        mml_seg.loptbl[work.bx + 1] = (byte) (work.dx >>> 8);
 
         // Write 0 to lextbl
         //Work.bx += MmlSeg.loopnest * 2;
@@ -7264,7 +7262,7 @@ noset_release: // ↑
     }
 
     private void edl00() {
-        byte bh = (byte) (work.bx >> 8);
+        byte bh = (byte) (work.bx >>> 8);
         if (bh != 0) {
             error(']', 2, work.si);
         }
@@ -7289,7 +7287,7 @@ noset_release: // ↑
         if (work.al == (byte) 0xff) {
             error(']', 23, work.si);
         }
-        work.bx = work.al * 2; // offset loptbl
+        work.bx = (work.al & 0xff) * 2; // offset loptbl
         // Set the value you wrote in loptbl
         work.dx = (mml_seg.loptbl[work.bx + 0] & 0xff) + (mml_seg.loptbl[work.bx + 1] & 0xff) * 0x100;
         m_seg.m_buf.set(work.di + 0, new MmlDatum(work.dx & 0xff));
@@ -7314,8 +7312,8 @@ noset_release: // ↑
         //
         // If there is a ":" then write it there too
         //
-        //Work.bx += MmlSeg.loopnest * 2; // bx = location of lextbl
-        //Work.bx = MSeg.m_buf.get(Work.bx).dat + MSeg.m_buf.get(Work.bx).dat * 0x100; // bx = value of lextbl
+        //work.bx += mml_seg.loopnest * 2; // bx = location of lextbl
+        //work.bx = m_seg.m_buf.get(work.bx).dat + m_seg.m_buf.get(work.bx).dat * 0x100; // bx = value of lextbl
         work.bx = (mml_seg.lextbl[work.bx] & 0xff) + (mml_seg.lextbl[work.bx + 1] & 0xff) * 0x100; // bx = value of lextbl
         if (work.bx != 0) { // break nonexit; // There is no ":"
 
@@ -7485,12 +7483,12 @@ noset_release: // ↑
             cy = lngset(/* out */ bx, /* out */ al);
             if (al[0] == 1) { // break volup2;
 
-                cmd = new MmlDatum(0xf4, MMLType.Volume, MakeLinePos(), (Object[]) null);
+                cmd = new MmlDatum(0xf4, MMLType.Volume, makeLinePos(), (Object[]) null);
                 m_seg.m_buf.set(work.di++, cmd);
                 return Pass2JumpTable.Olc0;
             }
 //volup2:
-            cmd = new MmlDatum(0xe3, MMLType.Volume, MakeLinePos(), (Object[]) null);
+            cmd = new MmlDatum(0xe3, MMLType.Volume, makeLinePos(), (Object[]) null);
             m_seg.m_buf.set(work.di++, cmd);
             ongen_sel_vol();
             m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
@@ -7500,7 +7498,7 @@ noset_release: // ↑
         if (ch != '^') { // break volup4;
             work.si++;
             cy = lngset(/* out */ bx, /* out */ al);
-            cmd = new MmlDatum(0xe3, MMLType.Volume, MakeLinePos(), (Object[]) null);
+            cmd = new MmlDatum(0xe3, MMLType.Volume, makeLinePos(), (Object[]) null);
             m_seg.m_buf.set(work.di++, cmd);
             m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             return Pass2JumpTable.Olc0;
@@ -7514,7 +7512,7 @@ noset_release: // ↑
             ongen_sel_vol();
             if (work.al == 0) return Pass2JumpTable.Olc03; // If 0, ignore
 
-            cmd = new MmlDatum(0xde, MMLType.Volume, MakeLinePos());
+            cmd = new MmlDatum(0xde, MMLType.Volume, makeLinePos());
             m_seg.m_buf.set(work.di++, cmd);
             m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
@@ -7527,7 +7525,7 @@ noset_release: // ↑
         cy = lngset(/* out */ bx, /* out */ al);
         if (work.al == 0) return Pass2JumpTable.Olc03; // If 0, ignore
 
-        cmd = new MmlDatum(0xde, MMLType.Volume, MakeLinePos());
+        cmd = new MmlDatum(0xde, MMLType.Volume, makeLinePos());
         m_seg.m_buf.set(work.di++, cmd);
         m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
@@ -7554,12 +7552,12 @@ voldown4: // ↑
                 cy = lngset(/* out */ bx, /* out */ al);
                 if (al[0] == 1) { // break voldown2;
 
-                    cmd = new MmlDatum(0xf3, MMLType.Volume, MakeLinePos());
+                    cmd = new MmlDatum(0xf3, MMLType.Volume, makeLinePos());
                     m_seg.m_buf.set(work.di++, cmd);
                     return Pass2JumpTable.Olc0;
                 }
 //voldown2:
-                cmd = new MmlDatum(0xe2, MMLType.Volume, MakeLinePos());
+                cmd = new MmlDatum(0xe2, MMLType.Volume, makeLinePos());
                 m_seg.m_buf.set(work.di++, cmd);
                 ongen_sel_vol();
                 m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
@@ -7568,7 +7566,7 @@ voldown4: // ↑
 //voldown3:
             work.si++;
             cy = lngset(/* out */ bx, /* out */ al);
-            cmd = new MmlDatum(0xe2, MMLType.Volume, MakeLinePos());
+            cmd = new MmlDatum(0xe2, MMLType.Volume, makeLinePos());
             m_seg.m_buf.set(work.di++, cmd);
             m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
             return Pass2JumpTable.Olc0;
@@ -7582,7 +7580,7 @@ voldown4: // ↑
             ongen_sel_vol();
             if (work.al == 0) return Pass2JumpTable.Olc03; // If 0, ignore
 
-            cmd = new MmlDatum(0xdd, MMLType.Volume, MakeLinePos());
+            cmd = new MmlDatum(0xdd, MMLType.Volume, makeLinePos());
             m_seg.m_buf.set(work.di++, cmd);
             m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
@@ -7595,7 +7593,7 @@ voldown4: // ↑
         cy = lngset(/* out */ bx, /* out */ al);
         if (work.al == 0) return Pass2JumpTable.Olc03; // If 0, ignore
 
-        cmd = new MmlDatum(0xdd, MMLType.Volume, MakeLinePos());
+        cmd = new MmlDatum(0xdd, MMLType.Volume, makeLinePos());
         m_seg.m_buf.set(work.di++, cmd);
         m_seg.m_buf.set(work.di++, new MmlDatum(work.al & 0xff));
 
@@ -7763,7 +7761,7 @@ voldown4: // ↑
                         error('M', 2, work.si);
                     }
 
-                    if (work.ah != 0xd6) { // A? // break mdc_noa;
+                    if ((work.ah & 0xff) != 0xd6) { // A? // break mdc_noa;
                         work.bx = (work.bx & 0xff00) | ((work.bx & 0xff) | 0x80);
                     }
 //mdc_noa:
@@ -7828,11 +7826,14 @@ voldown4: // ↑
 
                 return Pass2JumpTable.ParSet;
             }
-            case (byte) 'B' -> //break lfoset_main;
+            case (byte) 'B' -> // break lfoset_main;
                     work.ah = (byte) 0xbf;
-            case (byte) 'A' -> //            break lfoset_main;
+            case (byte) 'A' -> // break lfoset_main;
                     work.ah = (byte) 0xf2;
-            default -> work.si--;
+            default -> {
+                work.ah = (byte) 0xf2;
+                work.si--;
+            }
         }
 //lfoset_main:
 
@@ -8169,7 +8170,7 @@ voldown4: // ↑
                 error('p', 2, work.si);
             }
 
-            m_seg.m_buf.set(work.di++, new MmlDatum(0xec, MMLType.Pan, MakeLinePos(), work.bx));
+            m_seg.m_buf.set(work.di++, new MmlDatum(0xec, MMLType.Pan, makeLinePos(), work.bx));
             m_seg.m_buf.set(work.di++, new MmlDatum(work.bx & 0xff));
 
             return Pass2JumpTable.Olc0;
@@ -8178,7 +8179,7 @@ voldown4: // ↑
         work.si++;
         cy = getnum(/* out */ bx, /* out */ dl);
         int prm1 = dl[0];
-        m_seg.m_buf.set(work.di++, new MmlDatum(0xc3, MMLType.Pan, MakeLinePos(), prm1, 0));
+        m_seg.m_buf.set(work.di++, new MmlDatum(0xc3, MMLType.Pan, makeLinePos(), prm1, 0));
         m_seg.m_buf.set(work.di++, new MmlDatum(dl[0] & 0xff));
         m_seg.m_buf.set(work.di++, new MmlDatum(0));
 
@@ -8188,7 +8189,7 @@ voldown4: // ↑
         cy = getnum(/* out */ bx, /* out */ dl);
         if (dl[0] == 0) return Pass2JumpTable.Olc0;
 
-        m_seg.m_buf.set(work.di - 3, new MmlDatum(0xc3, MMLType.Pan, MakeLinePos(), prm1, 1));
+        m_seg.m_buf.set(work.di - 3, new MmlDatum(0xc3, MMLType.Pan, makeLinePos(), prm1, 1));
         m_seg.m_buf.set(work.di - 1, new MmlDatum(1));
         return Pass2JumpTable.Olc0;
     }
@@ -8218,7 +8219,7 @@ voldown4: // ↑
     private Pass2JumpTable rhycom() {
         work.al = (byte) (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
         work.bx = 0; // offset rcomtbl
-        //rc00:;
+//rc00:
         do {
             if (rcomtbl[work.bx].getItem1() == 0) error('\\', 1, work.si);
             if (work.al == rcomtbl[work.bx].getItem1()) break; // rc01;
@@ -8441,7 +8442,7 @@ voldown4: // ↑
      */
     private Pass2JumpTable hscom() {
         char ch;
-        int ax;
+        int[] ax = new int[1];
 
         int bsi = work.si; // KUMA:Added
 
@@ -8473,11 +8474,11 @@ voldown4: // ↑
             //; add bx, ax
             //; jmp hscom_main
 
-            //hscom2:;
-            ax = work.al * 2;
+//hscom2:
+            ax[0] = (work.al & 0xff) * 2;
             work.bx = 0; // offset hsbuf2
             hs_seg.currentBuf = hs_seg.hsbuf2;
-            work.bx += ax;
+            work.bx += ax[0];
 //            break hscom_main;
         } else {
 //hscom3:
@@ -8492,20 +8493,20 @@ voldown4: // ↑
 
                     error('!', 27, work.si);
                 }
-            }
 //hscom3_small:
-            work.bx = work.dx;
+                work.bx = work.dx;
+            }
         }
 //hscom_main:
         //KUMA:Added
 
-        String macroName = "!";
-        while (bsi < work.si) macroName += mml_seg.mml_buf.charAt(bsi++);
+        StringBuilder macroName = new StringBuilder("!");
+        while (bsi < work.si) macroName.append(mml_seg.mml_buf.charAt(bsi++));
 
         if (work.isIDE) {
 
             // Output special IDE commands
-            LinePos pos = MakeLinePos();
+            LinePos pos = makeLinePos();
             List<Object> args = new ArrayList<>();
             MmlDatum cmd = new MmlDatum(MMLType.IDE, args, pos, 0xff);
 
@@ -8515,12 +8516,12 @@ voldown4: // ↑
             //
             LinePos nLp = LinePos.Copy(pos);
             nLp.aliesName = mml_seg.AliesName;
-            nLp.aliesNextName = macroName;
+            nLp.aliesNextName = macroName.toString();
             nLp.aliesDepth = mml_seg.getMacroStack().size() + 1;
             nLp.col--;
             nLp.row--;
             mml_seg.getMacroStack().push(nLp);
-            mml_seg.AliesName = macroName;
+            mml_seg.AliesName = macroName.toString();
 
             List<Object> tArgs = new ArrayList<>();
             tArgs.add(mml_seg.getMacroStack().toArray());
@@ -8528,17 +8529,17 @@ voldown4: // ↑
             args.add(cmd);
         }
 
-        ax = (hs_seg.currentBuf[work.bx] & 0xff) + (hs_seg.currentBuf[work.bx + 1] & 0xff) * 0x100;
+        ax[0] = (hs_seg.currentBuf[work.bx] & 0xff) + (hs_seg.currentBuf[work.bx + 1] & 0xff) * 0x100;
 
         //    assume es:MSeg
 
-        if (ax == 0) {
+        if (ax[0] == 0) {
             error('!', 27, work.si); // It's not defined.
         }
 
         mml_seg.hscomSI.push(work.si);
         mml_seg.hsflag++;
-        work.si = ax;
+        work.si = ax[0];
         calc_line(/* ref */ ax);
         return Pass2JumpTable.Olc02; // Olc0
     }
@@ -8546,7 +8547,7 @@ voldown4: // ↑
     private Pass2JumpTable hscom_exit() {
         mml_seg.hsflag--;
         work.si = mml_seg.hscomSI.pop();
-        int ax = work.si;
+        int[] ax = {work.si};
         calc_line(/* ref */ ax);
 
         // KUMA: Added
@@ -8554,7 +8555,7 @@ voldown4: // ↑
         if (work.isIDE) {
 
             // Output special IDE commands
-            LinePos pos = MakeLinePos();
+            LinePos pos = makeLinePos();
             List<Object> args = new ArrayList<>();
             MmlDatum cmd = new MmlDatum(MMLType.IDE, args, pos, 0xff);
 
@@ -8632,7 +8633,7 @@ hscom3_chk: // ↑
                         break hscom3_next;
                     }
 //hscom3_next2:
-                    if (ah < work.al) { // break hscom3_next;
+                    if ((ah & 0xff) < (work.al & 0xff)) { // break hscom3_next;
                         ah = work.al;
                         work.dx = work.bx;
                     }
@@ -8669,7 +8670,9 @@ hscom3_chk: // ↑
      *  [part] Part number 0: Undefined
      */
     private void error(int dh, int dl, int si) {
-        calc_line(/* ref */ si);
+        int[] tmp = {si};
+        calc_line(/* ref */ tmp);
+        si = tmp[0];
 
         StringBuilder mes = new StringBuilder();
         //
@@ -8755,11 +8758,11 @@ hscom3_chk: // ↑
      * [linehead] Line head position
      *  [mml_filename] MML file name
      */
-    private void calc_line(/* ref */ int si) {
-        if (si == 0) {
+    private void calc_line(/* ref */ int[] si) {
+        if (si[0] == 0) {
             mml_seg.line = 0;
             mml_seg.linehead = 0;
-            si = 0;
+            si[0] = 0;
             return;
         }
 
@@ -8769,24 +8772,24 @@ hscom3_chk: // ↑
         Stack<Integer> lineStack = new Stack<>();
         int bx = 0;
         int ah = 0; // Main/Include Flag
-        int dx = si; //DX=Error position
-        si = 0; // offset mml_buf
+        int dx = si[0]; //DX=Error position
+        si[0] = 0; // offset mml_buf
 
         mml_seg.line = 1;
 
 cl_exit:
         do {
-            mml_seg.linehead = si;
-            if (si == dx) break; // If the first character is error
+            mml_seg.linehead = si[0];
+            if (si[0] == dx) break; // If the first character is error
 
             do {
-                char al = si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(si++) : (char) 0x1a;
-                if (si == dx) break cl_exit; // Have you reached the error position?
+                char al = si[0] < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(si[0]++) : (char) 0x1a;
+                if (si[0] == dx) break cl_exit; // Have you reached the error position?
 
                 if (al == 0x1a) { // EOF
                     mml_seg.line = 0;
                     mml_seg.linehead = 0;
-                    si = 0;
+                    si[0] = 0;
                     return;
                 }
 
@@ -8794,7 +8797,7 @@ cl_exit:
 
                 if (al == 13) // CR
                 {
-                    si++; // Send LF
+                    si[0]++; // Send LF
                     mml_seg.line++;
                     break;
                 }
@@ -8805,7 +8808,7 @@ cl_exit:
                     lineStack.push(bx); // Save MML file name position
                     mml_seg.line = 1; // From the first line
                     ah++; // Add one Include hierarchy
-                    bx = si + 1; // Save MML file name position to BX
+                    bx = si[0] + 1; // Save MML file name position to BX
                     //do {
                     //al = si < MmlSeg.mml_buf.length() ? MmlSeg.mml_buf.charAt(si++) : (char)0x1a;
                     //} while (al != 0x0a); // Skip the file name
@@ -8814,13 +8817,12 @@ cl_exit:
                     mml_seg.currentMMLFile = mml_seg.includeFileHistory.get(++mml_seg.includeFileHistoryPos);
 
                     break;
-                } else if (al == 2) // Include->Main check code
-                {
+                } else if (al == 2) { // Include->Main check code
                     bx = lineStack.pop(); // Restore the MML file name position
                     mml_seg.line = lineStack.pop(); // Restore Line Position
                     ah--; // Reduce one Include level
 
-                    si++;
+                    si[0]++;
                     mml_seg.currentMMLFile = mml_seg.includeFileHistoryStack.pop();
                     break;
                 }
@@ -8829,12 +8831,12 @@ cl_exit:
         } while (true);
 
         if (ah == 0) {
-            si = dx; // Return the error position to SI
+            si[0] = dx; // Return the error position to SI
             mml_seg.mml_filename = mml_seg.currentMMLFile;
             return;
         }
 
-        si = bx;
+        si[0] = bx;
         mml_seg.mml_filename = mml_seg.currentMMLFile;
 
         //while (MmlSeg.mml_buf.charAt(si) != 'e' && MmlSeg.mml_buf.charAt(si) != 'E') { // Skip includes
@@ -8850,7 +8852,7 @@ cl_exit:
         //MmlSeg.mml_filename = MmlSeg.mml_filename.trim();
     }
 
-    /**
+    /*
      * Searching for environments
      * input si Environment variable name+"="
      *      es Environmental segment

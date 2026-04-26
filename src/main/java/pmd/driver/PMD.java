@@ -3497,7 +3497,7 @@ cm_clear: // ↑
                             if ((pw.partWk[r.di & 0xffff].lfoswi & 0x1) != 0)
                                 break cm_set;
 
-                            //cm_noset1:;
+//cm_noset1:
                             if ((pw.partWk[r.di & 0xffff]._volmask & 0x0f) == 0)
                                 break cm_clear;
                             if ((pw.partWk[r.di & 0xffff].lfoswi & 0x10) != 0)
@@ -3510,7 +3510,7 @@ cm_clear: // ↑
                     if (pw.slot3_flag != 0)
                         break cm_set2;
 
-                    //cm_clear2:;
+//cm_clear2:
                     if (pw.slotdetune_flag == 1)
                         break cm_set2;
                     r.ah = 0x3f;
@@ -3654,12 +3654,12 @@ sm_notfm3: // ↑
                     r.di = (short) pw.part3;
                     keyon_sm();
 
-                    //sm_3bchk:;
+//sm_3bchk:
                     if (r.bp != pw.part3b) { // break sm_exit2;
                         r.di = (short) pw.part3b;
                         keyon_sm();
 
-                        //sm_3cchk:;
+//sm_3cchk:
                         if (r.bp != pw.part3c) { // break sm_exit2;
                             r.di = (short) pw.part3c;
                             keyon_sm();
@@ -3731,7 +3731,7 @@ sm_notfm3: // ↑
             r.di = r.stack.pop();
             r.setSi(r.stack.pop());
 
-            //ses_ret:;
+//ses_ret:
             return null;
         }
 //ses_off:
@@ -6751,7 +6751,7 @@ nss_notfm3: // ↑
      * @output cy = 1 There has been a change
      */
     public void lfo() {
-        //lfop:;
+//lfop:
         if (pw.partWk[r.di & 0xffff].delay != 0) { // break lfo1;
             pw.partWk[r.di & 0xffff].delay--; // cy=0
 //lfo_ret:
@@ -7000,8 +7000,9 @@ lfo20: // ↑
 
     /**
      * Random number generator
-     * INPUT : AX=MAX_RANDOM
-     * OUTPUT: AX=RANDOM_NUMBER
+     *
+     * @input AX MAX_RANDOM
+     * @output AX RANDOM_NUMBER
      */
     private void rnd() {
         r.setCx(r.getAx());
@@ -7751,7 +7752,7 @@ pcm_ef: // ↑
 
     /**
      * SET DATA TO OPN
-     * INPUTS ---- D,E
+     * @inputs D,E
      */
     //
     // Fore

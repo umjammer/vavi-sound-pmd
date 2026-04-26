@@ -79,7 +79,7 @@ public class Lc {
      * Looping by Part
      */
     private PartEnds part_loop() {
-        work.si = (m_seg.m_buf.get(work.bp).dat & 0xff) + (m_seg.m_buf.get(work.bp + 1).dat & 0xff) * 0x100;
+        work.si = m_seg.m_buf.get(work.bp).dat + m_seg.m_buf.get(work.bp + 1).dat * 0x100;
         work.si += 0; // offset m_buf
         work.bp += 2;
 
@@ -100,9 +100,9 @@ public class Lc {
         work.si++;
 
         for (int i = 0; i < 3; i++) {
-            int l = m_seg.m_buf.get(work.si++).dat & 0xff;
-            int h = m_seg.m_buf.get(work.si++).dat & 0xff;
-            fm3_adr[i] = (h & 0xff) * 0x100 + (l & 0xff);
+            int l = m_seg.m_buf.get(work.si++).dat;
+            int h = m_seg.m_buf.get(work.si++).dat;
+            fm3_adr[i] = h * 0x100 + l;
         }
 
         return PartEnds.CheckJ;
@@ -118,8 +118,8 @@ public class Lc {
         work.si++;
 
         for (int i = 0; i < 8; i++) {
-            int l = m_seg.m_buf.get(work.si++).dat & 0xff;
-            int h = m_seg.m_buf.get(work.si++).dat & 0xff;
+            int l = m_seg.m_buf.get(work.si++).dat;
+            int h = m_seg.m_buf.get(work.si++).dat;
             pcm_adr[i] = h * 0x100 + l;
         }
 
@@ -150,7 +150,7 @@ logger.log(Level.TRACE, "si:%d, %02x".formatted(work.si, al.dat));
             } while (true);
 
 //cl_00:
-            command_exec((byte) (al.dat & 0xff));
+            command_exec((byte) al.dat);
             if (loop_flag) return PartEnds.PartEnds;
 
         } while (true);
@@ -227,7 +227,7 @@ logger.log(Level.TRACE, "si:%d, %02x".formatted(work.si, al.dat));
             MmlDatum ald;
             byte al;
             ald = (work.si < m_seg.m_buf.size()) ? m_seg.m_buf.get(work.si++) : (new MmlDatum(0x80));
-            al = (byte) (ald.dat & 0xff);
+            al = (byte) ald.dat;
             if (al == (byte) 0x80) return PartEnds.KPartEnd;
             if ((al & 0xff) >= 0x80) {
                 work.al = al;
@@ -300,7 +300,7 @@ rpart_end:
                 if ((al.dat & 0x80) != 0) {
                     work.si++;
                 }
-//rl_01:
+            //rl_01:
                 al = m_seg.m_buf.get(work.si++);
                 all_length += al.dat;
 
@@ -308,8 +308,8 @@ rpart_end:
             //
             // Rpart / Various special command processing
             //
-//rl_00:
-            command_exec((byte) (al.dat & 0xff));
+            //rl_00:
+            command_exec((byte) al.dat);
             if (loop_flag) break rpart_end;
         } while (true);
         //
@@ -364,7 +364,7 @@ rpart_end:
      * tempo
      */
     private void _tempo() {
-        int al = m_seg.m_buf.get(work.si++).dat & 0xff;
+        int al = m_seg.m_buf.get(work.si++).dat;
         if (al >= 251) {
             work.si++; // relative
         }
@@ -377,7 +377,7 @@ rpart_end:
     private void porta() {
         work.si += 2;
 
-        int al = m_seg.m_buf.get(work.si++).dat & 0xff;
+        int al = m_seg.m_buf.get(work.si++).dat;
         all_length += al;
     }
 
@@ -392,7 +392,7 @@ rpart_end:
      * '[' command
      */
     private void loop_start() {
-        int ax = m_seg.m_buf.get(work.si++).dat & 0xff;
+        int ax = m_seg.m_buf.get(work.si++).dat;
         ax += m_seg.m_buf.get(work.si++).dat * 0x100;
 
         work.bx = ax;
@@ -404,11 +404,11 @@ rpart_end:
      * ']' command
      */
     private void loop_end() {
-        int al = m_seg.m_buf.get(work.si++).dat & 0xff;
+        int al = m_seg.m_buf.get(work.si++).dat;
         if (al != 0) { // break loop_fset; // There was an unconditional loop
             int ah = al;
             m_seg.m_buf.set(work.si, new musicDriverInterface.MmlDatum((m_seg.m_buf.get(work.si).dat + 1) & 0xff));
-            al = m_seg.m_buf.get(work.si++).dat & 0xff;
+            al = m_seg.m_buf.get(work.si++).dat;
             if (ah == al) { // break reloop;
                 work.si++;
                 work.si++;
@@ -416,7 +416,7 @@ rpart_end:
             }
 //reloop:
 
-            int ax = m_seg.m_buf.get(work.si++).dat & 0xff;
+            int ax = m_seg.m_buf.get(work.si++).dat;
             ax += m_seg.m_buf.get(work.si++).dat * 0x100;
             ax += 2; // offset m_buf+2
             work.si = ax;
@@ -430,14 +430,14 @@ rpart_end:
      * ':' command
      */
     private void loop_exit() {
-        int ax = m_seg.m_buf.get(work.si++).dat & 0xff;
+        int ax = m_seg.m_buf.get(work.si++).dat;
         ax += m_seg.m_buf.get(work.si++).dat * 0x100;
         work.bx = ax;
         work.bx += 0; // offset m_buf
-        int dl = m_seg.m_buf.get(work.bx).dat & 0xff;
+        int dl = m_seg.m_buf.get(work.bx).dat;
         dl--;
         work.bx++;
-        if ((dl & 0xff) != (m_seg.m_buf.get(work.bx).dat & 0xff)) { // break loopexit;
+        if ((dl & 0xff) != m_seg.m_buf.get(work.bx).dat) { // break loopexit;
             return;
         }
 //loopexit:
@@ -449,7 +449,7 @@ rpart_end:
      * 0c0h + ?? special control
      */
     private void special_0c0h() {
-        byte al = (byte) (m_seg.m_buf.get(work.si++).dat & 0xff);
+        byte al = (byte) m_seg.m_buf.get(work.si++).dat;
         if ((al & 0xff) >= 2) { // break spc0_ret;
 logger.log(Level.INFO, "%02x, %02x".formatted(al & 0xff, ~al & 0xff));
             al = (byte) ~al;
