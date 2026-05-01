@@ -1,5 +1,6 @@
 package pmd.driver;
 
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.List;
@@ -8,7 +9,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import dotnet4j.io.Stream;
 import musicDriverInterface.ChipDatum;
 import musicDriverInterface.LinePos;
 import musicDriverInterface.MmlDatum;
@@ -50,7 +50,7 @@ public class PMD {
             MmlDatum[] mmlData,
             Consumer<ChipDatum> WriteOPNARegister,
             PW pw,
-            Function<String, Stream> appendFileReaderCallback,
+            Function<String, InputStream> appendFileReaderCallback,
             Function<ChipDatum, Integer> ppz8em,
             Function<ChipDatum, Integer> ppsdrv,
             Function<ChipDatum, Integer> p86em) {

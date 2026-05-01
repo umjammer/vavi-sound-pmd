@@ -1,33 +1,27 @@
 package pmd.console;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import dotnet4j.io.BufferedStream;
-import dotnet4j.io.File;
-import dotnet4j.io.FileAccess;
-import dotnet4j.io.FileMode;
-import dotnet4j.io.FileShare;
-import dotnet4j.io.FileStream;
-import dotnet4j.io.IOException;
-import dotnet4j.io.MemoryStream;
-import dotnet4j.io.Path;
-import dotnet4j.io.Stream;
-import dotnet4j.io.StreamReader;
-import dotnet4j.util.compat.Tuple;
 import musicDriverInterface.MmlDatum;
-import org.apache.tools.ant.types.Environment;
 import pmd.compiler.Compiler;
+import vavi.util.compat.Tuple;
 import vavi.util.serdes.Serdes;
 
 import static java.lang.System.getLogger;
 import static pmd.common.Common.charset;
+import static vavi.util.compat.Util.changeExtension;
 
 
 /**
@@ -40,14 +34,15 @@ public class Program {
 
     private static final ResourceBundle rb = ResourceBundle.getBundle("pmd/message");
 
-    private static String srcFile;
-    private static String ffFile;
-    private static String desFile;
-    private static boolean isXml = false;
+    private String srcFile;
+    private String ffFile;
+    private String desFile;
+    private boolean isXml = false;
     public static boolean isTest = false;
 
     public static void main(String[] args) {
-        int fnIndex = AnalyzeOption(args);
+        Program app = new Program();
+        int fnIndex = app.analyzeOption(args);
 
         if (args == null || args.length - fnIndex < 1) {
             logger.log(Level.ERROR, rb.getString("E0600"));
@@ -56,7 +51,7 @@ public class Program {
 
         try {
 
-            compile(args, fnIndex);
+            app.compile(args, fnIndex);
 
         } catch (Exception ex) {
             logger.log(Level.ERROR, ex.getMessage(), ex);
@@ -64,7 +59,7 @@ public class Program {
         }
     }
 
-    private static int compile(String[] args, int argIndex) {
+    private int compile(String[] args, int argIndex) {
         try {
             // Create a list of arguments for mc
             List<String> lstMcArg = new ArrayList<>(Arrays.asList(args).subList(argIndex, args.length));
@@ -97,9 +92,9 @@ public class Program {
                 return 1;
             }
 
-            byte[] ffFileBuf = null;
-            if (ffFile != null && !ffFile.isEmpty() && File.exists(ffFile)) {
-                ffFileBuf = File.readAllBytes(ffFile);
+            byte[] ffFileBuf;
+            if (ffFile != null && !ffFile.isEmpty() && Files.exists(Path.of(ffFile))) {
+                ffFileBuf = Files.readAllBytes(Path.of(ffFile));
                 compiler.setFfFileBuf(ffFileBuf);
             }
 
@@ -112,23 +107,22 @@ public class Program {
                 // The default is the source file name with the extension changed to .M.
                 String destFileName = "";
                 if (srcFile != null && !srcFile.isEmpty()) {
-                    destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), "%s.M".formatted(Path.getFileNameWithoutExtension(srcFile))).replace('\\', java.io.File.separatorChar);
+                    destFileName = changeExtension(srcFile, ".M");
                 }
 
                 // Get Filename from Tag
                 String srcText;
-                try (FileStream sourceMML = new FileStream(srcFile, FileMode.Open, FileAccess.Read, FileShare.Read)) {
-                    try (StreamReader sr = new StreamReader(sourceMML, charset)) {
-                        StringBuilder sb = new StringBuilder();
-                        int ch;
-                        while ((ch = sr.read()) != -1) {
-                            sb.append((char) ch);
-                        }
-                        srcText = sb.toString();
+                try (InputStream sourceMML = Files.newInputStream(Path.of(srcFile));
+                    InputStreamReader sr = new InputStreamReader(sourceMML, charset)) {
+                    StringBuilder sb = new StringBuilder();
+                    int ch;
+                    while ((ch = sr.read()) != -1) {
+                        sb.append((char) ch);
                     }
+                    srcText = sb.toString();
                 }
                 String outFileName = "";
-                Tuple<String, String>[] tags = compiler.getTags(srcText, Program::appendFileReaderCallback);
+                Tuple<String, String>[] tags = compiler.getTags(srcText, this::appendFileReaderCallback);
                 if (tags != null && tags.length > 0) {
                     for (Tuple<String, String> tag : tags) {
                         logger.log(Level.TRACE, "%s\t: %s".formatted(tag.getItem1(), tag.getItem2()));
@@ -142,12 +136,10 @@ public class Program {
                 if (outFileName != null && !outFileName.isEmpty()) {
                     if (outFileName.charAt(0) != '.') {
                         // When specifying a file name
-                        destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), outFileName);
+                        destFileName = Path.of(srcFile).getParent().resolve(outFileName).toString();
                     } else {
                         // When specifying the extension only
-                        destFileName = Path.combine(
-                                Path.getDirectoryName(Path.getFullPath(srcFile)), "%s%s".formatted(
-                                        Path.getFileNameWithoutExtension(srcFile), outFileName));
+                        destFileName = changeExtension(srcFile, outFileName);
                     }
                 }
 
@@ -157,27 +149,23 @@ public class Program {
                 }
 
                 boolean isSuccess = false;
-                try (FileStream sourceMML = new FileStream(srcFile, FileMode.Open, FileAccess.Read, FileShare.Read)) {
-                    //try (FileStream destCompiledBin = new FileStream(destFileName, FileMode.Create, FileAccess.Write))
-                    try (MemoryStream destCompiledBin = new MemoryStream()) {
-                        try (Stream bufferedDestStream = new BufferedStream(destCompiledBin)) {
-                            isSuccess = compiler.compile(sourceMML, bufferedDestStream, Program::appendFileReaderCallback);
+                try (InputStream sourceMML = Files.newInputStream(Path.of(srcFile));
+                     ByteArrayOutputStream destCompiledBin = new ByteArrayOutputStream()) {
+                    isSuccess = compiler.compile(sourceMML, destCompiledBin, this::appendFileReaderCallback);
 
-                            if (isSuccess) {
-                                bufferedDestStream.flush();
-                                byte[] destbuf = destCompiledBin.toArray();
-                                File.writeAllBytes(destFileName, destbuf);
-                                if (compiler.getOutFFFileBuf() != null) {
-                                    String outfn = Path.combine(Path.getDirectoryName(destFileName), compiler.getOutFFFileName());
-                                    File.writeAllBytes(outfn, compiler.getOutFFFileBuf());
-                                }
-                            } else return 1;
+                    if (isSuccess) {
+                        destCompiledBin.flush();
+                        byte[] destbuf = destCompiledBin.toByteArray();
+                        Files.write(Path.of(destFileName), destbuf);
+                        if (compiler.getOutFFFileBuf() != null) {
+                            Path outfn = Path.of(destFileName).getParent().resolve(compiler.getOutFFFileName());
+                            Files.write(outfn, compiler.getOutFFFileBuf());
                         }
-                    }
+                    } else return 1;
                 }
             } else {
 
-                String destFileName = Path.combine(Path.getDirectoryName(Path.getFullPath(srcFile)), "%s.xml".formatted(Path.getFileNameWithoutExtension(srcFile)));
+                String destFileName = changeExtension(srcFile, ".xml");
                 if (desFile != null) {
                     destFileName = desFile;
                 }
@@ -186,11 +174,11 @@ public class Program {
                 // When using xml, compile in IDE mode
                 compiler.setCompileSwitch("IDE");
 
-                try (FileStream sourceMML = new FileStream(srcFile, FileMode.Open, FileAccess.Read, FileShare.Read)) {
-                    dest = compiler.compile(sourceMML, Program::appendFileReaderCallback);
+                try (InputStream sourceMML = Files.newInputStream(Path.of(srcFile))) {
+                    dest = compiler.compile(sourceMML, this::appendFileReaderCallback);
                 }
 
-                try (OutputStream sw = Files.newOutputStream(java.nio.file.Path.of(destFileName))) {
+                try (OutputStream sw = Files.newOutputStream(Path.of(destFileName))) {
                     Serdes.Util.serialize(sw, dest);
                 }
             }
@@ -198,35 +186,34 @@ public class Program {
         } catch (Exception ex) {
             logger.log(Level.ERROR, ex.getMessage(), ex);
             return 1;
-        } finally {
         }
         return 0;
     }
 
-    private static Stream appendFileReaderCallback(String arg) {
+    private InputStream appendFileReaderCallback(String arg) {
 
-        String fn;
-        fn = Path.combine(Path.getDirectoryName(srcFile), arg);
+        Path fn = Path.of(srcFile).getParent().resolve(arg);
 
         String[] envPaths = System.getProperty("pmd.dir", "").split(";");
         if (envPaths.length > 0 && envPaths[0] != null) {
             int i = 0;
-            while (!File.exists(fn) && i < envPaths.length) {
-                fn = Path.combine(envPaths[i++], arg);
+            while (!Files.exists(fn) && i < envPaths.length) {
+                fn = Path.of(envPaths[i++], arg);
             }
         }
 
-        FileStream strm;
+        InputStream strm;
         try {
-            strm = new FileStream(fn, FileMode.Open, FileAccess.Read, FileShare.Read);
+            strm = Files.newInputStream(fn);
         } catch (IOException e) {
+            logger.log(Level.ERROR, e.getMessage(), e);
             strm = null;
         }
 
         return strm;
     }
 
-    private static int AnalyzeOption(String[] args) {
+    private int analyzeOption(String[] args) {
         if (args == null) return 0;
         if (args.length < 1) return 0;
 

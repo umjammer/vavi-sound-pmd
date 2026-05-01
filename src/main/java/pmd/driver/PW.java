@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import dotnet4j.util.compat.Tuple;
 import musicDriverInterface.LinePos;
 import musicDriverInterface.MmlDatum;
+import vavi.util.compat.Tuple;
 
 
 public class PW {

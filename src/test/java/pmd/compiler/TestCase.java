@@ -1,14 +1,11 @@
 package pmd.compiler;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import dotnet4j.io.FileAccess;
-import dotnet4j.io.FileMode;
-import dotnet4j.io.FileShare;
-import dotnet4j.io.FileStream;
-import dotnet4j.io.MemoryStream;
 import pmd.compilerTestService.PMDCompileTestService;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
@@ -67,24 +64,29 @@ class TestCase {
                 System.getProperty("pmd.opt")
         };
 
-        var ms = new MemoryStream();
-        var fs = new FileStream(mml, FileMode.Open, FileAccess.Read, FileShare.Read);
+        var ms = new ByteArrayOutputStream();
+        var fs = Files.newInputStream(Path.of(mml));
         var r = compiler.compile(fs, ms, f -> {
 Debug.println(f);
-            return new FileStream("tmp/" + f, FileMode.Open, FileAccess.Read, FileShare.Read);
+            try {
+                return Files.newInputStream(Path.of("tmp/" + f));
+            } catch (IOException e) {
+Debug.printStackTrace(e);
+                return null;
+            }
         });
         ms.flush();
 
 Debug.println(r);
 Debug.println(compiler.getMemo_writeAddress());
 
-        Files.write(Path.of("tmp/java.m"), ms.toArray());
+        Files.write(Path.of("tmp/java.m"), ms.toByteArray());
 
         assertTrue(r);
 
         assertEquals(
                 Files.size(Path.of("src/test/resources/dotnet.m")),
-                ms.getLength()
+                ms.size()
         );
     }
 

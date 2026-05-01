@@ -3,6 +3,7 @@ package pmd.compiler;
 import java.awt.Point;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,8 +11,6 @@ import java.util.ResourceBundle;
 import java.util.Stack;
 import java.util.function.Supplier;
 
-import dotnet4j.io.Path;
-import dotnet4j.util.compat.Tuple;
 import musicDriverInterface.LinePos;
 import musicDriverInterface.MmlDatum;
 import musicDriverInterface.MmlDatum.MMLType;
@@ -19,6 +18,7 @@ import pmd.common.PmdDosExitException;
 import pmd.common.PmdDosExitException.PmdErrorExitException;
 import pmd.common.PmdException;
 import vavi.util.ByteUtil;
+import vavi.util.compat.Tuple;
 
 import static java.lang.System.getLogger;
 import static pmd.common.Common.charset;
@@ -8680,7 +8680,7 @@ hscom3_chk: // ↑
         //
         if (si != 0) {
             try {
-                mes.append(Path.getFileName(mml_seg.mml_filename));
+                mes.append(Path.of(mml_seg.mml_filename).getFileName().toString());
             } catch (Exception e) {
                 mes.append(mml_seg.mml_filename);
             }

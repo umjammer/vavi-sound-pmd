@@ -1,9 +1,12 @@
 package pmd.player;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,17 +23,6 @@ import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
-import dotnet4j.io.File;
-import dotnet4j.io.FileAccess;
-import dotnet4j.io.FileMode;
-import dotnet4j.io.FileShare;
-import dotnet4j.io.FileStream;
-import dotnet4j.io.IOException;
-import dotnet4j.io.Path;
-import dotnet4j.io.Stream;
-import dotnet4j.util.compat.StopWatch;
-import dotnet4j.util.compat.TriFunction;
-import dotnet4j.util.compat.Tuple;
 import mdsound.Instrument;
 import mdsound.MDSound;
 import mdsound.instrument.P86Inst;
@@ -42,10 +34,12 @@ import musicDriverInterface.IDriver;
 import musicDriverInterface.MmlDatum;
 import pmd.common.PmdException;
 import pmd.driver.Driver;
+import vavi.util.compat.Tuple;
 import vavi.util.serdes.Serdes;
 
 import static java.lang.System.getLogger;
 import static vavi.sound.SoundUtil.volume;
+import static vavi.util.compat.Util.getExtension;
 
 
 /**
@@ -79,71 +73,61 @@ public class Program {
 
     private static SourceDataLine audioOutput = null;
 
-    public interface naudioCallBack extends TriFunction<short[], Integer, Integer, Integer> {
-
-    }
-
     private static Thread trdMain = null;
-    private static StopWatch sw = null;
-    private static double swFreq = 0;
     public static boolean trdClosed = false;
-    private static final Object lockObj = new Object();
     private static boolean _trdStopped = true;
     static boolean trdStopped;
 
-    public static boolean getTrdStopped() {
-        synchronized (lockObj) {
-            return _trdStopped;
-        }
+    public synchronized boolean getTrdStopped() {
+        return _trdStopped;
     }
 
-    public static void setTrdStopped(boolean value) {
-        synchronized (lockObj) {
-            _trdStopped = value;
-        }
+    public synchronized void setTrdStopped(boolean value) {
+        _trdStopped = value;
     }
 
     private static final int SamplingRate = 55467; // 44100;
     private static final int SamplingRatePPSGIMIC = 44100;
     private static final int SamplingRatePPSSCCI = 16000;
     private static final int samplingBuffer = 1024;
-    private static final short[] frames = new short[samplingBuffer * 4];
-    private static MDSound mds = null;
-    private static final short[] emuRenderBuf = new short[2];
-    private static IDriver drv = null;
+    private final short[] frames = new short[samplingBuffer * 4];
+    private MDSound mds = null;
+    private final short[] emuRenderBuf = new short[2];
+    private IDriver drv = null;
     private static final int opnaMasterClock = 7987200;
-    private static int device = 0;
-    private static int loop = 0;
-//    private static NScci.NScci nScci;
-//    private static Nc86ctl.Nc86ctl nc86ctl;
-//    private static RSoundChip rsc;
+    private int device = 0;
+    private int loop = 0;
+//    private NScci nScci;
+//    private Nc86ctl nc86ctl;
+//    private RSoundChip rsc;
 
-    private static boolean isAUTO = true;
-    private static boolean isNRM = true;
-    private static boolean isSPB = true;
-    private static boolean isVA = false;
-    private static boolean usePPS = false;
-    private static boolean usePPZ = false;
-    private static int[] VolumeV = null;
-    private static int[] VolumeR = null;
-    private static final boolean isGimicOPNA = false;
-    private static Ppz8Inst ppz8em = null;
-    private static PpsInst ppsdrv = null;
-    private static P86Inst p86em = null;
-    private static String[] envPmd = null;
-    private static String[] envPmdOpt = null;
-    private static String srcFile = null;
-    private static int userPPSFREQ = -1;
-    private static int ppsdrvWait = 1;
+    private boolean isAUTO = true;
+    private boolean isNRM = true;
+    private boolean isSPB = true;
+    private boolean isVA = false;
+    private boolean usePPS = false;
+    private boolean usePPZ = false;
+    private int[] VolumeV = null;
+    private int[] VolumeR = null;
+    private final boolean isGimicOPNA = false;
+    private Ppz8Inst ppz8em = null;
+    private PpsInst ppsdrv = null;
+    private P86Inst p86em = null;
+    private String[] envPmd = null;
+    private String[] envPmdOpt = null;
+    private String srcFile = null;
+    private int userPPSFREQ = -1;
+    private int ppsdrvWait = 1;
 
     public static void main(String[] args) {
-        int fnIndex = analyzeOption(args);
+        Program app = new Program();
+        int fnIndex = app.analyzeOption(args);
         int mIndex = -1;
 
         if (args != null) {
             for (int i = fnIndex; i < args.length; i++) {
-                if ((!Path.getExtension(args[i]).toUpperCase().contains(".M"))
-                        && (!Path.getExtension(args[i]).toUpperCase().contains(".XML"))
+                if ((!getExtension(args[i]).toUpperCase().contains(".M"))
+                        && (!getExtension(args[i]).toUpperCase().contains(".XML"))
                 ) continue;
                 mIndex = i;
                 break;
@@ -155,13 +139,18 @@ public class Program {
             return;
         }
 
-        srcFile = args[mIndex];
+        app.srcFile = args[mIndex];
 
-        if (!File.exists(args[mIndex])) {
+        if (!Files.exists(Path.of(args[mIndex]))) {
             logger.log(Level.ERROR, "File [%s] not found".formatted(args[mIndex]));
             return;
         }
 
+        app.play(args, mIndex, fnIndex);
+    }
+
+    /** */
+    void play(String[] args, int mIndex, int fnIndex) {
 //        rsc = checkDevice();
 
         try {
@@ -173,19 +162,17 @@ public class Program {
                     audioOutput = AudioSystem.getSourceDataLine(new AudioFormat(SamplingRate, 16, 2, true, false));
                     audioOutput.open();
                     volume(audioOutput, Double.parseDouble(System.getProperty("pmd.volume", "0.2")));
-                    trdMain = new Thread(Program::emuPlayback);
+                    trdMain = new Thread(this::emuPlayback);
                     trdMain.setPriority(Thread.MAX_PRIORITY);
                     trdMain.setDaemon(true);
                     trdMain.setName("trdEmu");
                     break;
                 case 1:
                 case 2:
-                    trdMain = new Thread(Program::realCallback);
+                    trdMain = new Thread(this::realCallback);
                     trdMain.setPriority(Thread.MAX_PRIORITY);
                     trdMain.setDaemon(true);
                     trdMain.setName("trdVgmReal");
-                    sw = StopWatch.startNew();
-                    swFreq = StopWatch.Frequency;
                     break;
             }
 
@@ -221,7 +208,7 @@ public class Program {
             );
             chipps.clock = opnaMasterClock;
             chipps.volume = 0;
-            chipps.option = device == 0 ? null : (new Object[] {(BiConsumer<Integer, Integer>) Program::psgPPSDRV});
+            chipps.option = device == 0 ? null : (new Object[] {(BiConsumer<Integer, Integer>) this::psgPPSDRV});
 
             MDSound.Chip chip86 = new MDSound.Chip();
             chip86.id = 0;
@@ -259,7 +246,7 @@ public class Program {
                     envPmd,
                     srcFile,
                     "",
-                    (Function<String, Stream>) Program::appendFileReaderCallback
+                    (Function<String, InputStream>) this::appendFileReaderCallback
             };
 
             List<String> pop = new ArrayList<>();
@@ -272,8 +259,8 @@ public class Program {
                     pmdvolFound = true;
             }
 
-            if (!Path.getExtension(srcFile).equalsIgnoreCase(".xml")) { // mml
-                byte[] srcBuf = File.readAllBytes(srcFile);
+            if (!getExtension(srcFile).equalsIgnoreCase(".xml")) { // mml
+                byte[] srcBuf = Files.readAllBytes(Path.of(srcFile));
 logger.log(Level.INFO, "size: " + srcBuf.length);
                 List<MmlDatum> buf = new ArrayList<>();
                 for (byte b : srcBuf)
@@ -283,26 +270,26 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
                         null,
                         dop,
                         pop.toArray(String[]::new),
-                        (Function<ChipDatum, Integer>) Program::writePPZ8,
-                        (Function<ChipDatum, Integer>) Program::writePPSDRV,
-                        (Function<ChipDatum, Integer>) Program::writeP86,
-                        (Consumer<ChipDatum>) Program::writeOPNA,
-                        (BiConsumer<Long, Integer>) Program::waitSendOPNA);
+                        (Function<ChipDatum, Integer>) this::writePPZ8,
+                        (Function<ChipDatum, Integer>) this::writePPSDRV,
+                        (Function<ChipDatum, Integer>) this::writeP86,
+                        (Consumer<ChipDatum>) this::writeOPNA,
+                        (BiConsumer<Long, Integer>) this::waitSendOPNA);
             } else { // xml
-                try (InputStream sr = Files.newInputStream(java.nio.file.Path.of(srcFile))) {
+                try (InputStream sr = Files.newInputStream(Path.of(srcFile))) {
                     MmlDatum[] s = Serdes.Util.deserialize(sr, new MmlDatum[0]); // TODO
                     drv.init(null,
                             s,
                             null,
                             dop,
                             pop.toArray(String[]::new),
-                            (Function<ChipDatum, Integer>) Program::writePPZ8,
-                            (Function<ChipDatum, Integer>) Program::writePPSDRV,
-                            (Function<ChipDatum, Integer>) Program::writeP86,
-                            (Consumer<ChipDatum>) Program::writeOPNA,
-                            (BiConsumer<Long, Integer>) Program::waitSendOPNA);
-                } catch (java.io.IOException e) {
-                    throw new dotnet4j.io.IOException(e);
+                            (Function<ChipDatum, Integer>) this::writePPZ8,
+                            (Function<ChipDatum, Integer>) this::writePPSDRV,
+                            (Function<ChipDatum, Integer>) this::writeP86,
+                            (Consumer<ChipDatum>) this::writeOPNA,
+                            (BiConsumer<Long, Integer>) this::waitSendOPNA);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
                 }
             }
 
@@ -395,7 +382,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-    private static String[] setVolume() {
+    private String[] setVolume() {
         List<String> ret = new ArrayList<>();
 
         if (device == 0 || device == 3) { //EMU or wav
@@ -458,7 +445,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
     }
 
     public static String getApplicationFolder() {
-        String path = Path.getDirectoryName(System.getProperty("user.home"));
+        String path = System.getProperty("user.home");
         if (path != null && !path.isEmpty()) {
             path += path.charAt(path.length() - 1) == '\\' ? "" : "\\";
         }
@@ -477,28 +464,27 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-    private static Stream appendFileReaderCallback(String arg) {
-        String fn;
-        fn = Path.combine(Path.getDirectoryName(srcFile), arg);
+    private InputStream appendFileReaderCallback(String arg) {
+        Path fn = Path.of(srcFile).getParent().resolve(arg);
 
         if (envPmd != null) {
             int i = 0;
-            while (!File.exists(fn) && i < envPmd.length) {
-                fn = Path.combine(envPmd[i++], arg);
+            while (!Files.exists(fn) && i < envPmd.length) {
+                fn = Path.of(envPmd[i++], arg);
             }
         }
 
-        FileStream strm;
+        InputStream strm;
         try {
-            strm = new FileStream(fn, FileMode.Open, FileAccess.Read, FileShare.Read);
-        } catch (IOException e) {
+            strm = Files.newInputStream(fn);
+        } catch (java.io.IOException e) {
             strm = null;
         }
 
         return strm;
     }
 
-    private static int analyzeOption(String[] args) {
+    private int analyzeOption(String[] args) {
         if (args == null || args.length < 1) return 0;
 
         int i = 0;
@@ -529,7 +515,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         return i;
     }
 
-    private static void optionSetPPZ(String v) {
+    private void optionSetPPZ(String v) {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
@@ -538,7 +524,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-    private static void optionSetPPS(String v) {
+    private void optionSetPPS(String v) {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
@@ -547,7 +533,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-    private static void optionSetPPSFREQ(String v) {
+    private void optionSetPPSFREQ(String v) {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
@@ -556,7 +542,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-    private static void optionSetPPSWAIT(String v) {
+    private void optionSetPPSWAIT(String v) {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
@@ -565,15 +551,15 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-    private static void optionSetLoop(String op) {
+    private void optionSetLoop(String op) {
         try {
             loop = Integer.parseInt(op.substring(2));
-            loop = 0;
         } catch (NumberFormatException e) {
+            loop = 0;
         }
     }
 
-    private static void optionSetVolumeR(String v) {
+    private void optionSetVolumeR(String v) {
         if (v == null || v.isEmpty()) return;
         try {
             int n = Integer.parseInt(v);
@@ -582,7 +568,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-    private static void optionSetVolumeV(String v) {
+    private void optionSetVolumeV(String v) {
         if (v == null || v.isEmpty()) return;
         String[] prm = v.split(",");
         if (prm == null || prm.length < 1) return;
@@ -598,7 +584,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-    private static void optionSetBoard(String v) {
+    private void optionSetBoard(String v) {
         if (v == null || v.isEmpty()) return;
         switch (v) {
             case "AUTO" -> isAUTO = true;
@@ -768,7 +754,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
                 """);
     }
 
-    private static void waitSendOPNA(long elapsed, int size) {
+    private void waitSendOPNA(long elapsed, int size) {
         switch (device) {
             case 0: // EMU
                 return;
@@ -800,7 +786,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-//    private static RSoundChip checkDevice() {
+//    private RSoundChip checkDevice() {
 //        SChipType ct = null;
 //        int iCount = 0;
 //
@@ -908,12 +894,12 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
 //        return null;
 //    }
 
-    private static int emuCallback(short[] buffer, int offset, int count) {
+    private int emuCallback(short[] buffer, int offset, int count) {
         try {
             int bufCnt = count / 2;
 
             for (int i = 0; i < bufCnt; i++) {
-                mds.update(emuRenderBuf, 0, 2, Program::oneFrame);
+                mds.update(emuRenderBuf, 0, 2, this::oneFrame);
                 //ppz8em.Update(emuRenderBuf);
                 //ppsdrv.Update(emuRenderBuf);
 
@@ -927,7 +913,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         return count;
     }
 
-    private static void emuPlayback() {
+    private void emuPlayback() {
         audioOutput.start();
         short[] buf = new short[samplingBuffer * 2];
         byte[] byteBuf = new byte[buf.length * 2];
@@ -947,10 +933,10 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         trdStopped = true;
     }
 
-    private static void realCallback() {
+    private void realCallback() {
 
-        double o = sw.getElapsedMilliseconds() / swFreq;
-        double oPPS = sw.getElapsedMilliseconds() / swFreq;
+        double o = System.currentTimeMillis() / 2000_000_000.;
+        double oPPS = System.currentTimeMillis() / 2000_000_000.;
         double step = 1 / (double) SamplingRate;
         int PPSSamplingRate = userPPSFREQ == -1
                 ? (device == 1 ? SamplingRatePPSGIMIC : SamplingRatePPSSCCI)
@@ -962,7 +948,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
             while (!trdClosed) {
                 Thread.sleep(0);
 
-                double el1 = sw.getElapsedMilliseconds() / swFreq;
+                double el1 = System.currentTimeMillis() / 2000_000_000.;
                 if (el1 - o >= step) {
                     if (el1 - o >= step * SamplingRate / 100.0) // Threshold 10ms
                     {
@@ -995,11 +981,11 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         trdStopped = true;
     }
 
-    private static void oneFrame() {
+    private void oneFrame() {
         drv.render();
     }
 
-    private static void writeOPNA(ChipDatum dat) {
+    private void writeOPNA(ChipDatum dat) {
         if (dat != null && dat.additionalData != null) {
             MmlDatum md = (MmlDatum) dat.additionalData;
             if (md.linePos != null) {
@@ -1023,7 +1009,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-    private static int writePPZ8(ChipDatum arg) {
+    private int writePPZ8(ChipDatum arg) {
         if (arg == null) return 0;
 
         if (arg.port == 0x03) {
@@ -1034,7 +1020,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-    private static int writePPSDRV(ChipDatum arg) {
+    private int writePPSDRV(ChipDatum arg) {
         if (arg == null) return 0;
 
         if (arg.port == 0x05) {
@@ -1045,10 +1031,10 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-    //static int aold = -1;
-    //static int dold = -1;
+    //int aold = -1;
+    //int dold = -1;
 
-    private static void psgPPSDRV(int a, int d) {
+    private void psgPPSDRV(int a, int d) {
         switch (device) {
             case 0:
                 mds.write(Ym2608Inst.class, 0, 0, a, d);
@@ -1067,7 +1053,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         }
     }
 
-    private static int writeP86(ChipDatum arg) {
+    private int writeP86(ChipDatum arg) {
         if (arg == null) return 0;
 
         if (arg.port == 0x00) {
@@ -1077,15 +1063,4 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
             return p86em.write(0, arg.port, arg.address, arg.data);
         }
     }
-
-//    public static class SineWaveProvider16 extends WaveProvider16 {
-//
-//        public SineWaveProvider16() {
-//        }
-//
-//        @Override
-//        public int Read(short[] buffer, int offset, int sampleCount) {
-//            return callBack(buffer, offset, sampleCount);
-//        }
-//    }
 }

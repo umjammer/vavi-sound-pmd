@@ -1,21 +1,17 @@
 package pmd.driver;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import dotnet4j.io.File;
-import dotnet4j.io.FileAccess;
-import dotnet4j.io.FileMode;
-import dotnet4j.io.FileShare;
-import dotnet4j.io.FileStream;
-import dotnet4j.io.Path;
-import dotnet4j.io.Stream;
-import dotnet4j.util.compat.Tuple;
 import musicDriverInterface.ChipAction;
 import musicDriverInterface.ChipDatum;
 import musicDriverInterface.IDriver;
@@ -24,8 +20,11 @@ import musicDriverInterface.MetaData.Tag;
 import musicDriverInterface.MmlDatum;
 import pmd.common.Common;
 import vavi.util.ByteUtil;
+import vavi.util.compat.Tuple;
 
 import static java.lang.System.getLogger;
+import static vavi.util.compat.Util.changeExtension;
+import static vavi.util.compat.Util.getExtension;
 
 
 public class Driver implements IDriver {
@@ -279,7 +278,7 @@ getmemo_errret:
      * @param additionalOption 0: driver options, 1: command line options, 2: ppz8, 3: pps, 4: p86, 5: opna wrote, 6: opna wait send
      */
     @Override
-    public void init(List<ChipAction> chipsAction, MmlDatum[] srcBuf, Function<String, Stream> ignored, Object... additionalOption) {
+    public void init(List<ChipAction> chipsAction, MmlDatum[] srcBuf, Function<String, InputStream> ignored, Object... additionalOption) {
 
         Object[] option = additionalOption;
 
@@ -301,10 +300,10 @@ getmemo_errret:
         }};
 logger.log(Level.DEBUG, pdno);
 
-        Function<String, Stream> appendFileReaderCallback =
+        Function<String, InputStream> appendFileReaderCallback =
                 (pdnos.length < 13 || pdnos[12] == null)
-                        ? createAppendFileReaderCallback(Path.getDirectoryName(pdno.srcFile))
-                        : (Function<String, Stream>) pdnos[12];
+                        ? createAppendFileReaderCallback(Path.of(pdno.srcFile).getParent().toString())
+                        : (Function<String, InputStream>) pdnos[12];
 
         if (pdnos.length == 14) {
             pdno.jumpIndex = (int) pdnos[13];
@@ -355,13 +354,13 @@ logger.log(Level.DEBUG, pdno);
         pmd.resetOption(pmdOption);
     }
 
-    private String checkPPC(Function<String, Stream> appendFileReaderCallback) {
+    private String checkPPC(Function<String, InputStream> appendFileReaderCallback) {
         if (work.ppcFile == null || work.ppcFile.isEmpty()) {
             return "";
         }
 
         byte[] buf = null;
-        String ext = Path.getExtension(work.ppcFile);
+        String ext = getExtension(work.ppcFile);
         String fn = work.ppcFile;
         int extn = 0;
         String[] ppcExtTbl = new String[] {".PPC", ".P86", ".PVI"};
@@ -370,7 +369,7 @@ logger.log(Level.DEBUG, pdno);
             if (buf != null) break;
             if (extn == 3) break;
             extn++;
-            fn = Path.changeExtension(fn, ppcExtTbl[extn - 1]);
+            fn = changeExtension(fn, ppcExtTbl[extn - 1]);
         }
         if (buf == null) return "";
         if (buf.length < 3) return "";
@@ -460,16 +459,20 @@ logger.log(Level.DEBUG, pdno);
         }
     }
 
-    private static Function<String, Stream> createAppendFileReaderCallback(String dir) {
+    private static Function<String, InputStream> createAppendFileReaderCallback(String dir) {
         return fname -> {
-            if (dir != null && !dir.isEmpty()) {
-                var path = Path.combine(dir, fname);
-                if (File.exists(path)) {
-                    return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            try {
+                if (dir != null && !dir.isEmpty()) {
+                    var path = Path.of(dir, fname);
+                    if (Files.exists(path)) {
+                        return Files.newInputStream(path);
+                    }
                 }
-            }
-            if (File.exists(fname)) {
-                return new FileStream(fname, FileMode.Open, FileAccess.Read, FileShare.Read);
+                if (Files.exists(Path.of(fname))) {
+                    return Files.newInputStream(Path.of(fname));
+                }
+            } catch (IOException e) {
+logger.log(Level.ERROR, e.getMessage(), e);
             }
             return null;
         };
