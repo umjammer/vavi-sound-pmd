@@ -83,7 +83,7 @@ public class DosCompiler {
                 }
             }
         } catch (IOException | InterruptedException e) {
-            throw new dotnet4j.io.IOException(e);
+            throw new IllegalStateException(e);
         }
     }
 }

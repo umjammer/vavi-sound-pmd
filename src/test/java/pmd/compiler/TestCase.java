@@ -1,60 +1,104 @@
-
 package pmd.compiler;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.nio.file.Paths;
 
-import dotnet4j.io.FileAccess;
-import dotnet4j.io.FileMode;
-import dotnet4j.io.FileShare;
-import dotnet4j.io.FileStream;
-import dotnet4j.io.MemoryStream;
+import pmd.compilerTestService.PMDCompileTestService;
+import vavi.util.Debug;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import pmd.compilerTestService.PMDCompileTestService;
-import vavi.util.Debug;
+import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
-@Disabled
+@EnabledIf("localPropertiesExists")
+@PropsEntity(url = "file:local.properties")
 class TestCase {
 
+    static boolean localPropertiesExists() {
+        return Files.exists(Paths.get("local.properties"));
+    }
+
+    @Property(name = "mmlX")
+    String mml = "src/test/resources/test.mml";
+
+    @Property(name = "vavi.test.volume")
+    double volume = 0.2;
+
+    @BeforeEach
+    void setup() throws Exception {
+        if (localPropertiesExists()) {
+            PropsEntity.Util.bind(this);
+        }
+
+        System.setProperty("pmd.volume", "%4.2f".formatted(volume));
+
+//        System.setProperty("pmd.dir", "");
+//        System.setProperty("pmd.opt", "");
+    }
+
     @Test
+    @DisplayName("compile mml")
+    @EnabledIfSystemProperty(named = "vavi.test", matches = "ide")
     void test1() throws Exception {
         var compiler = new Compiler();
         compiler.init();
 
-        compiler.mcArgs = new String[] {"/v", "src/test/resources/BRICK.MML"};
+        compiler.mcArgs = new String[] {"/v", mml};
 
-        var envs = new ArrayList<String>();
-        envs.add(System.getenv( "ARRANGER"));
-        envs.add(System.getenv("COMPOSER"));
-        envs.add(System.getenv("USER"));
-        envs.add(System.getenv("MCOPT"));
-        compiler.env = envs.toArray(String[]::new);
+        compiler.env = new String[] {
+                System.getProperty("pmd.arranger"),
+                System.getProperty("pmd.composer"),
+                System.getProperty("pmd.user"),
+                System.getProperty("pmd.opt")
+        };
 
-        var ms = new MemoryStream();
-        var fs = new FileStream("src/test/resources/BRICK.MML", FileMode.Open, FileAccess.Read, FileShare.Read);
+        var ms = new ByteArrayOutputStream();
+        var fs = Files.newInputStream(Path.of(mml));
         var r = compiler.compile(fs, ms, f -> {
 Debug.println(f);
-            return new FileStream("tmp/" + f, FileMode.Open, FileAccess.Read, FileShare.Read);
+            try {
+                return Files.newInputStream(Path.of("tmp/" + f));
+            } catch (IOException e) {
+Debug.printStackTrace(e);
+                return null;
+            }
         });
         ms.flush();
 
 Debug.println(r);
 Debug.println(compiler.getMemo_writeAddress());
+
+        Files.write(Path.of("tmp/java.m"), ms.toByteArray());
+
+        assertTrue(r);
+
+        assertEquals(
+                Files.size(Path.of("src/test/resources/dotnet.m")),
+                ms.size()
+        );
     }
 
     @Test
+    @Disabled("dos tool not exists")
     @DisplayName("Multiple MML compile tests_V available")
     void test2() throws Exception {
         testMain(new String[] {"/v"});
     }
 
     @Test
+    @Disabled
     @DisplayName("Multiple MML compile test_V None")
     void test3() throws Exception {
         testMain(null);
@@ -80,7 +124,7 @@ Debug.println(compiler.getMemo_writeAddress());
     }
 
     private static Path getToolDir() {
-        return Path.of("opt/homebrew/Cellar/pmdmini/2.0.0/bin");
+        return Path.of("/opt/homebrew/bin");
     }
 
     private static Path getMMLDir() {

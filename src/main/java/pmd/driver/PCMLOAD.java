@@ -1,19 +1,20 @@
 package pmd.driver;
 
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import dotnet4j.io.MemoryStream;
-import dotnet4j.io.Path;
-import dotnet4j.io.Stream;
 import musicDriverInterface.ChipDatum;
 import vavi.util.ByteUtil;
 
 import static java.lang.System.getLogger;
 import static pmd.common.Common.charset;
+import static vavi.util.compat.Util.changeExtension;
+import static vavi.util.compat.Util.getExtension;
 
 
 public class PCMLOAD {
@@ -27,7 +28,7 @@ public class PCMLOAD {
     private final Function<ChipDatum, Integer> ppz8em;
     private final Function<ChipDatum, Integer> ppsdrv;
     private final Function<ChipDatum, Integer> p86em;
-    private Function<String, Stream> appendFileReaderCallback = null;
+    private Function<String, InputStream> appendFileReaderCallback = null;
     public final byte[][] ppzPcmData = new byte[2][];
     public final byte[][] p86PcmData = new byte[2][];
 
@@ -35,7 +36,7 @@ public class PCMLOAD {
                    Function<ChipDatum, Integer> ppz8em,
                    Function<ChipDatum, Integer> ppsdrv,
                    Function<ChipDatum, Integer> p86em,
-                   Function<String, Stream> appendFileReaderCallback) {
+                   Function<String, InputStream> appendFileReaderCallback) {
         this.pmd = pmd;
         this.pw = pw;
         this.r = r;
@@ -48,29 +49,10 @@ public class PCMLOAD {
 
     private byte[] getPCMDataFromFile(String fnPcm) {
 logger.log(Level.DEBUG, "pcm: " + fnPcm);
-        try (Stream pd = appendFileReaderCallback != null ? appendFileReaderCallback.apply(fnPcm) : null) {
-            return readAllBytes(pd);
+        try (InputStream pd = appendFileReaderCallback != null ? appendFileReaderCallback.apply(fnPcm) : null) {
+            return pd != null ? pd.readAllBytes() : null;
         } catch (Exception e) {
             return null;
-        }
-    }
-
-    /**
-     * Read binary from a stream in bulk
-     */
-    private static byte[] readAllBytes(Stream stream) {
-        if (stream == null) return null;
-
-        var buf = new byte[8192];
-        try (var ms = new MemoryStream()) {
-            while (true) {
-                var r = stream.read(buf, 0, buf.length);
-                if (r < 1) {
-                    break;
-                }
-                ms.write(buf, 0, r);
-            }
-            return ms.toArray();
         }
     }
 
@@ -141,8 +123,8 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
 
     private void read_ppz8() {
         // File extension identification (PVI/PZI)
-        String ext = Path.getExtension(pw.filename_ofs).toUpperCase().trim();
-        if (ext.isEmpty()) pw.filename_ofs = Path.changeExtension(pw.filename_ofs, ".PZI");
+        String ext = getExtension(pw.filename_ofs).toUpperCase().trim();
+        if (ext.isEmpty()) pw.filename_ofs = changeExtension(pw.filename_ofs, ".PZI");
         if (ext.equals(".PZI")) r.ch = 1;
         else if (ext.equals(".PVI")) r.ch = 0;
 
@@ -362,7 +344,7 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
         String fn;
         byte[] pcmData;
 
-        fn = Path.changeExtension(pw.filename_ofs, ".PPS"); // Change the extension to "PPS"
+        fn = changeExtension(pw.filename_ofs, ".PPS"); // Change the extension to "PPS"
         pcmData = getPCMDataFromFile(fn);
 
         if (pcmData == null || pcmData.length < 1) {
@@ -426,7 +408,7 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
         String fn;
         byte[] pcmData;
 
-        fn = Path.changeExtension(pw.filename_ofs, ".PPC"); // Change the extension to "PPC"
+        fn = changeExtension(pw.filename_ofs, ".PPC"); // Change the extension to "PPC"
         pcmData = getPCMDataFromFile(fn);
 
         if (pcmData == null || pcmData.length < 1) {
@@ -434,10 +416,10 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
             pcmData = getPCMDataFromFile(fn); // Try reading by specifying MML
 
             if (pcmData == null || pcmData.length < 1) {
-                fn = Path.changeExtension(pw.filename_ofs, ".PVI"); // Change the extension to "PVI"
+                fn = changeExtension(pw.filename_ofs, ".PVI"); // Change the extension to "PVI"
                 pcmData = getPCMDataFromFile(fn);
                 if (pcmData == null || pcmData.length < 1) {
-                    fn = Path.changeExtension(pw.filename_ofs, ".P86"); // Change the extension to "P86"
+                    fn = changeExtension(pw.filename_ofs, ".P86"); // Change the extension to "P86"
                     pcmData = getPCMDataFromFile(fn);
                     if (pcmData == null || pcmData.length < 1) {
                         allload_exit2();
@@ -643,7 +625,7 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
         String fn;
         byte[] pcmData;
 
-        fn = Path.changeExtension(pw.filename_ofs, ".P86"); // Change the extension to "P86"
+        fn = changeExtension(pw.filename_ofs, ".P86"); // Change the extension to "P86"
         pcmData = getPCMDataFromFile(fn);
 
         if (pcmData == null || pcmData.length < 1) {
@@ -652,7 +634,7 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
             pcmData = getPCMDataFromFile(fn); // Try reading by specifying MML
 
             if (pcmData == null || pcmData.length < 1) {
-                fn = Path.changeExtension(pw.filename_ofs, ".PPC"); // Change the extension to "PPC"
+                fn = changeExtension(pw.filename_ofs, ".PPC"); // Change the extension to "PPC"
                 pcmData = getPCMDataFromFile(fn);
                 if (pcmData == null || pcmData.length < 1) {
 //                    break p86load_error;
@@ -771,7 +753,7 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
         //
         // Set filename_ofs2 to the filename without the pathname (for file name comparison)
         //
-        pw.filename_ofs2 = Path.getFileName(pw.filename_ofs);
+        pw.filename_ofs2 = Path.of(pw.filename_ofs).getFileName().toString();
     }
 
     /**

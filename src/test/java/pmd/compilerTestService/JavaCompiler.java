@@ -1,22 +1,18 @@
 package pmd.compilerTestService;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Function;
 
-import dotnet4j.io.FileAccess;
-import dotnet4j.io.FileMode;
-import dotnet4j.io.FileShare;
-import dotnet4j.io.FileStream;
-import dotnet4j.io.MemoryStream;
-import dotnet4j.io.Stream;
-import dotnet4j.io.StreamReader;
-import dotnet4j.util.compat.Tuple;
 import pmd.compiler.Compiler;
+import vavi.util.compat.Tuple;
 
 import static pmd.common.Common.charset;
 
@@ -49,25 +45,25 @@ public class JavaCompiler extends DosCompiler {
             }
         }
 
-        Function<String, Stream> fnAppendFileReaderCallback = fname_ -> {
+        Function<String, InputStream> fnAppendFileReaderCallback = fname_ -> {
             try {
                 if (fname_ != null) {
                     for (var item : includePaths) {
                         var path = item.resolve(fname_);
                         if (Files.exists(path)) {
-                            return new FileStream(path.toString(), FileMode.Open, FileAccess.Read, FileShare.Read);
+                            return Files.newInputStream(path);
                         }
                     }
                 }
-            } catch (Exception e) {
+            } catch (Exception _) {
             }
             return null;
         };
 
         var outputFileName = getOutputFileName(compiler, mmlFilePath, fnAppendFileReaderCallback);
 
-        try (var fs = new FileStream(fullpath.toString(), FileMode.Open, FileAccess.Read, FileShare.Read)) {
-            try (var ms = new MemoryStream()) {
+        try (var fs = Files.newInputStream(fullpath);
+             var ms = new ByteArrayOutputStream()) {
                 if (options != null) {
                     var tmp = new ArrayList<String>(options.length + 1);
                     tmp.addAll(Arrays.asList(options));
@@ -77,49 +73,46 @@ public class JavaCompiler extends DosCompiler {
                     compiler.mcArgs = new String[] {fname.toString()};
                 }
 
-                var envs = new ArrayList<String>();
-
-                addEnv(envs, "ARRANGER");
-                addEnv(envs, "COMPOSER");
-                addEnv(envs, "USER");
-                addEnv(envs, "MCOPT");
-                compiler.env = envs.toArray(String[]::new);
+                compiler.env = new String[] {
+                        System.getProperty("pmd.arranger"),
+                        System.getProperty("pmd.composer"),
+                        System.getProperty("pmd.user"),
+                        System.getProperty("pmd.mcopt")
+                };
 
                 var r = compiler.compile(fs, ms, fnAppendFileReaderCallback);
                 ms.flush();
 
-                return new Tuple<>(new CompileResult(r, ms.toArray(), log.toString(), compiler.getMemo_writeAddress()), outputFileName);
+                return new Tuple<>(new CompileResult(r, ms.toByteArray(), log.toString(), compiler.getMemo_writeAddress()), outputFileName);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static String getOutputFileName(Compiler compiler, String mmlFilePath, Function<String, InputStream> fnAppendFileReaderCallback) {
+        try (var sourceMML = Files.newInputStream(Path.of(mmlFilePath));
+             var sr = new InputStreamReader(sourceMML, charset)) {
+            StringBuilder sb = new StringBuilder();
+            int ch;
+            while ((ch = sr.read()) != -1) {
+                sb.append((char) ch);
             }
-        }
-    }
-
-    static void addEnv(List<String> envs, String envname) {
-        var env = System.getenv(envname);
-        if (env != null && !env.isEmpty()) {
-            envs.add("%s=%s".formatted(envname, env));
-        }
-    }
-
-    private static String getOutputFileName(Compiler compiler, String mmlFilePath, Function<String, Stream> fnAppendFileReaderCallback) {
-        try (var sourceMML = new FileStream(mmlFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)) {
-            try (var sr = new StreamReader(sourceMML, charset)) {
-                var srcText = sr.readToEnd();
-                var tags = compiler.getTags(srcText, fnAppendFileReaderCallback);
-                if (tags != null) {
-                    for (var item : tags) {
-                        // Because mc is judged up to three characters
-                        if (item.getItem1().toUpperCase().indexOf("#FI") == 0) {
-                            if (item.getItem2().charAt(0) == '.') {
-                                return mmlFilePath.substring(0, mmlFilePath.indexOf('.')) + item.getItem2();
-                            } else {
-                                return Path.of(item.getItem2()).getFileName().toString();
-                            }
+            var srcText = sb.toString();
+            var tags = compiler.getTags(srcText, fnAppendFileReaderCallback);
+            if (tags != null) {
+                for (var item : tags) {
+                    // Because mc is judged up to three characters
+                    if (item.getItem1().toUpperCase().indexOf("#FI") == 0) {
+                        if (item.getItem2().charAt(0) == '.') {
+                            return mmlFilePath.substring(0, mmlFilePath.indexOf('.')) + item.getItem2();
+                        } else {
+                            return Path.of(item.getItem2()).getFileName().toString();
                         }
                     }
                 }
-            } catch (IOException e) {
-                throw new dotnet4j.io.IOException(e);
             }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
         return mmlFilePath.substring(0, mmlFilePath.indexOf('.')) + ".M";
     }

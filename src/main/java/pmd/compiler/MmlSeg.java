@@ -6,11 +6,15 @@ import java.util.Stack;
 
 import musicDriverInterface.LinePos;
 
+import static pmd.compiler.Mc.cr;
+import static pmd.compiler.Mc.eof;
+import static pmd.compiler.Mc.lf;
+
 
 public class MmlSeg {
 
     /**
-     * //	Work Area
+     * Work Area
      */
     public static final String warning_mes = "Warning ";
     public static final String not_ff_mes = ": The tone file name is not specified.";
@@ -19,7 +23,7 @@ public class MmlSeg {
     public static final String loop_err_mes = " : The loop termination symbol ] is missing.";
     public static final String mcopt_err_mes = ": The environment variable MCOPT is incorrectly written.";
 
-    //#if efc
+//#if efc
 //		public String usames = "Usage:  EFC [/option] filename[.EML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
 //		+ "Option: /V  Compile with Tonedatas" + Mc.cr + Mc.lf
 //		+ "        /VW Write Voicefile after Compile" + Mc.cr + Mc.lf
@@ -34,59 +38,59 @@ public class MmlSeg {
 //#else
 //#if !hyouka
     public static final String usames = "Usage:  MC" +
-            " [/option] filename[.MML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf +
+            " [/option] filename[.MML] [filename[.FF]]" + cr + lf + cr + lf +
             "Option: " +
-            "/V  Compile with Tonedatas & Messages & Filenames" + Mc.cr + Mc.lf +
-            "        /VW Write Tonedata after Compile" + Mc.cr + Mc.lf +
-            "        /N  Compile on OPN   Mode(Default)" + Mc.cr + Mc.lf +
-            "        /L  (unsupported) Compile on OPL   Mode" + Mc.cr + Mc.lf +
-            "        /M  (unsupported) Compile on OPM   Mode" + Mc.cr + Mc.lf +
-            "        /T  (unsupported) Compile on TOWNS Mode" + Mc.cr + Mc.lf +
-            "        /P  (unsupported) Play after Compile Complete" + Mc.cr + Mc.lf +
-            "        /S  (unsupported) Not Write Compiled File & Play" + Mc.cr + Mc.lf +
-            "        /A  (unsupported) Not Set ADPCM_File before Play" + Mc.cr + Mc.lf +
-            "        /O  (unsupported) Not Put Title Messages after Play" + Mc.cr + Mc.lf +
-            "        /C  Calculate & Put Total Length of Parts" + Mc.cr + Mc.lf
+            "/V  Compile with Tonedatas & Messages & Filenames" + cr + lf +
+            "        /VW Write Tonedata after Compile" + cr + lf +
+            "        /N  Compile on OPN   Mode(Default)" + cr + lf +
+            "        /L  (unsupported) Compile on OPL   Mode" + cr + lf +
+            "        /M  (unsupported) Compile on OPM   Mode" + cr + lf +
+            "        /T  (unsupported) Compile on TOWNS Mode" + cr + lf +
+            "        /P  (unsupported) Play after Compile Complete" + cr + lf +
+            "        /S  (unsupported) Not Write Compiled File & Play" + cr + lf +
+            "        /A  (unsupported) Not Set ADPCM_File before Play" + cr + lf +
+            "        /O  (unsupported) Not Put Title Messages after Play" + cr + lf +
+            "        /C  Calculate & Put Total Length of Parts" + cr + lf
             //+ Mc.eof
             ;
     public static final String titmes = " .MML file --> .M file Compiler" +
-            " ver " + Mc.ver + Mc.cr + Mc.lf +
+            " ver " + Mc.ver + cr + lf +
             "		Programmed by M.Kajihara(KAJA) " + Mc.date +
-            Mc.cr + Mc.lf
-            //Mc.cr + Mc.lf +
-            //Mc.eof
+            cr + lf
+            //cr + lf +
+            //eof
             ;
 //#else
 //    public String usames = "Usage:  MCH"
-//            + " [/option] filename[.MML] [filename[.FF]]" + Mc.cr + Mc.lf + Mc.cr + Mc.lf
+//            + " [/option] filename[.MML] [filename[.FF]]" + cr + lf + cr + lf
 //            + "Option: "
-//            + "/N  Compile on OPN   Mode(Default)" + Mc.cr + Mc.lf
-//            + "        /L  Compile on OPL   Mode" + Mc.cr + Mc.lf
-//            + "        /A  Not Set ADPCM_File before Play" + Mc.cr + Mc.lf
-//            + "        /O  Not Put Title Messages after Play" + Mc.cr + Mc.lf
-//            + "        /C  Calculate & Put Total Length of Parts" + Mc.cr + Mc.lf
+//            + "/N  Compile on OPN   Mode(Default)" + cr + lf
+//            + "        /L  Compile on OPL   Mode" + cr + lf
+//            + "        /A  Not Set ADPCM_File before Play" + cr + lf
+//            + "        /O  Not Put Title Messages after Play" + cr + lf
+//            + "        /C  Calculate & Put Total Length of Parts" + cr + lf
 //            + Mc.eof;
 //    public String titmes = " .MML file Compiler & Player (MC.EXE evaluation version)"
-//            + " ver " + Mc.ver + Mc.cr + Mc.lf
+//            + " ver " + Mc.ver + cr + lf
 //            + "		Programmed by M.Kajihara(KAJA) " + Mc.date
-//            + Mc.cr + Mc.lf
-//            //+ Mc.cr + Mc.lf + Mc.eof
+//            + cr + lf +
+//            //cr + lf + eof
 //            ;
 //#endif
 //#endif
 
     public static final String finmes = "Compile Completed.";
-    public String mes_crlf = "" + Mc.cr + Mc.lf + Mc.eof;
+    public String mes_crlf = "" + cr + lf + eof;
 
-    public String mes_title = Mc.cr + Mc.lf + " Start playing." + Mc.cr + Mc.lf + Mc.cr + Mc.lf +
-            "Title    : " + Mc.eof;
-    public String mes_composer = "Composer : " + Mc.eof;
-    public String mes_arranger = "Arranger : " + Mc.eof;
-    public String mes_memo = "         : " + Mc.eof;
+    public String mes_title = cr + lf + " Start playing." + cr + lf + cr + lf +
+            "Title    : " + eof;
+    public String mes_composer = "Composer : " + eof;
+    public String mes_arranger = "Arranger : " + eof;
+    public String mes_memo = "         : " + eof;
 
-    public String mes_ppzfile = "PPZFile  : " + Mc.eof;
-    public String mes_ppsfile = "PPSFile  : " + Mc.eof;
-    public String mes_pcmfile = "PCMFile  : " + Mc.eof;
+    public String mes_ppzfile = "PPZFile  : " + eof;
+    public String mes_ppsfile = "PPSFile  : " + eof;
+    public String mes_pcmfile = "PCMFile  : " + eof;
 
     public static final String user_txt = "USER=";
     public static final String composer_txt = "COMPOSER=";
@@ -150,7 +154,7 @@ public class MmlSeg {
     public int rhythm_voldown_flag = 0; // b
     public int ppz_voldown_flag = 0; // b
 
-    public static final byte[] fmvol = {
+    public static final byte[] fmVol = {
             127 - 0x2a,  // VOLUME	00
             127 - 0x28,  // VOLUME	01
             127 - 0x25,  // VOLUME	02
@@ -175,7 +179,7 @@ public class MmlSeg {
     public int pcm_vol_ext = 0; // b
 
     // PSG tone patterns
-    public final int[][] psgenvdat = {
+    public final int[][] psgEnvDat = {
             {0, 0, 0, 0},     // @0 Standard
             {2, 255, 0, 1},   // @1 Synth 1
             {2, 254, 0, 1},   // @2 Synth 2
@@ -187,7 +191,7 @@ public class MmlSeg {
             {1, 2, 0, 1},     // @8 Brass 1
             {1, 2, 24, 1}     // @9 Brass 2
     };
-    public static final int psgenvdat_max = 9;
+    public static final int psgEnvDatMax = 9;
     public static final int max_part = 11;
     public static final int fm = 0;
     public int fm2 = 1;
@@ -201,7 +205,7 @@ public class MmlSeg {
 
 //#endif
 
-    public static final int pcmpart = 10;
+    public static final int pcmPart = 10;
     public static final int rhythm2 = 11;
     public static final int rhythm = 18;
 
@@ -275,7 +279,7 @@ public class MmlSeg {
     public int pcm_ofsadr = 0; // w	0
 
     // offset,max,rot
-    public static final byte[] oplprg_table = {
+    public static final byte[] oplPrgTable = {
             8, 1, 0,   // alg
             8, 7, 1,   // fbl
 

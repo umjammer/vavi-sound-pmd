@@ -360,3 +360,6 @@ MigrationBackup/
 FodyWeavers.xsd
 output
 tmp/
+#AGENTS.md
+local.properties
+AGENTS.md

@@ -1,7 +1,12 @@
 package pmd.compiler;
 
 import java.awt.Point;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.ArrayList;
@@ -9,18 +14,13 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Function;
 
-import dotnet4j.io.FileNotFoundException;
-import dotnet4j.io.MemoryStream;
-import dotnet4j.io.SeekOrigin;
-import dotnet4j.io.Stream;
-import dotnet4j.io.StreamReader;
-import dotnet4j.util.compat.Tuple;
-import dotnet4j.util.compat.Tuple3;
 import musicDriverInterface.CompilerInfo;
-import musicDriverInterface.MetaData;
 import musicDriverInterface.ICompiler;
+import musicDriverInterface.MetaData;
 import musicDriverInterface.MetaData.Tag;
 import musicDriverInterface.MmlDatum;
+import vavi.util.compat.Tuple;
+import vavi.util.compat.Tuple3;
 
 import static java.lang.System.getLogger;
 import static pmd.common.Common.charset;
@@ -30,7 +30,7 @@ public class Compiler implements ICompiler {
 
     private static final Logger logger = getLogger(Compiler.class.getName());
 
-    final ResourceBundle rb = ResourceBundle.getBundle("lang/message");
+    final ResourceBundle rb = ResourceBundle.getBundle("pmd/message");
 
     // Input data
 
@@ -70,7 +70,7 @@ public class Compiler implements ICompiler {
     private String srcBuf = null;
     private boolean isIDE = false;
     private Point skipPoint = new Point(0, 0);
-    private Function<String, Stream> appendFileReaderCallback;
+    private Function<String, InputStream> appendFileReaderCallback;
     private Work work = null;
     private byte[] ffBuf = null;
 
@@ -90,7 +90,7 @@ public class Compiler implements ICompiler {
 
         for (Object prm : param) {
             if (prm instanceof Function) {
-                appendFileReaderCallback = (Function<String, Stream>) prm;
+                appendFileReaderCallback = (Function<String, InputStream>) prm;
                 continue;
             }
 
@@ -126,25 +126,28 @@ public class Compiler implements ICompiler {
     }
 
     @Override
-    public MmlDatum[] compile(Stream sourceMML, Function<String, Stream> appendFileReaderCallback) {
-        try (var ms = readAllBytesToMemoryStream(sourceMML)) {
-            ms.seek(0, SeekOrigin.Begin);
+    public MmlDatum[] compile(InputStream sourceMML, Function<String, InputStream> appendFileReaderCallback) {
+        try {
+            byte[] b = sourceMML.readAllBytes();
+            var ms = new ByteArrayInputStream(b);
             int c = 0;
             int offset = 0;
-            while ((c = ms.readByte()) >= 0) {
+            while ((c = ms.read()) >= 0) {
                 if (c == 0x1a) {
-                    ms.setLength(offset);
                     break;
                 }
                 offset++;
             }
-            ms.seek(0, SeekOrigin.Begin);
 
-            try (StreamReader sr = new StreamReader(ms, charset)) {
-                srcBuf = sr.readToEnd();
-            } catch (IOException e) {
-                throw new dotnet4j.io.IOException(e);
+            var sr = new InputStreamReader(new ByteArrayInputStream(b, 0, offset), charset);
+            StringBuilder sb = new StringBuilder();
+            int ch;
+            while ((ch = sr.read()) != -1) {
+                sb.append((char) ch);
             }
+            srcBuf = sb.toString();
+        } catch (java.io.IOException e) {
+            throw new UncheckedIOException(e);
         }
 
         //logger.log(Level.TRACE, srcBuf);
@@ -193,22 +196,22 @@ public class Compiler implements ICompiler {
 //            logger.log(Level.ERROR, pe.getMessage());
         } catch (Exception e) {
             work.compilerInfo.errorList.add(new Tuple3<>(-1, -1, e.getMessage()));
-            logger.log(Level.ERROR, rb.getString("E0000").formatted(e.getMessage()), e);
+            logger.log(Level.ERROR, e.getMessage(), e);
         }
 
         return null;
     }
 
-    public boolean compile(Stream sourceMML, Stream destCompiledBin, Function<String, Stream> appendFileReaderCallback) {
+    public boolean compile(InputStream sourceMML, ByteArrayOutputStream destCompiledBin, Function<String, InputStream> appendFileReaderCallback) {
         var dat = compile(sourceMML, appendFileReaderCallback);
         if (dat == null) {
             return false;
         }
         for (MmlDatum md : dat) {
             if (md == null) {
-                destCompiledBin.writeByte((byte) 0);
+                destCompiledBin.write((byte) 0);
             } else {
-                destCompiledBin.writeByte((byte) (md.dat & 0xff));
+                destCompiledBin.write((byte) (md.dat & 0xff));
             }
         }
         return true;
@@ -219,7 +222,7 @@ public class Compiler implements ICompiler {
         return work.compilerInfo;
     }
 
-    public Tuple<String, String>[] getTags(String srcBuf, Function<String, Stream> appendFileReaderCallback) {
+    public Tuple<String, String>[] getTags(String srcBuf, Function<String, InputStream> appendFileReaderCallback) {
         this.appendFileReaderCallback = appendFileReaderCallback;
         List<String> lstTag = new ArrayList<>();
         List<Tuple<String, String>> tags = new ArrayList<>();
@@ -262,23 +265,28 @@ public class Compiler implements ICompiler {
         ffBuf = ffFileBuf;
     }
 
-    byte[] readFile(String filename) {
-        Stream strm = appendFileReaderCallback.apply(filename);
-        return readAllBytes(strm);
+    byte[] readFile(String filename) throws IOException {
+        InputStream strm = appendFileReaderCallback.apply(filename);
+        return strm.readAllBytes();
     }
 
     String readFileText(String mml_filename2) {
-        Stream strm = appendFileReaderCallback.apply(mml_filename2);
+        InputStream strm = appendFileReaderCallback.apply(mml_filename2);
         if (strm == null) {
             logger.log(Level.ERROR, String.format(rb.getString("E0201"), mml_filename2));
-            throw new FileNotFoundException(mml_filename2);
+            throw new IllegalArgumentException(mml_filename2);
             //return "";
         }
         String text;
-        try (StreamReader sr = new StreamReader(strm, charset)) {
-            text = sr.readToEnd();
+        try (var sr = new InputStreamReader(strm, charset)) {
+            StringBuilder sb = new StringBuilder();
+            int ch;
+            while ((ch = sr.read()) != -1) {
+                sb.append((char) ch);
+            }
+            text = sb.toString();
         } catch (IOException e) {
-            throw new dotnet4j.io.IOException(e);
+            throw new UncheckedIOException(e);
         }
 
         return text;
@@ -300,30 +308,6 @@ public class Compiler implements ICompiler {
 
             getTagReca(lstTag, ilin);
         }
-    }
-
-    /**
-     * Read binary from a stream in bulk
-     */
-    private static byte[] readAllBytes(Stream stream) {
-        try (var ms = readAllBytesToMemoryStream(stream)) {
-            return ms != null ? ms.toArray() : null;
-        }
-    }
-
-    private static MemoryStream readAllBytesToMemoryStream(Stream stream) {
-        if (stream == null) return null;
-
-        var buf = new byte[8192];
-        var ms = new MemoryStream();
-        while (true) {
-            var r = stream.read(buf, 0, buf.length);
-            if (r < 1) {
-                break;
-            }
-            ms.write(buf, 0, r);
-        }
-        return ms;
     }
 
     @Override

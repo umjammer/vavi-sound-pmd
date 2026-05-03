@@ -4,9 +4,9 @@ package pmd.compiler;
 import java.util.ArrayList;
 import java.util.List;
 
-import dotnet4j.util.compat.Tuple;
 import musicDriverInterface.MmlDatum;
 import musicDriverInterface.common.AutoExtendList;
+import vavi.util.compat.Tuple;
 
 
 public class MSeg {
