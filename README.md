@@ -61,9 +61,9 @@ currently this project has no good player, use [vavi-sound-mdplayer](https://git
    * ~~loop ok~~
    * ~~rhythm ok~~
    * ~~base ng~~
- * compiler
+ * ~~compiler~~
  * pcm
- * environment variables
+ * ~~environment variables~~
 
 ---
 
