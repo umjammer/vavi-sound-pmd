@@ -229,7 +229,7 @@ getmemo_errret:
                 lst.add((byte) srcBuf[index[0] & 0xffff].dat);
             }
 
-            String n = new String(ByteUtil.toByteArray(lst), Common.charset);
+            String n = Common.decode(ByteUtil.toByteArray(lst));
             index[0]++;
 
             return n;
