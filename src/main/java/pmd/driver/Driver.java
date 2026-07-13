@@ -269,9 +269,10 @@ getmemo_errret:
         return metaData;
     }
 
+    /** return {@link #work} */
     @Override
     public Object getWork() {
-        throw new UnsupportedOperationException();
+        return work;
     }
 
     /**
