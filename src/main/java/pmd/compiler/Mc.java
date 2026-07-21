@@ -2622,15 +2622,15 @@ fm3_check:
      * #Option
      */
     private void option_set() {
-        String val = "";
+        StringBuilder val = new StringBuilder();
         char v = (char) 0;
         do {
             v = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
-            val += v;
+            val.append(v);
         } while (v >= 0x20);
-        if (val.length() > 1) val = val.substring(0, val.length() - 1);
+        if (val.length() > 1) val = new StringBuilder(val.substring(0, val.length() - 1));
 
-        get_option(val.trim().toUpperCase());
+        get_option(val.toString().trim().toUpperCase());
     }
 
     /**
@@ -2755,45 +2755,45 @@ fm3_check:
      * Until crlf comes
      */
     private String set_Strings() {
-        String ret = "";
+        StringBuilder ret = new StringBuilder();
 
         do {
             char al = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
             if (al == 9 || al == 0x1b) // TAB or ESC
             {
-                ret += al;
+                ret.append(al);
                 continue;
             }
 
             if (al < ' ') break;
 
-            ret += al;
+            ret.append(al);
         } while (true);
 
 //setstr_exit:
         work.si--;
-        return ret;
+        return ret.toString();
     }
 
     private String set_Strings2() {
-        String ret = "";
+        StringBuilder ret = new StringBuilder();
         // With Lowercase to Uppercase conversion
 
         do {
             char al = (work.si < mml_seg.mml_buf.length() ? mml_seg.mml_buf.charAt(work.si++) : (char) 0x1a);
             if (al == 9 || al == 0x1b) // TAB or ESC
             {
-                ret += al;
+                ret.append(al);
                 continue;
             }
             if (al < ' ') break;
 
-            ret += String.valueOf(Character.toUpperCase(al));
+            ret.append(String.valueOf(Character.toUpperCase(al)));
         } while (true);
 
         //setstr_exit2:
         work.si--;
-        return ret;
+        return ret.toString();
     }
 
     /**
@@ -8514,7 +8514,7 @@ voldown4: // ↑
 
             //public Stack<Tuple<String, Object>> macroStack { get; internal set; }
             //
-            LinePos nLp = LinePos.Copy(pos);
+            LinePos nLp = LinePos.copy(pos);
             nLp.aliesName = mml_seg.AliesName;
             nLp.aliesNextName = macroName.toString();
             nLp.aliesDepth = mml_seg.getMacroStack().size() + 1;

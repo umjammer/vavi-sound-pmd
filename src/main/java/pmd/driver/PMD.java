@@ -1923,8 +1923,8 @@ rfin: // ↑
 
                 flashMacroList();
 
-                MmlDatum md = new MmlDatum(MMLType.TraceLocate, null, LinePos.Copy(pw.cmd.linePos), 0xff);
-                md = new MmlDatum(MMLType.TraceLocate, List.of(0, 1, md), LinePos.Copy(pw.cmd.linePos), 0xff);
+                MmlDatum md = new MmlDatum(MMLType.TraceLocate, null, LinePos.copy(pw.cmd.linePos), 0xff);
+                md = new MmlDatum(MMLType.TraceLocate, List.of(0, 1, md), LinePos.copy(pw.cmd.linePos), 0xff);
                 ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
                 cd.additionalData = md;
                 writeDummy(cd);

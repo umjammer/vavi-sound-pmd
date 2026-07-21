@@ -300,7 +300,7 @@ rpart_end:
                 if ((al.dat & 0x80) != 0) {
                     work.si++;
                 }
-            //rl_01:
+//rl_01:
                 al = m_seg.m_buf.get(work.si++);
                 all_length += al.dat;
 
@@ -308,9 +308,9 @@ rpart_end:
             //
             // Rpart / Various special command processing
             //
-            //rl_00:
+//rl_00:
             command_exec((byte) al.dat);
-            if (loop_flag) break rpart_end;
+            if (loop_flag) break /* rpart_end */;
         } while (true);
         //
         // Rpart / Calculation complete
