@@ -109,7 +109,7 @@ public class Program {
     private boolean usePPZ = false;
     private int[] VolumeV = null;
     private int[] VolumeR = null;
-    private final boolean isGimicOPNA = false;
+    private static final boolean isGimicOPNA = false;
     private Ppz8Inst ppz8em = null;
     private PpsInst ppsdrv = null;
     private P86Inst p86em = null;
