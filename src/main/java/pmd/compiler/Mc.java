@@ -88,7 +88,7 @@ public class Mc {
     public int olddat = 0; // Data created before v2.92
     public int split = 0; // Is the tone data in SPLIT format?
     public int tempo_old_flag = 0; // Tempo processing old and new flag
-    public int pmdvector = 0x60; // VRTC.Interrupt
+    public static final int pmdvector = 0x60; // VRTC.Interrupt
     public static final char cr = (char) 13;
     public static final char lf = (char) 10;
     public static final char eof = '$';
@@ -111,14 +111,14 @@ public class Mc {
         // Display messages on the console
         String[] a = qq.split("" + cr + lf, -1);
         for (String s : a)
-            logger.log(Level.INFO, s);
+            System.out.println(s);
     }
 
     public void print_mes_err(String qq) {
         // Display messages on the console
         String[] a = qq.split("" + cr + lf);
         for (String s : a)
-            System.out.println(s);
+            System.err.println(s);
     }
 
     public void print_chr(String qq) {
@@ -3261,7 +3261,7 @@ hsset_loop:
         int n = mml_seg.mml_buf.indexOf("\r\n", work.si);
         int[] r = {work.si};
         calc_line(/* ref */ r);
-        logger.log(Level.DEBUG, String.format("%s(%d) \t%s",
+        logger.log(Level.TRACE, "%s(%d) \t%s".formatted(
                 mml_seg.mml_filename,
                 mml_seg.line,
                 mml_seg.mml_buf.substring(work.si, n)));
