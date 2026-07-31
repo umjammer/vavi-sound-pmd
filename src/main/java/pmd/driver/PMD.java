@@ -4553,6 +4553,12 @@ reloop: // ↑
 //muloop:
             r.incSi();
             pw.partWk[r.di & 0xffff].loopcheck = 1;
+            // an unconditional "[ ... ]0" is the part's loop point just like the "L" jump at the
+            // end of the data: nothing after it is reachable, and ':' cannot escape it either
+            // (the counter stays 0, so it never matches count - 1). without counting it here a
+            // part written that way keeps loopCounter at 0 and pins nowLoopCounter, the minimum
+            // over the parts, to 0 forever - the song then never reports a loop and never ends.
+            pw.partWk[r.di & 0xffff].loopCounter++;
         }
 //reloop:
         r.setAx((short) (pw.md[r.getSi() & 0xffff].dat + pw.md[(r.getSi() + 1) & 0xffff].dat * 0x100));
