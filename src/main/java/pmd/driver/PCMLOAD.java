@@ -154,6 +154,8 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
                 ppz_load_error();
                 r.carry = true;
             }
+            if ((r.cl & 0xff) == 0) pw.ppz1Error = r.carry || pcmData == null;
+            else if ((r.cl & 0xff) == 1) pw.ppz2Error = r.carry || pcmData == null;
         }
 //p8_load_skip:
         r.setAx((short) 0);
@@ -422,6 +424,7 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
                     fn = changeExtension(pw.filename_ofs, ".P86"); // Change the extension to "P86"
                     pcmData = getPCMDataFromFile(fn);
                     if (pcmData == null || pcmData.length < 1) {
+                        pw.ppcError = true;
                         allload_exit2();
                         return;
                     }
@@ -564,6 +567,7 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
         //
         // end
         //
+        pw.ppcError = false;
         r.setAx((short) 0);
     }
 
