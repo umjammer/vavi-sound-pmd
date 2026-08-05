@@ -245,7 +245,7 @@ public class X86Register {
 
     public final Object lockObj = new Object();
 
-    private static final int[] bitMask = new int[] {0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff};
+    private static final int[] bitMask = {0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff};
 
     public byte rol(byte r, int n) {
         n &= 7;

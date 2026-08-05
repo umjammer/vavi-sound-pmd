@@ -13,7 +13,7 @@ public class Pc98 {
     private byte fm2_reg = 0;
     private final PW pw;
 
-    private final byte[] psgDat = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    private final byte[] psgDat = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     public Pc98(Consumer<ChipDatum> writeOPNARegister, PW pw) {
         this.writeOPNARegister = writeOPNARegister;

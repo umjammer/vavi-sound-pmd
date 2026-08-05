@@ -94,7 +94,7 @@ public class Driver implements IDriver {
         lpw.md = srcBuf;
 
         StringBuilder str;
-        short[] adr = new short[] {get_memo(1, lr, lpw)};
+        short[] adr = {get_memo(1, lr, lpw)};
         if (adr[0] != 0) {
             str = new StringBuilder(getNRDString(/* ref */ adr));
             tags.add(new Tuple<>("title", str.toString()));
@@ -365,7 +365,7 @@ logger.log(Level.DEBUG, pdno);
         String ext = getExtension(work.ppcFile);
         String fn = work.ppcFile;
         int extn = 0;
-        String[] ppcExtTbl = new String[] {".PPC", ".P86", ".PVI"};
+        String[] ppcExtTbl = {".PPC", ".P86", ".PVI"};
         while (true) {
             buf = Common.getPCMDataFromFile(work.ppcFile, appendFileReaderCallback);
             if (buf != null) break;

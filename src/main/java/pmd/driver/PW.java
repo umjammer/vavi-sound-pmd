@@ -336,7 +336,7 @@ public class PW {
 
 
     public MmlDatum[] rd = null;
-    public final MmlDatum[] rdDmy = new MmlDatum[] {new MmlDatum(0xff)};
+    public final MmlDatum[] rdDmy = {new MmlDatum(0xff)};
 
     // Playing Data Area
 
