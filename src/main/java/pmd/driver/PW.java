@@ -72,6 +72,10 @@ public class PW {
     public String ppcFile = "";
     public String ppz1File = "";
     public String ppz2File = "";
+    public boolean ppsError = false;
+    public boolean ppcError = false;
+    public boolean ppz1Error = false;
+    public boolean ppz2Error = false;
 
     public static final String ver = "4.8s";
     public static final int vers = 0x48;
@@ -332,7 +336,7 @@ public class PW {
 
 
     public MmlDatum[] rd = null;
-    public final MmlDatum[] rdDmy = new MmlDatum[] {new MmlDatum(0xff)};
+    public final MmlDatum[] rdDmy = {new MmlDatum(0xff)};
 
     // Playing Data Area
 
