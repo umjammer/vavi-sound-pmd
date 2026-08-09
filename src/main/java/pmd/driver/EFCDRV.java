@@ -6,7 +6,7 @@ import musicDriverInterface.ChipDatum;
 import musicDriverInterface.MmlDatum;
 
 
-public class EFCDRV {
+class EFCDRV {
 
     private final PMD pmd;
     private final PW pw;
@@ -101,7 +101,7 @@ public class EFCDRV {
 
                     ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
                     cd.additionalData = pw.cmd;
-                    pmd.WriteOPNARegister.accept(cd);
+                    pmd.writeOPNARegister.accept(cd);
                     if (pw.cmd != null && pw.cmd.args != null && pw.cmd.args.size() > 2 && pw.cmd.args.get(2) instanceof MmlDatum[]) {
                         for (MmlDatum md : (MmlDatum[]) pw.cmd.args.get(2)) {
                             pmd.execIDESpecialCommand(md);
@@ -137,7 +137,7 @@ public class EFCDRV {
 
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
         cd.additionalData = pw.cmd;
-        pmd.WriteOPNARegister.accept(cd);
+        pmd.writeOPNARegister.accept(cd);
         if (pw.cmd != null && pw.cmd.args != null && pw.cmd.args.size() > 2 && pw.cmd.args.get(2) instanceof MmlDatum[]) {
             for (MmlDatum md : (MmlDatum[]) pw.cmd.args.get(2)) {
                 pmd.execIDESpecialCommand(md);

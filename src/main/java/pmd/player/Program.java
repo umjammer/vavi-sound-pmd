@@ -74,9 +74,9 @@ public class Program {
     private static SourceDataLine audioOutput = null;
 
     private static Thread trdMain = null;
-    public static boolean trdClosed = false;
+    private static boolean trdClosed = false;
     private static boolean _trdStopped = true;
-    static boolean trdStopped;
+    private static boolean trdStopped;
 
     public synchronized boolean getTrdStopped() {
         return _trdStopped;
@@ -150,7 +150,7 @@ public class Program {
     }
 
     /** */
-    void play(String[] args, int mIndex, int fnIndex) {
+    private void play(String[] args, int mIndex, int fnIndex) {
 //        rsc = checkDevice();
 
         try {
@@ -444,7 +444,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         return ret.toArray(String[]::new);
     }
 
-    public static String getApplicationFolder() {
+    private static String getApplicationFolder() {
         String path = System.getProperty("user.home");
         if (path != null && !path.isEmpty()) {
             path += path.charAt(path.length() - 1) == '\\' ? "" : "\\";
@@ -452,7 +452,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
         return path;
     }
 
-    static void writeLine2(Level level, String msg, int wrapPos /* = 0 */) {
+    private static void writeLine2(Level level, String msg, int wrapPos /* = 0 */) {
         if (wrapPos == 0) {
             logger.log(level, msg);
         } else {
@@ -925,7 +925,7 @@ logger.log(Level.INFO, "size: " + srcBuf.length);
                     byteBuf[i * 2] = (byte) (buf[i] & 0xff);
                     byteBuf[i * 2 + 1] = (byte) ((buf[i] >> 8) & 0xff);
                 }
-                audioOutput.write(byteBuf, 0, byteBuf.length);
+                if (audioOutput != null) audioOutput.write(byteBuf, 0, byteBuf.length);
             }
         } catch (Exception e) {
             logger.log(Level.ERROR, e.getMessage(), e);

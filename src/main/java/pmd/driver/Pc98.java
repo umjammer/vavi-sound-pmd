@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 import musicDriverInterface.ChipDatum;
 
 
-public class Pc98 {
+class Pc98 {
 
     private final Consumer<ChipDatum> writeOPNARegister;
     private final ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
@@ -15,12 +15,12 @@ public class Pc98 {
 
     private final byte[] psgDat = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    public Pc98(Consumer<ChipDatum> writeOPNARegister, PW pw) {
+    Pc98(Consumer<ChipDatum> writeOPNARegister, PW pw) {
         this.writeOPNARegister = writeOPNARegister;
         this.pw = pw;
     }
 
-    public byte inPort(int v) {
+    byte inPort(int v) {
         if (v == 0x2) {
             return 0;
         } else if (v == 0xa468) {
@@ -45,7 +45,7 @@ public class Pc98 {
         throw new UnsupportedOperationException(Integer.toHexString(v));
     }
 
-    public void outPort(short dx, byte al) {
+    void outPort(short dx, byte al) {
         if ((dx & 0xffff) == 0x02) {
 
         } else if ((dx & 0xffff) == 0x188) {
@@ -71,7 +71,7 @@ public class Pc98 {
         }
     }
 
-    public boolean getGraphKey() {
+    boolean getGraphKey() {
         // TODO Not implemented
         return false;
     }

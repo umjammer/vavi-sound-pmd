@@ -9,7 +9,7 @@ import musicDriverInterface.common.AutoExtendList;
 import vavi.util.compat.Tuple;
 
 
-public class MSeg {
+class MSeg {
 
     public String m_filename;
     public int file_ext_adr; // w

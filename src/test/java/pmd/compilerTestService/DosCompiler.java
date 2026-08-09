@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 
-public class DosCompiler {
+class DosCompiler {
 
     public static CompileResult compile(String mmlFilePath, String[] options, String outputFileName, Path tooldir) {
         var tooldirFull = tooldir.toAbsolutePath();

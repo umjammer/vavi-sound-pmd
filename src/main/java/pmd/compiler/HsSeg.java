@@ -4,7 +4,7 @@ package pmd.compiler;
 import musicDriverInterface.LinePos;
 
 
-public class HsSeg {
+class HsSeg {
 
     public static final int hs_length = 32;
     public final byte[] hsbuf2 = new byte[2 * 256];

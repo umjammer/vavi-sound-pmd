@@ -6,6 +6,7 @@
 
 package pmd;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,10 +18,12 @@ import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -51,6 +54,12 @@ class TestCase {
 
     @Property
     String pmdDotNet;
+
+    @BeforeAll
+    static void setupAll() throws Exception {
+        Path tmp = Path.of("tmp");
+        if (!Files.exists(tmp)) Files.createDirectory(tmp);
+    }
 
     @BeforeEach
     void setup() throws Exception {
@@ -92,6 +101,7 @@ Debug.println(rb.getString("E01%02d".formatted(7)));
 
      @Test
      @DisplayName("play")
+     @EnabledIfSystemProperty(named = "vavi.test", matches = "ide")
      void test3() throws Exception {
 Debug.println(file);
          pmd.player.Program.main(new String[] {file});
@@ -113,7 +123,8 @@ Debug.println(mml);
         assertTrue(Files.exists(testM), "java compile failed");
 
         // play
-        pmd.player.Program.main(new String[] {testM.toString()});
+        if ("ide".equals(System.getProperty("vavi.test")))
+            pmd.player.Program.main(new String[] {testM.toString()});
     }
 
     @Test
@@ -132,7 +143,8 @@ Debug.println(mml);
         assertEquals(0, r);
         assertTrue(Files.exists(testM), "compile failed");
         // play
-        pmd.player.Program.main(new String[] {testM.toString()});
+        if ("ide".equals(System.getProperty("vavi.test")))
+            pmd.player.Program.main(new String[] {testM.toString()});
     }
 
     @Test
@@ -172,6 +184,7 @@ Debug.println("java: " + Files.size(testM));
 
         // play
 Debug.println("play --------");
-        pmd.player.Program.main(new String[] {testM.toString()});
+        if ("ide".equals(System.getProperty("vavi.test")))
+            pmd.player.Program.main(new String[] {testM.toString()});
     }
 }

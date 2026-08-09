@@ -4,7 +4,7 @@ import musicDriverInterface.CompilerInfo;
 import musicDriverInterface.MmlDatum.MMLType;
 
 
-public class Work {
+class Work {
 
     public final CompilerInfo compilerInfo = new CompilerInfo();
     public final byte[] ppzfile_buf = new byte[128 * 8];

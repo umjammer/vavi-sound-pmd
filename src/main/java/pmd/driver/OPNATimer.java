@@ -53,7 +53,7 @@ public class OPNATimer {
         }
     }
 
-    public void WriteReg(byte adr, byte data) {
+    public void writeReg(byte adr, byte data) {
         switch (adr) {
             // timerA
             case 0x24:

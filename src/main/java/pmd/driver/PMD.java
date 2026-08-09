@@ -29,7 +29,7 @@ import static java.lang.System.getLogger;
  * @version 4.8
  * @see "https://gemini.google.com/app/3cbfc288ae580d61"
  */
-public class PMD {
+class PMD {
 
     private static final Logger logger = getLogger(PMD.class.getName());
 
@@ -43,12 +43,12 @@ public class PMD {
     private final Function<ChipDatum, Integer> ppz8em;
     private final Function<ChipDatum, Integer> ppsdrv;
     private final Function<ChipDatum, Integer> p86em;
-    public final PCMLOAD pcmload;
-    public final Consumer<ChipDatum> WriteOPNARegister;
+    final PCMLOAD pcmload;
+    final Consumer<ChipDatum> writeOPNARegister;
 
     public PMD(
             MmlDatum[] mmlData,
-            Consumer<ChipDatum> WriteOPNARegister,
+            Consumer<ChipDatum> writeOPNARegister,
             PW pw,
             Function<String, InputStream> appendFileReaderCallback,
             Function<ChipDatum, Integer> ppz8em,
@@ -73,7 +73,7 @@ public class PMD {
 
         r = new X86Register();
         r.pw = pw;
-        pc98 = new Pc98(WriteOPNARegister, pw);
+        pc98 = new Pc98(writeOPNARegister, pw);
         pcmload = new PCMLOAD(this, pw, r, pc98, ppz8em, ppsdrv, p86em, appendFileReaderCallback);
 
         ppzdrv = new PPZDRV(this, pw, r, pc98, ppz8em, pcmload.ppzPcmData);
@@ -82,7 +82,7 @@ public class PMD {
         ppzdrv.init();
         pcmdrv86 = new PCMDRV86(this, pw, r, pc98, p86em, pcmload.p86PcmData);
         efcdrv = new EFCDRV(this, pw, r, ppsdrv);
-        this.WriteOPNARegister = WriteOPNARegister;
+        this.writeOPNARegister = writeOPNARegister;
 
         set_int60_jumptable();
         set_n_int60_jumptable();
@@ -94,7 +94,7 @@ public class PMD {
         comstart();
     }
 
-    public void rendering() {
+    void rendering() {
         if (pw.getStatus() == 0) return;
 
         synchronized (pw.systemInterrupt) {
@@ -142,7 +142,7 @@ try {
         throw new PmdErrorExitException("error code:%d".formatted(qq));
     }
 
-    public void print_mes(String qq) {
+    private void print_mes(String qq) {
         // Display messages on the console
         String[] a = qq.split("" + (char) 13 + (char) 10);
         for (String s : a)
@@ -185,14 +185,14 @@ try {
 //#endif
     }
 
-    public void _wait() {
+    private void _wait() {
 //        r.cx = (short) pw.wait_clock;
 //        do {
 //            r.cx--;
 //        } while ((r.cx & 0xffff) > 0);
     }
 
-    public void _waitP() {
+    private void _waitP() {
 //        short p = r.cx;
 //        r.cx = (short) pw.wait_clock;
 //        do {
@@ -202,7 +202,7 @@ try {
     }
 
     /** Rhythm continuous output wait */
-    public void _rwait() {
+    private void _rwait() {
 //        short p = r.cx;
 //        r.cx = (short) (pw.wait_clock * 32);
 //        do {
@@ -212,14 +212,14 @@ try {
     }
 
     /** For Address out break:ax */
-    public void rdychk() {
+    private void rdychk() {
         r.al = pc98.inPort(r.getDx() & 0xffff); // Useless reading
         do {
             r.al = pc98.inPort(r.getDx() & 0xffff);
         } while ((r.al & 0x80) != 0);
     }
 
-    public void _ppz() {
+    private void _ppz() {
         // local exit
         if (pw.ppz != 0) {
             if (pw.ppz_call_seg >= 2) {
@@ -229,7 +229,7 @@ try {
         }
     }
 
-    public void int60_main(short ax) {
+    void int60_main(short ax) {
         synchronized (r.lockObj) {
             r.setAx(ax);
 
@@ -279,7 +279,7 @@ try {
         pw.fadeout_speed = r.al;
     }
 
-    public void resetOption(String[] pmdOption) {
+    void resetOption(String[] pmdOption) {
         set_option(pmdOption);
     }
 
@@ -1211,7 +1211,7 @@ pd03: // ↑
 
                 ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
                 cd.additionalData = pw.cmd;
-                WriteOPNARegister.accept(cd);
+                writeOPNARegister.accept(cd);
 
                 r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
                 pw.partWk[r.di & 0xffff].leng = r.al;
@@ -1249,7 +1249,7 @@ pd03: // ↑
         } while (true);
     }
 
-    public void flashMacroList() {
+    void flashMacroList() {
         if (pw.cmd.args != null && pw.cmd.args.size() > 2) {
             Object obj = pw.cmd.args.get(2);
             if (obj instanceof MmlDatum[] mds) {
@@ -1361,7 +1361,7 @@ pd03: // ↑
         return mnp_retRef;
     }
 
-    public Supplier<Object> mnp_ret() {
+    Supplier<Object> mnp_ret() {
         r.al = pw.loop_work;
         r.al &= pw.partWk[r.di & 0xffff].loopcheck;
         pw.loop_work = r.al;
@@ -1373,7 +1373,7 @@ pd03: // ↑
      * Calculating the Q factor
      *  break dx
      */
-    public void calc_q() {
+    void calc_q() {
         if (pw.md[r.getSi() & 0xffff].dat != 0xc1) { //&& // break cq_sular;
 
             r.dl = pw.partWk[r.di & 0xffff].qdata;
@@ -1494,7 +1494,7 @@ pd03: // ↑
         } while (true);
     }
 
-    public Supplier<Object> fmmnp_3() {
+    Supplier<Object> fmmnp_3() {
         flashMacroList();
 
         pw.partWk[r.di & 0xffff].fnum = 0; // Set to Rest
@@ -1514,7 +1514,7 @@ pd03: // ↑
         return this::fmmnp_4;
     }
 
-    public Supplier<Object> fmmnp_4() {
+    Supplier<Object> fmmnp_4() {
         pw.tieflag = 0;
         pw.volpush_flag = 0;
         return mnp_retRef;
@@ -1623,7 +1623,7 @@ pd03: // ↑
 
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
         cd.additionalData = pw.cmd;
-        WriteOPNARegister.accept(cd);
+        writeOPNARegister.accept(cd);
 
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         pw.partWk[r.di & 0xffff].leng = r.al;
@@ -2099,7 +2099,7 @@ roret: // ↑
             }
 //rpsg:
             r.al = (byte) 0xff; // -1
-rolop:
+//rolop:
             while (true) {
                 do {
                     r.al++;
@@ -2185,7 +2185,7 @@ rolop:
         return command00();
     }
 
-    public Supplier<Object> command00() {
+    Supplier<Object> command00() {
         if (pw.cmd != null && pw.cmd.args != null && pw.cmd.args.size() > 2 && pw.cmd.args.get(2) instanceof MmlDatum[]) {
             for (MmlDatum md : (MmlDatum[]) pw.cmd.args.get(2)) {
                 execIDESpecialCommand(md);
@@ -2532,14 +2532,14 @@ rolop:
         };
     }
 
-    public Supplier<Object> jump16() {
+    Supplier<Object> jump16() {
         logger.log(Level.TRACE, "jump16");
 
         r.addSi((short) 16);
         return null;
     }
 
-    public Supplier<Object> jump6() {
+    Supplier<Object> jump6() {
         logger.log(Level.TRACE, "jump6");
 
         r.addSi((short) 6);
@@ -2553,35 +2553,35 @@ rolop:
         return null;
     }
 
-    public Supplier<Object> jump4() {
+    Supplier<Object> jump4() {
         logger.log(Level.TRACE, "jump4");
 
         r.addSi((short) 4);
         return null;
     }
 
-    public Supplier<Object> jump3() {
+    Supplier<Object> jump3() {
         logger.log(Level.TRACE, "jump3");
 
         r.addSi((short) 3);
         return null;
     }
 
-    public Supplier<Object> jump2() {
+    Supplier<Object> jump2() {
         logger.log(Level.TRACE, "jump2");
 
         r.addSi((short) 2);
         return null;
     }
 
-    public Supplier<Object> jump1() {
+    Supplier<Object> jump1() {
         logger.log(Level.TRACE, "jump1");
 
         r.incSi();
         return null;
     }
 
-    public Supplier<Object> jump0() {
+    Supplier<Object> jump0() {
         logger.log(Level.TRACE, "jump0");
 
         return null;
@@ -2590,7 +2590,7 @@ rolop:
     /**
      * Additional special instructions for 0c0h
      */
-    public Supplier<Object> special_0c0h() {
+    Supplier<Object> special_0c0h() {
         if ((r.al & 0xff) < (PW.com_end_0c0h & 0xff)) {
             return this::out_of_commands;
         }
@@ -3158,7 +3158,7 @@ _fb_notfm3:
         return this::ch3_setting;
     }
 
-    public Supplier<Object> _volmask_set() {
+    Supplier<Object> _volmask_set() {
         logger.log(Level.TRACE, "_volmask_set");
 
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
@@ -3278,7 +3278,7 @@ vms_not_p3: // ↑
     /**
      * LFO Extend Set
      */
-    public Supplier<Object> lfo_extend() {
+    Supplier<Object> lfo_extend() {
         logger.log(Level.TRACE, "lfo_extend");
 
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
@@ -3293,7 +3293,7 @@ vms_not_p3: // ↑
     /**
      * Envelope Extend Set
      */
-    public Supplier<Object> envelope_extend() {
+    Supplier<Object> envelope_extend() {
         logger.log(Level.TRACE, "envelope_extend");
 
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
@@ -3309,7 +3309,7 @@ vms_not_p3: // ↑
     /**
      * LFO Wave Selection
      */
-    public Supplier<Object> lfowave_set() {
+    Supplier<Object> lfowave_set() {
         logger.log(Level.TRACE, "lfowave_set");
 
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
@@ -3321,7 +3321,7 @@ vms_not_p3: // ↑
     /**
      * PSG Envelope set(Extend)
      */
-    public Supplier<Object> extend_psgenvset() {
+    Supplier<Object> extend_psgenvset() {
         logger.log(Level.TRACE, "extend_psgenvset");
 
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
@@ -3818,7 +3818,7 @@ sm_notfm3: // ↑
     /**
      * LFO depth +- set
      */
-    public Supplier<Object> mdepth_set() {
+    Supplier<Object> mdepth_set() {
         logger.log(Level.TRACE, "mdepth_set");
 
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
@@ -3830,7 +3830,7 @@ sm_notfm3: // ↑
         return null;
     }
 
-    public Supplier<Object> mdepth_count() {
+    Supplier<Object> mdepth_count() {
         logger.log(Level.TRACE, "mdepth_count");
 
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
@@ -3860,7 +3860,7 @@ sm_notfm3: // ↑
     /**
      * It's a portamento calculation.
      */
-    public void porta_calc() {
+    void porta_calc() {
         r.setAx(pw.partWk[r.di & 0xffff].porta_num2);
         pw.partWk[r.di & 0xffff].porta_num += r.getAx();
         if (pw.partWk[r.di & 0xffff].porta_num3 != 0) { // break pc_ret;
@@ -3885,7 +3885,7 @@ sm_notfm3: // ↑
 
             ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
             cd.additionalData = pw.cmd;
-            WriteOPNARegister.accept(cd);
+            writeOPNARegister.accept(cd);
 
             r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
             lfoinit();
@@ -3958,7 +3958,7 @@ sm_notfm3: // ↑
 
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
         cd.additionalData = pw.cmd;
-        WriteOPNARegister.accept(cd);
+        writeOPNARegister.accept(cd);
 
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         lfoinitp();
@@ -4161,7 +4161,7 @@ sm_notfm3: // ↑
         ChipDatum cd = new ChipDatum(-1, 0xff, 0xff);
         MmlDatum md = new MmlDatum(0, MMLType.Tempo, null, pw.tempo_d & 0xff, pw.syousetu_lng & 0xff);
         cd.additionalData = md;
-        WriteOPNARegister.accept(cd);
+        writeOPNARegister.accept(cd);
 
         return null;
     }
@@ -9559,7 +9559,7 @@ ppschk_exit: // ↑
             case 0:
             case 1:
             case 2:
-                WriteOPNARegister.accept(cd);
+                writeOPNARegister.accept(cd);
                 break;
             case 3:
                 ppz8em.apply(cd);

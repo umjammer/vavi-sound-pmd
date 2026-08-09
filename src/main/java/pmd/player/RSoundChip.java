@@ -2,13 +2,13 @@ package pmd.player;
 
 public class RSoundChip {
 
-    protected final int SoundLocation;
-    protected final int BusID;
-    protected final int SoundChip;
+    private final int SoundLocation;
+    private final int BusID;
+    private final int SoundChip;
 
     public int dClock = 3579545;
 
-    public RSoundChip(int soundLocation, int busID, int soundChip) {
+    RSoundChip(int soundLocation, int busID, int soundChip) {
         SoundLocation = soundLocation;
         BusID = busID;
         SoundChip = soundChip;
