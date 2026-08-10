@@ -51,7 +51,7 @@ public class Mc {
     // 1: Waiting to reach the skip position on the mml
     // 2: The row and column have been achieved and now we are waiting for the pitch command to come.
     // 3: Processing complete
-    public int skipPointCol = -1; // Skip processing: The position of the digit is replaced with the number of characters on the mml
+    private int skipPointCol = -1; // Skip processing: The position of the digit is replaced with the number of characters on the mml
 
     //
     // MML Compiler/Effect Compiler FOR PC-9801/88VA
@@ -59,7 +59,7 @@ public class Mc {
     //
 
     public static final String ver = "4.8s"; // version
-    public static final int vers = 0x48;
+    private static final int vers = 0x48;
     public static final String date = "2023/09/23"; // date
 
 //#if !hyouka
@@ -87,7 +87,7 @@ public class Mc {
 
     public int olddat = 0; // Data created before v2.92
     public int split = 0; // Is the tone data in SPLIT format?
-    public int tempo_old_flag = 0; // Tempo processing old and new flag
+    private int tempo_old_flag = 0; // Tempo processing old and new flag
     public static final int pmdvector = 0x60; // VRTC.Interrupt
     public static final char cr = (char) 13;
     public static final char lf = (char) 10;
@@ -102,7 +102,7 @@ public class Mc {
         throw new PmdDosExitException("msdos_exit");
     }
 
-    public void error_exit(int qq) {
+    private void error_exit(int qq) {
         // Program terminated (error code qq)
         throw new PmdErrorExitException("error code:%d".formatted(qq));
     }
@@ -114,7 +114,7 @@ public class Mc {
             System.out.println(s);
     }
 
-    public void print_mes_err(String qq) {
+    private void print_mes_err(String qq) {
         // Display messages on the console
         String[] a = qq.split("" + cr + lf);
         for (String s : a)
@@ -2788,7 +2788,7 @@ fm3_check:
             }
             if (al < ' ') break;
 
-            ret.append(String.valueOf(Character.toUpperCase(al)));
+            ret.append(Character.toUpperCase(al));
         } while (true);
 
         //setstr_exit2:
@@ -4579,7 +4579,7 @@ notend: // ↑
         if (dh >= 3) { // break sss_notfm2;
             dh -= 3; // FM2 part -3
         }
-sss_notfm2:
+//sss_notfm2:
         dh += 0x90; // SSGEG $90 + [part]
         if ((cx & 1) == 0) {
             cx = (cx & 0xff00) | ((cx & 0xff) >> 1); // Issue the y command corresponding to the specified slot

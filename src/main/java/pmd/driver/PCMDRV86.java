@@ -8,7 +8,7 @@ import musicDriverInterface.MmlDatum;
 import musicDriverInterface.MmlDatum.MMLType;
 
 
-public class PCMDRV86 {
+class PCMDRV86 {
 
     private final PMD pmd;
     private final PW pw;
@@ -605,7 +605,7 @@ public class PCMDRV86 {
     /**
      * COMMAND ')' [VOLUME UP]
      */
-    public Supplier<Object> comvolupm() {
+    private Supplier<Object> comvolupm() {
         r.al = pw.partWk[r.di & 0xffff].volume;
         r.carry = (r.al & 0xff) + 16 > 0xff;
         r.al += 16;
@@ -630,7 +630,7 @@ public class PCMDRV86 {
     }
 
     // V2.3 EXTEND
-    public Supplier<Object> comvolupm2() {
+    private Supplier<Object> comvolupm2() {
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.carry = (r.al & 0xff) + (pw.partWk[r.di & 0xffff].volume & 0xff) > 0xff;
         r.al += pw.partWk[r.di & 0xffff].volume;
@@ -640,7 +640,7 @@ public class PCMDRV86 {
     /**
      * COMMAND '(' [VOLUME DOWN]
      */
-    public Supplier<Object> comvoldownm() {
+    private Supplier<Object> comvoldownm() {
         r.al = pw.partWk[r.di & 0xffff].volume;
         r.carry = (r.al & 0xff) - 16 < 0;
         r.al -= 16;
@@ -649,7 +649,7 @@ public class PCMDRV86 {
     }
 
     // V2.3 EXTEND
-    public Supplier<Object> comvoldownm2() {
+    private Supplier<Object> comvoldownm2() {
         r.al = (byte) pw.md[r.incSi() & 0xffff].dat;
         r.ah = r.al;
         r.al = pw.partWk[r.di & 0xffff].volume;

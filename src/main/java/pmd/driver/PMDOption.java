@@ -4,20 +4,20 @@ import java.util.Arrays;
 import java.util.StringJoiner;
 
 
-public class PMDOption {
+class PMDOption {
 
-    public boolean isLoadADPCM;
-    public boolean loadADPCMOnly;
-    public boolean isAUTO;
-    public boolean isVA;
-    public boolean isNRM;
-    public boolean usePPS;
-    public boolean usePPZ;
-    public boolean isSPB;
-    public String[] envPmd;
-    public String[] envPmdOpt;
-    public String srcFile;
-    public String ppcHeader;
+    boolean isLoadADPCM;
+    boolean loadADPCMOnly;
+    boolean isAUTO;
+    boolean isVA;
+    boolean isNRM;
+    boolean usePPS;
+    boolean usePPZ;
+    boolean isSPB;
+    String[] envPmd;
+    String[] envPmdOpt;
+    String srcFile;
+    String ppcHeader;
     public int jumpIndex;
 
     @Override

@@ -13,18 +13,18 @@ import static java.lang.System.getLogger;
 //
 // ppz8l.cpp / ppz8l.h Created with reference to (by C60)
 //
-public class PPZ8em {
+class PPZ8em {
 
     private static final Logger logger = getLogger(PPZ8em.class.getName());
 
-    public final byte[][] pcmData = new byte[2][];
+    private final byte[][] pcmData = new byte[2][];
     private final boolean[] isPVI = new boolean[2];
     private final PPZChannelWork[] chWk = {
             new PPZChannelWork(), new PPZChannelWork(), new PPZChannelWork(), new PPZChannelWork(),
             new PPZChannelWork(), new PPZChannelWork(), new PPZChannelWork(), new PPZChannelWork()
     };
-    public int bank = 0;
-    public int ptr = 0;
+    private int bank = 0;
+    private int ptr = 0;
     private boolean interrupt = false;
     private byte adpcmEmu;
     private final short[][] VolumeTable = {
@@ -296,7 +296,7 @@ public class PPZ8em {
     /**
      * 0x16 Overall Volume
      */
-    public void setAllVolume(int vol) {
+    private void setAllVolume(int vol) {
         logger.log(Level.TRACE, "ppz8em: SetAllVolume: %d".formatted(vol));
 
         if (vol < 16 && vol != pcmVolume) {

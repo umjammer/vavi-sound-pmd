@@ -1,7 +1,7 @@
 
 package pmd.compiler;
 
-public class FNumDatSeg {
+class FNumDatSeg {
 
     public static final int[] fnumTbl = {
             // block=3 c

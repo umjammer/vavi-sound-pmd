@@ -11,7 +11,7 @@ import vavi.util.compat.Tuple;
 
 public class PW {
 
-    public final Object lockObj = new Object();
+    private final Object lockObj = new Object();
     public final Object systemInterrupt = new Object();
 
     private int _status = 0;
@@ -28,7 +28,7 @@ public class PW {
         }
     }
 
-    int maxLoopCount = -1;
+    private int maxLoopCount = -1;
 
     public int getmaxLoopCount() {
         return maxLoopCount;
@@ -77,10 +77,10 @@ public class PW {
     public boolean ppz1Error = false;
     public boolean ppz2Error = false;
 
-    public static final String ver = "4.8s";
+    private static final String ver = "4.8s";
     public static final int vers = 0x48;
     public static final char verc = 's';
-    public static final String date = "Jan.22nd 2020";
+    private static final String date = "Jan.22nd 2020";
 
     public static final int mdata_def = 16;
     public static final int voice_def = 8;
@@ -107,10 +107,10 @@ public class PW {
     //
     // constant
     //
-    public int ms_cmd = 0x000; // 8259 Master Port
-    public int ms_msk = 0x002; // 8259 Master/Mask
-    public int sl_cmd = 0x008; // 8259 Slave Port
-    public int sl_msk = 0x00a; // 8259 Slave/Mask
+    private int ms_cmd = 0x000; // 8259 Master Port
+    private int ms_msk = 0x002; // 8259 Master/Mask
+    private int sl_cmd = 0x008; // 8259 Slave Port
+    private int sl_msk = 0x00a; // 8259 Slave/Mask
 
     //
     // Program Start

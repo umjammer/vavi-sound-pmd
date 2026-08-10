@@ -17,7 +17,7 @@ import static vavi.util.compat.Util.changeExtension;
 import static vavi.util.compat.Util.getExtension;
 
 
-public class PCMLOAD {
+class PCMLOAD {
 
     private static final Logger logger = getLogger(PCMLOAD.class.getName());
 
@@ -29,14 +29,14 @@ public class PCMLOAD {
     private final Function<ChipDatum, Integer> ppsdrv;
     private final Function<ChipDatum, Integer> p86em;
     private Function<String, InputStream> appendFileReaderCallback = null;
-    public final byte[][] ppzPcmData = new byte[2][];
-    public final byte[][] p86PcmData = new byte[2][];
+    final byte[][] ppzPcmData = new byte[2][];
+    final byte[][] p86PcmData = new byte[2][];
 
-    public PCMLOAD(PMD pmd, PW pw, X86Register r, Pc98 pc98,
-                   Function<ChipDatum, Integer> ppz8em,
-                   Function<ChipDatum, Integer> ppsdrv,
-                   Function<ChipDatum, Integer> p86em,
-                   Function<String, InputStream> appendFileReaderCallback) {
+    PCMLOAD(PMD pmd, PW pw, X86Register r, Pc98 pc98,
+            Function<ChipDatum, Integer> ppz8em,
+            Function<ChipDatum, Integer> ppsdrv,
+            Function<ChipDatum, Integer> p86em,
+            Function<String, InputStream> appendFileReaderCallback) {
         this.pmd = pmd;
         this.pw = pw;
         this.r = r;

@@ -12,7 +12,7 @@ import musicDriverInterface.MmlDatum.MMLType;
 import static java.lang.System.getLogger;
 
 
-public class PPZDRV {
+class PPZDRV {
 
     private static final Logger logger = getLogger(PPZDRV.class.getName());
 
@@ -22,7 +22,7 @@ public class PPZDRV {
     private final Pc98 pc98;
     private final Function<ChipDatum, Integer> ppz8em;
     private final byte[][] pcmData;
-    public PCMDRV pcmdrv = null;
+    PCMDRV pcmdrv = null;
     private int bank = 0;
     private int ptr = 0;
 

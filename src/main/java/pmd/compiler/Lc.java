@@ -636,25 +636,25 @@ logger.log(Level.INFO, "%02x, %02x".formatted(al & 0xff, ~al & 0xff));
     }
 
 
-    public static final String part_mes = "Part ";
-    public String part_type = "FMOPN";
-    public char part_chr = ' ';
-    public int part_num = 0;
+    private static final String part_mes = "Part ";
+    private String part_type = "FMOPN";
+    private char part_chr = ' ';
+    private int part_num = 0;
     private static final String part_chr_n = "\tLength : ";
     private static final String loop_mes = "\t/ Loop : ";
     private static final String loop_mes2 = "\t/ Found Infinite Local Loop!";
     //private String _crlf_mes = "\r\n$";
 
-    public boolean print_flag = false;
-    public int all_length = 0; // new int[2] { 0, 0 };
-    public int loop_length = 0; // new int[2] { 0, 0 };
+    private boolean print_flag = false;
+    private int all_length = 0; // new int[2] { 0, 0 };
+    private int loop_length = 0; // new int[2] { 0, 0 };
     public int max_all = 0; // new int[2] { 0, 0 };
     public int max_loop = 0; // new int[2] { 0, 0 };
 
-    public final int[] fm3_adr = {0, 0, 0};
-    public final int[] pcm_adr = {0, 0, 0, 0, 0, 0, 0, 0};
+    private final int[] fm3_adr = {0, 0, 0};
+    private final int[] pcm_adr = {0, 0, 0, 0, 0, 0, 0, 0};
 
-    public boolean loop_flag = false;
+    private boolean loop_flag = false;
 
     public final char[] _fm3_partchr = {
             (char) 0,

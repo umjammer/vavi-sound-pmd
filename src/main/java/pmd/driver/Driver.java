@@ -42,7 +42,7 @@ public class Driver implements IDriver {
     private Function<ChipDatum, Integer> writeP86;
     private BiConsumer<Long, Integer> waitSendOPNA;
     private final Object lockObjWriteReg = new Object();
-    MmlDatum[] srcBuf = null;
+    private MmlDatum[] srcBuf = null;
     public Exception renderingException = null;
 
     @Override
@@ -160,7 +160,7 @@ if (work != null) {
         return tags;
     }
 
-    public short get_memo(int al, X86Register r, PW pw) {
+    private short get_memo(int al, X86Register r, PW pw) {
         try {
 
 getmemo_errret:
@@ -455,7 +455,7 @@ logger.log(Level.DEBUG, pdno);
         if (work == null) return;
         synchronized (lockObjWriteReg) {
             if (reg.port == 0) {
-                if (work != null) work.timer.WriteReg((byte) reg.address, (byte) reg.data);
+                if (work != null) work.timer.writeReg((byte) reg.address, (byte) reg.data);
             }
             writeOPNA.accept(reg);
         }

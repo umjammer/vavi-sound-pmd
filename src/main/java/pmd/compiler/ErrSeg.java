@@ -1,6 +1,6 @@
 package pmd.compiler;
 
-public class ErrSeg {
+class ErrSeg {
 
     public static final String errmes_1 = " Error ";
     public static final String errmes_2 = ": Part ";

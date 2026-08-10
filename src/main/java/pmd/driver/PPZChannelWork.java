@@ -1,21 +1,21 @@
 package pmd.driver;
 
-public class PPZChannelWork {
+class PPZChannelWork {
 
-    public int loopStartOffset;
-    public int loopEndOffset;
+    int loopStartOffset;
+    int loopEndOffset;
     public boolean playing;
     public short pan;
-    public double panL;
-    public double panR;
-    public int srcFrequency;
+    double panL;
+    double panR;
+    int srcFrequency;
     public short volume;
     public int frequency;
 
-    public int _loopStartOffset;
-    public int _loopEndOffset;
+    int _loopStartOffset;
+    int _loopEndOffset;
 //    public int _frequency;
-    public int _srcFrequency;
+int _srcFrequency;
 
     public int bank;
     public int ptr;

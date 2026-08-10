@@ -17,7 +17,7 @@ import vavi.util.compat.Tuple;
 import static pmd.common.Common.charset;
 
 
-public class JavaCompiler extends DosCompiler {
+class JavaCompiler extends DosCompiler {
 
     public static Tuple<CompileResult, String> compile(String mmlFilePath, String[] options) {
 

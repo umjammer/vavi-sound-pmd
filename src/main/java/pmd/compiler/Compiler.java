@@ -30,7 +30,7 @@ public class Compiler implements ICompiler {
 
     private static final Logger logger = getLogger(Compiler.class.getName());
 
-    final ResourceBundle rb = ResourceBundle.getBundle("pmd/message");
+    private static final ResourceBundle rb = ResourceBundle.getBundle("pmd/message");
 
     // Input data
 
@@ -51,8 +51,8 @@ public class Compiler implements ICompiler {
         return vdat_setAddress;
     }
 
-    public MmlSeg mml_seg = null;
-    public VoiceSeg voice_seg = null;
+    private MmlSeg mml_seg = null;
+    private VoiceSeg voice_seg = null;
     private byte[] outFFFileBuf = null;
 
     public byte[] getOutFFFileBuf() {
@@ -64,7 +64,7 @@ public class Compiler implements ICompiler {
         return outFFFileName;
     }
 
-    public int skipIndex = -1; // Skip Position
+    private int skipIndex = -1; // Skip Position
 
     // internal
     private String srcBuf = null;

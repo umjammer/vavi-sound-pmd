@@ -59,7 +59,7 @@ public class CompileResult {
         this(exitCode, compiledBinary, log, null);
     }
 
-    public CompileResult(int exitCode, byte[] compiledBinary, String log, Integer memoWriteAddress /* = null */) {
+    private CompileResult(int exitCode, byte[] compiledBinary, String log, Integer memoWriteAddress /* = null */) {
         var succeeded = exitCode == 0;
         if (succeeded) {
             if (!log.contains("Warning")) {
@@ -113,7 +113,7 @@ public class CompileResult {
         return compiledBinary.length == target.compiledBinary.length ? CompareResult.Match : CompareResult.Match_NotEqualLength;
     }
 
-    public static Integer getMemoOffset(byte[] array) {
+    private static Integer getMemoOffset(byte[] array) {
 
             // The straightforward approach (only with /v)
 //        if (array.length >= 0x1a && array[1] == 0x1a) {

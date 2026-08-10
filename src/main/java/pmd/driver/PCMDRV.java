@@ -11,7 +11,7 @@ import musicDriverInterface.MmlDatum.MMLType;
 import static java.lang.System.getLogger;
 
 
-public class PCMDRV {
+class PCMDRV {
 
     private static final Logger logger = getLogger(PCMDRV.class.getName());
 
@@ -714,7 +714,7 @@ public class PCMDRV {
                     r.carry = (r.al & 0xff) - (r.ah & 0xff) < 0;
                     r.al -= r.ah;
                     if (r.carry) { // break mvset;
-mv_min:
+//mv_min:
                         r.al = 0;
 //                        break mv_out;
                         r.dl = r.al; // <<
@@ -879,7 +879,7 @@ mv_min:
         keyoffp();
     }
 
-    public void keyoffp() {
+    private void keyoffp() {
         if (pw.partWk[r.di & 0xffff].onkai != (byte) 0xff) {
             kofp1();
         }
