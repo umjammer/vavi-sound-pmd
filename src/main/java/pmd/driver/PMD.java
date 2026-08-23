@@ -8802,12 +8802,8 @@ pm_fm2: // ↑
         }
 //not_fade:
         if (pw.effon != 0) { // break not_psgeffec;
-            if (pw.ppsdrv_flag != 0) { // break ta_not_ppsdrv;
-                if ((pw.psgefcnum & 0x80) == 0) { // break not_psgeffec; // It is played by ppsdrv.
-                } else {
-                    efcdrv.effplay(); // SSG sound effect processing // <<
-                }
-            } else {
+            // ppsdrv_flag on and psgefcnum bit 7 on means it is played by ppsdrv
+            if (pw.ppsdrv_flag == 0 || (pw.psgefcnum & 0x80) == 0) { // break not_psgeffec;
 //ta_not_ppsdrv:
                 efcdrv.effplay(); // SSG sound effect processing
             }

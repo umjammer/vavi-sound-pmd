@@ -3,7 +3,7 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-sound-pmd</artifactId>
-  <version>0.0.12</version>
+  <version>0.0.13</version>
 
   <build>
     <plugins>
@@ -55,7 +55,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / vavi -->
       <artifactId>vavi-commons</artifactId>
-      <version>1.1.19</version>
+      <version>1.1.20</version>
     </dependency>
 
     <dependency>
@@ -73,13 +73,13 @@
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- vavi / com.github.umjammer -->
       <artifactId>vavi-util-serdes</artifactId>
-      <version>1.0.13</version>
+      <version>1.0.14</version>
     </dependency>
 
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-sound</artifactId>
-      <version>1.0.27</version>
+      <version>1.0.28</version>
     </dependency>
 
     <dependency>
