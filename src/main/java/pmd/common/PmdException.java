@@ -21,6 +21,6 @@ public class PmdException extends RuntimeException implements Serializable {
     }
 
     public PmdException(String message, int row, int col) {
-        super(String.format(rb.getString("E0300"), row, col, message));
+        super(rb.getString("E0300").formatted(row, col, message));
     }
 }

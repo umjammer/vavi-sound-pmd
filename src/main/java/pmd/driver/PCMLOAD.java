@@ -209,9 +209,9 @@ logger.log(Level.DEBUG, "pcm: " + fnPcm);
         //pw.banknum = r.al.toString(); // Bank
         r.stack.push(r.getDx());
         r.setDx((short) 0); // offset ppzbank_mes
-        //ppz_error_main2(String.format(pw.ppzbank_mes, r.al));
+        //ppz_error_main2(pw.ppzbank_mes.formatted(r.al));
         r.setDx(r.stack.pop());
-        ppz_error_main2(String.format(PW.ppzbank_mes, (char) (r.al & 0xff)) + msg);
+        ppz_error_main2(PW.ppzbank_mes.formatted((char) (r.al & 0xff)) + msg);
     }
 
     private static void ppz_error_main2(String msg) {
