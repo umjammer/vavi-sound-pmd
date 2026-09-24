@@ -273,7 +273,7 @@ public class Compiler implements ICompiler {
     String readFileText(String mml_filename2) {
         InputStream strm = appendFileReaderCallback.apply(mml_filename2);
         if (strm == null) {
-            logger.log(Level.ERROR, String.format(rb.getString("E0201"), mml_filename2));
+            logger.log(Level.ERROR, rb.getString("E0201").formatted(mml_filename2));
             throw new IllegalArgumentException(mml_filename2);
             //return "";
         }

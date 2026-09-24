@@ -1809,7 +1809,7 @@ fm3_check:
         }
 
         if (voice_seg.voice_buf == null) {
-            print_mes(MmlSeg.warning_mes + String.format(rb.getString("E0200"), voice_seg.v_filename)); // MmlSeg.ff_readerr_mes);
+            print_mes(MmlSeg.warning_mes + rb.getString("E0200").formatted(voice_seg.v_filename)); // MmlSeg.ff_readerr_mes);
         } else {
 //#if !hyouka
             mml_seg.prg_flg |= 1;
@@ -6822,7 +6822,7 @@ psgprg: // ↑
             m_seg.m_buf.set(work.di++, cmd);
             cx = 4;
             //if (work.bx > 9) {
-            //    logger.log(Level.WARNING, String.format(rb.getString("W0100").formatted(work.bx)));
+            //    logger.log(Level.WARNING, rb.getString("W0100").formatted(work.bx)));
             //    work.bx = 0;
             //}
 //pplop0:

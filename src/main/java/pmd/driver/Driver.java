@@ -1,10 +1,8 @@
 package pmd.driver;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -304,7 +302,7 @@ logger.log(Level.DEBUG, pdno);
 
         Function<String, InputStream> appendFileReaderCallback =
                 (pdnos.length < 13 || pdnos[12] == null)
-                        ? createAppendFileReaderCallback(Path.of(pdno.srcFile).getParent().toString())
+                        ? Common.createFileReader(Path.of(pdno.srcFile).toAbsolutePath().getParent(), pdno.envPmd)
                         : (Function<String, InputStream>) pdnos[12];
 
         if (pdnos.length == 14) {
@@ -367,7 +365,7 @@ logger.log(Level.DEBUG, pdno);
         int extn = 0;
         String[] ppcExtTbl = {".PPC", ".P86", ".PVI"};
         while (true) {
-            buf = Common.getPCMDataFromFile(work.ppcFile, appendFileReaderCallback);
+            buf = Common.getPCMDataFromFile(fn, appendFileReaderCallback);
             if (buf != null) break;
             if (extn == 3) break;
             extn++;
@@ -459,25 +457,6 @@ logger.log(Level.DEBUG, pdno);
             }
             writeOPNA.accept(reg);
         }
-    }
-
-    private static Function<String, InputStream> createAppendFileReaderCallback(String dir) {
-        return fname -> {
-            try {
-                if (dir != null && !dir.isEmpty()) {
-                    var path = Path.of(dir, fname);
-                    if (Files.exists(path)) {
-                        return Files.newInputStream(path);
-                    }
-                }
-                if (Files.exists(Path.of(fname))) {
-                    return Files.newInputStream(Path.of(fname));
-                }
-            } catch (IOException e) {
-logger.log(Level.ERROR, e.getMessage(), e);
-            }
-            return null;
-        };
     }
 
     @Override

@@ -1,8 +1,14 @@
 
 package pmd.common;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
 import musicDriverInterface.MmlDatum;
@@ -74,5 +80,37 @@ public class Common {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * the file reader for the files a song names (.PPC, .P86, .PPS, .PZI, MML includes).
+     *
+     * @param songDir the song's folder, searched first
+     * @param envPmd the PMD environment variable, the search path after the song's folder,
+     *               a relative entry is resolved against the song's folder, nullable
+     * @return the reader gives null when the file is not found
+     */
+    public static Function<String, InputStream> createFileReader(Path songDir, String[] envPmd) {
+        return fname -> {
+            String name = fname.replace('\\', '/');
+            String baseName = Path.of(name).getFileName().toString();
+            List<Path> candidates = new ArrayList<>();
+            candidates.add(songDir.resolve(name));
+            if (envPmd != null) {
+                for (String dir : envPmd) {
+                    if (dir != null && !dir.isBlank()) candidates.add(songDir.resolve(dir).resolve(baseName).normalize());
+                }
+            }
+            for (Path path : candidates) {
+                if (Files.isRegularFile(path)) {
+                    try {
+                        return Files.newInputStream(path);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                }
+            }
+            return null;
+        };
     }
 }
